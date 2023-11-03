@@ -1,0 +1,13 @@
+{
+    "workbench.colorCustomizations": {
+        "titleBar.activeBackground": "#14d6dd",
+        "titleBar.activeForeground": "#000000",
+        "titleBar.inactiveBackground": "#14d6dd",
+        "statusBar.background": "#14d6dd",
+        "statusBar.foreground": "#000000",
+        "commandCenter.foreground": "#e0a80b"
+    },
+    "[vue]": {
+        "editor.tabSize": 2
+    }
+}
