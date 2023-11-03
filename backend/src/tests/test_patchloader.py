@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock
 
-from src.server.loader.patchexceptions import MuteException, EmptyTodoException
+from src.server.loader.patchexceptions import MuteException, EmptyTodoException, PatcherError
 from src.server.loader.patchloader import Patchloader, Todo, TodoType, RuneClass
 
 
@@ -17,6 +17,16 @@ async def test_update_todo_mute(clean_Patchloader):
 
     Patchloader.mute = True
     with pytest.raises(MuteException):
+        l1 = await Patchloader.update_todo()
+
+
+
+@pytest.mark.asyncio
+async def test_update_todo_bad_varsions(clean_Patchloader, mocker):
+
+    mocker.patch("src.server.loader.patchloader.Patchloader.get_dict_from_request", return_value=[13, 12])
+    mocker.patch("src.server.loader.patchloader.db.fetch_patch_latest", return_value=None)
+    with pytest.raises(PatcherError):
         l1 = await Patchloader.update_todo()
 
 
@@ -135,12 +145,13 @@ async def test_work_todo(clean_Patchloader, mocker):
 
 
 
-def test_list_data(clean_Patchloader, db_fake_patch):
+def test_list_data(clean_Patchloader):
 
     p1 = Patchloader()
     c_list, i_list, r_list, s_list = p1.list_data("13.21.1")
     assert c_list[2] == "Akali"
     assert i_list[1][0] == "1004"
+    assert i_list[2][1]["name"] == "Rejuvenation Bead"
     assert r_list[2].tree == "Domination"
     assert r_list[2].row == 0
     assert r_list[2].rune["key"] == "DarkHarvest"
@@ -185,10 +196,13 @@ async def test_load_data(patch1321, mocker):
 
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
-async def test_load_all_champions():
-    assert False
+async def test_load_all_champions(clean_Patchloader, mocker):
+    champion_mock = mocker.patch("src.server.loader.patchloader.Patchloader.load_champion", return_value=None)
+    p1 = Patchloader()
+    champion_list, _, _, _ = p1.list_data("13.21.1")
+    await p1.load_all_champions(champion_list)
+    assert champion_mock.call_count == 165
 
 
 
@@ -199,10 +213,15 @@ async def test_load_champion():
 
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
-async def test_load_all_items():
-    assert False
+async def test_load_all_items(clean_Patchloader, db_fake_patch_uptodate , mocker):
+    item_mock = mocker.patch("src.server.loader.patchloader.Patchloader.load_item", return_value=None)
+    p1 = Patchloader()
+    p1.patch = db_fake_patch_uptodate
+    _, item_list, _, _ = p1.list_data("13.21.1")
+    await p1.load_all_items(item_list)
+    assert item_mock.call_count == 435
+    assert p1.patch.item_count == 435
 
 
 
@@ -213,10 +232,13 @@ async def test_load_item():
 
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
-async def test_load_all_runes():
-    assert False
+async def test_load_all_runes(clean_Patchloader, mocker):
+    rune_mock = mocker.patch("src.server.loader.patchloader.Patchloader.load_rune", return_value=None)
+    p1 = Patchloader()
+    _, _, rune_list, _ = p1.list_data("13.21.1")
+    await p1.load_all_runes(rune_list)
+    assert rune_mock.call_count == 63
 
 
 
@@ -227,16 +249,19 @@ async def test_load_rune():
 
 
 
+@pytest.mark.asyncio
+async def test_load_all_summonerspells(clean_Patchloader, mocker):
+    summoner_mock = mocker.patch("src.server.loader.patchloader.Patchloader.load_summonerspell", return_value=None)
+    p1 = Patchloader()
+    _, _, _, summoner_list = p1.list_data("13.21.1")
+    await p1.load_all_summonerspells(summoner_list)
+    assert summoner_mock.call_count == 18
+
+
+
 @pytest.mark.skip
 @pytest.mark.asyncio
-async def test_load_all_summonerspells():
-    assert False
-
-
-
-@pytest.mark.skip
-@pytest.mark.asyncio
-async def test_load_summonerspells():
+async def test_load_summonerspell():
     assert False
 
 

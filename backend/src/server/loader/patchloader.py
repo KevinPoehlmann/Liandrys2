@@ -101,6 +101,12 @@ class Patchloader():
             Patchloader.mute = False
             raise PatcherError("Failed loading Versions.json file!", e)
         
+        con1 = type(patches) == list
+        con2 = len(patches) > 0
+        con3 = type(patches[0]) == str
+        if not(con1 and con2 and con3):
+            raise PatcherError("Versions.json file is in the wrong shape!", "Couldn't validate version.json!")
+        
         db_patch = await db.fetch_patch_latest()
 
         ### ------------- Empty database
@@ -266,6 +272,7 @@ class Patchloader():
     async def load_all_items(self, item_list: list[tuple[str, dict]]) -> None:
         #TODO look at old code
         item_tasks = [self.load_item(item) for item in item_list]
+        self.patch.item_count = len(item_tasks)
         await asyncio.gather(*item_tasks)
 
 
