@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from pydantic import ValidationError
 from requests_html import HTMLSession
 from urllib.error import HTTPError, URLError
 
@@ -17,6 +18,18 @@ import src.server.loader.webscraper as ws
 
 from src.server.loader.helper import info_loader, SafeSession
 from src.server.models.patch import Patch, NewPatch
+from src.server.models.json_validation import (
+    ChampionsJson,
+    ItemsJson,
+    ItemJson,
+    RuneJson,
+    RuneTreeJson,
+    SummonerspellsJson,
+    SummonerspellJson,
+    InfoJson,
+    PathJson,
+    UrlJson
+)
 from src.server.loader.patchexceptions import (
     PatcherError,
     MuteException,
@@ -61,13 +74,13 @@ class Todo():
 @dataclass
 class RuneClass():
     """Class to gather Rune information"""
-    rune: dict
+    rune: RuneJson
     tree: str
     tree_id: int
     row: int
 
     def __str__(self) -> str:
-        return self.rune.get("name", "Rune")
+        return self.rune.name
     
 
 
@@ -82,7 +95,7 @@ class Patchloader():
         
         
         self.patch: Patch = None
-        self.urls: dict = info_loader("urls")
+        self.urls: UrlJson = info_loader().urls
         self.session: SafeSession = None
 
 
@@ -92,8 +105,8 @@ class Patchloader():
             raise MuteException("Already loading updates!")
 
         Patchloader.mute = True
-        urls = info_loader("urls")
-        versions = urls.get("patches")
+        urls = info_loader().urls
+        versions = urls.patches
         debugger.info(versions)
         try:
             patches = Patchloader.get_dict_from_request(versions)
@@ -121,7 +134,7 @@ class Patchloader():
             patch_list.insert(0, patches.pop(0))
         else:
             try:
-                html = Patchloader.get_html_from_request("V" + urls["wiki"] + patches[0].rstrip(".1"))
+                html = Patchloader.get_html_from_request(urls.wiki + "V" + patches[0].rstrip(".1"))
                 hotfix_list = ws.get_hotfix_list(html)
             except (HTTPError, URLError, ValueError, AttributeError) as e:
                 raise PatcherError("Failed loading Hotfix information!", e, patches[0])
@@ -177,12 +190,12 @@ class Patchloader():
             logger.error(f"Failed loading data dicts!")
             logger.error(e.reason)
             return
-        except KeyError as e:
-            logger.error(f"Could not find key {e} in data dict!")
+        except ValidationError as e:
+            logger.error(f"Error validating patch_data: {e}")
             return
         
         try:
-            html = Patchloader.get_html_from_request("V" + self.urls["wiki"] + patch_ver.rstrip(".1"))
+            html = Patchloader.get_html_from_request(self.urls.wiki + "V" + patch_ver.rstrip(".1"))
             hotfix_list = ws.get_hotfix_list(html)
         except (HTTPError, URLError, ValueError, AttributeError) as e:
             raise PatcherError("Failed loading Hotfix information!", e, patch_ver)
@@ -227,35 +240,36 @@ class Patchloader():
 
 
 
-    def list_data(self, patch_ver: str) -> tuple[list[str], list[tuple[str, dict]], RuneClass, list[tuple[str, dict]]]: 
-        champion_dict = requests.get(self.urls["dataLink"] + patch_ver + self.urls["championList"]).json()
-        item_dict = requests.get(self.urls["dataLink"] + patch_ver + self.urls["itemsData"]).json()
-        rune_dict = requests.get(self.urls["dataLink"] + patch_ver + self.urls["runesData"]).json()
-        summonerspell_dict = requests.get(self.urls["dataLink"] + patch_ver + self.urls["summonerspellsData"]).json()
+    def list_data(self, patch_ver: str) -> tuple[list[str], list[tuple[str, ItemJson]], list[RuneClass], list[tuple[str, SummonerspellJson]]]: 
+        champions = ChampionsJson(**requests.get(self.urls.dataLink + patch_ver + self.urls.championList).json())
+        items = ItemsJson(**requests.get(self.urls.dataLink + patch_ver + self.urls.itemList).json())
+        runes = requests.get(self.urls.dataLink + patch_ver + self.urls.runeList).json()
+        summoners = SummonerspellsJson(**requests.get(self.urls.dataLink + patch_ver + self.urls.summonerspellList).json())
 
 
-        champion_list = list(champion_dict["data"].keys())
-        item_list = list(item_dict["data"].items())
+        champion_list = list(champions.data.keys())
+        item_list = [(item_name, ItemJson(**item_data)) for item_name, item_data in items.data.items()]
         rune_list = []
-        for tree in rune_dict:
-            for i, row in enumerate(tree["slots"]):
-                for r in row["runes"]:
-                    rune_list.append(RuneClass(r, tree["name"], tree["id"], i))
-        summonerspell_list = list(summonerspell_dict["data"].items())
+        for tree in runes:
+            rune_tree = RuneTreeJson(**tree)
+            for i, row in enumerate(rune_tree.slots):
+                for rune in row.runes:
+                    rune_list.append(RuneClass(rune, rune_tree.name, rune_tree.id_, i))
+        summoner_list = [(summoner_name, SummonerspellJson(**summoner_data)) for summoner_name, summoner_data in summoners.data.items()]
 
-        return champion_list, item_list, rune_list, summonerspell_list
+        return champion_list, item_list, rune_list, summoner_list
 
 
     def create_folder_tree(self) -> None:
         """Creates directory structure for static images, if not existing yet."""
-        paths = info_loader("paths")
-        Path(paths["basePath"] + paths["championImage"]).mkdir(parents=True, exist_ok=True)
-        Path(paths["basePath"] + paths["itemImage"]).mkdir(parents=True, exist_ok=True)
-        Path(paths["basePath"] + paths["passiveImage"]).mkdir(parents=True, exist_ok=True)
-        Path(paths["basePath"] + paths["runeImage"]).mkdir(parents=True, exist_ok=True)
-        Path(paths["basePath"] + paths["spellImage"]).mkdir(parents=True, exist_ok=True)
-        Path(paths["basePath"] + paths["sprite"]).mkdir(parents=True, exist_ok=True)
-        Path(paths["basePath"] + paths["summonerspellImage"]).mkdir(parents=True, exist_ok=True)
+        paths = info_loader().paths
+        paths.championImage.mkdir(parents=True, exist_ok=True)
+        paths.itemImage.mkdir(parents=True, exist_ok=True)
+        paths.passiveImage.mkdir(parents=True, exist_ok=True)
+        paths.runeImage.mkdir(parents=True, exist_ok=True)
+        paths.spellImage.mkdir(parents=True, exist_ok=True)
+        paths.sprite.mkdir(parents=True, exist_ok=True)
+        paths.summonerspellImage.mkdir(parents=True, exist_ok=True)
 
 
 
@@ -269,14 +283,14 @@ class Patchloader():
 
 
 
-    async def load_all_items(self, item_list: list[tuple[str, dict]]) -> None:
+    async def load_all_items(self, item_list: list[tuple[str, ItemJson]]) -> None:
         #TODO look at old code
-        item_tasks = [self.load_item(item) for item in item_list]
+        item_tasks = [self.load_item(item_id, item_data) for item_id, item_data in item_list]
         self.patch.item_count = len(item_tasks)
         await asyncio.gather(*item_tasks)
 
 
-    async def load_item(self, item: tuple[str, dict]) -> None:
+    async def load_item(self, item_id: str, item_data: ItemJson) -> None:
         pass
 
 
@@ -291,12 +305,12 @@ class Patchloader():
 
 
 
-    async def load_all_summonerspells(self, summonerspell_list: list[tuple[str, dict]]) -> None:
+    async def load_all_summonerspells(self, summonerspell_list: list[tuple[str, SummonerspellJson]]) -> None:
         summonerspell_tasks = [self.load_summonerspell(name, stats) for name, stats in summonerspell_list]
         await asyncio.gather(*summonerspell_tasks)
 
 
-    async def load_summonerspell(self, name: str, stats: dict) -> None:
+    async def load_summonerspell(self, name: str, stats: SummonerspellJson) -> None:
         pass
 
 

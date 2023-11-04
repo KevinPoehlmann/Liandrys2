@@ -6,6 +6,8 @@ import logging
 
 from typing import Callable
 
+from src.server.models.json_validation import InfoJson
+
 #TODO change to pydantic instead of dict
 
 logger = logging.getLogger("patch_loader")
@@ -13,7 +15,7 @@ debugger = logging.getLogger("debugger")
 
 
 
-def info_loader(info: str) -> dict:
+def info_loader() -> InfoJson:
     """Loads information from the info.json file
 
         Parameters:
@@ -24,7 +26,7 @@ def info_loader(info: str) -> dict:
     """
     with open("src/server/loader/info.json") as info_file:
         info_dict = json.load(info_file)
-    return info_dict[info]
+    return InfoJson(**info_dict)
 
 
 

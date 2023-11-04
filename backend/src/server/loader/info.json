@@ -1,13 +1,12 @@
 {
     "paths": {
-        "basePath": "src/",
-        "championImage": "images/champions/",
-        "itemImage": "images/items/",
-        "passiveImage": "images/passives/",
-        "runeImage": "images/runes/",
-        "spellImage": "images/spells/",
-        "sprite": "images/sprites/",
-        "summonerspellImage": "images/summonerspells/"
+        "championImage": "src/images/champions/",
+        "itemImage": "src/images/items/",
+        "passiveImage": "src/images/passives/",
+        "runeImage": "src/images/runes/",
+        "spellImage": "src/images/spells/",
+        "sprite": "src/images/sprites/",
+        "summonerspellImage": "src/images/summonerspells/"
     },
     "urls": {
         "patches": "https://ddragon.leagueoflegends.com/api/versions.json",
@@ -17,14 +16,14 @@
         "championData": "/data/en_GB/champion/",
         "championWiki": "/LoL",
         "championImage": "/img/champion/",
-        "itemsData": "/data/en_GB/item.json",
+        "itemList": "/data/en_GB/item.json",
         "itemImage": "/img/item/",
         "passiveImage": "/img/passive/",
-        "runesData": "/data/en_GB/runesReforged.json",
+        "runeList": "/data/en_GB/runesReforged.json",
         "runeImage": "img/",
         "spellImage": "/img/spell/",
         "sprite": "/img/sprite/",
-        "summonerspellsData": "/data/en_GB/summoner.json",
+        "summonerspellList": "/data/en_GB/summoner.json",
         "summonerspellImage": "/img/spell/"
     },
     "itemStatDict": {
@@ -63,19 +62,5 @@
         "Blade of The Ruined King": "Blade of the Ruined King",
         "Kalista's Black Spear": "Black Spear",
         "Slightly Magical Footwear": "Slightly Magical Boots"
-    },
-    "months": {
-        "January": "1",
-        "February": "2",
-        "March": "3",
-        "April": "4",
-        "May": "5",
-        "June": "6",
-        "July": "7",
-        "August": "8",
-        "September": "9",
-        "October": "10",
-        "November": "11",
-        "December": "12"
     }
 }

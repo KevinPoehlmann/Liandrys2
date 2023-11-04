@@ -151,11 +151,12 @@ def test_list_data(clean_Patchloader):
     c_list, i_list, r_list, s_list = p1.list_data("13.21.1")
     assert c_list[2] == "Akali"
     assert i_list[1][0] == "1004"
-    assert i_list[2][1]["name"] == "Rejuvenation Bead"
+    assert i_list[2][1].name == "Rejuvenation Bead"
     assert r_list[2].tree == "Domination"
     assert r_list[2].row == 0
-    assert r_list[2].rune["key"] == "DarkHarvest"
+    assert r_list[2].rune.key == "DarkHarvest"
     assert s_list[0][0] == "SummonerBarrier"
+    assert s_list[1][1].name == "Cleanse"
 
 
 
