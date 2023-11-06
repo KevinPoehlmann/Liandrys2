@@ -21,6 +21,79 @@ class ChampionsJson(BaseModel):
     data: dict
 
 
+class StatsJson(BaseModel):
+    hp: float
+    hpperlevel: int
+    mp: float
+    mpperlevel: float
+    movespeed: int
+    armor: int
+    armorperlevel: float
+    spellblock: float
+    spellblockperlevel: float
+    attackrange: int
+    hpregen: float
+    hpregenperlevel: float
+    mpregen: float
+    mpregenperlevel: float
+    crit: int
+    critperlevel: int
+    attackdamage: float
+    attackdamageperlevel: float
+    attackspeedperlevel: float
+    attackspeed: float
+
+
+class SpellJson(BaseModel):
+    id_: str = Field(..., alias="id")
+    name: str
+    description: str
+    tooltip: str
+    leveltip: dict
+    maxrank: int
+    cooldown: list[float]
+    cooldownBurn: str
+    cost: list[int]
+    costBurn: str
+    datavalues: dict
+    effect: list
+    effectBurn: list
+    vars: list
+    costType: str
+    maxammo: str
+    range_: list[int] = Field(..., alias="range")
+    rangeBurn: str
+    image: ImageJson
+    resource: str
+
+
+class PassiveJson(BaseModel):
+    name: str
+    description: str
+    image: ImageJson
+
+
+class ChampionJson(BaseModel):
+    id_: str = Field(..., alias="id")
+    key: str
+    name: str
+    title: str
+    image: ImageJson
+    skins: list[dict]
+    lore: str
+    blurb: str
+    allytps: list[str]
+    enemytips: list[str]
+    tags: list[str]
+    partype: str
+    info: dict
+    stats: StatsJson
+    spells: list[SpellJson]
+    passive: PassiveJson
+    recommended: list
+
+
+
 
 class ItemsJson(BaseModel):
     typ: str = Field(..., alias="type")
@@ -104,6 +177,10 @@ class SummonerspellJson(BaseModel):
     image: ImageJson
     resource: str
 
+
+
+
+#--------------------------------------------------------------------------
 
 #TODO convert from str to Path
 class PathJson(BaseModel):

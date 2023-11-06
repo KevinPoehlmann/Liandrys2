@@ -20,6 +20,7 @@ from src.server.loader.helper import info_loader, SafeSession
 from src.server.models.patch import Patch, NewPatch
 from src.server.models.json_validation import (
     ChampionsJson,
+    ChampionJson,
     ItemsJson,
     ItemJson,
     RuneJson,
@@ -278,8 +279,25 @@ class Patchloader():
         await asyncio.gather(*champion_tasks)
 
 
-    async def load_champion(self, champion: str) -> None:
-        pass
+    async def load_champion(self, champion_id: str) -> None:
+        try:
+            champion_dict = await self.session.json(self.urls.dataLink + self.patch.patch + self.urls.championData + champion_id + ".json")
+            champion_json = ChampionsJson(**champion_dict)
+            champion = ChampionJson(**champion_json.data.get(champion_id))
+            champion_wiki = await self.session.html(self.urls.wiki + champion.name + self.urls.championWiki)
+        except HTTPError as e:
+            raise LoadError(e.code, e.reason, e.url, "Champion", champion_id)
+        except URLError as e:
+            raise LoadError(e.errno, e.reason, e.filename, "Champion", champion_id)
+        
+        try:
+            #TODO BS with wiki
+            pass
+        except (AttributeError, ValueError) as e:
+            raise ScrapeError(e, "Champion", champion_id)
+        
+        #TODO add champion to database
+
 
 
 
