@@ -1,16 +1,19 @@
 from bson.objectid import ObjectId as BsonObjectId
+from bson.errors import InvalidId
 
 
 
-class PydanticObjectId(BsonObjectId):
+class PydanticObjectId(str):
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
 
     @classmethod
     def validate(cls, v):
-        if not isinstance(v, BsonObjectId):
-            raise TypeError("Object ID needed")
+        try:
+            BsonObjectId(str(v))
+        except InvalidId:
+            raise ValueError("Not a valid ObjectId")
         return str(v)
 """     
     @classmethod

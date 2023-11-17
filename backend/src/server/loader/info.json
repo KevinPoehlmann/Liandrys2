@@ -1,12 +1,7 @@
 {
     "paths": {
-        "championImage": "src/images/champions/",
-        "itemImage": "src/images/items/",
-        "passiveImage": "src/images/passives/",
-        "runeImage": "src/images/runes/",
-        "spellImage": "src/images/spells/",
-        "sprite": "src/images/sprites/",
-        "summonerspellImage": "src/images/summonerspells/"
+        "image": "src/images/",
+        "sprite": "src/images/sprites/"
     },
     "urls": {
         "patches": "https://ddragon.leagueoflegends.com/api/versions.json",
@@ -16,6 +11,7 @@
         "championData": "/data/en_GB/champion/",
         "championWiki": "/LoL",
         "championImage": "/img/champion/",
+        "image": "img/",
         "itemList": "/data/en_GB/item.json",
         "itemImage": "/img/item/",
         "passiveImage": "/img/passive/",

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from aenum import MultiValueEnum
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 
 
@@ -75,6 +75,13 @@ class ResourceType(str, MultiValueEnum):
     RAGE="Rage"
     SHIELD="Shield"
     NONE="None", ""
+
+class Skill(str, Enum):
+    Q="skill skill_q"
+    W="skill skill_w"
+    E="skill skill_e"
+    R="skill skill_r"
+
 
 
 #Items
@@ -279,6 +286,7 @@ class AttackspeedStats():
     attack_windup: float = 0.0
     windup_modifier: float = 1.0
     missile_speed: int = 0
+
 
 
 @dataclass

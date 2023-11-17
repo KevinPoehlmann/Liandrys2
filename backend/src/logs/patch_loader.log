@@ -1,38 +1,175 @@
-28.10.2023  12:26:19 - INFO:  Loading patch: 13.21.1
-02.11.2023  22:25:03 - INFO:  Loading patch: 13.21.1
-02.11.2023  22:25:45 - INFO:  Loading patch: 13.21.1
-02.11.2023  22:43:09 - INFO:  Loading patch: 13.21.1
-02.11.2023  22:44:55 - INFO:  Loading patch: 13.21.1
-02.11.2023  22:56:25 - INFO:  Loading patch: 13.21.1
-02.11.2023  22:57:10 - INFO:  Loading patch: 13.21.1
-02.11.2023  22:58:26 - INFO:  Loading patch: 13.21.1
-02.11.2023  22:58:59 - INFO:  Loading patch: 13.21.1
-03.11.2023  17:50:51 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:01:43 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:02:00 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:06:12 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:07:46 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:08:59 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:09:14 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:09:24 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:11:15 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:12:00 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:13:50 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:14:01 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:15:41 - INFO:  Loading patch: 13.21.1
-03.11.2023  18:15:52 - INFO:  Loading patch: 13.21.1
-03.11.2023  21:24:41 - INFO:  Loading patch: 13.21.1
-03.11.2023  21:25:18 - INFO:  Loading patch: 13.21.1
-03.11.2023  21:26:32 - INFO:  Loading patch: 13.21.1
-03.11.2023  21:27:27 - INFO:  Loading patch: 13.21.1
-03.11.2023  21:28:09 - INFO:  Loading patch: 13.21.1
-03.11.2023  21:29:04 - INFO:  Loading patch: 13.21.1
-03.11.2023  21:29:32 - INFO:  Loading patch: 13.21.1
-03.11.2023  21:29:51 - INFO:  Loading patch: 13.21.1
-03.11.2023  21:30:58 - INFO:  Loading patch: 13.21.1
-03.11.2023  23:51:15 - INFO:  Loading patch: 13.21.1
-04.11.2023  00:55:28 - INFO:  Loading patch: 13.21.1
-04.11.2023  00:59:53 - INFO:  Loading patch: 13.21.1
-04.11.2023  01:01:48 - INFO:  Loading patch: 13.21.1
-04.11.2023  01:03:06 - INFO:  Loading patch: 13.21.1
-04.11.2023  17:44:38 - INFO:  Loading patch: 13.21.1
+13.11.2023  15:00:56 - INFO:  Loading patch: 13.21.1
+13.11.2023  15:01:52 - INFO:  Loading patch: 13.21.1
+13.11.2023  15:05:45 - INFO:  Loading patch: 13.21.1
+13.11.2023  15:06:53 - INFO:  Loading patch: 13.21.1
+13.11.2023  15:30:17 - INFO:  Loading patch: 13.21.1
+13.11.2023  15:30:21 - INFO: Can't find the wiki page for summoner Ignite
+13.11.2023  15:31:20 - INFO:  Loading patch: 13.21.1
+13.11.2023  15:31:23 - INFO: Can't find the wiki page for summoner Ignite
+13.11.2023  15:32:47 - INFO:  Loading patch: 13.21.1
+13.11.2023  15:32:51 - INFO: Can't find the wiki page for summoner Ignite
+13.11.2023  15:33:30 - INFO:  Loading patch: 13.21.1
+13.11.2023  15:33:33 - INFO: Can't find the wiki page for summoner Ignite
+13.11.2023  16:57:50 - INFO:  Loading patch: 13.22.1
+13.11.2023  17:02:18 - INFO:  Loading patch: 13.22.1
+13.11.2023  17:39:16 - INFO:  Loading patch: 13.22.1
+13.11.2023  17:39:21 - ERROR: Error 9 for Champion 'Jayce'!
+13.11.2023  17:39:21 - ERROR: 1 validation error for ChampionJson
+spells -> 3 -> leveltip
+  field required (type=value_error.missing)
+13.11.2023  17:39:21 - ERROR: Could not load information from ''
+13.11.2023  17:46:26 - INFO:  Loading patch: 13.22.1
+13.11.2023  17:46:31 - ERROR: Error 9 for Champion 'Swain'!
+13.11.2023  17:46:31 - ERROR: 1 validation error for ChampionJson
+spells -> 3 -> resource
+  field required (type=value_error.missing)
+13.11.2023  17:46:31 - ERROR: Could not load information from ''
+13.11.2023  18:04:53 - INFO:  Loading patch: 13.22.1
+13.11.2023  18:05:06 - INFO: Can't find the wiki page for summoner Flash
+13.11.2023  18:05:06 - INFO: Can't find the wiki page for summoner Cleanse
+13.11.2023  18:05:06 - INFO: Can't find the wiki page for summoner Barrier
+13.11.2023  18:05:06 - INFO: Can't find the wiki page for summoner Flash
+13.11.2023  18:05:06 - INFO: Can't find the wiki page for summoner Ignite
+13.11.2023  18:05:06 - INFO: Can't find the wiki page for summoner Exhaust
+13.11.2023  18:05:06 - INFO: Can't find the wiki page for summoner Heal
+13.11.2023  18:05:07 - INFO: Can't find the wiki page for summoner Ghost
+13.11.2023  18:05:07 - INFO: Can't find the wiki page for summoner Mark
+13.11.2023  18:05:07 - INFO: Can't find the wiki page for summoner Mark
+13.11.2023  18:05:09 - INFO: Can't find the wiki page for summoner Smite
+13.11.2023  18:05:09 - INFO: Can't find the wiki page for summoner Clarity
+13.11.2023  18:05:14 - INFO: Can't find the wiki page for summoner Teleport
+13.11.2023  18:05:27 - INFO: Can't find the wiki page for summoner Placeholder
+13.11.2023  18:06:15 - WARNING: 'trinket item' is not a valid ItemClass
+13.11.2023  18:06:16 - WARNING: 'trinket item' is not a valid ItemClass
+13.11.2023  18:06:19 - WARNING: 'trinket item' is not a valid ItemClass
+13.11.2023  18:06:20 - WARNING: 'basic trinket item' is not a valid ItemClass
+13.11.2023  18:06:20 - WARNING: 'trinket item' is not a valid ItemClass
+14.11.2023  15:56:04 - INFO: --------------------------------------------------------------------------------------------
+14.11.2023  15:56:04 - INFO:  Loading patch: 13.22.1
+14.11.2023  15:56:19 - INFO: Can't find the wiki page for summoner Placeholder
+14.11.2023  15:56:19 - INFO: Can't find the wiki page for summoner Clarity
+14.11.2023  15:56:19 - INFO: Can't find the wiki page for summoner Barrier
+14.11.2023  15:56:19 - INFO: Can't find the wiki page for summoner Smite
+14.11.2023  15:56:19 - INFO: Can't find the wiki page for summoner Cleanse
+14.11.2023  15:56:19 - INFO: Can't find the wiki page for summoner Flash
+14.11.2023  15:56:19 - INFO: Can't find the wiki page for summoner Heal
+14.11.2023  15:56:19 - INFO: Can't find the wiki page for summoner Flash
+14.11.2023  15:56:20 - INFO: Can't find the wiki page for summoner Exhaust
+14.11.2023  15:56:20 - INFO: Can't find the wiki page for summoner Ghost
+14.11.2023  15:56:20 - INFO: Can't find the wiki page for summoner Mark
+14.11.2023  15:56:21 - INFO: Can't find the wiki page for summoner Mark
+14.11.2023  15:56:21 - INFO: Can't find the wiki page for summoner Teleport
+14.11.2023  15:56:21 - INFO: Can't find the wiki page for summoner Ignite
+14.11.2023  15:57:36 - WARNING: 'trinket item' is not a valid ItemClass
+14.11.2023  15:57:37 - WARNING: 'basic trinket item' is not a valid ItemClass
+14.11.2023  15:57:38 - WARNING: 'trinket item' is not a valid ItemClass
+14.11.2023  15:57:38 - WARNING: 'trinket item' is not a valid ItemClass
+14.11.2023  15:57:47 - ERROR: Could not scrape data for Item 'Lucent Singularity'
+14.11.2023  15:57:47 - ERROR: find() takes no keyword arguments
+14.11.2023  15:57:54 - INFO: Patching took 110.14834547042847 seconds.
+16.11.2023  23:04:13 - INFO: --------------------------------------------------------------------------------------------
+16.11.2023  23:04:13 - INFO:  Loading patch: 13.22.1
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Barrier
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Ignite
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Heal
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Clarity
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Smite
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Mark
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Mark
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Exhaust
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Cleanse
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Placeholder
+16.11.2023  23:04:27 - INFO: Can't find the wiki page for summoner Flash
+16.11.2023  23:04:28 - INFO: Can't find the wiki page for summoner Flash
+16.11.2023  23:04:28 - INFO: Can't find the wiki page for summoner Ghost
+16.11.2023  23:04:28 - INFO: Can't find the wiki page for summoner Teleport
+16.11.2023  23:05:50 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:05:50 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:05:50 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:05:51 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:05:51 - WARNING: 'basic trinket item' is not a valid ItemClass
+16.11.2023  23:06:02 - ERROR: Could not scrape data for Item 'Lucent Singularity'
+16.11.2023  23:06:02 - ERROR: find() takes no keyword arguments
+16.11.2023  23:06:05 - INFO: Patching took 112.36563491821289 seconds.
+16.11.2023  23:20:14 - INFO: --------------------------------------------------------------------------------------------
+16.11.2023  23:20:14 - INFO:  Loading patch: 13.22.1
+16.11.2023  23:20:34 - INFO: Can't find the wiki page for summoner Exhaust
+16.11.2023  23:20:34 - INFO: Can't find the wiki page for summoner Flash
+16.11.2023  23:20:34 - INFO: Can't find the wiki page for summoner Flash
+16.11.2023  23:20:34 - INFO: Can't find the wiki page for summoner Ignite
+16.11.2023  23:20:34 - INFO: Can't find the wiki page for summoner Barrier
+16.11.2023  23:20:34 - INFO: Can't find the wiki page for summoner Cleanse
+16.11.2023  23:20:35 - INFO: Can't find the wiki page for summoner Heal
+16.11.2023  23:20:35 - INFO: Can't find the wiki page for summoner Clarity
+16.11.2023  23:20:35 - INFO: Can't find the wiki page for summoner Smite
+16.11.2023  23:20:35 - INFO: Can't find the wiki page for summoner Mark
+16.11.2023  23:20:35 - INFO: Can't find the wiki page for summoner Mark
+16.11.2023  23:20:39 - INFO: Can't find the wiki page for summoner Ghost
+16.11.2023  23:20:51 - INFO: Can't find the wiki page for summoner Placeholder
+16.11.2023  23:20:52 - INFO: Can't find the wiki page for summoner Teleport
+16.11.2023  23:22:01 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:22:02 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:22:03 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:22:03 - WARNING: 'basic trinket item' is not a valid ItemClass
+16.11.2023  23:22:03 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:22:19 - ERROR: Could not scrape data for Item 'Lucent Singularity'
+16.11.2023  23:22:19 - ERROR: find() takes no keyword arguments
+16.11.2023  23:22:20 - INFO: Patching took 126.7366886138916 seconds.
+16.11.2023  23:42:04 - INFO: --------------------------------------------------------------------------------------------
+16.11.2023  23:42:04 - INFO:  Loading patch: 13.22.1
+16.11.2023  23:42:20 - INFO: Can't find the wiki page for summoner Cleanse
+16.11.2023  23:42:20 - INFO: Can't find the wiki page for summoner Flash
+16.11.2023  23:42:20 - INFO: Can't find the wiki page for summoner Ghost
+16.11.2023  23:42:20 - INFO: Can't find the wiki page for summoner Clarity
+16.11.2023  23:42:20 - INFO: Can't find the wiki page for summoner Heal
+16.11.2023  23:42:21 - INFO: Can't find the wiki page for summoner Mark
+16.11.2023  23:42:21 - INFO: Can't find the wiki page for summoner Mark
+16.11.2023  23:42:21 - INFO: Can't find the wiki page for summoner Placeholder
+16.11.2023  23:42:21 - INFO: Can't find the wiki page for summoner Barrier
+16.11.2023  23:42:21 - INFO: Can't find the wiki page for summoner Ignite
+16.11.2023  23:42:22 - INFO: Can't find the wiki page for summoner Smite
+16.11.2023  23:42:28 - INFO: Can't find the wiki page for summoner Exhaust
+16.11.2023  23:42:29 - INFO: Can't find the wiki page for summoner Teleport
+16.11.2023  23:42:38 - INFO: Can't find the wiki page for summoner Flash
+16.11.2023  23:43:53 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:43:54 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:43:54 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:43:56 - WARNING: 'trinket item' is not a valid ItemClass
+16.11.2023  23:43:57 - WARNING: 'basic trinket item' is not a valid ItemClass
+16.11.2023  23:44:07 - ERROR: Could not scrape data for Item 'Lucent Singularity'
+16.11.2023  23:44:07 - ERROR: find() takes no keyword arguments
+16.11.2023  23:44:09 - INFO: Can't find the wiki page for summoner Placeholder and Attack-Smite
+16.11.2023  23:44:09 - INFO: Can't find the wiki page for summoner Flee
+16.11.2023  23:44:10 - INFO: Can't find the wiki page for summoner To the King!
+16.11.2023  23:44:10 - INFO: Can't find the wiki page for summoner Poro Toss
+16.11.2023  23:44:10 - INFO: Patching took 125.83769369125366 seconds.
+17.11.2023  00:20:32 - INFO: --------------------------------------------------------------------------------------------
+17.11.2023  00:20:32 - INFO:  Loading patch: 13.22.1
+17.11.2023  00:20:48 - INFO: Can't find the wiki page for summoner Cleanse
+17.11.2023  00:20:49 - INFO: Can't find the wiki page for summoner Exhaust
+17.11.2023  00:20:49 - INFO: Can't find the wiki page for summoner Ghost
+17.11.2023  00:20:49 - INFO: Can't find the wiki page for summoner Ignite
+17.11.2023  00:20:49 - INFO: Can't find the wiki page for summoner Barrier
+17.11.2023  00:20:49 - INFO: Can't find the wiki page for summoner Flash
+17.11.2023  00:20:49 - INFO: Can't find the wiki page for summoner Flash
+17.11.2023  00:20:49 - INFO: Can't find the wiki page for summoner Heal
+17.11.2023  00:20:49 - INFO: Can't find the wiki page for summoner Clarity
+17.11.2023  00:20:49 - INFO: Can't find the wiki page for summoner Mark
+17.11.2023  00:20:50 - INFO: Can't find the wiki page for summoner Teleport
+17.11.2023  00:20:50 - INFO: Can't find the wiki page for summoner Placeholder
+17.11.2023  00:20:51 - INFO: Can't find the wiki page for summoner Smite
+17.11.2023  00:21:51 - INFO: Can't find the wiki page for summoner Mark
+17.11.2023  00:22:22 - WARNING: 'trinket item' is not a valid ItemClass
+17.11.2023  00:22:22 - ERROR: Could not scrape data for Item 'Lucent Singularity'
+17.11.2023  00:22:22 - ERROR: find() takes no keyword arguments
+17.11.2023  00:22:22 - WARNING: 'trinket item' is not a valid ItemClass
+17.11.2023  00:22:22 - WARNING: 'basic trinket item' is not a valid ItemClass
+17.11.2023  00:22:22 - WARNING: 'trinket item' is not a valid ItemClass
+17.11.2023  00:22:24 - WARNING: 'trinket item' is not a valid ItemClass
+17.11.2023  00:22:33 - ERROR: Could not scrape data for Item 'Sandshrike's Claw'
+17.11.2023  00:22:33 - ERROR: 'NoneType' object has no attribute 'nextSibling'
+17.11.2023  00:22:41 - INFO: Can't find the wiki page for summoner Flee
+17.11.2023  00:22:44 - INFO: Can't find the wiki page for summoner To the King!
+17.11.2023  00:22:44 - INFO: Can't find the wiki page for summoner Poro Toss
+17.11.2023  00:22:44 - INFO: Can't find the wiki page for summoner Placeholder and Attack-Smite
+17.11.2023  00:22:51 - INFO: Patching took 139.74687147140503 seconds.

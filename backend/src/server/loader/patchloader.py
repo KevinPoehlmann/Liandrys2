@@ -1,14 +1,15 @@
 import aiohttp
 import asyncio
+import functools
 import logging
 import requests
+import time
 
-from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from pydantic import ValidationError
 from requests_html import HTMLSession
+from typing import Callable
 from urllib.error import HTTPError, URLError
 
 
@@ -16,7 +17,8 @@ from urllib.error import HTTPError, URLError
 import src.server.database as db
 import src.server.loader.webscraper as ws
 
-from src.server.loader.helper import info_loader, SafeSession
+from src.server.loader.helper import info_loader, SafeSession, Todo, RuneClass, TodoType
+from src.server.models.image import Image
 from src.server.models.patch import Patch, NewPatch
 from src.server.models.json_validation import (
     ChampionsJson,
@@ -53,37 +55,31 @@ debugger = logging.getLogger("debugger")
 handler = logging.FileHandler(filename="src/logs/debug.log")
 handler.setFormatter(frm)
 debugger.addHandler(handler)
-debugger.setLevel(logging.INFO)
+debugger.setLevel(logging.DEBUG)
 
 
 
-
-class TodoType(str, Enum):
-    LOAD="Load"
-    HOTFIX="Hotfix"
-    PATCH="Patch"
-
-
-@dataclass
-class Todo():
-    todo_type: TodoType
-    patch: str
-    hotfix: datetime = None
-
-
-
-@dataclass
-class RuneClass():
-    """Class to gather Rune information"""
-    rune: RuneJson
-    tree: str
-    tree_id: int
-    row: int
-
-    def __str__(self) -> str:
-        return self.rune.name
-    
-
+def time_safely(method: Callable) -> Callable:
+        """Decorator to time the loading process and catch uncaught exceptions."""
+        @functools.wraps(method)
+        async def wrapper(*args, **kwargs) -> None:
+            logger.info("--------------------------------------------------------------------------------------------")
+            debugger.info("--------------------------------------------------------------------------------------------")
+            t = time.time()
+            try:
+                await method(*args, **kwargs)
+            except Exception as e:
+                logger.exception(e)
+                logger.error(f"Patch {args[0].patch.patch} was not loaded successfully!")
+                await args[0].cleanup()
+                return
+            finally:
+                Patchloader.mute = False
+            t = time.time()-t
+            logger.info(f"Patching took {t} seconds.")
+            """ documents = sum([getattr(ref.information, field) for field in ref.information.__dataclass_fields__])
+            logger.info(f"Loaded {documents} documents in {t} seconds ({t/documents} per document)") """
+        return wrapper
 
 
 
@@ -91,6 +87,10 @@ class RuneClass():
 class Patchloader():
     mute: bool = False
     todo: list[Todo] = []
+
+
+
+
 
     def __init__(self) -> None:
         
@@ -108,7 +108,7 @@ class Patchloader():
         Patchloader.mute = True
         urls = info_loader().urls
         versions = urls.patches
-        debugger.info(versions)
+        #debugger.info(versions)
         try:
             patches = Patchloader.get_dict_from_request(versions)
         except (HTTPError, URLError) as e:
@@ -177,11 +177,11 @@ class Patchloader():
         Patchloader.mute = False
 
 
-
+    @time_safely
     async def load_data(self, patch_ver: str) -> None:
         logger.info(f" Loading patch: {patch_ver}")
         try:
-            champion_list, item_list, rune_list, summonerspell_list = self.list_data(patch_ver)
+            champion_list, item_list, rune_list, summonerspell_list = await self.list_data(patch_ver)
         except HTTPError as e:
             logger.error(f"Error {e.code}: Failed loading data dicts!")
             logger.error(e.reason)
@@ -194,6 +194,11 @@ class Patchloader():
         except ValidationError as e:
             logger.error(f"Error validating patch_data: {e}")
             return
+        except LoadError as e:
+                logger.error(f"Error {e.code} for {e.type} '{e.name}'!")
+                logger.error(e.reason)
+                logger.error(f"Could not load information from '{e.url}'")
+                return
         
         try:
             html = Patchloader.get_html_from_request(self.urls.wiki + "V" + patch_ver.rstrip(".1"))
@@ -208,12 +213,9 @@ class Patchloader():
             item_count=len(item_list),
             rune_count=len(rune_list),
             summonerspell_count=len(summonerspell_list),
-            document_count= len(champion_list)+len(item_list)+len(rune_list)+len(summonerspell_list)
         )
         patch_id = await db.add_patch(p)
         self.patch = await db.fetch_patch_by_id(patch_id)
-
-        self.create_folder_tree()
 
         timeout = aiohttp.ClientTimeout(total=600)
         async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -241,7 +243,7 @@ class Patchloader():
 
 
 
-    def list_data(self, patch_ver: str) -> tuple[list[str], list[tuple[str, ItemJson]], list[RuneClass], list[tuple[str, SummonerspellJson]]]: 
+    async def list_data(self, patch_ver: str) -> tuple[list[str], list[tuple[str, ItemJson]], list[RuneClass], list[SummonerspellJson]]: 
         champions = ChampionsJson(**requests.get(self.urls.dataLink + patch_ver + self.urls.championList).json())
         items = ItemsJson(**requests.get(self.urls.dataLink + patch_ver + self.urls.itemList).json())
         runes = requests.get(self.urls.dataLink + patch_ver + self.urls.runeList).json()
@@ -251,85 +253,175 @@ class Patchloader():
         champion_list = list(champions.data.keys())
         item_list = [(item_name, ItemJson(**item_data)) for item_name, item_data in items.data.items()]
         rune_list = []
+        tree_icons = []
         for tree in runes:
             rune_tree = RuneTreeJson(**tree)
+            tree_icons.append(rune_tree.icon)
             for i, row in enumerate(rune_tree.slots):
                 for rune in row.runes:
                     rune_list.append(RuneClass(rune, rune_tree.name, rune_tree.id_, i))
-        summoner_list = [(summoner_name, SummonerspellJson(**summoner_data)) for summoner_name, summoner_data in summoners.data.items()]
+        await self.load_rune_tree_images(tree_icons)
+        summoner_list = [SummonerspellJson(**summoner_data) for summoner_data in summoners.data.values()]
 
         return champion_list, item_list, rune_list, summoner_list
-
-
-    def create_folder_tree(self) -> None:
-        """Creates directory structure for static images, if not existing yet."""
-        paths = info_loader().paths
-        paths.championImage.mkdir(parents=True, exist_ok=True)
-        paths.itemImage.mkdir(parents=True, exist_ok=True)
-        paths.passiveImage.mkdir(parents=True, exist_ok=True)
-        paths.runeImage.mkdir(parents=True, exist_ok=True)
-        paths.spellImage.mkdir(parents=True, exist_ok=True)
-        paths.sprite.mkdir(parents=True, exist_ok=True)
-        paths.summonerspellImage.mkdir(parents=True, exist_ok=True)
 
 
 
     async def load_all_champions(self, champion_list: list[str]) -> None:
         champion_tasks = [self.load_champion(champion) for champion in champion_list]
         await asyncio.gather(*champion_tasks)
+        debugger.debug(f"++++++++++++++ All Champions done")
 
 
     async def load_champion(self, champion_id: str) -> None:
+        debugger.debug(f"{champion_id} - B - begin")
         try:
             champion_dict = await self.session.json(self.urls.dataLink + self.patch.patch + self.urls.championData + champion_id + ".json")
-            champion_json = ChampionsJson(**champion_dict)
-            champion = ChampionJson(**champion_json.data.get(champion_id))
-            champion_wiki = await self.session.html(self.urls.wiki + champion.name + self.urls.championWiki)
+            debugger.debug(f"{champion_id} - J - json")
+            champions_json = ChampionsJson(**champion_dict)
+            champion_json = ChampionJson(**champions_json.data.get(champion_id))
+            champion_wiki = await self.session.html(self.urls.wiki + champion_json.name + self.urls.championWiki)
+            debugger.debug(f"{champion_id} - W - wiki")
         except HTTPError as e:
             raise LoadError(e.code, e.reason, e.url, "Champion", champion_id)
         except URLError as e:
             raise LoadError(e.errno, e.reason, e.filename, "Champion", champion_id)
+        except ValidationError as e:
+            raise LoadError(9, str(e), "", "Champion", champion_id)
         
         try:
-            #TODO BS with wiki
-            pass
-        except (AttributeError, ValueError) as e:
-            raise ScrapeError(e, "Champion", champion_id)
+            champion = ws.create_champion(champion_json, champion_wiki, self.patch.patch)
+            debugger.debug(f"{champion_id} - S - scraped")
+        except (AttributeError, ValueError, TypeError) as e:
+            logger.error(f"Could not scrape data for Champion '{champion_id}'")
+            logger.error(e)
+            return
         
-        #TODO add champion to database
+        await self.load_image(champion_json.image)
+        await self.load_image(champion_json.passive.image)
+        for spell in champion_json.spells:
+            await self.load_image(spell.image)
+        debugger.debug(f"{champion_id} - I - images downloaded")
+        
+        await db.add_champion(champion)
+        debugger.debug(f"{champion_id} - A - added")
+        await db.increment_loaded_documents(self.patch.id)
+        debugger.debug(f"{champion_id} - C - counted")
 
 
 
 
     async def load_all_items(self, item_list: list[tuple[str, ItemJson]]) -> None:
-        #TODO look at old code
-        item_tasks = [self.load_item(item_id, item_data) for item_id, item_data in item_list]
+        #TODO do all items have names???
+        wiki_names = info_loader().itemWikiNames
+        item_tasks = [self.load_item(item_id, item_data, wiki_names) for item_id, item_data in item_list]
         self.patch.item_count = len(item_tasks)
         await asyncio.gather(*item_tasks)
+        debugger.debug(f"++++++++++++++ All Items done")
 
 
-    async def load_item(self, item_id: str, item_data: ItemJson) -> None:
-        pass
+    async def load_item(self, item_id: str, item_json: ItemJson, wiki_names: list[str]) -> None:
+        debugger.debug(f"{item_json.name} - B - begin")
+        try:
+            item_json.name = wiki_names[item_json.name] if item_json.name in wiki_names else item_json.name
+            item_wiki = await self.session.html(self.urls.wiki + item_json.name)
+            debugger.debug(f"{item_json.name} - W - wiki")
+        except HTTPError as e:
+            raise LoadError(e.code, e.reason, e.url, "Item", item_json.name)
+        except URLError as e:
+            raise LoadError(e.errno, e.reason, e.filename, "Item", item_json.name)
+        except ValidationError as e:
+            raise LoadError(9, str(e), "", "Item", item_json.name)
+        
+        try:
+            item = ws.create_item(item_id, item_json, item_wiki, self.patch.patch)
+            debugger.debug(f"{item_json.name} - S - scraped")
+        except (AttributeError, ValueError, TypeError) as e:
+            logger.error(f"Could not scrape data for Item '{item_json.name}'")
+            logger.error(e)
+            return
+        
+        await self.load_image(item_json.image)
+        debugger.debug(f"{item_json.name} - I - images downloaded")
+        
+        await db.add_item(item)
+        debugger.debug(f"{item_json.name} - A - added")
+        await db.increment_loaded_documents(self.patch.id)
+        debugger.debug(f"{item_json.name} - C - counted")
 
 
 
     async def load_all_runes(self, rune_list: list[RuneClass]) -> None:
         rune_tasks = [self.load_rune(rune) for rune in rune_list]
         await asyncio.gather(*rune_tasks)
+        debugger.debug(f"++++++++++++++ All Runes done")
 
 
-    async def load_rune(self, rune: RuneClass) -> None:
-        pass
+    async def load_rune(self, rune_class: RuneClass) -> None:
+        debugger.debug(f"{rune_class.rune.name} - B - begin")
+        try:
+            if rune_class.rune.name == "Grasp of the Undying":
+                rune_wiki = await self.session.html(self.urls.wiki + rune_class.rune.name + "_(Rune)")
+            else:
+                rune_wiki = await self.session.html(self.urls.wiki + rune_class.rune.name)
+            debugger.debug(f"{rune_class.rune.name} - W - wiki")
+        except HTTPError as e:
+            raise LoadError(e.code, e.msg, e.url, "Rune", rune_class.rune.name)
+        except URLError as e:
+            raise LoadError(e.errno, e.reason, e.filename, "Rune", rune_class.rune.name)
+        except ValidationError as e:
+            raise LoadError(9, str(e), "", "Rune", rune_class.rune.name)
+
+        image = await self.load_image_rune(rune_class.rune.icon)
+        debugger.debug(f"{rune_class.rune.name} - I - images downloaded")
+
+        try:
+            rune = ws.create_rune(rune_class, rune_wiki, self.patch.patch, image)
+            debugger.debug(f"{rune_class.rune.name} - S - scraped")
+        except (AttributeError, ValueError, TypeError) as e:
+            logger.error(f"Could not scrape data for Rune '{rune_class.rune.name}'")
+            logger.error(e)
+            return
+
+        await db.add_rune(rune)
+        debugger.debug(f"{rune_class.rune.name} - A - added")
+        await db.increment_loaded_documents(self.patch.id)
+        debugger.debug(f"{rune_class.rune.name} - C - counted")
 
 
 
-    async def load_all_summonerspells(self, summonerspell_list: list[tuple[str, SummonerspellJson]]) -> None:
-        summonerspell_tasks = [self.load_summonerspell(name, stats) for name, stats in summonerspell_list]
+    async def load_all_summonerspells(self, summonerspell_list: list[SummonerspellJson]) -> None:
+        summonerspell_tasks = [self.load_summonerspell(stats) for stats in summonerspell_list]
         await asyncio.gather(*summonerspell_tasks)
+        debugger.debug(f"++++++++++++++ All Summonerspells done")
 
 
-    async def load_summonerspell(self, name: str, stats: SummonerspellJson) -> None:
-        pass
+    async def load_summonerspell(self, summonerspell_json: SummonerspellJson) -> None:
+        debugger.debug(f"{summonerspell_json.name} - B - begin")
+        try:
+            summonerspell_wiki = await self.session.html(self.urls.wiki + summonerspell_json.name)
+            debugger.debug(f"{summonerspell_json.name} - W - wiki")
+        except HTTPError as e:
+            raise LoadError(e.code, e.reason, e.url, "Summonerspell", summonerspell_json.name)
+        except URLError as e:
+            raise LoadError(e.errno, e.reason, e.filename, "Summonerspell", summonerspell_json.name)
+        except ValidationError as e:
+            raise LoadError(9, str(e), "", "Summonerspell", summonerspell_json.name)
+        try:
+            summonerspell = ws.create_summonerspell(summonerspell_json, summonerspell_wiki, self.patch.patch)
+            debugger.debug(f"{summonerspell_json.name} - S - scraped")
+        except (AttributeError, ValueError, TypeError) as e:
+            logger.error(f"Could not scrape data for Summonerspell '{summonerspell_json.name}'")
+            logger.error(e)
+            return
+        
+        await self.load_image(summonerspell_json.image)
+        debugger.debug(f"{summonerspell_json.name} - I - images downloaded")
+        
+        await db.add_summonerspell(summonerspell)
+        debugger.debug(f"{summonerspell_json.name} - A - added")
+        await db.increment_loaded_documents(self.patch.id)
+        debugger.debug(f"{summonerspell_json.name} - C - counted")
 
 
 
@@ -339,6 +431,71 @@ class Patchloader():
 
     async def hotfix_data(self, hotfix: str) -> None:
         pass
+
+
+    async def load_image(self, image: Image) -> None:
+        paths = info_loader().paths
+        img_path = Path(paths.image + image.group + "/" + image.full)
+        if not img_path.exists():
+            img_path.parent.mkdir(parents=True, exist_ok=True)
+            img_url = self.urls.dataLink + self.patch.patch + "/" + self.urls.image + image.group + "/" + image.full
+            try:
+                with open(img_path, "wb") as img_file:
+                    img_file.write(await self.session.read(img_url))
+                debugger.info(f"create_image: -> {image.full}")
+            except HTTPError as e:
+                raise LoadError(e.code, e.reason, e.url, image.group, image.full)
+            except URLError as e:
+                raise LoadError(e.errno, e.reason, e.filename, image.group, image.full)
+            
+        if image.sprite and (image.x == image.y == 0):
+            sprite_path = Path(paths.sprite + image.sprite)
+            sprite_path.parent.mkdir(parents=True, exist_ok=True)
+            sprite_url = self.urls.dataLink + self.patch.patch + self.urls.sprite + image.sprite
+            try:
+                with open(sprite_path, "wb") as sprite_file:
+                    sprite_file.write(await self.session.read(sprite_url))
+                #debugger.info(f"create_image: -> {image.sprite}")
+            except HTTPError as e:
+                raise LoadError(e.code, e.reason, e.url, image.group, image.full)
+            except URLError as e:
+                raise LoadError(e.errno, e.reason, e.filename, image.group, image.full)
+            
+
+    async def load_image_rune(self, icon: str) -> Image:
+        image = Image(
+            full=icon.rsplit("/", 1)[-1],
+            group="rune"
+        )
+        paths = info_loader().paths
+        img_path = Path(paths.image + image.group + "/" + image.full)
+        if not img_path.exists():
+            img_path.parent.mkdir(parents=True, exist_ok=True)
+            img_url = self.urls.dataLink + self.urls.image + icon
+            try:
+                with open(img_path, "wb") as image_file:
+                    image_file.write(await self.session.read(img_url))
+                debugger.info(f"create_image: -> {image.full}")
+            except HTTPError as e:
+                raise LoadError(e.code, e.reason, e.url, image.group, image.full)
+            except URLError as e:
+                raise LoadError(e.errno, e.reason, e.filename, image.group, image.full)
+        return image
+
+
+    async def load_rune_tree_images(self, icon_list: list[str]) -> None:
+        timeout = aiohttp.ClientTimeout(total=600)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            self.session = SafeSession(session)
+            tasks = [self.load_image_rune(icon) for icon in icon_list]
+            await asyncio.gather(*tasks)
+
+    
+
+
+    async def clean_up(self) -> None:
+        await db.delete_patch(self.patch.id)
+        logger.error(f"Successfully cleaned up patch '{self.patch.patch}'!")
 
 
 

@@ -1,16 +1,8 @@
 from pathlib import Path
 from pydantic import BaseModel, Field, validator, ValidationError
 
+from src.server.models.image import Image
 
-
-class ImageJson(BaseModel):
-    full: str
-    sprite: str
-    group: str
-    x: int
-    y: int
-    w: int
-    h: int
 
 
 
@@ -49,7 +41,7 @@ class SpellJson(BaseModel):
     name: str
     description: str
     tooltip: str
-    leveltip: dict
+    leveltip: dict = {}
     maxrank: int
     cooldown: list[float]
     cooldownBurn: str
@@ -63,14 +55,14 @@ class SpellJson(BaseModel):
     maxammo: str
     range_: list[int] = Field(..., alias="range")
     rangeBurn: str
-    image: ImageJson
-    resource: str
+    image: Image
+    resource: str = ""
 
 
 class PassiveJson(BaseModel):
     name: str
     description: str
-    image: ImageJson
+    image: Image
 
 
 class ChampionJson(BaseModel):
@@ -78,11 +70,11 @@ class ChampionJson(BaseModel):
     key: str
     name: str
     title: str
-    image: ImageJson
+    image: Image
     skins: list[dict]
     lore: str
     blurb: str
-    allytps: list[str]
+    allytips: list[str]
     enemytips: list[str]
     tags: list[str]
     partype: str
@@ -116,9 +108,9 @@ class ItemJson(BaseModel):
     description: str
     colloq: str
     plaintext: str
-    from_: list[str] | None = Field(alias="from")
-    into: list[str] | None = None
-    image: ImageJson
+    from_: list[str] = Field(alias="from", default=[])
+    into: list[str] = []
+    image: Image
     gold: GoldJson
     tags: list[str]
     maps: dict
@@ -142,6 +134,7 @@ class RuneRowJson(BaseModel):
 class RuneTreeJson(BaseModel):
     id_: int = Field(..., alias="id")
     key: str
+    icon: str
     name: str
     slots: list[RuneRowJson]
 
@@ -174,7 +167,7 @@ class SummonerspellJson(BaseModel):
     maxammo: str
     range_: list[int] = Field(..., alias="range")
     rangeBurn: str
-    image: ImageJson
+    image: Image
     resource: str
 
 
@@ -184,17 +177,9 @@ class SummonerspellJson(BaseModel):
 
 #TODO convert from str to Path
 class PathJson(BaseModel):
-    championImage: Path
-    itemImage: Path
-    passiveImage: Path
-    runeImage: Path
-    spellImage: Path
-    sprite: Path
-    summonerspellImage: Path
+    image: str
+    sprite: str
 
-    @validator("championImage", "itemImage", "passiveImage", "runeImage", "spellImage", "sprite", "summonerspellImage", pre=True, allow_reuse=True)
-    def convert_to_path(cls, value):
-        return Path(value)
 
 
 class UrlJson(BaseModel):
@@ -205,6 +190,7 @@ class UrlJson(BaseModel):
     championData: str
     championWiki: str
     championImage: str
+    image: str
     itemList: str
     itemImage: str
     passiveImage: str

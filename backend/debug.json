@@ -1,0 +1,26 @@
+{
+    "champions": {
+        "number": 0,
+        "names": []
+    },
+    "items": {
+        "number": 7,
+        "names": [
+            "Blade of The Ruined King",
+            "Slightly Magical Footwear",
+            "Blade of The Ruined King",
+            "Lucent Singularity",
+            "Kalista's Black Spear",
+            "Kalista's Black Spear",
+            "Sandshrike's Claw"
+        ]
+    },
+    "runes": {
+        "number": 0,
+        "names": []
+    },
+    "summoners": {
+        "number": 0,
+        "names": []
+    }
+}

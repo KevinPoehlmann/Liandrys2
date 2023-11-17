@@ -4,9 +4,10 @@ from pydantic import BaseModel
 #TODO change string to FilePath
 
 class Image(BaseModel):
-    image: str
+    full: str
+    group: str
     sprite: str = None
-    sprite_x: int = None
-    sprite_y: int = None
-    sprite_w: int = None
-    sprite_h: int = None
+    x: int = None
+    y: int = None
+    h: int = None
+    w: int = None

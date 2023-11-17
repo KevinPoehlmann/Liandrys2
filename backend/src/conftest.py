@@ -1,10 +1,22 @@
 import json
 import pytest
 
+from bs4 import BeautifulSoup
+from bson.objectid import ObjectId
 from datetime import datetime
 
+from src.server.loader.helper import RuneClass
 from src.server.loader.patchloader import Patchloader, Todo, TodoType
-from src.server.models.patch import NewPatch
+from src.server.models.json_validation import (
+    ChampionJson,
+    ChampionsJson,
+    ItemsJson,
+    ItemJson,
+    RuneTreeJson,
+    SummonerspellsJson,
+    SummonerspellJson
+)
+from src.server.models.patch import NewPatch, Patch
 
 
 
@@ -33,9 +45,75 @@ def champion_json():
 
 
 @pytest.fixture()
+def aatrox_soup():
+    with open("src/tests/files/aatrox.html", encoding='UTF-8') as champion:
+        return BeautifulSoup(champion, "lxml")
+
+
+@pytest.fixture()
+def ashe_soup():
+    with open("src/tests/files/ashe.html", encoding='UTF-8') as champion:
+        return BeautifulSoup(champion, "lxml")
+
+
+@pytest.fixture()
+def yuumi_soup():
+    with open("src/tests/files/yuumi.html", encoding='UTF-8') as champion:
+        return BeautifulSoup(champion, "lxml")
+
+
+@pytest.fixture()
+def aatrox_html():
+    with open("src/tests/files/aatrox.html", encoding="utf-8") as patch:
+        by = patch.read()
+        return by.encode("utf-8")
+
+
+
+@pytest.fixture()
+def aatrox_json():
+    with open("src/tests/files/aatrox.json", encoding='UTF-8') as champion:
+        return json.load(champion)
+
+
+@pytest.fixture()
+def aatroxJson():
+    with open("src/tests/files/aatrox.json", encoding='UTF-8') as champion:
+        champs = ChampionsJson(**json.load(champion))
+        return ChampionJson(**champs.data["Aatrox"])
+
+
+
+@pytest.fixture()
 def item_json():
     with open("src/tests/files/item.json", encoding='UTF-8') as item:
         return json.load(item)
+
+
+@pytest.fixture()
+def triforce_json():
+    with open("src/tests/files/item.json", encoding='UTF-8') as item_file:
+        items = ItemsJson(**json.load(item_file))
+        item = ItemJson(**items.data["3078"])
+        return item
+
+
+@pytest.fixture()
+def youmuusJson():
+    with open("src/tests/files/item.json", encoding='UTF-8') as item_file:
+        items = ItemsJson(**json.load(item_file))
+        item = ItemJson(**items.data["3142"])
+        return item
+
+
+@pytest.fixture()
+def youmuus_html():
+    with open("src/tests/files/youmuus.html", encoding='UTF-8') as patch:
+        by = patch.read()
+        return by.encode("utf-8")
+    
+
+
 
 
 @pytest.fixture()
@@ -45,9 +123,50 @@ def runesReforged_json():
 
 
 @pytest.fixture()
+def electrocute():
+    with open("src/tests/files/runesReforged.json", encoding='UTF-8') as rune_file:
+        runes = json.load(rune_file)
+        rune_tree = RuneTreeJson(**runes[0])
+        rune_row = rune_tree.slots[0]
+        rune = rune_row.runes[0]
+        rune_class = RuneClass(
+            rune=rune,
+            tree=rune_tree.name,
+            tree_id=rune_tree.id_,
+            row=0
+        )
+        return rune_class
+
+
+@pytest.fixture()
+def electrocute_html():
+    with open("src/tests/files/electrocute.html", encoding='UTF-8') as patch:
+        by = patch.read()
+        return by.encode("utf-8")
+    
+
+
+@pytest.fixture()
 def summoner_json():
     with open("src/tests/files/summoner.json", encoding='UTF-8') as summoner:
         return json.load(summoner)
+
+
+@pytest.fixture()
+def ignite_json():
+    with open("src/tests/files/summoner.json", encoding='UTF-8') as summoner_file:
+        summoners = json.load(summoner_file)
+        summoners_json = SummonerspellsJson(**summoners)
+        summoner = SummonerspellJson(**summoners_json.data["SummonerDot"])
+        return summoner
+
+
+@pytest.fixture()
+def ignite_html():
+    with open("src/tests/files/ignite.html", encoding='UTF-8') as patch:
+        by = patch.read()
+        return by.encode("utf-8")
+    
 
 
 @pytest.fixture()
@@ -62,11 +181,11 @@ def patch1321():
 def db_fake_patch():
     patch = NewPatch(
         patch="13.21.1",
-        champion_count=0,
-        item_count=0,
-        rune_count=0,
-        summonerspell_count=0,
-        document_count=0
+        champion_count=165,
+        item_count=435,
+        rune_count=63,
+        summonerspell_count=18,
+        document_count=681
     )
     return patch
 
@@ -76,11 +195,11 @@ def db_fake_patch_hotfix():
     patch = NewPatch(
         patch="13.21.1",
         hotfix=datetime(2023, 10, 26),
-        champion_count=0,
-        item_count=0,
-        rune_count=0,
-        summonerspell_count=0,
-        document_count=0
+        champion_count=165,
+        item_count=435,
+        rune_count=63,
+        summonerspell_count=18,
+        document_count=681
     )
     return patch
 
@@ -90,11 +209,26 @@ def db_fake_patch_uptodate():
     patch = NewPatch(
         patch="13.21.1",
         hotfix=datetime(2023, 10, 27),
-        champion_count=0,
-        item_count=0,
-        rune_count=0,
-        summonerspell_count=0,
-        document_count=0
+        champion_count=165,
+        item_count=435,
+        rune_count=63,
+        summonerspell_count=18,
+        document_count=681
+    )
+    return patch
+
+
+@pytest.fixture()
+def db_fake_patch_with_id():
+    patch = Patch(
+        _id=ObjectId(),
+        patch="13.21.1",
+        hotfix=datetime(2023, 10, 27),
+        champion_count=165,
+        item_count=435,
+        rune_count=63,
+        summonerspell_count=18,
+        document_count=681
     )
     return patch
 

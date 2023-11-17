@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from src.server.models.ability import ChampionAbility
 from src.server.models.passive import ChampionPassive
 from src.server.models.image import Image
@@ -16,7 +16,6 @@ class NewChampion(BaseModel):
     key: str
     name: str
     champion_id: str
-    ready_to_use: bool = False
     patch: str
     last_changed: str
 
@@ -51,9 +50,14 @@ class NewChampion(BaseModel):
     e: ChampionAbility
     r: ChampionAbility
 
+    ready_to_use: bool = False
     changes: list[str] = []
 
     image: Image
+
+    @validator("ready_to_use", always=True)
+    def set_ready_to_use(cls, v, values):
+        return all((values["passive"].ready_to_use, values["q"].ready_to_use, values["w"].ready_to_use, values["e"].ready_to_use, values["r"].ready_to_use))
 
 
 

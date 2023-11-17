@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from bson import ObjectId
@@ -5,6 +6,10 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncI
 from pymongo.errors import InvalidURI
 
 from src.server.models.patch import NewPatch, Patch
+from src.server.models.champion import NewChampion, Champion, ShortChampion
+from src.server.models.item import NewItem, Item, ShortItem
+from src.server.models.rune import NewRune, Rune, ShortRune
+from src.server.models.summonerspell import NewSummonerspell, Summonerspell, ShortSummonerspell
 
 
 
@@ -28,32 +33,48 @@ def connect_database() -> AsyncIOMotorDatabase:
 
 database = connect_database()
 
-patches_collection: AsyncIOMotorCollection = database.patches
+patch_collection: AsyncIOMotorCollection = database.patches
+champion_collection: AsyncIOMotorCollection = database.champions
+item_collection: AsyncIOMotorCollection = database.items
+rune_collection: AsyncIOMotorCollection = database.runes
+summonerspell_collection: AsyncIOMotorCollection = database.summonerspells
 
 
+
+async def delete_patch(patch) -> None:
+    del_patch = await patch_collection.delete_one({"_id": ObjectId(patch)})
+    await asyncio.gather(
+        champion_collection.delete_many({"patch": del_patch["patch"]}),
+        item_collection.delete_many({"patch": del_patch["patch"]}),
+        rune_collection.delete_many({"patch": del_patch["patch"]}),
+        summonerspell_collection.delete_many({"patch": del_patch["patch"]})
+    )
+
+
+#------------------Patch--------------------------------------------------
 
 async def add_patch(patch: NewPatch) -> str:
     document = patch.dict()
-    result = await patches_collection.insert_one(document)
+    result = await patch_collection.insert_one(document)
     return result.inserted_id
 
 
 async def fetch_patch_latest() -> Patch:
-    cursor = patches_collection.find().sort("patch", -1)
+    cursor = patch_collection.find().sort("patch", -1)
     async for document in cursor:
         patch = Patch(**document)
         return patch
 
 
-async def fetch_patch_by_id(id) -> Patch:
-    patch = await patches_collection.find_one({"_id": ObjectId(id)})
+async def fetch_patch_by_id(id_) -> Patch:
+    patch = await patch_collection.find_one({"_id": ObjectId(id_)})
     if patch:
         return Patch(**patch)
         
     
 async def fetch_patch_all() -> list[Patch]:
     patch_list = []
-    cursor = patches_collection.find()
+    cursor = patch_collection.find()
     async for document in cursor:
         patch = Patch(**document)
         patch_list.append(patch)
@@ -61,5 +82,82 @@ async def fetch_patch_all() -> list[Patch]:
 
 
 async def clear_patches_collection() -> bool:
-    await patches_collection.delete_many({})
+    await patch_collection.delete_many({})
     return True
+
+
+
+async def increment_loaded_documents(id_: str) -> None:
+    await patch_collection.update_one({"_id":ObjectId(id_)}, {"$inc":{"loaded_documents":1}})
+
+
+
+
+#--------Champion-----------------------------
+
+
+async def add_champion(champion: NewChampion) -> str:
+    document = champion.dict()
+    result = await champion_collection.insert_one(document)
+    return result.inserted_id
+
+
+async def fetch_champions_patch(patch: str) -> list[ShortChampion]:
+    champions = []
+    cursor = champion_collection.find({"patch":patch}, sort=[("name", 1)])
+    async for document in cursor:
+        champion = ShortChampion(**document)
+        champions.append(champion)
+    return champions
+
+
+#--------Item-----------------------------
+
+
+async def add_item(item: NewItem) -> str:
+    document = item.dict()
+    result = await item_collection.insert_one(document)
+    return result.inserted_id
+
+
+async def fetch_items_patch(patch: str) -> list[ShortItem]:
+    items = []
+    cursor = item_collection.find({"patch":patch}, sort=[("name", 1)])
+    async for document in cursor:
+        item = ShortItem(**document)
+        items.append(item)
+    return items
+
+#--------Rune-----------------------------
+
+
+async def add_rune(rune: NewRune) -> str:
+    document = rune.dict()
+    result = await rune_collection.insert_one(document)
+    return result.inserted_id
+
+
+async def fetch_runes_patch(patch: str) -> list[ShortRune]:
+    runes = []
+    cursor = rune_collection.find({"patch":patch}, sort=[("name", 1)])
+    async for document in cursor:
+        rune = ShortRune(**document)
+        runes.append(rune)
+    return runes
+
+#--------Summonerspell-----------------------------
+
+
+async def add_summonerspell(summonerspell: NewSummonerspell) -> str:
+    document = summonerspell.dict()
+    result = await summonerspell_collection.insert_one(document)
+    return result.inserted_id
+
+
+async def fetch_summonerspells_patch(patch: str) -> list[ShortSummonerspell]:
+    summonerspells = []
+    cursor = summonerspell_collection.find({"patch":patch}, sort=[("name", 1)])
+    async for document in cursor:
+        summonerspell = ShortSummonerspell(**document)
+        summonerspells.append(summonerspell)
+    return summonerspells

@@ -4,11 +4,16 @@ import functools
 import json
 import logging
 
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
 from typing import Callable
 
-from src.server.models.json_validation import InfoJson
+from src.server.models.json_validation import (
+    InfoJson,
+    RuneJson
+)
 
-#TODO change to pydantic instead of dict
 
 logger = logging.getLogger("patch_loader")
 debugger = logging.getLogger("debugger")
@@ -31,6 +36,34 @@ def info_loader() -> InfoJson:
 
 
 
+
+class TodoType(str, Enum):
+    LOAD="Load"
+    HOTFIX="Hotfix"
+    PATCH="Patch"
+
+
+
+@dataclass
+class Todo():
+    todo_type: TodoType
+    patch: str
+    hotfix: datetime = None
+
+
+
+@dataclass
+class RuneClass():
+    """Class to gather Rune information"""
+    rune: RuneJson
+    tree: str
+    tree_id: int
+    row: int
+
+    def __str__(self) -> str:
+        return self.rune.name
+
+
 class SafeSession():
         def __init__(self, session) -> None:
             self.session: aiohttp.ClientSession = session
@@ -44,7 +77,7 @@ class SafeSession():
                     try:
                         async with ref.session.get(url) as response:
                             m = await method(ref, response)
-                            debugger.info(f"{i} tries to load '{url}'.")
+                            #debugger.info(f"{i} tries to load '{url}'.")
                             return m
                     except (asyncio.TimeoutError, aiohttp.ServerDisconnectedError) as e:
                         if i == 5:
