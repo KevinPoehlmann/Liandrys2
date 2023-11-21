@@ -102,13 +102,19 @@ async def add_champion(champion: NewChampion) -> str:
     return result.inserted_id
 
 
-async def fetch_champions_patch(patch: str) -> list[ShortChampion]:
+async def fetch_champions_by_patch(patch: str) -> list[ShortChampion]:
     champions = []
     cursor = champion_collection.find({"patch":patch}, sort=[("name", 1)])
     async for document in cursor:
         champion = ShortChampion(**document)
         champions.append(champion)
     return champions
+
+
+async def fetch_champion_by_id(id_: str) -> Champion:
+    document = await champion_collection.find_one({"_id":ObjectId(id_)})
+    if document:
+        return Champion(**document)
 
 
 #--------Item-----------------------------
@@ -120,13 +126,19 @@ async def add_item(item: NewItem) -> str:
     return result.inserted_id
 
 
-async def fetch_items_patch(patch: str) -> list[ShortItem]:
+async def fetch_items_by_patch(patch: str) -> list[ShortItem]:
     items = []
     cursor = item_collection.find({"patch":patch}, sort=[("name", 1)])
     async for document in cursor:
         item = ShortItem(**document)
         items.append(item)
     return items
+
+
+async def fetch_item_by_id(id_: str) -> Item:
+    document = await item_collection.find_one({"_id":ObjectId(id_)})
+    if document:
+        return Item(**document)
 
 #--------Rune-----------------------------
 
@@ -137,13 +149,19 @@ async def add_rune(rune: NewRune) -> str:
     return result.inserted_id
 
 
-async def fetch_runes_patch(patch: str) -> list[ShortRune]:
+async def fetch_runes_by_patch(patch: str) -> list[ShortRune]:
     runes = []
     cursor = rune_collection.find({"patch":patch}, sort=[("name", 1)])
     async for document in cursor:
         rune = ShortRune(**document)
         runes.append(rune)
     return runes
+
+
+async def fetch_rune_by_id(id_: str) -> Rune:
+    document = await rune_collection.find_one({"_id":ObjectId(id_)})
+    if document:
+        return Rune(**document)
 
 #--------Summonerspell-----------------------------
 
@@ -154,10 +172,16 @@ async def add_summonerspell(summonerspell: NewSummonerspell) -> str:
     return result.inserted_id
 
 
-async def fetch_summonerspells_patch(patch: str) -> list[ShortSummonerspell]:
+async def fetch_summonerspells_by_patch(patch: str) -> list[ShortSummonerspell]:
     summonerspells = []
     cursor = summonerspell_collection.find({"patch":patch}, sort=[("name", 1)])
     async for document in cursor:
         summonerspell = ShortSummonerspell(**document)
         summonerspells.append(summonerspell)
     return summonerspells
+
+
+async def fetch_summonerspell_by_id(id_: str) -> Summonerspell:
+    document = await summonerspell_collection.find_one({"_id":ObjectId(id_)})
+    if document:
+        return Summonerspell(**document)

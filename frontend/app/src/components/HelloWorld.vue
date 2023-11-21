@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import axios from "axios";
+import ChampionsList from './ChampionsList.vue';
 
 defineProps({
   msg: String,
@@ -33,5 +34,6 @@ const liandrys = () => {
         {{ message }}
       </p>
     </div>
+    <ChampionsList />
   </div>
 </template>
