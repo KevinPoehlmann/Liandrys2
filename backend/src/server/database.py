@@ -41,13 +41,13 @@ summonerspell_collection: AsyncIOMotorCollection = database.summonerspells
 
 
 
-async def delete_patch(patch) -> None:
-    del_patch = await patch_collection.delete_one({"_id": ObjectId(patch)})
+async def clear_patch(patch: str) -> None:
+    del_patch = await patch_collection.delete_one({"patch": patch})
     await asyncio.gather(
-        champion_collection.delete_many({"patch": del_patch["patch"]}),
-        item_collection.delete_many({"patch": del_patch["patch"]}),
-        rune_collection.delete_many({"patch": del_patch["patch"]}),
-        summonerspell_collection.delete_many({"patch": del_patch["patch"]})
+        champion_collection.delete_many({"patch": patch}),
+        item_collection.delete_many({"patch": patch}),
+        rune_collection.delete_many({"patch": patch}),
+        summonerspell_collection.delete_many({"patch": patch})
     )
 
 

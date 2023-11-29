@@ -5,6 +5,7 @@ from src.server.database import (
     fetch_patch_latest,
     fetch_patch_all,
     clear_patches_collection,
+    clear_patch 
 )
 
 from src.server.loader.patchloader import Patchloader
@@ -56,6 +57,14 @@ async def get_patches_status():
 @router.delete("/")
 async def delete_all_patches():
     response = await clear_patches_collection()
+    if not response:
+        raise HTTPException(status_code=400, detail=f"Something went wrong")
+    return response
+
+
+@router.delete("/{patch}")
+async def delete_patch(patch: str):
+    response = await clear_patch(patch)
     if not response:
         raise HTTPException(status_code=400, detail=f"Something went wrong")
     return response

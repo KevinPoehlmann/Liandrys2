@@ -1,8 +1,9 @@
 <script setup>
 import axios from 'axios'
-import { ref, onBeforeMount } from 'vue'
+import { ref, onBeforeMount, inject } from 'vue'
+import ChampionCard from './ChampionCard.vue';
 
-const URL = "http://127.0.0.1:5000/";
+const URL = inject("URL");
 
 const patch = ref("");
 const champions = ref([]);
@@ -32,10 +33,10 @@ onBeforeMount(() => {
 
 
 <template>
-  <div>
-    <ul>
-      <li v-for="champion in champions" :key="champion.key">
-        <p>{{ champion.name }}</p>
+  <div class="p-8">
+    <ul class="flex flex-row flex-wrap">
+      <li v-for="champion in champions" :key="champion.key" class="m-auto">
+        <ChampionCard :champion="champion"/>
       </li>
     </ul>
   </div>
