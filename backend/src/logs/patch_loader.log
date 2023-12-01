@@ -235,3 +235,34 @@ spells -> 3 -> resource
 23.11.2023  20:18:05 - INFO: Can't find the wiki page for summoner Flee
 23.11.2023  20:18:06 - INFO: Can't find the wiki page for summoner To the King!
 23.11.2023  20:18:23 - INFO: Patching took 123.15901470184326 seconds.
+29.11.2023  18:03:44 - INFO: --------------------------------------------------------------------------------------------
+29.11.2023  18:03:44 - INFO:  Loading patch: 13.23.1
+29.11.2023  18:04:13 - WARNING: 'enchantment' is not a valid ItemClass
+29.11.2023  18:04:27 - INFO: Can't find the wiki page for summoner Flash
+29.11.2023  18:04:27 - INFO: Can't find the wiki page for summoner Ignite
+29.11.2023  18:04:28 - INFO: Can't find the wiki page for summoner Barrier
+29.11.2023  18:04:28 - INFO: Can't find the wiki page for summoner Cleanse
+29.11.2023  18:04:29 - INFO: Can't find the wiki page for summoner Exhaust
+29.11.2023  18:04:29 - INFO: Can't find the wiki page for summoner Flash
+29.11.2023  18:04:29 - INFO: Can't find the wiki page for summoner Ghost
+29.11.2023  18:04:30 - INFO: Can't find the wiki page for summoner Heal
+29.11.2023  18:04:30 - INFO: Can't find the wiki page for summoner Clarity
+29.11.2023  18:04:33 - INFO: Can't find the wiki page for summoner Smite
+29.11.2023  18:04:34 - INFO: Can't find the wiki page for summoner Mark
+29.11.2023  18:04:35 - INFO: Can't find the wiki page for summoner Mark
+29.11.2023  18:04:36 - INFO: Can't find the wiki page for summoner Placeholder
+29.11.2023  18:04:42 - INFO: Can't find the wiki page for summoner Teleport
+29.11.2023  18:10:59 - ERROR: Could not scrape data for Item 'Lucent Singularity'
+29.11.2023  18:10:59 - ERROR: find() takes no keyword arguments
+29.11.2023  18:11:01 - WARNING: 'trinket item' is not a valid ItemClass
+29.11.2023  18:11:02 - WARNING: 'trinket item' is not a valid ItemClass
+29.11.2023  18:11:02 - WARNING: 'trinket item' is not a valid ItemClass
+29.11.2023  18:11:03 - WARNING: 'trinket item' is not a valid ItemClass
+29.11.2023  18:11:51 - WARNING: 'basic trinket item' is not a valid ItemClass
+29.11.2023  18:11:53 - INFO: Can't find the wiki page for summoner Flee
+29.11.2023  18:11:59 - INFO: Can't find the wiki page for summoner To the King!
+29.11.2023  18:12:02 - INFO: Can't find the wiki page for summoner Placeholder and Attack-Smite
+29.11.2023  18:12:22 - ERROR: Could not scrape data for Item 'Sandshrike's Claw'
+29.11.2023  18:12:22 - ERROR: 'NoneType' object has no attribute 'nextSibling'
+29.11.2023  18:12:24 - INFO: Can't find the wiki page for summoner Poro Toss
+29.11.2023  18:13:21 - INFO: Patching took 576.8752677440643 seconds.
