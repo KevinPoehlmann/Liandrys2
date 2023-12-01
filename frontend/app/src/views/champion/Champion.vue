@@ -72,7 +72,7 @@ const changeLevel = (i) => {
         <div class="border-4 border-black inline-block">
           <ul class="flex flex-row flex-wrap w-48 h-32">
             <li v-for="item in items" :key="item.name" class="w-16 h-16">
-              <button type="button" @click="" class="border-2 border-slate-300">
+              <button type="button" class="border-2 border-slate-300">
                 <img :src="URL + 'images/' + item.image.group + '/' + item.image.full" :alt="item.name" />
               </button>
             </li>
