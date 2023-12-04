@@ -2,33 +2,58 @@
 import axios from "axios";
 import { ref, inject, onBeforeMount } from "vue";
 import { useRoute } from "vue-router";
+import basicAttackImage from "@/assets/basic_attack.png"
 
 
 const { params } = useRoute();
 
 let actionId = 0;
 const basicAttack = {
-  name: "Basic Attack"
+  id: "aa",
+  name: "Basic Attack",
+  img: basicAttackImage
 }
 
 const URL = inject("URL");
 const id = params.id;
 const champion = ref({});
+const q = ref({});
+const w = ref({});
+const e = ref({});
+const r = ref({});
 const level = ref(1);
 const items = ref([]);
 const combo = ref([]);
-const butts = ref([]);
+const activeItems = ref([]);
 
 
 onBeforeMount(() => {
   axios.get(`${URL}champion/${id}`)
     .then((res) => {
       champion.value = res.data;
-      butts.value = [res.data.q, res.data.w, res.data.e, res.data.r]
+      q.value = {
+        id: "q",
+        name: res.data.q.name,
+        img: `${URL}images/${res.data.q.image.group}/${res.data.q.image.full}`
+      }      
+      w.value = {
+        id: "w",
+        name: res.data.w.name,
+        img: `${URL}images/${res.data.w.image.group}/${res.data.w.image.full}`
+      }      
+      e.value = {
+        id: "e",
+        name: res.data.e.name,
+        img: `${URL}images/${res.data.e.image.group}/${res.data.e.image.full}`
+      }      
+      r.value = {
+        id: "r",
+        name: res.data.r.name,
+        img: `${URL}images/${res.data.r.image.group}/${res.data.r.image.full}`
+      }      
     })
     .catch((error) => {
       console.error(`Error: ${error}`)
-      patch.value = "Error"
     })
 })
 
@@ -84,33 +109,39 @@ const changeLevel = (i) => {
       </div>
     </div>
     <div>
-      <div class="border-4 border-black m-2 inline-block">
-        <ul class="flex flex-row flex-wrap w-96">
-          <li class="w-16 h-16">
-            <button type="button" @click="addAction(basicAttack)" class="border-2 border-black hover:border-white">
-              <img src="@/assets/basic_attack.png" alt="Basic Attack" />
-            </button>
-          </li>
-          <li v-for="butt in butts" :key="butt.name" class="w-16 h-16">
-            <button type="button" @click="addAction(butt)" class="border-2 border-black hover:border-white">
-              <img :src="URL + 'images/' + butt.image.group + '/' + butt.image.full" :alt="butt.name" />
-            </button>
-          </li>
-        </ul>
+      <div class="m-2 flex flex-row flex-wrap">
+        <div class="border-4 border-black m-2 flex">
+          <button type="button" @click="addAction(basicAttack)" class="border-2 border-black w-16 h-16 hover:border-white">
+            <img :src="basicAttack.img" :alt="basicAttack.name" />
+          </button>
+        </div>
+        <div class="inline-flex flex-row flex-wrap border-4 border-black m-2">
+          <button type="button" @click="addAction(q)" class="border-2 border-black w-16 h-16 hover:border-white">
+            <img :src="q.img" :alt="q.name" />
+          </button>
+          <button type="button" @click="addAction(w)" class="border-2 border-black w-16 h-16 hover:border-white">
+            <img :src="w.img" :alt="w.name" />
+          </button>
+          <button type="button" @click="addAction(e)" class="border-2 border-black w-16 h-16 hover:border-white">
+            <img :src="e.img" :alt="e.name" />
+          </button>
+          <button type="button" @click="addAction(r)" class="border-2 border-black w-16 h-16 hover:border-white">
+            <img :src="r.img" :alt="r.name" />
+          </button>
+        </div>
+        <div class="inline-flex flex-row flex-wrap border-4 border-black m-2">
+        </div>
       </div>
       <div class="border-4 border-black m-2">
         <ul class="flex flex-row flex-wrap h-16">
           <li v-for="action in combo" :key="action.id" class="w-16 h-16">
             <button type="button" @click="removeAction(action.id)" class="border-2 border-black hover:border-white">
-              <img v-if="action.action.name !== 'Basic Attack'"
-                :src="URL + 'images/' + action.action.image.group + '/' + action.action.image.full"
-                :alt="action.action.name" />
-              <img v-else src="@/assets/basic_attack.png" alt="Basic Attack" />
+              <img :src="action.action.img" :alt="action.action.name" />
             </button>
           </li>
         </ul>
       </div>
-    </div>
+      </div>
     <div>
       <button type="button" class="border-4 border-black w-48 h-16 bg-slate-200 flex justify-center hover:border-white">
         <p class="text-5xl">Attack</p>
