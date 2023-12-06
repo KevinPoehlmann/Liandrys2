@@ -224,13 +224,19 @@ class TableTitle(str, MultiValueEnum):
     FURY="Fury"
     LEVEL="level", "Ornn's level"
     MARKS="marks"
-    MISSING_HO="missing health"
+    MISSING_HP="missing health"
     MISSING_HP_T="target's missing health"
     RANK="Rank",
     SECONDS="seconds"
     STACKS="Stacks", "stacks"
     ERROR="Error"
 
+
+class DamageCalculation(str, Enum):
+    FLAT="flat"
+    MAX_HP="max health"
+    MISSING_HP="missing health"
+    CURRENT_HP="current health"
 
 
 ############### BaseModels ###############
@@ -305,3 +311,10 @@ class AbilityBaseStats():
     costs: AbilityCosts = None
     ability_stats: list[AbilityStat] = field(default_factory=list)
 
+
+@dataclass
+class Damage():
+    """"""
+    value: float
+    dtype: DamageSubType
+    dcalc: DamageCalculation

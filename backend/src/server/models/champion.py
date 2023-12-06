@@ -6,13 +6,13 @@ from src.server.models.image import Image
 from .pydanticid import PydanticObjectId
 
 from src.server.models.dataenums import RangeType, ResourceType
+from src.server.models.unit import Fighter
 
 
 
 
 
-
-class NewChampion(BaseModel):
+class NewChampion(Fighter):
     key: str
     name: str
     champion_id: str
@@ -21,23 +21,18 @@ class NewChampion(BaseModel):
 
     range_type: RangeType
     resource_type: ResourceType
-    hp: float
     hp_per_lvl: int
     mana: float
     mana_per_lvl: float
     movementspeed: int
-    armor: int
     armor_per_lvl: float
-    mr: float
     mr_per_lvl: float
     attackrange: int
     hp_regen: float
     hp_regen_per_lvl: float
     mana_regen: float
     mana_regen_per_lvl: float
-    ad: float
     ad_per_lvl: float
-    attackspeed: float
     attackspeed_ratio: float
     attackspeed_per_lvl: float
     attack_windup: float
