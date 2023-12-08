@@ -8,6 +8,7 @@ from src.server.routes.champion import router as championsRouter
 from src.server.routes.item import router as itemsRouter
 from src.server.routes.rune import router as runesRouter
 from src.server.routes.summonerspell import router as summonerspellsRouter
+from src.server.routes.simulation import router as simulationRouter
 
 
 
@@ -30,6 +31,7 @@ def include_routers(app: FastAPI) -> None:
     app.include_router(itemsRouter, tags=["Item"], prefix="/item")
     app.include_router(runesRouter, tags=["Rune"], prefix="/rune")
     app.include_router(summonerspellsRouter, tags=["Summonerspell"], prefix="/summonerspell")
+    app.include_router(simulationRouter, tags=["Simulation"], prefix="/simulation")
 
 
 def add_static_files(app: FastAPI) -> None:

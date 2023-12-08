@@ -25,6 +25,7 @@ const level = ref(1);
 const items = ref([]);
 const combo = ref([]);
 const activeItems = ref([]);
+const damage = ref(0);
 
 
 onBeforeMount(() => {
@@ -76,6 +77,22 @@ const changeLevel = (i) => {
   }
 }
 
+
+const calculateDamage = () => {
+  axios.post(`${URL}simulation/dummy`,
+  {
+    champion_id: id,
+    lvl: level.value
+  })
+  .then((res) => {
+    damage.value = res.data
+  })
+  .catch((error) => {
+    console.error(`Error: ${error}`)
+  })
+}
+
+
 </script>
 
 <template>
@@ -116,16 +133,28 @@ const changeLevel = (i) => {
           </button>
         </div>
         <div class="inline-flex flex-row flex-wrap border-4 border-black m-2">
-          <button type="button" @click="addAction(q)" class="border-2 border-black w-16 h-16 hover:border-white">
+          <button type="button" @click="addAction(q)"
+          :disabled="!q.ready_to_use"
+          :class="{ 'opacity-50 cursor-not-allowed': !q.ready_to_use }"
+          class="border-2 border-black w-16 h-16 hover:border-white">
             <img :src="q.img" :alt="q.name" />
           </button>
-          <button type="button" @click="addAction(w)" class="border-2 border-black w-16 h-16 hover:border-white">
+          <button type="button" @click="addAction(w)"
+          :disabled="!w.ready_to_use"
+          :class="{ 'opacity-50 cursor-not-allowed': !w.ready_to_use }"
+          class="border-2 border-black w-16 h-16 hover:border-white">
             <img :src="w.img" :alt="w.name" />
           </button>
-          <button type="button" @click="addAction(e)" class="border-2 border-black w-16 h-16 hover:border-white">
+          <button type="button" @click="addAction(e)"
+          :disabled="!e.ready_to_use"
+          :class="{ 'opacity-50 cursor-not-allowed': !e.ready_to_use }"
+          class="border-2 border-black w-16 h-16 hover:border-white">
             <img :src="e.img" :alt="e.name" />
           </button>
-          <button type="button" @click="addAction(r)" class="border-2 border-black w-16 h-16 hover:border-white">
+          <button type="button" @click="addAction(r)"
+          :disabled="!r.ready_to_use"
+          :class="{ 'opacity-50 cursor-not-allowed': !r.ready_to_use }"
+          class="border-2 border-black w-16 h-16 hover:border-white">
             <img :src="r.img" :alt="r.name" />
           </button>
         </div>
@@ -143,8 +172,9 @@ const changeLevel = (i) => {
       </div>
       </div>
     <div>
-      <button type="button" class="border-4 border-black w-48 h-16 bg-slate-200 flex justify-center hover:border-white">
+      <button type="button" @click="calculateDamage()" class="border-4 border-black w-48 h-16 bg-slate-200 flex justify-center hover:border-white">
         <p class="text-5xl">Attack</p>
       </button>
+      <p class="text-4xl">{{ damage }}</p>
   </div>
 </div></template>
