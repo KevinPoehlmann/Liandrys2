@@ -55,6 +55,14 @@ class Stat(str, MultiValueEnum):
     ERROR="Error"
 
 
+
+class ActionType(str, Enum):
+    AA="aa"
+    Q="q"
+    W="w"
+    E="e"
+    R="r"
+
 #Champions
 
 class RangeType(str, Enum):

@@ -1,5 +1,6 @@
 <script setup>
 import axios from "axios";
+import Shop from "../../components/Shop.vue";
 import { ref, inject, onBeforeMount } from "vue";
 import { useRoute } from "vue-router";
 import basicAttackImage from "@/assets/basic_attack.png"
@@ -17,12 +18,15 @@ const basicAttack = {
 const URL = inject("URL");
 const id = params.id;
 const champion = ref({});
+const allItems = ref([])
+const shop = ref(false)
 const q = ref({});
 const w = ref({});
 const e = ref({});
 const r = ref({});
 const level = ref(1);
 const items = ref([]);
+const gold = ref(0)
 const combo = ref([]);
 const activeItems = ref([]);
 const damage = ref(0);
@@ -51,7 +55,14 @@ onBeforeMount(() => {
         id: "r",
         name: res.data.r.name,
         img: `${URL}images/${res.data.r.image.group}/${res.data.r.image.full}`
-      }      
+      }
+      axios.get(`${URL}item/${res.data.patch}`)
+        .then((resp) => {
+          allItems.value = resp.data;
+        })
+        .catch((error) => {
+          console.error(`Error: ${error}`)
+        })
     })
     .catch((error) => {
       console.error(`Error: ${error}`)
@@ -78,11 +89,23 @@ const changeLevel = (i) => {
 }
 
 
+const addItem = (item) => {
+  if( items.value.length < 6) {
+    items.value.push(item)
+  }
+}
+
+const removeItem = (id) => {
+  items.value = items.value.filter((item) => item.id !== id)
+}
+
 const calculateDamage = () => {
   axios.post(`${URL}simulation/dummy`,
   {
     champion_id: id,
-    lvl: level.value
+    lvl: level.value,
+    itmes: items.value.map(e => e.item._id),
+    combo: combo.value.map(e => e.action.id)
   })
   .then((res) => {
     damage.value = res.data
@@ -97,6 +120,7 @@ const calculateDamage = () => {
 
 <template>
   <div class="w-full p-8">
+    <!--   STATS   -->
     <div class="flex">
       <img :src="URL + 'images/' + champion.image.group + '/' + champion.image.full" :alt="champion.name" class="w-32 h-32" />
       <div class="mx-4">
@@ -113,18 +137,27 @@ const calculateDamage = () => {
       <div class="flex">
         <div class="border-4 border-black inline-block">
           <ul class="flex flex-row flex-wrap w-48 h-32">
-            <li v-for="item in items" :key="item.name" class="w-16 h-16">
-              <button type="button" class="border-2 border-slate-300">
-                <img :src="URL + 'images/' + item.image.group + '/' + item.image.full" :alt="item.name" />
+            <li v-for="item in items" :key="item.item.name" class="w-16 h-16">
+              <button type="button" @click="removeItem(item.id)" class="border-2 border-slate-300">
+                <img :src="URL + 'images/' + item.item.image.group + '/' + item.item.image.full" :alt="item.item.name" />
               </button>
             </li>
           </ul>
         </div>
-        <button type="button" class="border-4 border-black w-16 h-16 bg-slate-200 flex justify-center hover:border-white">
-          <p class="text-5xl">+</p>
-        </button>
+        <div class="flex flex-col">
+          <div>
+            <button type="button" @click="shop = !shop" class="border-4 border-black w-16 h-16 bg-slate-200 flex justify-center hover:border-white">
+              <p class="text-5xl">+</p>
+            </button>
+            <div v-if="shop">
+              <Shop :items="allItems" :addItem="addItem"/>
+            </div>
+          </div>
+          <p class="text-xl text-white m-4">{{ gold }} Gold</p>
+        </div>
       </div>
     </div>
+    <!--   ACTIONS   -->
     <div>
       <div class="m-2 flex flex-row flex-wrap">
         <div class="border-4 border-black m-2 flex">
@@ -170,7 +203,8 @@ const calculateDamage = () => {
           </li>
         </ul>
       </div>
-      </div>
+    </div>
+    <!--   CALCULATIONS   -->
     <div>
       <button type="button" @click="calculateDamage()" class="border-4 border-black w-48 h-16 bg-slate-200 flex justify-center hover:border-white">
         <p class="text-5xl">Attack</p>
