@@ -71,7 +71,7 @@ def time_safely(method: Callable) -> Callable:
             except Exception as e:
                 logger.exception(e)
                 logger.error(f"Patch {args[0].patch.patch} was not loaded successfully!")
-                await args[0].cleanup()
+                await args[0].clean_up()
                 return
             finally:
                 Patchloader.mute = False
@@ -231,12 +231,14 @@ class Patchloader():
                 logger.error(f"Error {e.code} for {e.type} '{e.name}'!")
                 logger.error(e.reason)
                 logger.error(f"Could not load information from '{e.url}'")
-                await self.cleanup()
+                logger.error(e)
+                await self.clean_up()
                 return
             except ScrapeError as e:
                 logger.error(f"Could not scrape data for {e.type} '{e.name}'")
                 logger.error(e.reason)
-                await self.cleanup()
+                logger.error(e)
+                await self.clean_up()
                 return
 
 
@@ -289,13 +291,7 @@ class Patchloader():
         except ValidationError as e:
             raise LoadError(9, str(e), "", "Champion", champion_id)
         
-        try:
-            champion = ws.create_champion(champion_json, champion_wiki, self.patch.patch)
-            debugger.debug(f"{champion_id} - S - scraped")
-        except (AttributeError, ValueError, TypeError) as e:
-            logger.error(f"Could not scrape data for Champion '{champion_id}'")
-            logger.error(e)
-            return
+        champion = ws.create_champion(champion_json, champion_wiki, self.patch.patch)
         
         await self.load_image(champion_json.image)
         await self.load_image(champion_json.passive.image)
@@ -322,6 +318,8 @@ class Patchloader():
 
     async def load_item(self, item_id: str, item_json: ItemJson, wiki_names: list[str]) -> None:
         debugger.debug(f"{item_json.name} - B - begin")
+        if len(item_id) > 4:
+            return
         try:
             item_json.name = wiki_names[item_json.name] if item_json.name in wiki_names else item_json.name
             item_wiki = await self.session.html(self.urls.wiki + item_json.name)
@@ -360,7 +358,7 @@ class Patchloader():
     async def load_rune(self, rune_class: RuneClass) -> None:
         debugger.debug(f"{rune_class.rune.name} - B - begin")
         try:
-            if rune_class.rune.name == "Grasp of the Undying":
+            if rune_class.rune.name == "Grasp of the Undying" or rune_class.rune.name == "Triple Tonic":
                 rune_wiki = await self.session.html(self.urls.wiki + rune_class.rune.name + "_(Rune)")
             else:
                 rune_wiki = await self.session.html(self.urls.wiki + rune_class.rune.name)
@@ -494,7 +492,7 @@ class Patchloader():
 
 
     async def clean_up(self) -> None:
-        await db.delete_patch(self.patch.id)
+        await db.clear_patch(self.patch.patch)
         logger.error(f"Successfully cleaned up patch '{self.patch.patch}'!")
 
 

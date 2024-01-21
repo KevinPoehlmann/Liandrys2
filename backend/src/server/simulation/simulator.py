@@ -1,13 +1,14 @@
 from src.server.models.unit import Unit
 from src.server.models.champion import Champion
 from src.server.models.dataenums import ActionType
+from src.server.models.item import Item
 from src.server.simulation.unit import Dummy, Character
 
 
 class DummySimulation():
-    def __init__(self, champion: Champion, lvl: int, combo: list[ActionType]):
+    def __init__(self, champion: Champion, lvl: int, combo: list[ActionType], items: list[Item]):
         self.dummy = Dummy(Unit(hp=1000, armor=50, mr=50))
-        self.character = Character(champion, lvl)
+        self.character = Character(champion, lvl, items)
         self.combo = combo
 
 

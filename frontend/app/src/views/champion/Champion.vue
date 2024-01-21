@@ -92,11 +92,13 @@ const changeLevel = (i) => {
 const addItem = (item) => {
   if( items.value.length < 6) {
     items.value.push(item)
+    gold.value += 1
   }
 }
 
 const removeItem = (id) => {
   items.value = items.value.filter((item) => item.id !== id)
+  gold.value -= 1
 }
 
 const calculateDamage = () => {
@@ -104,7 +106,7 @@ const calculateDamage = () => {
   {
     champion_id: id,
     lvl: level.value,
-    itmes: items.value.map(e => e.item._id),
+    items: items.value.map(e => e.item._id),
     combo: combo.value.map(e => e.action.id)
   })
   .then((res) => {

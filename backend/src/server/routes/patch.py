@@ -14,6 +14,7 @@ from src.server.models.patch import NewPatch, Patch
 
 
 router = APIRouter()
+admin = APIRouter()
 
 
 @router.get("/")
@@ -54,7 +55,7 @@ async def get_patches_status():
     return response
 
 
-@router.delete("/")
+@admin.delete("/")
 async def delete_all_patches():
     response = await clear_patches_collection()
     if not response:
@@ -62,7 +63,7 @@ async def delete_all_patches():
     return response
 
 
-@router.delete("/{patch}")
+@admin.delete("/{patch}")
 async def delete_patch(patch: str):
     response = await clear_patch(patch)
     if not response:

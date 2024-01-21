@@ -11,14 +11,15 @@ from pydantic import BaseModel, validator
     
 class Stat(str, MultiValueEnum):
     ABILITY_HASTE="ability haste"
-    AP="ability power", "AP"
-    ARMOR="armor"
+    AP="ability power", "AP", 'per 100 AP'
+    ARMOR="armor", "total armor"
     ARMOR_PEN_P="armor penetration percent"
-    AD="attack damage", "AD"
+    AD="attack damage", "AD", 'per 100 AD'
     ATTACKSPEED_P="attack speed percent"
     MANA_REG_P="base mana regen percent", "base mana regeneration percent"
     HP_REG_P="base health regen percent", "base health regeneration percent"
-    CRIT_P="critical strike chance percent"
+    CRIT_P="critical strike chance percent", 'critical strike chance'
+    ENERGY="Energy", "energy"
     GOLD_P_10="gold per 10 seconds"
     HP="health"
     HEAL_N_SHIELD_P="heal and shield power percent"
@@ -26,7 +27,7 @@ class Stat(str, MultiValueEnum):
     LIFE_STEAL_P="life steal percent"
     MAGIC_PEN="magic penetration"
     MAGIC_PEN_P="magic penetration percent"
-    MR="magic resist", "magic resistance"
+    MR="magic resist", "magic resistance", "total magic resistance"
     MANA="mana", "Mana", " Mana", " mana"
     MOVESPEED="move speed", "movement speed"
     MOVESPEED_P="move speed percent", "movement speed percent", "bonus movement speed percent"
@@ -36,23 +37,40 @@ class Stat(str, MultiValueEnum):
     TENACITY_P="tenacity percent"
 
     ARMOR_TARGET="target's armor", "of target's armor"
-    BONUS_AD="bonus AD", "bonus attack damage"
+    BONUS_AD="bonus AD", "bonus attack damage", 'per 100 bonus AD'
     BONUS_ARMOR="bonus armor"
-    BONUS_ATTACKSPEED_P="bonus attack speed percent"
-    BONUS_MR="bonus magic resistance"
+    BONUS_ATTACKSPEED_P="bonus attack speed percent", 'bonus attack speed'
+    BONUS_MR="bonus magic resistance", 'per 100 bonus magic resistance'
     BONUS_HP="bonus health", 'of his bonus health'
     BONUS_HP_P="bonus health percent"
+    BONUS_MANA="bonus mana"
     BONUS_MOVESPEED="bonus movement speed"
-    CUURENT_HP_TARGET="of target's current health", "of the target's current health"
-    ENERGY="Energy"
+    CHARGE="Charge"
+    CURENT_HP_TARGET="of target's current health", "of the target's current health"
     MAX_HP="maximum health", 'of her maximum health', 'of maximum health', 'of his maximum health'
     MAX_HP_TARGET="target's maximum health", "of target's maximum health", "of the target's maximum health"
     MAX_MANA='maximum mana'
     MISSING_HP="missing health", "of missing health", 'his missing health', 'of his missing health'
-    MISSING_HP_TARGET="of target's missing health"
+    MISSING_HP_TARGET="of target's missing health", "target's missing health"
     MISSING_MANA='of missing mana'
+    UNITS="units"
     
+    FLAT="Flat"
     ERROR="Error"
+
+"""     CHANNEL_TIME="channel time"
+    CHARGE_TIME="CHARGE TIME", 'seconds charged', 'charge time'
+    CHIMES="number of Chimes"
+    CONST="Constant"
+    DISTANCE="distance traveled"
+    DURATION="duration"
+    FURY="Fury"
+    LEVEL="level", "Ornn's level"
+    MARKS="marks"
+    RANK="Rank",
+    SECONDS="seconds"
+    STACKS="Stacks", "stacks" """
+
 
 
 
@@ -62,6 +80,14 @@ class ActionType(str, Enum):
     W="w"
     E="e"
     R="r"
+
+
+class Map(str, MultiValueEnum):
+    SR="SR", "11"
+    HA="HA", "12"
+    NB="NB", "21"
+    AR="Arena", "30"
+    UK="22"
 
 #Champions
 
@@ -105,6 +131,7 @@ class ItemClass(str, MultiValueEnum):
     MYTHIC="mythic item"
     NONE=""
     STARTER="starter item"
+    TRINKET="trinket item"
     TOWER_MINION="tower and minion item"
     ERROR="Error"
 
@@ -127,9 +154,15 @@ class DamageSubType(str, MultiValueEnum):
     PHYSIC="Physical", "Physical damage", " Physical damage", " Physical"
     MAGIC="Magic", "Magic damage", " Magic", ' Magic damage'
     TRUE="True", "True damage", " True", " True damage"
+    ADAPTIVE="Adaptive"
 
+class MinionAggro(str, Enum):
+    DRAWN="Drawn"
+    NOT="Not Drawn"
+    NOTES="See Notes"
 
 class CounterType(str, Enum):
+    DISRUPTION="Disruption"
     GROUNDED="Grounded"
     KNOCKDOWN="Knockdown"
     PARRIES="Parries"
@@ -203,13 +236,17 @@ class StatusType(str, Enum):
     BLIND="Blind"
     CHARM="Charm"
     CRIPPLE="Cripple"
+    DAMAGE="Damage"
     DISARM="Disarm"
     DROWSY="Drowsy"
+    ERROR="Error"
     FLEE="Flee"
     GROUND="Ground"
+    HEAL="Heal"
     KINEMATICS="Kinematics"
     NEARSIGHT="Nearsight"
     POLYMOROPH="Polymorph"
+    REPLACE="Replace"
     ROOT="Root"
     SILENCE="Silence"
     SLEEP="Sleep"
@@ -229,6 +266,7 @@ class TableTitle(str, MultiValueEnum):
     CRIT_CHANCE='critical strike chance'
     DISTANCE="distance traveled"
     DURATION="duration"
+    FLAT="Flat"
     FURY="Fury"
     LEVEL="level", "Ornn's level"
     MARKS="marks"
@@ -250,7 +288,7 @@ class DamageCalculation(str, Enum):
 ############### BaseModels ###############
 
 class Table(BaseModel):
-    top: list[float]
+    top: list[float] = [1]
     bot: list[float]
     title: TableTitle = TableTitle.RANK
 
@@ -308,6 +346,7 @@ class AbilityDetails():
     """"""
     damage_type: DamageType = None
     damage_sub_type: list[DamageSubType] = field(default_factory=list)
+    minion_aggro: MinionAggro = None
     counters: list[Counter] = field(default_factory=list)
 
     

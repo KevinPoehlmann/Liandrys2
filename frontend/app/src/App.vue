@@ -29,7 +29,7 @@ provide("URL", URL)
       <aside class="order-3 bg-green-900">Auch Werbung</aside>
       <router-view class="order-2 min-h-screen text-left bg-green-700"></router-view>
     </div>
-    <footer class="w-full bg-amber-600">Feet o.O</footer>
+    <footer class="sticky w-full bg-amber-600">Feet o.O</footer>
   </div>
 </template>
 

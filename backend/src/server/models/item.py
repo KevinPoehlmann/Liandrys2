@@ -5,7 +5,7 @@ from src.server.models.passive import Passive
 from src.server.models.image import Image
 from src.server.models.pydanticid import PydanticObjectId
 
-from src.server.models.dataenums import ItemClass, ItemStat, Mythic
+from src.server.models.dataenums import ItemClass, ItemStat, Map
 
 
 
@@ -24,7 +24,8 @@ class NewItem(BaseModel):
     active: ItemActive = None
     passives: list[Passive] = []
     limitations: str = ""
-    requirements: str= ""
+    requirements: str = ""
+    maps: list[Map] = []
 
     changes: list[str] = []
 

@@ -1,31 +1,27 @@
 from pydantic import BaseModel
+from typing import Union
 
-from src.server.models.dataenums import ConditionType, StatusType, Stat, Table
+from src.server.models.dataenums import ConditionType, StatusType, Stat, DamageType, DamageSubType, Table
 
 
+class Formula(BaseModel):
+    formula: str
 
-
-class ScaleScale(BaseModel):
-    value: float
-    stat: Stat
 
 
 class Scaling(BaseModel):
-    value: list[float]
-    stat: Stat
-    scalescale: list[ScaleScale] = []
+    value: Union["Scaling", "Table", "Formula"]
+    stat: Stat = None
+
 
 
 class Status(BaseModel):
-    type_: StatusType
-    duration: float = 0
-
-
-class EffectStat(BaseModel):
-    flat: Table = None
     scalings: list[Scaling] = []
-    status: Status = None
+    type_: StatusType = None
     comment: str = ""
+
+    class Config:
+        orm_mode = True
 
 
 class Condition(BaseModel):
@@ -35,5 +31,5 @@ class Condition(BaseModel):
 
 class Effect(BaseModel):
     text: str
-    stats: list[EffectStat] = []
+    stati: list[Status] = []
     conditions: list[Condition] = []

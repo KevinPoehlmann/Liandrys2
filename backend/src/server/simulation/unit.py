@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
 
-from src.server.models.dataenums import Damage, DamageCalculation, DamageSubType
+from src.server.models.dataenums import Damage, DamageCalculation, DamageSubType, Stat
 from src.server.models.champion import Champion
 from src.server.models.item import Item
 from src.server.models.rune import Rune
@@ -62,17 +62,31 @@ class Attacker(Dummy):
 
 class Character(Attacker):
     #TODO Level Scaling
-    def __init__(self, champion: Champion, lvl: int) -> None:
+    def __init__(self, champion: Champion, lvl: int, items: list[Item]) -> None:
         #TODO add items, runes and summonerspells
         super().__init__(champion)
         self.unit: Champion = champion
         self.level: int = lvl
+        self.items: list[Item] = items
 
 
     def calculate_stat(self, stat: float, scaling: float) -> float:
         return (stat + scaling * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1)))
+    
+
+    def get_bonus_stat(self, stat: Stat) -> float:
+        bonus_stat = 0
+        for item in self.items:
+            for st in item.stats:
+                if st.stat == stat:
+                    bonus_stat += st.value
+                    break
+        return bonus_stat
+
 
 
     def basic_attack(self) -> Damage:
         #TODO add Penetration
-        return Damage(self.calculate_stat(self.unit.ad, self.unit.ad_per_lvl), DamageSubType.PHYSIC, DamageCalculation.FLAT)
+        base_ad = self.calculate_stat(self.unit.ad, self.unit.ad_per_lvl)
+        bonus_ad = self.get_bonus_stat(Stat.AD)
+        return Damage(base_ad + bonus_ad, DamageSubType.PHYSIC, DamageCalculation.FLAT)

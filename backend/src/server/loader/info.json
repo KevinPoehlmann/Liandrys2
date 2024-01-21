@@ -58,5 +58,12 @@
         "Blade of The Ruined King": "Blade of the Ruined King",
         "Kalista's Black Spear": "Black Spear",
         "Slightly Magical Footwear": "Slightly Magical Boots"
+    },
+    "maps": {
+        "11": "SR",
+        "12": "HA",
+        "21": "NB",
+        "22": "22",
+        "30": "Arena"
     }
 }
