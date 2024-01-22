@@ -363,5 +363,7 @@ class AbilityBaseStats():
 class Damage():
     """"""
     value: float
+    flat_pen: float
+    perc_pen: float
     dtype: DamageSubType
     dcalc: DamageCalculation

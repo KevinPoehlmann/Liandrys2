@@ -6,7 +6,7 @@ from src.server.simulation.unit import Dummy, Character
 
 
 class DummySimulation():
-    def __init__(self, champion: Champion, lvl: int, combo: list[ActionType], items: list[Item]):
+    def __init__(self, champion: Champion, lvl: int, items: list[Item], combo: list[ActionType]):
         self.dummy = Dummy(Unit(hp=1000, armor=50, mr=50))
         self.character = Character(champion, lvl, items)
         self.combo = combo
@@ -15,8 +15,8 @@ class DummySimulation():
     def do_combo(self) -> int:
         result = 0
         for action in self.combo:
-            if action == ActionType.AA:
-                result += self.attack()
+            match action:
+                case ActionType.AA: result += self.attack()
         return result
 
 
@@ -25,3 +25,10 @@ class DummySimulation():
         dmg = self.character.basic_attack()
         result = self.dummy.take_damge([dmg])
         return round(result)
+
+
+
+
+class V1Simulation():
+    def __init__(self, attacker: Champion, alvl: int, combo: list[ActionType]):
+        pass

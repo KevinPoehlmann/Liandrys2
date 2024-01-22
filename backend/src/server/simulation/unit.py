@@ -19,16 +19,18 @@ class Dummy():
 
 
 
-    def calculate_damage(self, value: float, resistance: float, dcalc: DamageCalculation) -> float:
-        #TODO add Penetration
-        match dcalc:
+    def calculate_damage(self, damage: Damage, resistance: float) -> float:
+        match damage.dcalc:
             case DamageCalculation.MAX_HP:
-                value *= self.unit.hp
+                damage.value *= self.unit.hp
             case DamageCalculation.CURRENT_HP:
-                value *= self.hp
+                damage.value *= self.hp
             case DamageCalculation.MISSING_HP:
-                value *= (self.unit.hp - self.hp)
-        result = value * (100 / (resistance + 100))
+                damage.value *= (self.unit.hp - self.hp)
+        resistance -= (resistance * damage.perc_pen / 100)
+        resistance -= damage.flat_pen
+        resistance = max(resistance, 0)
+        result = damage.value * (100 / (resistance + 100))
         return result
 
 
@@ -37,11 +39,11 @@ class Dummy():
         for damage in damages:
             match damage.dtype:
                 case DamageSubType.TRUE:
-                    results.append(self.calculate_damage(damage.value, 0, damage.dcalc))
+                    results.append(self.calculate_damage(damage, 0))
                 case DamageSubType.PHYSIC:
-                    results.append(self.calculate_damage(damage.value, self.unit.armor, damage.dcalc))
+                    results.append(self.calculate_damage(damage, self.unit.armor))
                 case DamageSubType.MAGIC:
-                    results.append(self.calculate_damage(damage.value, self.unit.mr, damage.dcalc))
+                    results.append(self.calculate_damage(damage, self.unit.mr))
         result = sum(results)
         self.hp -= result
         return result
@@ -61,9 +63,8 @@ class Attacker(Dummy):
 
 
 class Character(Attacker):
-    #TODO Level Scaling
     def __init__(self, champion: Champion, lvl: int, items: list[Item]) -> None:
-        #TODO add items, runes and summonerspells
+        #TODO add runes and summonerspells
         super().__init__(champion)
         self.unit: Champion = champion
         self.level: int = lvl
@@ -75,18 +76,17 @@ class Character(Attacker):
     
 
     def get_bonus_stat(self, stat: Stat) -> float:
-        bonus_stat = 0
-        for item in self.items:
-            for st in item.stats:
-                if st.stat == stat:
-                    bonus_stat += st.value
-                    break
-        return bonus_stat
+        return sum([item.stats[stat] for item in self.items if stat in item.stats])
 
 
 
     def basic_attack(self) -> Damage:
-        #TODO add Penetration
-        base_ad = self.calculate_stat(self.unit.ad, self.unit.ad_per_lvl)
-        bonus_ad = self.get_bonus_stat(Stat.AD)
-        return Damage(base_ad + bonus_ad, DamageSubType.PHYSIC, DamageCalculation.FLAT)
+
+        dmg = Damage(
+            value=self.calculate_stat(self.unit.ad, self.unit.ad_per_lvl) + self.get_bonus_stat(Stat.AD),
+            flat_pen=self.get_bonus_stat(Stat.LETHALITY),
+            perc_pen=self.get_bonus_stat(Stat.ARMOR_PEN_P),
+            dtype=DamageSubType.PHYSIC,
+            dcalc=DamageCalculation.FLAT
+        )
+        return dmg

@@ -16,5 +16,5 @@ async def attack_dummy(dummy_request: DummyRequest) -> int:
     for item_id in dummy_request.items:
         item = await fetch_item_by_id(item_id)
         items.append(item)
-    sim = DummySimulation(champion, dummy_request.lvl, dummy_request.combo, items)
+    sim = DummySimulation(champion, dummy_request.lvl, items, dummy_request.combo)
     return sim.do_combo()

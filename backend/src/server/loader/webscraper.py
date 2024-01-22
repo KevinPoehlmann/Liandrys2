@@ -468,9 +468,9 @@ def get_item_elements(item_content: Tag) -> dict[Tag]:
     return info_dict
 
 
-def get_item_stats(stat_content: Tag) -> list[ItemStat]:
+def get_item_stats(stat_content: Tag) -> dict:
     stats = stat_content.find_all("div", class_="pi-data-value pi-font")
-    item_stats = []
+    item_stats = {}
     for stat in stats:
         value = stat.contents[0] + stat.contents[1].text
         pair = value.split(maxsplit=1)
@@ -481,13 +481,13 @@ def get_item_stats(stat_content: Tag) -> list[ItemStat]:
             pair[0] = pair[0].strip(" %+")    #value
             pair[1] += " percent"           #unit
         if pair[1].isdigit():
-            item_stats.append(ItemStat(stat=Stat.GOLD_P_10, value=int(pair[1])))
+            item_stats[Stat.GOLD_P_10] = int(pair[1])
             continue
         try:
-            item_stats.append(ItemStat(stat=Stat(pair[1]), value=int(pair[0])))
+            item_stats[Stat(pair[1])] = int(pair[0])
         except ValueError as e:
             logger.warning(e)
-            item_stats.append(ItemStat(stat=Stat.ERROR, value=int(pair[0])))
+            item_stats[Stat.ERROR] = int(pair[0])
 
     return item_stats
 

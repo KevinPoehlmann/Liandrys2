@@ -5,7 +5,7 @@ from src.server.models.passive import Passive
 from src.server.models.image import Image
 from src.server.models.pydanticid import PydanticObjectId
 
-from src.server.models.dataenums import ItemClass, ItemStat, Map
+from src.server.models.dataenums import ItemClass, ItemStat, Map, Stat
 
 
 
@@ -19,7 +19,7 @@ class NewItem(BaseModel):
     from_: list[str]
     class_: ItemClass = None
     ready_to_use: bool = True
-    stats: list[ItemStat] = []
+    stats: dict[Stat, float] = {}
 
     active: ItemActive = None
     passives: list[Passive] = []

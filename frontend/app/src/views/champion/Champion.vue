@@ -56,7 +56,7 @@ onBeforeMount(() => {
         name: res.data.r.name,
         img: `${URL}images/${res.data.r.image.group}/${res.data.r.image.full}`
       }
-      axios.get(`${URL}item/${res.data.patch}`)
+      axios.get(`${URL}item/all/${res.data.patch}`)
         .then((resp) => {
           allItems.value = resp.data;
         })
