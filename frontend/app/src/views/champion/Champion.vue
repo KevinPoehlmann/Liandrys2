@@ -162,24 +162,7 @@ watchEffect(() => {
           </ul>
         </div>
         <div class="flex flex-col">
-          <div>
-            <button type="button" @click="shop = !shop" class="border-4 border-black w-16 h-16 bg-slate-200 flex justify-center hover:border-white">
-              <p class="text-5xl">+</p>
-            </button>
-            <div v-if="shop" @click="shop = !shop" class="fixed inset-0 flex items-center justify-center">
-              <div class="fixed inset-0 bg-black opacity-50"></div>
-              <div class="bg-white rounded p-8 shadow-lg z-10" @click.stop>
-                <h2 class="text-xl font-semibold mb-4">Shop</h2>
-                <Shop :items="allItems" :addItem="addItem"/>
-                <button @click="shop = !shop" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-                  Close
-                </button>
-              </div>
-            </div>
-            <!-- <div v-if="shop">
-              
-            </div> -->
-          </div>
+          <Shop :items="allItems" :addItem="addItem"/>
           <p class="text-xl text-white m-4">{{ gold }} Gold</p>
         </div>
       </div>

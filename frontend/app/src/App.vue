@@ -1,6 +1,6 @@
 <script setup>
-import HelloWorld from './views/index/HelloWorld.vue'
-import About from './views/about/About.vue';
+/* import HelloWorld from './views/index/HelloWorld.vue'
+import About from './views/about/About.vue'; */
 import icon from "@/assets/Liandrys.png"
 
 import { provide } from 'vue';
@@ -17,6 +17,7 @@ provide("URL", URL)
     <header class="fixed top-0 w-full p-2 flex bg-teal-800 text-white">
       <ul class="flex">
         <li><router-link class="mx-1 p-2 bg-gray-900 hover:bg-gray-700" to="/">Home</router-link></li>
+        <li><router-link class="mx-1 p-2 bg-gray-900 hover:bg-gray-700" to="/simulation">Simulation</router-link></li>
         <li><router-link class="mx-1 p-2 bg-gray-900 hover:bg-gray-700" to="/about">About</router-link></li>
       </ul>
       <div class="m-auto flex">

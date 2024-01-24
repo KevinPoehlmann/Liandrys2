@@ -90,3 +90,20 @@ class Character(Attacker):
             dcalc=DamageCalculation.FLAT
         )
         return dmg
+    
+
+    def take_damge(self, damages: list[Damage]) -> int:
+        results = []
+        for damage in damages:
+            match damage.dtype:
+                case DamageSubType.TRUE:
+                    results.append(self.calculate_damage(damage, 0))
+                case DamageSubType.PHYSIC:
+                    armor = self.calculate_stat(self.unit.armor, self.unit.armor_per_lvl) + self.get_bonus_stat(Stat.ARMOR)
+                    results.append(self.calculate_damage(damage, armor))
+                case DamageSubType.MAGIC:
+                    mr = self.calculate_stat(self.unit.mr, self.unit.mr_per_lvl) + self.get_bonus_stat(Stat.MR)
+                    results.append(self.calculate_damage(damage, mr))
+        result = sum(results)
+        self.hp -= result
+        return result
