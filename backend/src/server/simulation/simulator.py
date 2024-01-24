@@ -30,5 +30,21 @@ class DummySimulation():
 
 
 class V1Simulation():
-    def __init__(self, attacker: Champion, alvl: int, combo: list[ActionType]):
-        pass
+    def __init__(self, attacker: Champion, alvl: int, aitems: list[Item], defender: Champion, dlvl: int, ditems: list[Item], combo: list[ActionType]):
+        self.attacker = Character(attacker, alvl, aitems)
+        self.defender = Character(defender, dlvl, ditems)
+        self.combo = combo
+
+
+    def do_combo(self) -> int:
+        result = 0
+        for action in self.combo:
+            match action:
+                case ActionType.AA: result += self.attack()
+        return result
+    
+
+    def attack(self) -> int:
+        dmg = self.attacker.basic_attack()
+        result = self.defender.take_damge([dmg])
+        return round(result)

@@ -1,7 +1,7 @@
 <script setup>
 import axios from "axios";
 import Shop from "../../components/Shop.vue";
-import { ref, inject, onBeforeMount } from "vue";
+import { ref, inject, onBeforeMount, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import basicAttackImage from "@/assets/basic_attack.png"
 
@@ -91,17 +91,30 @@ const changeLevel = (i) => {
 
 const addItem = (item) => {
   if( items.value.length < 6) {
-    items.value.push(item)
-    gold.value += 1
+    axios.post(`${URL}simulation/item`,
+    {
+      items: items.value.map(e => e.item._id),
+      new_item: item.item._id
+    })
+    .then((res) => {
+      if( res.data) {
+        items.value.push(item)
+        gold.value += item.item.gold
+      }
+    })
+    .catch((error) => {
+      console.error(`Error: ${error}`)
+    })
   }
 }
 
 const removeItem = (id) => {
+  gold.value -= items.value.filter((item) => item.id === id)[0].item.gold
   items.value = items.value.filter((item) => item.id !== id)
-  gold.value -= 1
 }
 
-const calculateDamage = () => {
+
+watchEffect(() => {
   axios.post(`${URL}simulation/dummy`,
   {
     champion_id: id,
@@ -115,7 +128,7 @@ const calculateDamage = () => {
   .catch((error) => {
     console.error(`Error: ${error}`)
   })
-}
+})
 
 
 </script>
@@ -124,7 +137,9 @@ const calculateDamage = () => {
   <div class="w-full p-8">
     <!--   STATS   -->
     <div class="flex">
-      <img :src="URL + 'images/' + champion.image.group + '/' + champion.image.full" :alt="champion.name" class="w-32 h-32" />
+      <button type="button" class="border-4 border-black hover:border-white">
+        <img :src="URL + 'images/' + champion.image.group + '/' + champion.image.full" :alt="champion.name" class="w-32 h-32" />
+      </button>
       <div class="mx-4">
         <h2 class="text-bold text-white text-4xl">{{ champion.name }}</h2>
         <p class="text-white">Level:</p>
@@ -140,7 +155,7 @@ const calculateDamage = () => {
         <div class="border-4 border-black inline-block">
           <ul class="flex flex-row flex-wrap w-48 h-32">
             <li v-for="item in items" :key="item.item.name" class="w-16 h-16">
-              <button type="button" @click="removeItem(item.id)" class="border-2 border-slate-300">
+              <button type="button" @click="removeItem(item.id)" class="border-2 border-black hover:border-white">
                 <img :src="URL + 'images/' + item.item.image.group + '/' + item.item.image.full" :alt="item.item.name" />
               </button>
             </li>
@@ -151,9 +166,19 @@ const calculateDamage = () => {
             <button type="button" @click="shop = !shop" class="border-4 border-black w-16 h-16 bg-slate-200 flex justify-center hover:border-white">
               <p class="text-5xl">+</p>
             </button>
-            <div v-if="shop">
-              <Shop :items="allItems" :addItem="addItem"/>
+            <div v-if="shop" @click="shop = !shop" class="fixed inset-0 flex items-center justify-center">
+              <div class="fixed inset-0 bg-black opacity-50"></div>
+              <div class="bg-white rounded p-8 shadow-lg z-10" @click.stop>
+                <h2 class="text-xl font-semibold mb-4">Shop</h2>
+                <Shop :items="allItems" :addItem="addItem"/>
+                <button @click="shop = !shop" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+                  Close
+                </button>
+              </div>
             </div>
+            <!-- <div v-if="shop">
+              
+            </div> -->
           </div>
           <p class="text-xl text-white m-4">{{ gold }} Gold</p>
         </div>
@@ -208,9 +233,6 @@ const calculateDamage = () => {
     </div>
     <!--   CALCULATIONS   -->
     <div>
-      <button type="button" @click="calculateDamage()" class="border-4 border-black w-48 h-16 bg-slate-200 flex justify-center hover:border-white">
-        <p class="text-5xl">Attack</p>
-      </button>
       <p class="text-4xl">{{ damage }}</p>
   </div>
 </div></template>

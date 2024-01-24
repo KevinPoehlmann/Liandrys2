@@ -7,3 +7,8 @@ class DummyRequest(BaseModel):
     lvl: int
     items: list[str]
     combo: list[ActionType]
+
+
+class ItemRequest(BaseModel):
+    items: list[str]
+    new_item: str

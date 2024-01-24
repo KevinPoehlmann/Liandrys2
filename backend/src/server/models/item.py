@@ -14,7 +14,6 @@ class NewItem(BaseModel):
     item_id: str
     name: str
     patch: str
-    gold: int
     into: list[str]
     from_: list[str]
     class_: ItemClass = None
@@ -49,5 +48,6 @@ class ShortItem(BaseModel):
     id: PydanticObjectId = Field(..., alias="_id")
     item_id: str
     name: str
+    gold: int
     ready_to_use: bool
     image: Image

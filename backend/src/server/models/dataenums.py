@@ -87,7 +87,7 @@ class Map(str, MultiValueEnum):
     HA="HA", "12"
     NB="NB", "21"
     AR="Arena", "30"
-    UK="22"
+    TFT="TFT", "22"
 
 #Champions
 

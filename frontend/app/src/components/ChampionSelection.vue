@@ -1,9 +1,9 @@
 <script setup>
 import axios from "axios";
-import { ref, inject, onUpdated } from "vue";
+import { ref, inject } from "vue";
 
 
-const { items, addItem } = defineProps(['items', 'addItem']);
+const { champions, selectChampion } = defineProps(['champions', 'selectChampions']);
 const URL = inject("URL") 
 
 let itemId = 0;
