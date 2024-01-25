@@ -14,6 +14,7 @@ class NewItem(BaseModel):
     item_id: str
     name: str
     patch: str
+    gold: int
     into: list[str]
     from_: list[str]
     class_: ItemClass = None
