@@ -16,9 +16,9 @@ class NewRune(BaseModel):
     ready_to_use: bool = False
     image: Image = None
 
-    @validator("ready_to_use", always=True)
+    """ @validator("ready_to_use", always=True)
     def set_ready_to_use(cls, v, values):
-       return values["passive"].ready_to_use
+       return values["passive"].ready_to_use """
     
 
 class Rune(NewRune):

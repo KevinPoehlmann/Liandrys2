@@ -31,14 +31,14 @@ class NewItem(BaseModel):
 
     image: Image
 
-    @validator("ready_to_use", always=True)
+    """ @validator("ready_to_use", always=True)
     def set_ready_to_use(cls, v, values):
         result = True
         if "acttive" in values:
             result = values["acitve"].ready_to_use
         if "passives" in values:
             result = all((result, *[passive.ready_to_use for passive in values["passives"]]))
-        return result
+        return result """
     
     
 class Item(NewItem):

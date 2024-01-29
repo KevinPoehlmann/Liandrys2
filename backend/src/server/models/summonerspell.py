@@ -15,9 +15,9 @@ class NewSummonerspell(BaseModel):
     ready_to_use: bool = False
     image: Image
 
-    @validator("ready_to_use", always=True)
+    """ @validator("ready_to_use", always=True)
     def set_ready_to_use(cls, v, values):
-        return values["ability"].ready_to_use
+        return values["ability"].ready_to_use """
 
 
 class Summonerspell(NewSummonerspell):

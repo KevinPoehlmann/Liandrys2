@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 
 from bson import ObjectId
@@ -38,6 +39,9 @@ champion_collection: AsyncIOMotorCollection = database.champions
 item_collection: AsyncIOMotorCollection = database.items
 rune_collection: AsyncIOMotorCollection = database.runes
 summonerspell_collection: AsyncIOMotorCollection = database.summonerspells
+
+debugger = logging.getLogger("debugger")
+
 
 
 
@@ -118,9 +122,9 @@ async def fetch_champion_by_id(id_: str) -> Champion:
         return Champion(**document)
 
 
-async def update_champion(champion: Champion) -> None:
-    #maybe have to change to champion._id
-    await champion_collection.update_one({"_id":champion.id}, {"$set": champion.dict()})
+async def update_champion(champion: Champion):
+    result = await champion_collection.update_one({"_id":ObjectId(champion.id)}, {"$set": champion.dict()})
+    return result
 
 
 
@@ -147,6 +151,12 @@ async def fetch_item_by_id(id_: str) -> Item:
     if document:
         return Item(**document)
 
+
+async def update_item(item: Item):
+    result = await item_collection.update_one({"_id":ObjectId(item.id)}, {"$set": item.dict()})
+    return result
+
+
 #--------Rune-----------------------------
 
 
@@ -170,6 +180,12 @@ async def fetch_rune_by_id(id_: str) -> Rune:
     if document:
         return Rune(**document)
 
+
+async def update_rune(rune: Rune):
+    result = await rune_collection.update_one({"_id":ObjectId(rune.id)}, {"$set": rune.dict()})
+    return result
+
+
 #--------Summonerspell-----------------------------
 
 
@@ -192,3 +208,8 @@ async def fetch_summonerspell_by_id(id_: str) -> Summonerspell:
     document = await summonerspell_collection.find_one({"_id":ObjectId(id_)})
     if document:
         return Summonerspell(**document)
+    
+
+async def update_summonerspell(summonerspell: Summonerspell):
+    result = await summonerspell_collection.update_one({"_id":ObjectId(summonerspell.id)}, {"$set": summonerspell.dict()})
+    return result

@@ -4,7 +4,8 @@ from fastapi import APIRouter, HTTPException
 
 from src.server.database import (
     fetch_items_by_patch,
-    fetch_item_by_id
+    fetch_item_by_id,
+    update_item
 )
 from src.server.models.item import ShortItem, Item
 
@@ -26,3 +27,13 @@ async def get_item(item_id: str) -> Item:
     if not item:
         raise HTTPException(status_code=404, detail=f"No item found with id: {item_id} !")
     return item
+
+
+@router.put("/")
+async def put_item(item: Item) -> int:
+    response = await update_item(item)
+    if response.matched_count == 0:
+        raise HTTPException(status_code=404, detail=f"Could not find Item with ID: {item.id} !")
+    if response.modified_count == 0:
+        raise HTTPException(status_code=400, detail=f"Nothing changed for Item with ID: {item.id} !")
+    return response.modified_count

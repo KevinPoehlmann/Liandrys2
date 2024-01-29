@@ -50,9 +50,9 @@ class NewChampion(Fighter):
 
     image: Image
 
-    @validator("ready_to_use", always=True)
+"""     @validator("ready_to_use", always=True)
     def set_ready_to_use(cls, v, values):
-        return all((values["passive"].ready_to_use, values["q"].ready_to_use, values["w"].ready_to_use, values["e"].ready_to_use, values["r"].ready_to_use))
+        return all((values["passive"].ready_to_use, values["q"].ready_to_use, values["w"].ready_to_use, values["e"].ready_to_use, values["r"].ready_to_use)) """
 
 
 
