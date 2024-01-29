@@ -33,7 +33,7 @@ class NewItem(BaseModel):
 
     @validator("ready_to_use", always=True)
     def set_ready_to_use(cls, v, values):
-        result = False
+        result = True
         if "acttive" in values:
             result = values["acitve"].ready_to_use
         if "passives" in values:

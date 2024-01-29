@@ -21,7 +21,7 @@ const liandrys = () => {
 </script>
 
 <template>
-    <div class="w-full p-8">  
+    <div class="">  
       <div>
         <button class="p-2 m-1 bg-green-500 rounded-md hover:bg-green-400 active:border" type="button" @click="liandrys()">Send request</button>
         <p>

@@ -134,7 +134,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="w-full p-8">
+  <div class="">
     <!--   STATS   -->
     <div class="flex">
       <button type="button" class="border-4 border-black hover:border-white">

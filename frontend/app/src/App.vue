@@ -1,6 +1,4 @@
 <script setup>
-/* import HelloWorld from './views/index/HelloWorld.vue'
-import About from './views/about/About.vue'; */
 import icon from "@/assets/Liandrys.png"
 
 import { provide } from 'vue';
@@ -26,9 +24,9 @@ provide("URL", URL)
       </div>
     </header>
     <div class="flex flex-row mt-12">
-      <aside class="order-1 bg-green-900">Werbung</aside>
-      <aside class="order-3 bg-green-900">Auch Werbung</aside>
-      <router-view class="order-2 min-h-screen text-left bg-green-700"></router-view>
+      <aside class="order-1 bg-green-900">Supi</aside>
+      <aside class="order-3 bg-green-900">Dupi</aside>
+      <router-view class="order-2 min-h-screen text-left bg-green-700 w-full p-8"></router-view>
     </div>
     <footer class="sticky w-full bg-amber-600">Feet o.O</footer>
   </div>

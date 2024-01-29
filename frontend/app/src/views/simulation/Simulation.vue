@@ -4,7 +4,6 @@ import axios from "axios";
 import ChampionSelection from "./ChampionSelection.vue";
 import Shop from "../../components/Shop.vue";
 import { ref, inject, onBeforeMount, watchEffect } from "vue";
-import { useRoute } from "vue-router";
 import basicAttackImage from "@/assets/basic_attack.png"
 import noChampion from "@/assets/NoChampion.png"
 
@@ -23,7 +22,6 @@ const attacker = ref({});
 const defender = ref({});
 const allChampions = ref([])
 const allItems = ref([])
-const shop = ref(false)
 const q = ref({});
 const w = ref({});
 const e = ref({});
@@ -65,7 +63,6 @@ onBeforeMount(() => {
   })
     .catch((error) => {
       console.error(`Error: ${error}`)
-      patch.value = "Error"
     })
 })
 
@@ -204,7 +201,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="w-full p-8">
+  <div class="">
     <!--   STATS   -->
     <div class="flex justify-between">
       <div class="flex">

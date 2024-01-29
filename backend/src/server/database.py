@@ -49,6 +49,7 @@ async def clear_patch(patch: str) -> None:
         rune_collection.delete_many({"patch": patch}),
         summonerspell_collection.delete_many({"patch": patch})
     )
+    return True
 
 
 #------------------Patch--------------------------------------------------
@@ -115,6 +116,12 @@ async def fetch_champion_by_id(id_: str) -> Champion:
     document = await champion_collection.find_one({"_id":ObjectId(id_)})
     if document:
         return Champion(**document)
+
+
+async def update_champion(champion: Champion) -> None:
+    #maybe have to change to champion._id
+    await champion_collection.update_one({"_id":champion.id}, {"$set": champion.dict()})
+
 
 
 #--------Item-----------------------------
