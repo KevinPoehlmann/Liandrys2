@@ -5,6 +5,7 @@ import os
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pymongo.errors import InvalidURI
+from pymongo.results import UpdateResult
 
 from src.server.models.patch import NewPatch, Patch
 from src.server.models.champion import NewChampion, Champion, ShortChampion
@@ -122,7 +123,7 @@ async def fetch_champion_by_id(id_: str) -> Champion:
         return Champion(**document)
 
 
-async def update_champion(champion: Champion):
+async def update_champion(champion: Champion) -> UpdateResult:
     result = await champion_collection.update_one({"_id":ObjectId(champion.id)}, {"$set": champion.dict()})
     return result
 

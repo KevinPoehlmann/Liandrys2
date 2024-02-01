@@ -210,16 +210,16 @@ watchEffect(() => {
         <div class="mx-4">
           <h2 class="text-bold text-white text-4xl">{{ attacker.name ? attacker.name : "Select Champion" }}</h2>
           <p class="text-white">Level:</p>
-          <div class="inline-flex bg-white">
+          <div class="inline-flex bg-white rounded-md">
             <button type="button" @click="changeLevel(-1, 'A')"
-              class="border-x-2 border-black w-6 active:bg-slate-200">-</button>
+              class="border-x-2 border-black rounded-sm w-6 active:bg-slate-200">-</button>
             <p class="w-8 text-center">{{ levelAttacker }}</p>
             <button type="button" @click="changeLevel(1, 'A')"
-              class=" border-x-2 border-black w-6 active:bg-slate-200">+</button>
+              class=" border-x-2 border-black rounded-sm w-6 active:bg-slate-200">+</button>
           </div>
         </div>
         <div class="flex">
-          <div class="border-4 border-black inline-block">
+          <div class="border-4 border-black inline-block rounded-md">
             <ul class="flex flex-row flex-wrap w-48 h-32">
               <li v-for="item in itemsAttacker" :key="item.item.name" class="w-16 h-16">
                 <button type="button" @click="removeItem(item.id, 'A')" class="border-2 border-black hover:border-white">
@@ -240,7 +240,7 @@ watchEffect(() => {
             <Shop :items="allItems" :addItem="addItem" role="D"/>
             <p class="text-xl text-white m-4">{{ goldDefender }} Gold</p>
           </div>
-          <div class="border-4 border-black inline-block">
+          <div class="border-4 border-black inline-block rounded-md">
             <ul class="flex flex-row flex-wrap w-48 h-32">
               <li v-for="item in itemsDefender" :key="item.item.name" class="w-16 h-16">
                 <button type="button" @click="removeItem(item.id, 'D')" class="border-2 border-black hover:border-white">
@@ -253,12 +253,12 @@ watchEffect(() => {
         <div class="mx-4">
           <h2 class="text-bold text-white text-4xl">{{ defender.name ? defender.name : "Select Champion" }}</h2>
           <p class="text-white">Level:</p>
-          <div class="inline-flex bg-white">
+          <div class="inline-flex bg-white rounded-md">
             <button type="button" @click="changeLevel(-1, 'D')"
-              class="border-x-2 border-black w-6 active:bg-slate-200">-</button>
+              class="border-x-2 border-black rounded-sm w-6 active:bg-slate-200">-</button>
             <p class="w-8 text-center">{{ levelDefender }}</p>
             <button type="button" @click="changeLevel(1, 'D')"
-              class=" border-x-2 border-black w-6 active:bg-slate-200">+</button>
+              class=" border-x-2 border-black rounded-sm w-6 active:bg-slate-200">+</button>
           </div>
         </div>
         <ChampionSelection :imgSrc="defender.image ? URL + 'images/' + defender.image.group + '/' + defender.image.full : noChampion"
@@ -268,44 +268,44 @@ watchEffect(() => {
     <!--   ACTIONS   -->
     <div>
       <div class="m-2 flex flex-row flex-wrap">
-        <div class="border-4 border-black m-2 flex">
-          <button type="button" @click="addAction(basicAttack)" class="border-2 border-black w-16 h-16 hover:border-white">
+        <div class="border-4 border-black rounded-md m-2 flex">
+          <button type="button" @click="addAction(basicAttack)" class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
             <img :src="basicAttack.img" :alt="basicAttack.name" />
           </button>
         </div>
-        <div class="inline-flex flex-row flex-wrap border-4 border-black m-2">
+        <div class="inline-flex flex-row flex-wrap border-4 border-black rounded-md m-2">
           <button type="button" @click="addAction(q)"
           :disabled="!q.ready_to_use"
           :class="{ 'opacity-50 cursor-not-allowed': !q.ready_to_use }"
-          class="border-2 border-black w-16 h-16 hover:border-white">
+          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
             <img :src="q.img" :alt="q.name" />
           </button>
           <button type="button" @click="addAction(w)"
           :disabled="!w.ready_to_use"
           :class="{ 'opacity-50 cursor-not-allowed': !w.ready_to_use }"
-          class="border-2 border-black w-16 h-16 hover:border-white">
+          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
             <img :src="w.img" :alt="w.name" />
           </button>
           <button type="button" @click="addAction(e)"
           :disabled="!e.ready_to_use"
           :class="{ 'opacity-50 cursor-not-allowed': !e.ready_to_use }"
-          class="border-2 border-black w-16 h-16 hover:border-white">
+          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
             <img :src="e.img" :alt="e.name" />
           </button>
           <button type="button" @click="addAction(r)"
           :disabled="!r.ready_to_use"
           :class="{ 'opacity-50 cursor-not-allowed': !r.ready_to_use }"
-          class="border-2 border-black w-16 h-16 hover:border-white">
+          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
             <img :src="r.img" :alt="r.name" />
           </button>
         </div>
-        <div class="inline-flex flex-row flex-wrap border-4 border-black m-2">
+        <div class="inline-flex flex-row flex-wrap border-4 border-black rounded-md m-2">
         </div>
       </div>
-      <div class="border-4 border-black m-2">
+      <div class="border-4 border-black rounded-md m-2">
         <ul class="flex flex-row flex-wrap h-16">
           <li v-for="action in combo" :key="action.id" class="w-16 h-16">
-            <button type="button" @click="removeAction(action.id)" class="border-2 border-black hover:border-white">
+            <button type="button" @click="removeAction(action.id)" class="border-2 border-black rounded-sm hover:border-white">
               <img :src="action.action.img" :alt="action.action.name" />
             </button>
           </li>

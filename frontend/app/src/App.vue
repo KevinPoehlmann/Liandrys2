@@ -13,13 +13,13 @@ provide("URL", URL)
 <template>
   <div>
     <header class="fixed top-0 w-full p-2 flex bg-teal-800 text-white">
-      <ul class="flex">
-        <li><router-link class="mx-1 p-2 bg-gray-900 hover:bg-gray-700" to="/">Home</router-link></li>
-        <li><router-link class="mx-1 p-2 bg-gray-900 hover:bg-gray-700" to="/simulation">Simulation</router-link></li>
-        <li><router-link class="mx-1 p-2 bg-gray-900 hover:bg-gray-700" to="/about">About</router-link></li>
+      <ul class="flex mt-1">
+        <li><router-link class="mx-1 p-2 bg-gray-900 rounded hover:bg-gray-700" to="/">Home</router-link></li>
+        <li><router-link class="mx-1 p-2 bg-gray-900 rounded hover:bg-gray-700" to="/simulation">Simulation</router-link></li>
+        <li><router-link class="mx-1 p-2 bg-gray-900 rounded hover:bg-gray-700" to="/about">About</router-link></li>
       </ul>
       <div class="m-auto flex">
-        <img :src="icon" alt="Liandrys" class="h-8 w-8"/>
+        <img :src="icon" alt="Liandrys" class="h-8 w-8 rounded-full"/>
         <h1 class="font-bold text-2xl text-center mx-2">Liandrys</h1>
       </div>
     </header>

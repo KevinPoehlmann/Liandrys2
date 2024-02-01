@@ -29,7 +29,7 @@ const chooseItem = (item) => {
 
 <template>
   <div>
-    <button type="button" @click="shop = !shop" class="border-4 border-black w-16 h-16 bg-slate-200 flex justify-center hover:border-white">
+    <button type="button" @click="shop = !shop" class="border-4 border-black rounded-lg w-16 h-16 bg-slate-200 flex justify-center hover:border-white">
       <p class="text-5xl">+</p>
     </button>
     <div v-if="shop" @click="shop = !shop" class="fixed inset-0 flex items-center justify-center">

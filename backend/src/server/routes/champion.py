@@ -12,6 +12,7 @@ from src.server.database import (
     update_champion
 )
 from src.server.models.champion import ShortChampion, Champion
+from src.server.models.dataenums import RangeType, ResourceType
 
 router = APIRouter()
 debugger = logging.getLogger("debugger")
@@ -35,11 +36,32 @@ async def get_champion_by_id(id_: str) -> Champion:
 
 
 @router.put("/")
-async def put_champion(champion: Champion) -> int:
+async def put_champion(champion: Champion) -> Champion:
     debugger.info(champion.dict())
     response = await update_champion(champion)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Champion with ID: {champion.id} !")
     if response.modified_count == 0:
         raise HTTPException(status_code=400, detail=f"Nothing changed for Champion with ID: {champion.id} !")
-    return response.modified_count
+    return champion
+
+
+
+
+
+#------------------Enums--------------------------------------------------
+
+@router.get("/rangetype/")
+async def get_rangeType() -> list[RangeType]:
+    response = [e.value for e in RangeType]
+    if not response:
+        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
+    return response
+
+
+@router.get("/resourcetype/")
+async def get_resourceType() -> list[ResourceType]:
+    response = [e.value for e in ResourceType]
+    if not response:
+        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
+    return response
