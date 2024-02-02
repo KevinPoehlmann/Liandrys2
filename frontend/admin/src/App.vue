@@ -24,7 +24,7 @@ provide("URL", URL)
     <!-- Main Content -->
     <div class="bg-white dark:bg-gray-700 p-8 w-full min-h-screen">
       <!-- Your content goes here -->
-      <h1 class="text-3xl font-semibold mb-4">Liandry's Admin</h1>
+      <h1 class="text-3xl font-bold text-gray-200 mb-4">Liandry's Admin</h1>
       <router-view></router-view>
     </div>
   </div>

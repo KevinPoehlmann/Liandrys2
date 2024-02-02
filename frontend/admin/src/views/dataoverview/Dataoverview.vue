@@ -87,13 +87,22 @@ onBeforeMount(() => {
 
 <template>
   <div class="p-8">
-    <h2 class="text-2xl font-semibold mb-4">Overview</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+    <h2 class="text-2xl font-semibold text-gray-200 mb-4">Overview</h2>
+    <div class="grid grid-cols-1 border border-white rounded-md p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
       <div v-for="category in categories" :key="category.id">
-        <h3 class="text-xl font-semibold mb-2">{{ category.name }}</h3>
-        <ul>
-          <li v-for="item in category.items" :key="item._id" :class="{ 'text-green-500': item.ready_to_use, 'text-red-500': !item.ready_to_use }">
-            <router-link :to="`${category.route}/${item._id}`">{{ item.name }}</router-link>
+        <h3 class="text-xl font-semibold text-gray-200 mb-2 ml-2">{{ category.name }}</h3>
+        <ul class="border border-white rounded-md p-4 overflow-auto h-96">
+          <li
+            v-for="item in category.items" :key="item._id"
+            >
+            <router-link :to="`${category.route}/${item._id}`">
+              <div :class="{ 'bg-green-700': item.ready_to_use, 'bg-red-700': !item.ready_to_use }"
+              class="border border-white rounded p-1 hover:opacity-75 mb-1">
+                <p class="text-gray-200 font-semibold">
+                  {{ item.name }}
+                </p>
+              </div>
+            </router-link>
           </li>
         </ul>
       </div>
