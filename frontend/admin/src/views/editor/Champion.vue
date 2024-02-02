@@ -1,6 +1,7 @@
 <script setup>
 import axios from "axios";
-import { ref, inject, onBeforeMount, computed, watch } from "vue";
+import { getChanges, isEqual, deepCopy, updateValue } from "./helper.js"
+import { ref, inject, onBeforeMount, watch } from "vue";
 import { useRoute } from "vue-router";
 import Edited from "./Edited.vue";
 import Statfield from "./Statfield.vue";
@@ -42,63 +43,19 @@ onBeforeMount(() => {
     })
 })
 
-function deepCopy(obj) {
-  if (typeof obj !== 'object' || obj === null) {
-    return obj;
-  }
-
-  const result = Array.isArray(obj) ? [] : {};
-
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      result[key] = deepCopy(obj[key]);
-    }
-  }
-
-  return result;
-}
 
 
 watch(champion, (newChampion) => {
-  // Deep comparison of nested properties
   changed.value = !isEqual(newChampion, unchanged.value);
 }, { deep: true })
 
-
-function isEqual(obj1, obj2) {
-  if (typeof obj1 === 'object' || typeof obj2 === 'object') {
-    for (const key in obj1) {
-      if (!isEqual(obj1[key], obj2[key])) {
-        return false;
-      }
-    }
-    for (const key in obj2) {
-      if (!(key in obj1)) {
-        return false;
-      }
-    }
-    return true
-  }
-  if (obj1 != obj2) {
-    return false;
-  }
-  return true;
-}
-
-const getChanges = () => {
-  const changedFields = Object.entries(champion.value).filter(([key, value]) => {
-    const oldVal = unchanged.value[key]
-    return value !== oldVal
-  }).map(([key, value]) => ({ key, value, oldValue: unchanged.value[key] }));
-  return changedFields
-}
 
 
 const saveChanges = () => {
   mod.value = !mod.value
   axios.put(`${URL}champion`, champion.value)
   .then((res) => {
-      unchanged.value = {...champion.value}
+      unchanged.value = deepCopy(champion.value)
     })
     .catch((error) => {
       console.error(`Error: ${error}`)
@@ -108,10 +65,6 @@ const saveChanges = () => {
 const cancelChanges = () => {
   mod.value = !mod.value
 }
-
-const updateValue = (field, value) => {
-  champion.value[field] = value;
-};
 
 
 </script>
@@ -136,73 +89,74 @@ const updateValue = (field, value) => {
       </div>
     </div>
     <!-- Stat Fields -->
-    <div class="flex flex-wrap gap-6 mb-6">
+    <h2 class="text-gray-200 text-xl font-semibold mb-3 ml-12">Base Stats</h2>
+    <div class="border border-white rounded-md p-4 mb-6 flex flex-wrap gap-6">
       <div>
         <h3 class="text-gray-200 text-lg font-semibold mb-1 ml-2">Other Stats</h3>
         <div class="grid grid-cols-2 gap-8 border border-white rounded-md p-4">
-          <div class="flex flex-col">
-            <label for="rangeType" class="text-gray-200 w-40 mb-1">Range Type:</label>
-            <select v-model="champion.range_type" class="form-select">
-              <option v-for="ty in rangeTypes" :key="ty" :value="ty">{{ ty }}</option>
-            </select>
-          </div>
-          <div class="flex flex-col">
-            <label for="resourceType" class="text-gray-200 w-40 mb-1">Resource Type:</label>
-            <select v-model="champion.resource_type" class="form-select">
-              <option v-for="ty in resourceTypes" :key="ty" :value="ty">{{ ty }}</option>
-            </select>
-          </div>
-          <Statfield label="Movementspeed" :value="champion.movementspeed" @update="updateValue('movementspeed', $event)" /> 
-          <Statfield label="Attackrange" :value="champion.attackrange" @update="updateValue('attackrange', $event)" /> 
+        <div class="flex flex-col">
+          <label for="rangeType" class="text-gray-200 w-40 mb-1">Range Type:</label>
+          <select v-model="champion.range_type" id="rangeType" class="form-select">
+            <option v-for="ty in rangeTypes" :key="ty" :value="ty">{{ ty }}</option>
+          </select>
         </div>
-      </div>
-      <div>
-        <h3 class="text-gray-200 text-lg font-semibold mb-1 ml-2">Hitspoints</h3>
-        <div class="grid grid-cols-2 gap-8 border border-white rounded-md p-4">
-          <Statfield label="HP" :value="champion.hp" @update="updateValue('hp', $event)" /> 
-          <Statfield label="HP per Level" :value="champion.hp_per_lvl" @update="updateValue('hp_per_lvl', $event)" /> 
-          <Statfield label="HP Regen" :value="champion.hp_regen" @update="updateValue('hp_regen', $event)" /> 
-          <Statfield label="HP Regen per Level" :value="champion.hp_regen_per_lvl" @update="updateValue('hp_regen_per_lvl', $event)" /> 
+        <div class="flex flex-col">
+          <label for="resourceType" class="text-gray-200 w-40 mb-1">Resource Type:</label>
+          <select v-model="champion.resource_type" id="resourceType" class="form-select">
+            <option v-for="ty in resourceTypes" :key="ty" :value="ty">{{ ty }}</option>
+          </select>
         </div>
+        <Statfield label="Movementspeed" :value="champion.movementspeed" @update="updateValue(champion, 'movementspeed', $event)" /> 
+        <Statfield label="Attackrange" :value="champion.attackrange" @update="updateValue(champion, 'attackrange', $event)" /> 
       </div>
-      <div>
-        <h3 class="text-gray-200 text-lg font-semibold mb-1 ml-2">Mana</h3>
-        <div class="grid grid-cols-2 gap-8 border border-white rounded-md p-4">
-          <Statfield label="Mana" :value="champion.mana" @update="updateValue('mana', $event)" /> 
-          <Statfield label="Mana per Level" :value="champion.mana_per_lvl" @update="updateValue('mana_per_lvl', $event)" /> 
-          <Statfield label="Mana Regen" :value="champion.mana_regen" @update="updateValue('mana_regen', $event)" /> 
-          <Statfield label="Mana Regen per Level" :value="champion.mana_regen_per_lvl" @update="updateValue('mana_regen_per_lvl', $event)" />
-        </div>
+    </div>
+    <div>
+      <h3 class="text-gray-200 text-lg font-semibold mb-1 ml-2">Hitspoints</h3>
+      <div class="grid grid-cols-2 gap-8 border border-white rounded-md p-4">
+        <Statfield label="HP" :value="champion.hp" @update="updateValue(champion, 'hp', $event)" /> 
+        <Statfield label="HP per Level" :value="champion.hp_per_lvl" @update="updateValue(champion, 'hp_per_lvl', $event)" /> 
+        <Statfield label="HP Regen" :value="champion.hp_regen" @update="updateValue(champion, 'hp_regen', $event)" /> 
+        <Statfield label="HP Regen per Level" :value="champion.hp_regen_per_lvl" @update="updateValue(champion, 'hp_regen_per_lvl', $event)" /> 
       </div>
-      <div>
-        <h3 class="text-gray-200 text-lg font-semibold mb-1 ml-2">Attacks</h3>
-        <div class="grid grid-cols-2 gap-8 border border-white rounded-md p-4">
-          <Statfield label="AD" :value="champion.ad" @update="updateValue('ad', $event)" /> 
-          <Statfield label="AD per Level" :value="champion.ad_per_lvl" @update="updateValue('ad_per_lvl', $event)" /> 
-          <Statfield label="Attackspeed" :value="champion.attackspeed" @update="updateValue('attackspeed', $event)" /> 
-          <Statfield label="Attackspeed per Level" :value="champion.attackspeed_per_lvl" @update="updateValue('attackspeed_per_lvl', $event)" /> 
-          <Statfield label="Attackspeed Ratio" :value="champion.attackspeed_ratio" @update="updateValue('attackspeed_ratio', $event)" /> 
-          <Statfield label="Attack Windup" :value="champion.attack_windup" @update="updateValue('attack_windup', $event)" /> 
-          <Statfield label="Windup Modifier" :value="champion.manwindup_modifier" @update="updateValue('manwindup_modifier', $event)" /> 
-          <Statfield label="Missile Speed" :value="champion.missile_speed" @update="updateValue('missile_speed', $event)" /> 
-        </div>
+    </div>
+    <div>
+      <h3 class="text-gray-200 text-lg font-semibold mb-1 ml-2">Mana</h3>
+      <div class="grid grid-cols-2 gap-8 border border-white rounded-md p-4">
+        <Statfield label="Mana" :value="champion.mana" @update="updateValue(champion, 'mana', $event)" /> 
+        <Statfield label="Mana per Level" :value="champion.mana_per_lvl" @update="updateValue(champion, 'mana_per_lvl', $event)" /> 
+        <Statfield label="Mana Regen" :value="champion.mana_regen" @update="updateValue(champion, 'mana_regen', $event)" /> 
+        <Statfield label="Mana Regen per Level" :value="champion.mana_regen_per_lvl" @update="updateValue(champion, 'mana_regen_per_lvl', $event)" />
       </div>
-      <div>
-        <h3 class="text-gray-200 text-lg font-semibold mb-1 ml-2">Resistances</h3>
-        <div class="grid grid-cols-2 gap-8 border border-white rounded-md p-4">
-          <Statfield label="Armor" :value="champion.armor" @update="updateValue('armor', $event)" /> 
-          <Statfield label="Armor per Level" :value="champion.armor_per_lvl" @update="updateValue('armor_per_lvl', $event)" /> 
-          <Statfield label="MR" :value="champion.mr" @update="updateValue('mr', $event)" /> 
-          <Statfield label="MR per Level" :value="champion.mr_per_lvl" @update="updateValue('mr_per_lvl', $event)" /> 
-        </div>
+    </div>
+    <div>
+      <h3 class="text-gray-200 text-lg font-semibold mb-1 ml-2">Attacks</h3>
+      <div class="grid grid-cols-2 gap-8 border border-white rounded-md p-4">
+        <Statfield label="AD" :value="champion.ad" @update="updateValue(champion, 'ad', $event)" /> 
+        <Statfield label="AD per Level" :value="champion.ad_per_lvl" @update="updateValue(champion, 'ad_per_lvl', $event)" /> 
+        <Statfield label="Attackspeed" :value="champion.attackspeed" @update="updateValue(champion, 'attackspeed', $event)" /> 
+        <Statfield label="Attackspeed per Level" :value="champion.attackspeed_per_lvl" @update="updateValue(champion, 'attackspeed_per_lvl', $event)" /> 
+        <Statfield label="Attackspeed Ratio" :value="champion.attackspeed_ratio" @update="updateValue(champion, 'attackspeed_ratio', $event)" /> 
+        <Statfield label="Attack Windup" :value="champion.attack_windup" @update="updateValue(champion, 'attack_windup', $event)" /> 
+        <Statfield label="Windup Modifier" :value="champion.manwindup_modifier" @update="updateValue(champion, 'manwindup_modifier', $event)" /> 
+        <Statfield label="Missile Speed" :value="champion.missile_speed" @update="updateValue(champion, 'missile_speed', $event)" /> 
       </div>
+    </div>
+    <div>
+      <h3 class="text-gray-200 text-lg font-semibold mb-1 ml-2">Resistances</h3>
+      <div class="grid grid-cols-2 gap-8 border border-white rounded-md p-4">
+        <Statfield label="Armor" :value="champion.armor" @update="updateValue(champion, 'armor', $event)" /> 
+        <Statfield label="Armor per Level" :value="champion.armor_per_lvl" @update="updateValue(champion, 'armor_per_lvl', $event)" /> 
+        <Statfield label="MR" :value="champion.mr" @update="updateValue(champion, 'mr', $event)" /> 
+        <Statfield label="MR per Level" :value="champion.mr_per_lvl" @update="updateValue(champion, 'mr_per_lvl', $event)" /> 
+      </div>
+    </div>
       <!-- Add more fields as needed -->
     </div>
-    <ChampionPassive v-if="champion.passive" :passive="champion.passive" @update="updateValue('passive', $event)"/>
-    <ChampionAbility v-if="champion.q" :ability="champion.q" @update="updateValue('q', $event)"/>
-    <ChampionAbility v-if="champion.w" :ability="champion.w" @update="updateValue('w', $event)"/>
-    <ChampionAbility v-if="champion.e" :ability="champion.e" @update="updateValue('e', $event)"/>
-    <ChampionAbility v-if="champion.r" :ability="champion.r" @update="updateValue('r', $event)"/>
+    <ChampionPassive v-if="champion.passive" :passive="champion.passive" @update="updateValue(champion, 'passive', $event)"/>
+    <ChampionAbility v-if="champion.q" :ability="champion.q" @update="updateValue(champion, 'q', $event)"/>
+    <ChampionAbility v-if="champion.w" :ability="champion.w" @update="updateValue(champion, 'w', $event)"/>
+    <ChampionAbility v-if="champion.e" :ability="champion.e" @update="updateValue(champion, 'e', $event)"/>
+    <ChampionAbility v-if="champion.r" :ability="champion.r" @update="updateValue(champion, 'r', $event)"/>
       <!-- Switch for ready_to_use -->
     <div
       :class="{'bg-green-500': champion.ready_to_use, 'bg-red-400': !champion.ready_to_use}"
@@ -219,7 +173,6 @@ const updateValue = (field, value) => {
       </label>
     </div>
     <!-- Save Changes Button -->
-    <Edited :champion="champion.value" :unchanged="unchanged.value" :pushChanges="saveChanges"/>
     <button
       @click="mod = !mod"
       :disabled="!changed"
@@ -228,6 +181,6 @@ const updateValue = (field, value) => {
     >
       Save Changes
     </button>
-    <Edited :mod="mod" :changes="getChanges()" :pushChanges="saveChanges" :closeModal="cancelChanges"/>
+    <Edited :mod="mod" :changes="getChanges(champion, unchanged)" :pushChanges="saveChanges" :closeModal="cancelChanges"/>
   </div>
 </template>

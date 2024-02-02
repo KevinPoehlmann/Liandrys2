@@ -22,14 +22,14 @@ watch(passive, (newPassive) => {
       :alt="passive.name"
       class="w-12 h-12 object-cover border border-black rounded-3xl mr-4"
       />
-      <h3 class="text-gray-200 text-lg font-semibold">{{ passive.name }}</h3>
+      <h2 class="text-gray-200 text-xl font-semibold">{{ passive.name }}</h2>
     </div>
     <div class="border border-white rounded-md p-4">
       <div class="flex flex-col mb-4">
-        <label :for="description" class="text-gray-200  w-40 mb-1">Description:</label>
+        <label :for="'description'+passive.name" class="text-gray-200  w-40 mb-1">Description:</label>
         <textarea 
           type="text" 
-          :id="description" 
+          :id="'description'+passive.name"
           :value="passive.description" 
           @input="updateValue" 
           class="form-input rounded w-3/5 overflow-auto p-2" 

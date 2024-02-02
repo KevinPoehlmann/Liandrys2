@@ -28,12 +28,12 @@ const cancelChanges = () => {
           <h2 class="text-xl font-semibold mb-4">Changes</h2>
           <div class="border-4 border-black">
             <ul class="w-96 h-96 overflow-y-auto">
-              <li v-for="change in changes" :key="change[0]" class="relative group">
-                <p>{{ change.key }}: {{ change.oldValue }}  ->  {{ change.value }}</p>
+              <li v-for="change in changes" :key="change" class="relative group">
+                <p>{{ change }}</p>
               </li>
             </ul>
           </div>
-        <button @click="saveChanges" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+        <button @click="saveChanges" class="mt-4 mr-4 px-4 py-2 bg-blue-500 text-white rounded">
           Save
         </button>
         <button @click="cancelChanges" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">

@@ -3,7 +3,6 @@ const { label, value } = defineProps(['label', 'value'])
 const emit = defineEmits();
 
 const updateValue = ($event) => {
-  console.log($event.target.value)
   emit('update', $event.target.value);
 };
 </script>

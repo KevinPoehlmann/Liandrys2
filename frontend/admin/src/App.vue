@@ -15,8 +15,8 @@ provide("URL", URL)
     <nav class="bg-gray-800 p-4">
       <div class="container mx-auto flex items-center justify-between">
         <div class="space-x-4">
-          <router-link to="/" class="text-white mx-1 p-2 bg-gray-800 hover:bg-gray-700">Patchloader</router-link>
-          <router-link to="/data" class="text-white mx-1 p-2 bg-gray-800 hover:bg-gray-700">Data Overview</router-link>
+          <router-link to="/" class="text-white mx-1 p-2 bg-gray-800 rounded-md hover:bg-gray-700">Patchloader</router-link>
+          <router-link to="/data" class="text-white mx-1 p-2 bg-gray-800 rounded-md hover:bg-gray-700">Data Overview</router-link>
         </div>
       </div>
     </nav>
