@@ -1,6 +1,5 @@
 <script setup>
-import axios from "axios";
-import { ref, inject } from "vue";
+import { ref, inject, computed } from "vue";
 
 
 const { items, addItem, role } = defineProps(['items', 'addItem', 'role']);
@@ -11,8 +10,15 @@ let itemId = 0;
 
 const itemInfo = ref("")
 const shop = ref(false)
+const searchQuery = ref('');
 
 
+
+const filteredItems = computed(() => {
+  return items.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
 
 
 
@@ -34,12 +40,18 @@ const chooseItem = (item) => {
     </button>
     <div v-if="shop" @click="shop = !shop" class="fixed inset-0 flex items-center justify-center">
       <div class="fixed inset-0 bg-black opacity-50"></div>
-        <div class="bg-white rounded p-8 shadow-lg z-10" @click.stop>
-          <h2 class="text-xl font-semibold mb-4">Shop</h2>
-          <div class="border-4 border-black">
-            <ul class="flex flex-row flex-wrap w-96 h-96 overflow-y-auto">
-              <li v-for="item in items" :key="item.item_id" class="w-16 h-16 relative group" @mouseover="itemInfo = item.item_id" @mouseout="itemInfo = '0'">
-                <button type="button" @click="chooseItem(item)" class="border-2 border-black hover:border-slate-200">
+        <div class="bg-gray-800 rounded p-8 shadow-lg w-1/2 z-10" @click.stop>
+          <div class="flex items-center justify-between mb-2 mx-4">
+            <h2 class="text-xl text-gray-200 font-semibold mb-4">Shop:</h2>
+            <input
+              v-model="searchQuery" type="text" placeholder="Search..."
+              class=" w-96 ml-4 p-2 border border-gray-300 rounded text-gray-800 focus:outline-none focus:border-blue-500"
+            >
+          </div>
+          <div class="">
+            <ul class="flex flex-row flex-wrap h-96 overflow-y-auto border border-white rounded">
+              <li v-for="item in filteredItems" :key="item.item_id" class="w-16 h-16 relative group" @mouseover="itemInfo = item.item_id" @mouseout="itemInfo = '0'">
+                <button type="button" @click="chooseItem(item)" class="border-2 border-black rounded-sm hover:border-slate-200 hover:opacity-60">
                   <img :src="URL + 'images/' + item.image.group + '/' + item.image.full" :alt="item.name" />
                 </button>
                 <div v-if="itemInfo === item.item_id" class="absolute top-full left-0 bg-white border border-gray-300 p-1 h-8 shadow-md z-20 whitespace-nowrap">

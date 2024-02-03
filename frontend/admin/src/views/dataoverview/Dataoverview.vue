@@ -1,6 +1,6 @@
 <script setup>
 import axios from 'axios';
-import { ref, inject, onBeforeMount } from "vue";
+import { ref, inject, onBeforeMount, watch } from "vue";
 
 
 
@@ -13,31 +13,35 @@ const categories = ref([
           name: 'Champions',
           route: 'champion',
           items: [],
+          filteredItems: [],
         },
         {
           id: 2,
           name: 'Items',
           route: 'item',
           items: [],
+          filteredItems: [],
         },
         {
-          id: 2,
+          id: 3,
           name: 'Runes',
           route: 'rune',
           items: [],
+          filteredItems: [],
         },
         {
-          id: 2,
+          id: 4,
           name: 'Summonerspells',
           route: 'summonerspell',
           items: [],
+          filteredItems: [],
         },
         // Add more categories
       ])
-const champions = ref([])
-const items = ref([])
-const runes = ref([])
-const summonerspells = ref([])
+
+const searchQuery = ref('');
+
+
 
 
 onBeforeMount(() => {
@@ -48,6 +52,7 @@ onBeforeMount(() => {
       axios.get(`${URL}champion/all/${patch.value}`)
       .then((champs) => {
         categories.value[0].items = champs.data;
+        categories.value[0].filteredItems = champs.data;
       })
       .catch((error) => {
         console.error(`Error: ${error}`)
@@ -55,6 +60,7 @@ onBeforeMount(() => {
       axios.get(`${URL}item/all/${patch.value}`)
       .then((itemRes) => {
         categories.value[1].items = itemRes.data;
+        categories.value[1].filteredItems = itemRes.data;
       })
       .catch((error) => {
         console.error(`Error: ${error}`)
@@ -62,6 +68,7 @@ onBeforeMount(() => {
       axios.get(`${URL}rune/all/${patch.value}`)
       .then((runeRes) => {
         categories.value[2].items = runeRes.data;
+        categories.value[2].filteredItems = runeRes.data;
       })
       .catch((error) => {
         console.error(`Error: ${error}`)
@@ -69,17 +76,28 @@ onBeforeMount(() => {
       axios.get(`${URL}summonerspell/all/${patch.value}`)
       .then((summonerspellRes) => {
         categories.value[3].items = summonerspellRes.data;
+        categories.value[3].filteredItems = summonerspellRes.data;
       })
       .catch((error) => {
         console.error(`Error: ${error}`)
       })
     }
   })
-    .catch((error) => {
-      console.error(`Error: ${error}`)
-      patch.value = "Error"
-    })
+  .catch((error) => {
+    console.error(`Error: ${error}`)
+    patch.value = "Error"
+  })
 })
+
+
+
+watch(searchQuery, () => {
+  for(const cat of categories.value) {
+    cat.filteredItems = cat.items.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  }
+});
 
 
 </script>
@@ -87,13 +105,19 @@ onBeforeMount(() => {
 
 <template>
   <div class="p-8">
-    <h2 class="text-2xl font-semibold text-gray-200 mb-4">Overview</h2>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl text-gray-200 font-semibold">Champion Selection:</h2>
+      <input
+        v-model="searchQuery" type="text" placeholder="Search..."
+        class=" w-96 ml-4 p-2 border border-gray-300 rounded text-gray-800 focus:outline-none focus:border-blue-500"
+      >
+    </div>
     <div class="grid grid-cols-1 border border-white rounded-md p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
       <div v-for="category in categories" :key="category.id">
         <h3 class="text-xl font-semibold text-gray-200 mb-2 ml-2">{{ category.name }}</h3>
         <ul class="border border-white rounded-md p-4 overflow-auto h-96">
           <li
-            v-for="item in category.items" :key="item._id"
+            v-for="item in category.filteredItems" :key="item._id"
             >
             <router-link :to="`${category.route}/${item._id}`">
               <div :class="{ 'bg-green-700': item.ready_to_use, 'bg-red-700': !item.ready_to_use }"

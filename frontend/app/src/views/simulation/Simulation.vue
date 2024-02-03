@@ -44,7 +44,6 @@ onBeforeMount(() => {
   .then((res) => {
     patch.value = res.data.patch;
     if (patch.value) {
-      console.log("Hi this is patch: " + patch.value)
       axios.get(`${URL}champion/all/${patch.value}`)
       .then((champs) => {
         allChampions.value = champs.data;
@@ -70,6 +69,7 @@ onBeforeMount(() => {
 const selectAttacker = (championId) => {
   axios.get(`${URL}champion/${championId}`)
     .then((res) => {
+      //console.log(res.data)
       combo.value = []
       attacker.value = res.data;
       q.value = {
@@ -203,7 +203,7 @@ watchEffect(() => {
 <template>
   <div class="">
     <!--   STATS   -->
-    <div class="flex justify-between">
+    <div v-if="allItems[0] && allChampions[0]" class="flex justify-between">
       <div class="flex">
         <ChampionSelection :imgSrc="attacker.image ? URL + 'images/' + attacker.image.group + '/' + attacker.image.full : noChampion"
         :champions="allChampions" :selectChampion="selectAttacker"/>

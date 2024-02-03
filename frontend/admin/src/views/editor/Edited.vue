@@ -24,12 +24,12 @@ const cancelChanges = () => {
   <div>
     <div v-if="mod" @click="cancelChanges" class="fixed inset-0 flex items-center justify-center">
       <div class="fixed inset-0 bg-black opacity-50"></div>
-        <div class="bg-white rounded p-8 shadow-lg z-10" @click.stop>
-          <h2 class="text-xl font-semibold mb-4">Changes</h2>
-          <div class="border-4 border-black">
+        <div class="bg-gray-800 border border-white rounded p-8 shadow-lg z-10" @click.stop>
+          <h2 class="text-xl text-gray-200 font-semibold mb-4">Changes:</h2>
+          <div class="p-4">
             <ul class="w-96 h-96 overflow-y-auto">
               <li v-for="change in changes" :key="change" class="relative group">
-                <p>{{ change }}</p>
+                <p class="font-semibold text-gray-200">- {{ change }}</p>
               </li>
             </ul>
           </div>
