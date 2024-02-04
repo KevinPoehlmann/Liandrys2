@@ -8,6 +8,7 @@ from src.server.database import (
     update_item
 )
 from src.server.models.item import ShortItem, Item
+from src.server.models.dataenums import ItemClass, Map
 
 router = APIRouter()
 
@@ -37,3 +38,23 @@ async def put_item(item: Item) -> int:
     if response.modified_count == 0:
         raise HTTPException(status_code=400, detail=f"Nothing changed for Item with ID: {item.id} !")
     return response.modified_count
+
+
+
+
+#------------------Enums--------------------------------------------------
+
+@router.get("/itemclass/")
+async def get_item_class() -> list[ItemClass]:
+    response = [e.value for e in ItemClass]
+    if not response:
+        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
+    return response
+
+
+@router.get("/map/")
+async def get_map() -> list[Map]:
+    response = [e.value for e in Map]
+    if not response:
+        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
+    return response

@@ -47,7 +47,7 @@ const chooseChampion = (championId) => {
                 <button type="button" @click="chooseChampion(champion._id)" class="border-2 border-black rounded-sm hover:border-slate-200 hover:opacity-60">
                   <img :src="URL + 'images/' + champion.image.group + '/' + champion.image.full" :alt="champion.name" />
                 </button>
-                <div v-if="championInfo === champion.champion_id" class="absolute top-full left-0 bg-gray-200 border border-gray-300 p-1 h-8 shadow-md z-20 whitespace-nowrap">
+                <div v-if="championInfo === champion.champion_id" class="absolute top-full left-0 bg-gray-200 border border-gray-300 rounded p-1 h-8 shadow-md z-20 whitespace-nowrap">
                   {{ champion.name }}
                 </div>
               </li>

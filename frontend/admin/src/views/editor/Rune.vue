@@ -3,7 +3,7 @@ import axios from "axios";
 import { getChanges, isEqual, deepCopy, updateValue } from "./helper.js"
 import { ref, inject, onBeforeMount, watch } from "vue";
 import { useRoute } from "vue-router";
-import Statfield from "./Statfield.vue";
+import Statfield from "./Editfields/Statfield.vue";
 import Edited from "./Edited.vue";
 
 const { params } = useRoute();
@@ -63,10 +63,15 @@ const cancelChanges = () => {
       />
 
       <!-- Rune Details -->
-      <div>
-        <p class="text-gray-200 mb-1">DB:  {{ rune._id }}</p>
+      <div class=" mr-14">
+        <p class="text-gray-200 font-semibold mb-1">DB:  {{ rune._id }}</p>
         <h2 class="text-gray-200 text-2xl font-bold mb-2">{{ rune.name }}</h2>
-        <p class="text-gray-200 mb-1">ID:  {{ rune.rune_id }}</p>
+        <p class="text-gray-200 font-semibold mb-1">ID:  {{ rune.rune_id }}</p>
+      </div>
+      <div>
+        <p class="text-gray-200 font-semibold mb-1">Tree:  {{ rune.tree }}</p>
+        <p class="text-gray-200 font-semibold mb-1">Tree ID:  {{ rune.tree_id }}</p>
+        <p class="text-gray-200 font-semibold mb-1">Roew:  {{ rune.row }}</p>
       </div>
     </div>
     <!-- Stat Fields -->

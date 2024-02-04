@@ -54,7 +54,7 @@ const chooseItem = (item) => {
                 <button type="button" @click="chooseItem(item)" class="border-2 border-black rounded-sm hover:border-slate-200 hover:opacity-60">
                   <img :src="URL + 'images/' + item.image.group + '/' + item.image.full" :alt="item.name" />
                 </button>
-                <div v-if="itemInfo === item.item_id" class="absolute top-full left-0 bg-white border border-gray-300 p-1 h-8 shadow-md z-20 whitespace-nowrap">
+                <div v-if="itemInfo === item.item_id" class="absolute top-full left-0 bg-white border border-gray-300 rounded p-1 h-8 shadow-md z-20 whitespace-nowrap">
                   {{ item.name }}
                 </div>
               </li>

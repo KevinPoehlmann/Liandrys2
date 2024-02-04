@@ -129,7 +129,7 @@ class ItemClass(str, MultiValueEnum):
     EPIC="epic item"
     LEGENDARY="legendary item"
     MYTHIC="mythic item"
-    NONE=""
+    NONE="None", ""
     STARTER="starter item"
     TRINKET="trinket item"
     TOWER_MINION="tower and minion item"

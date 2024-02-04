@@ -3,7 +3,7 @@ import axios from "axios";
 import { getChanges, isEqual, deepCopy, updateValue } from "./helper.js"
 import { ref, inject, onBeforeMount, watch } from "vue";
 import { useRoute } from "vue-router";
-import Statfield from "./Statfield.vue";
+import Statfield from "./Editfields/Statfield.vue";
 import Edited from "./Edited.vue";
 
 const { params } = useRoute();
@@ -64,9 +64,9 @@ const cancelChanges = () => {
 
       <!-- Summonerspell Details -->
       <div>
-        <p class="text-gray-200 mb-1">DB:  {{ summonerspell._id }}</p>
+        <p class="text-gray-200 font-semibold mb-1">DB:  {{ summonerspell._id }}</p>
         <h2 class="text-gray-200 text-2xl font-bold mb-2">{{ summonerspell.name }}</h2>
-        <p class="text-gray-200 mb-1">ID:  {{ summonerspell.key }}</p>
+        <p class="text-gray-200 font-semibold mb-1">ID:  {{ summonerspell.key }}</p>
       </div>
     </div>
     <!-- Stat Fields -->

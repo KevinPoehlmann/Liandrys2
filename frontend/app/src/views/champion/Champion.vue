@@ -1,6 +1,6 @@
 <script setup>
 import axios from "axios";
-import Shop from "../../components/Shop.vue";
+import Shop from "../simulation/Shop.vue";
 import { ref, inject, onBeforeMount, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import basicAttackImage from "@/assets/basic_attack.png"

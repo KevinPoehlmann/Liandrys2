@@ -6,7 +6,7 @@ import { ref, inject, onBeforeMount, watch } from "vue";
 
 const URL = inject("URL");
 
-const patch = ref("")
+const patch = inject("patch")
 const categories = ref([
         {
           id: 1,
@@ -45,49 +45,41 @@ const searchQuery = ref('');
 
 
 onBeforeMount(() => {
-  axios.get(`${URL}patch/`)
-  .then((res) => {
-    patch.value = res.data.patch;
-    if (patch.value) {
-      axios.get(`${URL}champion/all/${patch.value}`)
-      .then((champs) => {
-        categories.value[0].items = champs.data;
-        categories.value[0].filteredItems = champs.data;
-      })
-      .catch((error) => {
-        console.error(`Error: ${error}`)
-      })
-      axios.get(`${URL}item/all/${patch.value}`)
-      .then((itemRes) => {
-        categories.value[1].items = itemRes.data;
-        categories.value[1].filteredItems = itemRes.data;
-      })
-      .catch((error) => {
-        console.error(`Error: ${error}`)
-      })
-      axios.get(`${URL}rune/all/${patch.value}`)
-      .then((runeRes) => {
-        categories.value[2].items = runeRes.data;
-        categories.value[2].filteredItems = runeRes.data;
-      })
-      .catch((error) => {
-        console.error(`Error: ${error}`)
-      })
-      axios.get(`${URL}summonerspell/all/${patch.value}`)
-      .then((summonerspellRes) => {
-        categories.value[3].items = summonerspellRes.data;
-        categories.value[3].filteredItems = summonerspellRes.data;
-      })
-      .catch((error) => {
-        console.error(`Error: ${error}`)
-      })
-    }
+  axios.get(`${URL}champion/all/${patch.value}`)
+  .then((champs) => {
+    categories.value[0].items = champs.data;
+    categories.value[0].filteredItems = champs.data;
   })
   .catch((error) => {
     console.error(`Error: ${error}`)
-    patch.value = "Error"
   })
-})
+  axios.get(`${URL}item/all/${patch.value}`)
+  .then((itemRes) => {
+    categories.value[1].items = itemRes.data;
+    categories.value[1].filteredItems = itemRes.data;
+  })
+  .catch((error) => {
+    console.error(`Error: ${error}`)
+  })
+  axios.get(`${URL}rune/all/${patch.value}`)
+  .then((runeRes) => {
+    categories.value[2].items = runeRes.data;
+    categories.value[2].filteredItems = runeRes.data;
+  })
+  .catch((error) => {
+    console.error(`Error: ${error}`)
+  })
+  axios.get(`${URL}summonerspell/all/${patch.value}`)
+  .then((summonerspellRes) => {
+    categories.value[3].items = summonerspellRes.data;
+    categories.value[3].filteredItems = summonerspellRes.data;
+  })
+    .catch((error) => {
+      console.error(`Error: ${error}`)
+    })
+  }
+)
+
 
 
 

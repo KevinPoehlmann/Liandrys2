@@ -2,7 +2,7 @@
 import axios from "axios";
 
 import ChampionSelection from "./ChampionSelection.vue";
-import Shop from "../../components/Shop.vue";
+import Shop from "./Shop.vue";
 import { ref, inject, onBeforeMount, watchEffect } from "vue";
 import basicAttackImage from "@/assets/basic_attack.png"
 import noChampion from "@/assets/NoChampion.png"
@@ -17,7 +17,7 @@ const basicAttack = {
 }
 
 const URL = inject("URL");
-const patch = ref("")
+const patch = inject("patch")
 const attacker = ref({});
 const defender = ref({});
 const allChampions = ref([])
@@ -40,29 +40,20 @@ const damage = ref(0);
 
 
 onBeforeMount(() => {
-  axios.get(`${URL}patch/`)
-  .then((res) => {
-    patch.value = res.data.patch;
-    if (patch.value) {
-      axios.get(`${URL}champion/all/${patch.value}`)
-      .then((champs) => {
-        allChampions.value = champs.data;
-      })
-      .catch((error) => {
-        console.error(`Error: ${error}`)
-      })
-      axios.get(`${URL}item/all/${patch.value}`)
-      .then((items) => {
-        allItems.value = items.data;
-      })
-      .catch((error) => {
-        console.error(`Error: ${error}`)
-      })
-    }
+  axios.get(`${URL}champion/all/${patch.value}`)
+  .then((champs) => {
+    allChampions.value = champs.data;
   })
-    .catch((error) => {
-      console.error(`Error: ${error}`)
-    })
+  .catch((error) => {
+    console.error(`Error: ${error}`)
+  })
+  axios.get(`${URL}item/all/${patch.value}`)
+  .then((items) => {
+    allItems.value = items.data;
+  })
+  .catch((error) => {
+    console.error(`Error: ${error}`)
+  })
 })
 
 
@@ -294,8 +285,9 @@ watchEffect(() => {
           </button>
           <button type="button" @click="addAction(r)"
           :disabled="!r.ready_to_use"
-          :class="{ 'opacity-50 cursor-not-allowed': !r.ready_to_use }"
-          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
+          :class="{ 'opacity-50 cursor-not-allowed z-0': !r.ready_to_use }"
+          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white"
+          style="transform: translateZ(0);">
             <img :src="r.img" :alt="r.name" />
           </button>
         </div>
@@ -315,5 +307,6 @@ watchEffect(() => {
     <!--   CALCULATIONS   -->
     <div>
       <p class="text-4xl">{{ damage }} Damage</p>
+    </div>
   </div>
-</div></template>
+</template>
