@@ -285,7 +285,7 @@ watchEffect(() => {
           </button>
           <button type="button" @click="addAction(r)"
           :disabled="!r.ready_to_use"
-          :class="{ 'opacity-50 cursor-not-allowed z-0': !r.ready_to_use }"
+          :class="{ 'grayscale cursor-not-allowed': !r.ready_to_use }"
           class="border-2 border-black rounded-sm w-16 h-16 hover:border-white"
           style="transform: translateZ(0);">
             <img :src="r.img" :alt="r.name" />
