@@ -42,7 +42,7 @@ const chooseChampion = (championId) => {
             >
           </div>
           <div class="border-4 border-white rounded">
-            <ul class="flex flex-row flex-wrap overflow-y-auto h-96">
+            <ul class="flex flex-row flex-wrap overflow-y-auto overflow-x-clip h-96">
               <li v-for="champion in filteredChampions" :key="champion.champion_id" class="w-16 h-16 relative group" @mouseover="championInfo = champion.champion_id" @mouseout="itemInfo = '0'">
                 <button type="button" @click="chooseChampion(champion._id)" class="border-2 border-black rounded-sm hover:border-slate-200 hover:opacity-60">
                   <img :src="URL + 'images/' + champion.image.group + '/' + champion.image.full" :alt="champion.name" />

@@ -49,7 +49,7 @@ const chooseItem = (item) => {
             >
           </div>
           <div class="">
-            <ul class="flex flex-row flex-wrap h-96 overflow-y-auto border border-white rounded">
+            <ul class="flex flex-row flex-wrap h-96 overflow-y-auto border border-white rounded overflow-x-clip">
               <li v-for="item in filteredItems" :key="item.item_id" class="w-16 h-16 relative group" @mouseover="itemInfo = item.item_id" @mouseout="itemInfo = '0'">
                 <button type="button" @click="chooseItem(item)" class="border-2 border-black rounded-sm hover:border-slate-200 hover:opacity-60">
                   <img :src="URL + 'images/' + item.image.group + '/' + item.image.full" :alt="item.name" />
