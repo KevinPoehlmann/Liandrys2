@@ -6,7 +6,7 @@ import { useRoute } from "vue-router";
 import Statfield from "./Editfields/Statfield.vue";
 import Selectionfield from "./Editfields/Selectionfield.vue";
 import Textfield from "./Editfields/Textfield.vue";
-import ListField from "./ListField.vue";
+import ListField from "./Editfields/Listfield.vue";
 import Multiselectionfield from "./Editfields/Multiselectionfield.vue"
 import Edited from "./Edited.vue";
 
