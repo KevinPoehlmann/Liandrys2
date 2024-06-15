@@ -25,7 +25,7 @@ class Status(BaseModel):
 
 
 class Condition(BaseModel):
-    modality: str
+    modality: bool = True
     condition: ConditionType
 
 
