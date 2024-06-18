@@ -14,7 +14,8 @@ from src.server.routes.simulation import router as simulationRouter
 
 
 def add_middleware(app: FastAPI) -> None:
-    origins = ["http://localhost:5173"]
+    origins = ["http://localhost:5173",
+               "http://surfer:5173"]
 
     app.add_middleware(
         CORSMiddleware,
