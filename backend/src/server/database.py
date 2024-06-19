@@ -29,7 +29,7 @@ def connect_database() -> AsyncIOMotorDatabase:
     except InvalidURI:
         #for testing
         #TODO Remove at some point
-        client= AsyncIOMotorClient("mongodb://localhost:27017")
+        client= AsyncIOMotorClient("mongodb://localhost:27017") #TODO change to surfer
     database = client.liandrys
     return database
 
@@ -66,10 +66,9 @@ async def add_patch(patch: NewPatch) -> str:
 
 
 async def fetch_patch_latest() -> Patch:
-    cursor = patch_collection.find().sort("patch", -1)
-    async for document in cursor:
-        patch = Patch(**document)
-        return patch
+    patch = await patch_collection.find_one(sort=[("patch", -1)])
+    if patch:
+        return Patch(**patch)
 
 
 async def fetch_patch_by_id(id_) -> Patch:
