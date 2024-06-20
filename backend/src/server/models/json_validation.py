@@ -207,3 +207,4 @@ class InfoJson(BaseModel):
     urls: UrlJson
     itemStatDict: dict
     itemWikiNames: dict
+    runeWikiNames: dict

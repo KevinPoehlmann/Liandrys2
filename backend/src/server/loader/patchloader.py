@@ -316,7 +316,7 @@ class Patchloader():
         debugger.debug(f"++++++++++++++ All Items done")
 
 
-    async def load_item(self, item_id: str, item_json: ItemJson, wiki_names: list[str]) -> None:
+    async def load_item(self, item_id: str, item_json: ItemJson, wiki_names: dict) -> None:
         debugger.debug(f"{item_json.name} - B - begin")
         if len(item_id) > 4:
             return
@@ -350,18 +350,17 @@ class Patchloader():
 
 
     async def load_all_runes(self, rune_list: list[RuneClass]) -> None:
-        rune_tasks = [self.load_rune(rune) for rune in rune_list]
+        wiki_names = info_loader().runeWikiNames
+        rune_tasks = [self.load_rune(rune, wiki_names) for rune in rune_list]
         await asyncio.gather(*rune_tasks)
         debugger.debug(f"++++++++++++++ All Runes done")
 
 
-    async def load_rune(self, rune_class: RuneClass) -> None:
+    async def load_rune(self, rune_class: RuneClass, wiki_names: dict) -> None:
         debugger.debug(f"{rune_class.rune.name} - B - begin")
         try:
-            if rune_class.rune.name == "Grasp of the Undying" or rune_class.rune.name == "Triple Tonic":
-                rune_wiki = await self.session.html(self.urls.wiki + rune_class.rune.name + "_(Rune)")
-            else:
-                rune_wiki = await self.session.html(self.urls.wiki + rune_class.rune.name)
+            rune_class.rune.name = wiki_names[rune_class.rune.name] if rune_class.rune.name in wiki_names else rune_class.rune.name
+            rune_wiki = await self.session.html(self.urls.wiki + rune_class.rune.name)
             debugger.debug(f"{rune_class.rune.name} - W - wiki")
         except HTTPError as e:
             raise LoadError(e.code, e.msg, e.url, "Rune", rune_class.rune.name)

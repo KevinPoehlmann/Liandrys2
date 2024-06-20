@@ -59,6 +59,11 @@
         "Kalista's Black Spear": "Black Spear",
         "Slightly Magical Footwear": "Slightly Magical Boots"
     },
+    "runeWikiNames": {
+        "Grasp of the Undying": "Grasp of the Undying_(Rune)",
+        "Jack Of All Trades": "Jack of All Trades",
+        "Triple Tonic": "Triple Tonic_(Rune)"
+    },
     "maps": {
         "11": "SR",
         "12": "HA",
