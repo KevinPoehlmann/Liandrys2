@@ -1,6 +1,7 @@
 services:
   mongo:
-    image: mongodb-raspberrypi4-unofficial-r7.0.4
+    image: mongo
+    #image: mongodb-raspberrypi4-unofficial-r7.0.4
     container_name: liandrys-database
     restart: always
     ports:
