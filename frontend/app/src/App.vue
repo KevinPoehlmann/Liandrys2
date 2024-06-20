@@ -4,7 +4,9 @@ import icon from "@/assets/Liandrys.png"
 
 import { provide, ref, onBeforeMount } from 'vue';
 
-const URL = "http://127.0.0.1:5000/";
+//const URL = "http://127.0.0.1:5000/";
+const URL = "http://172.22.0.5:5000/";
+
 provide("URL", URL)
 
 const patch = ref("")

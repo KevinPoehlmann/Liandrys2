@@ -3,7 +3,9 @@ import axios from "axios";
 
 import { provide, ref, onBeforeMount } from 'vue';
 
-const URL = "http://127.0.0.1:5001/";
+//const URL = "http://127.0.0.1:5001/";
+const URL = "http://172.22.0.6:5001/";
+
 provide("URL", URL)
 
 const patch = ref("")
