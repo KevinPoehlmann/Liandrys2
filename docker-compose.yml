@@ -1,0 +1,74 @@
+services:
+  mongo:
+    image: mongodb-raspberrypi4-unofficial-r7.0.4
+    container_name: liandrys-database
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      - liandrys-mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+
+  fastapi:
+    build: ./backend
+    entrypoint: uvicorn src.main:app --host 0.0.0.0 --port 5000 --reload
+    container_name: liandrys-fastapi
+    ports:
+      - 5000:5000
+    volumes:
+      - ./backend/src:/app/src
+    environment:
+      MONGODB_HOST: mongo
+      MONGODB_PORT: 27017
+      MONGODB_USER: root
+      MONGODB_PASSWORD: example
+      PYTHONPATH: /app
+
+  fastapi-admin:
+    build: ./backend
+    entrypoint: uvicorn src.admin:app --host 0.0.0.0 --port 5001 --reload
+    container_name: liandrys-fastapi-admin
+    ports:
+      - 5001:5001
+    volumes:
+      - ./backend/src:/app/src
+    environment:
+      MONGODB_HOST: mongo
+      MONGODB_PORT: 27017
+      MONGODB_USER: root
+      MONGODB_PASSWORD: example
+      PYTHONPATH: /app
+
+  vue:
+    build: ./frontend/app
+    command: npm run dev
+    container_name: liandrys-vue
+    ports:
+      - 5173:5173
+    volumes:
+      - ./frontend/app/src:/app/src
+
+  vue-admin:
+    build: ./frontend/admin
+    command: npm run dev
+    container_name: liandrys-vue-admin
+    ports:
+      - 5174:5174
+    volumes:
+      - ./frontend/admin/src:/app/src
+
+
+volumes:
+  liandrys-mongo-data:
