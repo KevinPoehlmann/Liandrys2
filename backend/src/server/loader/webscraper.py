@@ -263,7 +263,10 @@ def get_paragraph_tables(paragraph_content: Tag) -> list[Status]:
             title = re.findall(r"\(based on (.*)\)", value.text)
             if value["data-top_values"]:
                 top_values = value["data-top_values"]
-                effect_stat.scalings.append(Scaling(value=usify_tables(bot_values, top_values, title=title[0])))
+                if title:
+                    effect_stat.scalings.append(Scaling(value=usify_tables(bot_values, top_values, title=title[0])))
+                else:
+                    effect_stat.scalings.append(Scaling(value=usify_tables(bot_values, top_values, title="?")))                    
             else:
                 effect_stat.scalings.append(Scaling(value=usify_tables(bot_values, title=title[0])))
             table_stats.append(effect_stat)
@@ -398,7 +401,7 @@ def get_ability_details(ability_content: Tag) -> AbilityDetails:
 
 
 
-def create_item(item_id: str, item_json: ItemJson, item_wiki: str, patch: str) -> NewItem:
+def create_item(item_id: str, item_json: ItemJson, item_wiki: str, patch: str, masterwork: bool) -> NewItem:
     
     item = NewItem(
         item_id=item_id,
@@ -421,13 +424,16 @@ def create_item(item_id: str, item_json: ItemJson, item_wiki: str, patch: str) -
         return item
     
     item_soup = BeautifulSoup(item_wiki, "lxml")
-    wiki_item = get_item_content(item.name, item_soup)
+    wiki_item = get_item_content(item_soup)
     if not wiki_item: return item
 
     item_class = wiki_item.find("a", attrs={"title": re.compile("Category")})
     if not item_class: return item
     try:
-        item.class_ = ItemClass(item_class.text)
+        if masterwork:
+            item.class_ = ItemClass.MASTERWORK
+        else:
+            item.class_ = ItemClass(item_class.text)
     except ValueError as e:
         logger.warning(e)
         item.class_ = ItemClass.ERROR
@@ -435,7 +441,7 @@ def create_item(item_id: str, item_json: ItemJson, item_wiki: str, patch: str) -
     elements = get_item_elements(wiki_item)
     for title, content in elements.items():
         match title:
-            case "Stats": item.stats = get_item_stats(content)
+            case "Stats": item.stats = get_item_stats(content, masterwork)
             case "Active": item.active = get_item_active(content)
             case "Passive": item.passives = get_item_passives(content)
             case "Limitations": item.limitations = get_item_limitations(content)
@@ -447,13 +453,9 @@ def create_item(item_id: str, item_json: ItemJson, item_wiki: str, patch: str) -
     
 
 
-def get_item_content(item_name: str, wiki_soup: BeautifulSoup) -> Tag:
+def get_item_content(wiki_soup: BeautifulSoup) -> Tag:
     wiki_item = wiki_soup.find("div", class_="mw-parser-output")
     if not wiki_item: return
-    #for Ornn Items
-    heading = wiki_soup.find("h1", id="firstHeading").text.strip()
-    if heading != item_name:
-        wiki_item = wiki_item.find("div", class_="wds-tab__content wds-is-current").nextSibling
     return wiki_item
 
 
@@ -468,8 +470,26 @@ def get_item_elements(item_content: Tag) -> dict[Tag]:
     return info_dict
 
 
-def get_item_stats(stat_content: Tag) -> dict:
-    stats = stat_content.find_all("div", class_="pi-data-value pi-font")
+def is_masterwork(item_wiki: str) -> bool:
+    item_soup = BeautifulSoup(item_wiki, "lxml")
+    wiki_item = get_item_content(item_soup)
+    if not wiki_item: return False
+    item_class = wiki_item.find("a", attrs={"title": re.compile("Category")})
+    if not item_class: return False
+    elements = get_item_elements(wiki_item)
+    if "Stats" in elements:
+        masterwork = elements["Stats"].find("li", string=re.compile("Masterwork Total"))
+    else:
+        return False
+    return bool(masterwork)
+
+
+def get_item_stats(stat_content: Tag, masterwork: bool) -> dict:
+    tabs = stat_content.find_all("div", class_="wds-tab__content")
+    if masterwork:
+        stats = tabs[2].find_all("div", class_="pi-data-value pi-font")
+    else:
+        stats = tabs[0].find_all("div", class_="pi-data-value pi-font")
     item_stats = {}
     for stat in stats:
         value = stat.contents[0] + stat.contents[1].text

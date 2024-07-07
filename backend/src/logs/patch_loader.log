@@ -415,3 +415,885 @@
 25.01.2024  10:32:31 - WARNING: '5' is not a valid Stat
 25.01.2024  10:33:01 - WARNING: Weird Item stat: +3.5
 25.01.2024  10:33:06 - INFO: Patching took 944.1491861343384 seconds.
+05.07.2024  12:53:11 - INFO: --------------------------------------------------------------------------------------------
+05.07.2024  12:53:11 - INFO:  Loading patch: 14.13.1
+05.07.2024  12:53:13 - ERROR: list index out of range
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader.py", line 70, in wrapper
+    await method(*args, **kwargs)
+  File "/app/src/server/loader/patchloader.py", line 224, in load_data
+    await asyncio.gather(
+  File "/app/src/server/loader/patchloader.py", line 315, in load_all_items
+    await asyncio.gather(*item_tasks)
+  File "/app/src/server/loader/patchloader.py", line 334, in load_item
+    item = ws.create_item(item_id, item_json, item_wiki, self.patch.patch, masterwork=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 441, in create_item
+    case "Stats": item.stats = get_item_stats(content, masterwork)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 486, in get_item_stats
+    stats = tabs[2].find_all("div", class_="pi-data-value pi-font")
+            ~~~~^^^
+IndexError: list index out of range
+05.07.2024  12:53:13 - ERROR: Patch 14.13.1 was not loaded successfully!
+05.07.2024  12:53:13 - ERROR: Successfully cleaned up patch '14.13.1'!
+05.07.2024  12:56:40 - INFO: --------------------------------------------------------------------------------------------
+05.07.2024  12:56:40 - INFO:  Loading patch: 14.13.1
+05.07.2024  12:56:50 - WARNING: 'mythic item' is not a valid ItemClass
+05.07.2024  12:56:53 - ERROR: 'Stats'
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader.py", line 70, in wrapper
+    await method(*args, **kwargs)
+  File "/app/src/server/loader/patchloader.py", line 224, in load_data
+    await asyncio.gather(
+  File "/app/src/server/loader/patchloader.py", line 315, in load_all_items
+    await asyncio.gather(*item_tasks)
+  File "/app/src/server/loader/patchloader.py", line 335, in load_item
+    masterwork = ws.is_masterwork(item_wiki)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 477, in is_masterwork
+    masterwork = elements["Stats"].find("li", string=re.compile("Masterwork Total"))
+                 ~~~~~~~~^^^^^^^^^
+KeyError: 'Stats'
+05.07.2024  12:56:53 - ERROR: Patch 14.13.1 was not loaded successfully!
+05.07.2024  12:56:53 - ERROR: Successfully cleaned up patch '14.13.1'!
+05.07.2024  13:02:23 - INFO: --------------------------------------------------------------------------------------------
+05.07.2024  13:02:23 - INFO:  Loading patch: 14.13.1
+05.07.2024  13:02:38 - WARNING: 'mythic item' is not a valid ItemClass
+05.07.2024  13:02:38 - WARNING: 'mythic item' is not a valid ItemClass
+05.07.2024  13:02:45 - WARNING: 'recharge' is not a valid AbilityStatKey
+05.07.2024  13:02:45 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:45 - WARNING: Stats do not match regex: 0 − 77 (based on level) (+ 50 / 65 / 80 / 95 / 110) (+ 55% AP)
+05.07.2024  13:02:45 - WARNING: could not convert string to float: '20 mana + 1 Sand'
+05.07.2024  13:02:45 - WARNING: 'soldiers' is not a valid Stat
+05.07.2024  13:02:46 - WARNING: 'minutes' is not a valid TableTitle
+05.07.2024  13:02:46 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:46 - INFO: Can't find the wiki page for summoner Placeholder and Attack-Smite
+05.07.2024  13:02:46 - INFO: Can't find the wiki page for summoner Placeholder
+05.07.2024  13:02:46 - WARNING: " Glacial Storm's Rank" is not a valid TableTitle
+05.07.2024  13:02:46 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:46 - WARNING: 'chunks of ice' is not a valid Stat
+05.07.2024  13:02:46 - WARNING: could not convert string to float: '60 mana\xa0+\xa035'
+05.07.2024  13:02:47 - WARNING: "of Braum's maximum health" is not a valid Stat
+05.07.2024  13:02:47 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:47 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:47 - WARNING: 'number of targets hit by the outer radius' is not a valid TableTitle
+05.07.2024  13:02:47 - WARNING: "target's  Hemorrhage stacks" is not a valid TableTitle
+05.07.2024  13:02:48 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:48 - WARNING: Scales do not match regex: 15% AD)  ×  (1 + 0.3 per 100% bonus attack speed
+05.07.2024  13:02:48 - WARNING: Scales do not match regex: 15% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+05.07.2024  13:02:48 - WARNING: Scales do not match regex: 45% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+05.07.2024  13:02:48 - WARNING: Scales do not match regex: 75 / 90 / 105% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+05.07.2024  13:02:48 - WARNING: Scales do not match regex: 225 / 270 / 315% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+05.07.2024  13:02:49 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:49 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:49 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:49 - WARNING: could not convert string to float: '20 Mana + 1'
+05.07.2024  13:02:50 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:02:50 - WARNING: "of the target's missing health" is not a valid Stat
+05.07.2024  13:02:50 - WARNING: "of the target's missing health" is not a valid Stat
+05.07.2024  13:02:50 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:02:50 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:02:50 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:02:50 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:51 - WARNING: " Grand Challenge's Rank" is not a valid TableTitle
+05.07.2024  13:02:51 - WARNING: 'Vitals hit' is not a valid TableTitle
+05.07.2024  13:02:51 - WARNING: could not convert string to float: '8 mana per'
+05.07.2024  13:02:52 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:52 - WARNING: 'seconds elapsed' is not a valid TableTitle
+05.07.2024  13:02:53 - WARNING: Stats do not match regex: 8 / 10.8 / 13.6 / 16.4 / 19.2 / 22% of target's maximum health (+ 100% bonus AD)
+05.07.2024  13:02:53 - WARNING: Stats do not match regex: 52 − 120 (based on level) (+ 20 / 40 / 60 / 80 / 100) (+ 70% AP)
+05.07.2024  13:02:53 - WARNING: 'time active' is not a valid TableTitle
+05.07.2024  13:02:54 - WARNING: could not convert string to float: '78 Mana per'
+05.07.2024  13:02:54 - WARNING: New Detail type 'Statistics' encountered!
+05.07.2024  13:02:54 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:54 - WARNING: could not convert string to float: '30 Mana + 1'
+05.07.2024  13:02:55 - WARNING: '' is not a valid Stat
+05.07.2024  13:02:55 - WARNING: '' is not a valid Stat
+05.07.2024  13:02:55 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:55 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:55 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:55 - WARNING: '' is not a valid Stat
+05.07.2024  13:02:55 - WARNING: '' is not a valid Stat
+05.07.2024  13:02:55 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:55 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:56 - WARNING: 'per 100 bonus health' is not a valid Stat
+05.07.2024  13:02:56 - WARNING: 'per 100 bonus health' is not a valid Stat
+05.07.2024  13:02:57 - WARNING: could not convert string to float: '30 Mana + 4'
+05.07.2024  13:02:57 - WARNING: " GNAR!'s rank" is not a valid TableTitle
+05.07.2024  13:02:57 - WARNING: could not convert string to float: 'None'
+05.07.2024  13:02:57 - WARNING: 'Boots Tier' is not a valid TableTitle
+05.07.2024  13:02:57 - WARNING: could not convert string to float: 'None'
+05.07.2024  13:02:57 - WARNING: 'Boots Tier' is not a valid TableTitle
+05.07.2024  13:02:57 - WARNING: could not convert string to float: 'None'
+05.07.2024  13:02:57 - WARNING: 'Boots Tier' is not a valid TableTitle
+05.07.2024  13:02:57 - WARNING: could not convert string to float: 'None'
+05.07.2024  13:02:57 - WARNING: 'Boots Tier' is not a valid TableTitle
+05.07.2024  13:02:58 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:58 - WARNING: Scales do not match regex: 50% per 100% bonus attack speed
+05.07.2024  13:02:58 - WARNING: Scales do not match regex: 750% per 100% bonus attack speed
+05.07.2024  13:02:59 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:02:59 - WARNING: "of Ivern's AP" is not a valid Stat
+05.07.2024  13:02:59 - WARNING: Scales do not match regex: 0 − 8.2 (based on level)
+05.07.2024  13:02:59 - WARNING: Scales do not match regex: 0 − 10.25 (based on level)
+05.07.2024  13:03:00 - WARNING: 'enemies hit' is not a valid TableTitle
+05.07.2024  13:03:00 - WARNING: Scales do not match regex: 3% per 1% of health lost in the past 4 seconds
+05.07.2024  13:03:00 - WARNING: " Human Form's Rank" is not a valid TableTitle
+05.07.2024  13:03:00 - WARNING: " Spider Form's Rank" is not a valid TableTitle
+05.07.2024  13:03:00 - WARNING: " Spider Form's Rank" is not a valid TableTitle
+05.07.2024  13:03:00 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:00 - WARNING: could not convert string to float: '35 mana + 1'
+05.07.2024  13:03:01 - WARNING: " Tentacle Smash's rank" is not a valid TableTitle
+05.07.2024  13:03:01 - WARNING: could not convert string to float: '20 Mana + 1 Turret'
+05.07.2024  13:03:01 - WARNING: New Detail type 'Statistics' encountered!
+05.07.2024  13:03:01 - WARNING: New Detail type 'Statistics' encountered!
+05.07.2024  13:03:01 - WARNING: New Detail type 'Statistics' encountered!
+05.07.2024  13:03:01 - WARNING: New Detail type 'Statistics' encountered!
+05.07.2024  13:03:01 - WARNING: New Detail type 'Statistics' encountered!
+05.07.2024  13:03:01 - WARNING: New Detail type 'Statistics' encountered!
+05.07.2024  13:03:02 - WARNING: 'Plasma stacks before application' is not a valid TableTitle
+05.07.2024  13:03:02 - WARNING: 'bonus attack speed' is not a valid TableTitle
+05.07.2024  13:03:02 - WARNING: Scales do not match regex: Siphoning Strike stacks
+05.07.2024  13:03:02 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:03 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:03 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:03 - WARNING: Stats do not match regex: 5 − 64.5 (based on level) (+ 12 / 14 / 16 / 18 / 20) (+ 40% bonus AD) (+ 20% AP)
+05.07.2024  13:03:03 - WARNING: Stats do not match regex: 330 / 660 / 990 (+ 550% AD) (+ 330% AP) + 15 / 30 / 45 (+ 25% AD) (+ 15% AP) per 4% critical strike chance
+05.07.2024  13:03:03 - WARNING: Stats do not match regex: 660 / 1320 / 1980 (+ 1100% AD) (+ 660% AP) + 30 / 60 / 90 (+ 50% AD) (+ 30% AP) per 4% critical strike chance
+05.07.2024  13:03:03 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:03 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:04 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:04 - WARNING: '' is not a valid Stat
+05.07.2024  13:03:04 - WARNING: '' is not a valid Stat
+05.07.2024  13:03:04 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:04 - WARNING: 'missing health at the time of cast' is not a valid TableTitle
+05.07.2024  13:03:04 - WARNING: Stats do not match regex: 1 / 1.5 / 2% of target's maximum health (+ 34.375% AD)
+05.07.2024  13:03:04 - WARNING: Stats do not match regex: 8 / 12 / 16% of target's maximum health (+ 275% AD)
+05.07.2024  13:03:04 - WARNING: Stats do not match regex: 16 / 24 / 32% of target's maximum health (+ 550% AD)
+05.07.2024  13:03:05 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:05 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:06 - WARNING: Stats do not match regex: 0 − 45 (based on level) (+ 80 / 110 / 140 / 170 / 200) (+ 70% AP)
+05.07.2024  13:03:06 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:08 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:08 - WARNING: 'per  Feast stack' is not a valid Stat
+05.07.2024  13:03:08 - WARNING: 'per  Feast stack' is not a valid Stat
+05.07.2024  13:03:08 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:08 - WARNING: "Kindred's missing health" is not a valid TableTitle
+05.07.2024  13:03:08 - WARNING: 'per  mark' is not a valid Stat
+05.07.2024  13:03:08 - WARNING: 'per  mark' is not a valid Stat
+05.07.2024  13:03:08 - WARNING: 'per  Mark' is not a valid Stat
+05.07.2024  13:03:08 - WARNING: Scales do not match regex: 80% bonus AD)  (+ 7.5% (+  2.25%
+05.07.2024  13:03:08 - WARNING: Scales do not match regex:  0.175%) per  Mark
+05.07.2024  13:03:09 - WARNING: could not convert string to float: '20 Mana per attack with '
+05.07.2024  13:03:09 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:09 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:09 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:10 - WARNING: 'time traveling' is not a valid TableTitle
+05.07.2024  13:03:10 - WARNING: 'time traveling' is not a valid TableTitle
+05.07.2024  13:03:10 - WARNING: could not convert string to float: '30 Mana + 1'
+05.07.2024  13:03:11 - WARNING: Stats do not match regex: 100% AD (+ 8 / 9.5 / 11 / 12.5 / 14% of target's maximum health)
+05.07.2024  13:03:11 - WARNING: 'Forge Disable Time' is not a valid AbilityStatKey
+05.07.2024  13:03:12 - WARNING: " Realm Warp's Rank" is not a valid TableTitle
+05.07.2024  13:03:12 - WARNING: 'of expended Grit' is not a valid Stat
+05.07.2024  13:03:12 - WARNING: could not convert string to float: '100 Current'
+05.07.2024  13:03:12 - WARNING: "of primary target's bonus health" is not a valid Stat
+05.07.2024  13:03:12 - WARNING: "of primary target's bonus health" is not a valid Stat
+05.07.2024  13:03:13 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:13 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:13 - WARNING: Stats do not match regex: 20 / 40 / 60 / 80 / 100% AD (+ 25% AP)
+05.07.2024  13:03:13 - WARNING: Stats do not match regex: 75 − 135 (based on level) (+ 60 / 100 / 140 / 180 / 220) (+ 70% AD) (+ 120% AP)
+05.07.2024  13:03:13 - WARNING: ' ' is not a valid Stat
+05.07.2024  13:03:14 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:14 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:14 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:15 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:15 - WARNING: Stats do not match regex: 5 / 5.5 / 6 / 6.5 / 7% of target's maximum health (+ 1.5% per 100 AP) (+ 0.4% per 100 Pantheon's bonus health)
+05.07.2024  13:03:15 - WARNING: " Comet Spear's rank" is not a valid TableTitle
+05.07.2024  13:03:16 - WARNING: could not convert string to float: 'X'
+05.07.2024  13:03:16 - WARNING: 'proximity' is not a valid TableTitle
+05.07.2024  13:03:16 - WARNING: could not convert string to float: '75 (+ 15 AD)'
+05.07.2024  13:03:16 - WARNING: could not convert string to float: "Head of Kha'Zix"
+05.07.2024  13:03:16 - WARNING: ' Trophies' is not a valid TableTitle
+05.07.2024  13:03:16 - WARNING: Stats do not match regex: 30 − 235 (based on level) (+ 30% AD)
+05.07.2024  13:03:16 - WARNING: Stats do not match regex: 50 − 220 (based on level) (+ 80% AP)
+05.07.2024  13:03:16 - WARNING: Stats do not match regex: 50 − 305 (based on level) (+ 80% bonus AD)
+05.07.2024  13:03:16 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:17 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:17 - WARNING: could not convert string to float: '6 Style'
+05.07.2024  13:03:17 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:17 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:18 - WARNING: 'per 1 Lethality' is not a valid Stat
+05.07.2024  13:03:18 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:18 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:18 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:18 - WARNING: Scales do not match regex: 40% AP)(+ 1.5 per  Mist collected
+05.07.2024  13:03:18 - WARNING: 'non-champions hit' is not a valid TableTitle
+05.07.2024  13:03:18 - WARNING: Stats do not match regex: 60 / 65 / 70 / 75 / 80% AD (+ 50% AP)
+05.07.2024  13:03:18 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:19 - WARNING: Stats do not match regex: 10 − 40 (based on level) (+ 2 / 2.5 / 3 / 3.5 / 4% (+ 1.5% per 100 AP) of target's maximum health)
+05.07.2024  13:03:19 - WARNING: Stats do not match regex: 30 − 120 (based on level) (+ 6 / 7.5 / 9 / 10.5 / 12% (+ 4.5% per 100 AP) of target's maximum health)
+05.07.2024  13:03:19 - WARNING: Stats do not match regex: 10 − 40 (based on level) (+ 4 / 4.5 / 5 / 5.5 / 6% (+ 2% per 100 AP) of target's maximum health)
+05.07.2024  13:03:19 - WARNING: Stats do not match regex: 30 − 120 (based on level) (+ 12 / 13.5 / 15 / 16.5 / 18% (+ 6% per 100 AP) of target's maximum health)
+05.07.2024  13:03:19 - WARNING: could not convert string to float: '13 Mana per'
+05.07.2024  13:03:19 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:20 - WARNING: 'his missing health' is not a valid TableTitle
+05.07.2024  13:03:20 - WARNING: "of Sona's AP" is not a valid Stat
+05.07.2024  13:03:20 - WARNING: "of Sona's AP" is not a valid Stat
+05.07.2024  13:03:20 - WARNING: "per 100 of Sona's AP" is not a valid Stat
+05.07.2024  13:03:20 - WARNING: 'target range' is not a valid TableTitle
+05.07.2024  13:03:20 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:03:20 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:21 - WARNING: 'per  Soul collected' is not a valid Stat
+05.07.2024  13:03:21 - WARNING: Stats do not match regex: 1.5 per  Soul collected (+ 0% AD)
+05.07.2024  13:03:21 - WARNING: Stats do not match regex: 1.5 per  Soul collected (+ 80 / 110 / 140 / 170 / 200% AD)
+05.07.2024  13:03:21 - WARNING: Stats do not match regex: 0.15 / 0.25 / 0.35 / 0.45 / 0.55 per 1% missing health
+05.07.2024  13:03:21 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:03:21 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:22 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:22 - WARNING: 'enemies hit' is not a valid TableTitle
+05.07.2024  13:03:22 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:22 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:22 - WARNING: could not convert string to float: '35 Mana + 1'
+05.07.2024  13:03:23 - WARNING: 'stones detonated' is not a valid TableTitle
+05.07.2024  13:03:23 - WARNING: Stats do not match regex: 75 / 85 / 95 / 105 / 115% AD (+ 50% AP)
+05.07.2024  13:03:23 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:23 - WARNING: 'number of enemies hit' is not a valid TableTitle
+05.07.2024  13:03:23 - WARNING: " Piercing Arrow's charge time" is not a valid TableTitle
+05.07.2024  13:03:23 - WARNING: " Piercing Arrow's charge time" is not a valid TableTitle
+05.07.2024  13:03:24 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:24 - WARNING: Stats do not match regex: 20 − 150 (based on level) (+ 45 / 60 / 75 / 90 / 105 / 120) (+ 65% AP) (+ 8% maximum health)
+05.07.2024  13:03:24 - WARNING: Stats do not match regex: 10 − 75 (based on level) (+ 22.5 / 30 / 37.5 / 45 / 52.5 / 60) (+ 32.5% AP) (+ 4% maximum health)
+05.07.2024  13:03:24 - WARNING: Stats do not match regex: 0.63 − 4.69 (based on level) (+ 1.41 / 1.88 / 2.34 / 2.81 / 3.28 / 3.75) (+ 2.03% AP) (+ 0.25% maximum health)
+05.07.2024  13:03:24 - WARNING: Scales do not match regex: 70% AD) × (1 + 100% critical strike chance
+05.07.2024  13:03:24 - WARNING: Scales do not match regex: 70% AD) × (1 + 100% critical strike chance
+05.07.2024  13:03:24 - WARNING: 'distance from Vex' is not a valid TableTitle
+05.07.2024  13:03:25 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:03:25 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:03:25 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:26 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:26 - WARNING: 'ability haste' is not a valid TableTitle
+05.07.2024  13:03:26 - WARNING: could not convert string to float: '60 Mana + all'
+05.07.2024  13:03:26 - WARNING: "of Taric's armor" is not a valid Stat
+05.07.2024  13:03:26 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:26 - WARNING: could not convert string to float: '70 Mana + 1'
+05.07.2024  13:03:26 - WARNING: 'cast distance' is not a valid TableTitle
+05.07.2024  13:03:27 - WARNING: Stats do not match regex: 4 / 5.5 / 7 / 8.5 / 10% (+「 1% per 35 」「 2.86% per 100 」bonus AD) of target's maximum health
+05.07.2024  13:03:27 - WARNING: could not convert string to float: '50 Mana + 1'
+05.07.2024  13:03:27 - WARNING: 'orb travel distance' is not a valid TableTitle
+05.07.2024  13:03:28 - WARNING: 'previous feathers hit' is not a valid TableTitle
+05.07.2024  13:03:29 - WARNING: Stats do not match regex: 6 / 7 / 8 / 9 / 10% of target's maximum health (+ 120% AD) (+ 100% AP)
+05.07.2024  13:03:29 - WARNING: "Anchor's critical strike chance" is not a valid TableTitle
+05.07.2024  13:03:29 - WARNING: "Anchor's missing mana" is not a valid TableTitle
+05.07.2024  13:03:30 - WARNING: 'of damage dealt' is not a valid Stat
+05.07.2024  13:03:30 - WARNING: 'seconds active' is not a valid TableTitle
+05.07.2024  13:03:32 - WARNING: Weird Item stat: +3.5
+05.07.2024  13:03:32 - WARNING: "of Zac's maximum health" is not a valid Stat
+05.07.2024  13:03:32 - WARNING: "of Zac's maximum health" is not a valid Stat
+05.07.2024  13:03:32 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:03:32 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:03:32 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:32 - WARNING: '  percent' is not a valid Stat
+05.07.2024  13:03:35 - WARNING: Stats do not match regex: 10 − 68 (based on level) (+ 4 / 5 / 6 / 7 / 8% of his missing health)
+05.07.2024  13:03:35 - WARNING: Stats do not match regex: 5 − 34 (based on level) (+ 2 / 2.5 / 3 / 3.5 / 4% of his missing health)
+05.07.2024  13:03:35 - WARNING: New Detail type 'Statistics' encountered!
+05.07.2024  13:03:35 - WARNING: New Detail type 'Statistics' encountered!
+05.07.2024  13:03:40 - WARNING: Stats do not match regex: 100% AD (+ 25 / 40 / 55% of damage stored)
+05.07.2024  13:03:40 - WARNING: 'ATTACK RANGE' is not a valid AbilityStatKey
+05.07.2024  13:03:40 - WARNING: could not convert string to float: 'None'
+05.07.2024  13:03:40 - WARNING: "of turret's maximum health" is not a valid Stat
+05.07.2024  13:03:40 - WARNING: 'Seed' is not a valid Stat
+05.07.2024  13:03:40 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:48 - WARNING: Stats do not match regex: 7 − 50 (based on level) (+ 50 / 80 / 110 / 140 / 170) (+ 60% AP)
+05.07.2024  13:03:48 - WARNING: Stats do not match regex: 17.5 − 125 (based on level) (+ 125 / 200 / 275 / 350 / 425) (+ 150% AP)
+05.07.2024  13:03:48 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:48 - WARNING: could not convert string to float: '1 Spell'
+05.07.2024  13:03:51 - WARNING: 'seconds' is not a valid Stat
+05.07.2024  13:03:59 - ERROR: list index out of range
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader.py", line 70, in wrapper
+    await method(*args, **kwargs)
+  File "/app/src/server/loader/patchloader.py", line 224, in load_data
+    await asyncio.gather(
+  File "/app/src/server/loader/patchloader.py", line 274, in load_all_champions
+    await asyncio.gather(*champion_tasks)
+  File "/app/src/server/loader/patchloader.py", line 294, in load_champion
+    champion = ws.create_champion(champion_json, champion_wiki, self.patch.patch)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 92, in create_champion
+    w = create_ability(Skill.W, champion_soup, champion_json.spells[1])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 208, in create_ability
+    splitted_effects = get_ability_splitted_text(ability_content)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 287, in get_ability_splitted_text
+    table_stats = get_paragraph_tables(paragraph)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 266, in get_paragraph_tables
+    effect_stat.scalings.append(Scaling(value=usify_tables(bot_values, top_values, title=title[0])))
+                                                                                         ~~~~~^^^
+IndexError: list index out of range
+05.07.2024  13:03:59 - ERROR: Patch 14.13.1 was not loaded successfully!
+05.07.2024  13:03:59 - ERROR: Successfully cleaned up patch '14.13.1'!
+06.07.2024  17:01:21 - INFO: --------------------------------------------------------------------------------------------
+06.07.2024  17:01:21 - INFO:  Loading patch: 14.13.1
+06.07.2024  17:01:27 - WARNING: 'mythic item' is not a valid ItemClass
+06.07.2024  17:01:40 - WARNING: 'mythic item' is not a valid ItemClass
+06.07.2024  17:01:43 - WARNING: 'recharge' is not a valid AbilityStatKey
+06.07.2024  17:01:43 - INFO: Can't find the wiki page for summoner Placeholder and Attack-Smite
+06.07.2024  17:01:43 - INFO: Can't find the wiki page for summoner Placeholder
+06.07.2024  17:01:44 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:44 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:46 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:47 - WARNING: " Glacial Storm's Rank" is not a valid TableTitle
+06.07.2024  17:01:47 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:47 - WARNING: 'chunks of ice' is not a valid Stat
+06.07.2024  17:01:47 - WARNING: could not convert string to float: '60 mana\xa0+\xa035'
+06.07.2024  17:01:47 - WARNING: 'minutes' is not a valid TableTitle
+06.07.2024  17:01:47 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:48 - WARNING: 'enemies hit' is not a valid TableTitle
+06.07.2024  17:01:49 - WARNING: could not convert string to float: '78 Mana per'
+06.07.2024  17:01:49 - WARNING: " GNAR!'s rank" is not a valid TableTitle
+06.07.2024  17:01:50 - WARNING: " Human Form's Rank" is not a valid TableTitle
+06.07.2024  17:01:50 - WARNING: " Spider Form's Rank" is not a valid TableTitle
+06.07.2024  17:01:50 - WARNING: " Spider Form's Rank" is not a valid TableTitle
+06.07.2024  17:01:50 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:50 - WARNING: could not convert string to float: '30 Mana + 4'
+06.07.2024  17:01:51 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:51 - WARNING: could not convert string to float: '8 mana per'
+06.07.2024  17:01:52 - WARNING: "of Braum's maximum health" is not a valid Stat
+06.07.2024  17:01:52 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:52 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:52 - WARNING: '' is not a valid Stat
+06.07.2024  17:01:52 - WARNING: '' is not a valid Stat
+06.07.2024  17:01:52 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:52 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:52 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:52 - WARNING: '' is not a valid Stat
+06.07.2024  17:01:52 - WARNING: '' is not a valid Stat
+06.07.2024  17:01:52 - WARNING: Scales do not match regex: 3% per 1% of health lost in the past 4 seconds
+06.07.2024  17:01:53 - WARNING: Stats do not match regex: 0 − 77 (based on level) (+ 50 / 65 / 80 / 95 / 110) (+ 55% AP)
+06.07.2024  17:01:53 - WARNING: could not convert string to float: '20 mana + 1 Sand'
+06.07.2024  17:01:53 - WARNING: 'soldiers' is not a valid Stat
+06.07.2024  17:01:53 - WARNING: could not convert string to float: '35 mana + 1'
+06.07.2024  17:01:53 - WARNING: Scales do not match regex: 15% AD)  ×  (1 + 0.3 per 100% bonus attack speed
+06.07.2024  17:01:54 - WARNING: Scales do not match regex: 15% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+06.07.2024  17:01:54 - WARNING: Scales do not match regex: 45% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+06.07.2024  17:01:54 - WARNING: Scales do not match regex: 75 / 90 / 105% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+06.07.2024  17:01:54 - WARNING: Scales do not match regex: 225 / 270 / 315% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+06.07.2024  17:01:54 - WARNING: " Grand Challenge's Rank" is not a valid TableTitle
+06.07.2024  17:01:54 - WARNING: 'Vitals hit' is not a valid TableTitle
+06.07.2024  17:01:54 - WARNING: Stats do not match regex: 52 − 120 (based on level) (+ 20 / 40 / 60 / 80 / 100) (+ 70% AP)
+06.07.2024  17:01:55 - WARNING: could not convert string to float: '20 Mana + 1 Turret'
+06.07.2024  17:01:55 - WARNING: New Detail type 'Statistics' encountered!
+06.07.2024  17:01:55 - WARNING: New Detail type 'Statistics' encountered!
+06.07.2024  17:01:55 - WARNING: New Detail type 'Statistics' encountered!
+06.07.2024  17:01:55 - WARNING: New Detail type 'Statistics' encountered!
+06.07.2024  17:01:55 - WARNING: New Detail type 'Statistics' encountered!
+06.07.2024  17:01:55 - WARNING: New Detail type 'Statistics' encountered!
+06.07.2024  17:01:55 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:55 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:56 - WARNING: could not convert string to float: '20 Mana per attack with '
+06.07.2024  17:01:56 - WARNING: 'time active' is not a valid TableTitle
+06.07.2024  17:01:56 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:57 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:01:57 - WARNING: "of the target's missing health" is not a valid Stat
+06.07.2024  17:01:57 - WARNING: "of the target's missing health" is not a valid Stat
+06.07.2024  17:01:57 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:01:57 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:01:57 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:01:57 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:57 - WARNING: "of Ivern's AP" is not a valid Stat
+06.07.2024  17:01:57 - WARNING: 'number of targets hit by the outer radius' is not a valid TableTitle
+06.07.2024  17:01:57 - WARNING: "target's  Hemorrhage stacks" is not a valid TableTitle
+06.07.2024  17:01:58 - WARNING: 'time traveling' is not a valid TableTitle
+06.07.2024  17:01:58 - WARNING: 'time traveling' is not a valid TableTitle
+06.07.2024  17:01:58 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:58 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:01:59 - WARNING: Scales do not match regex: 50% per 100% bonus attack speed
+06.07.2024  17:01:59 - WARNING: Scales do not match regex: 750% per 100% bonus attack speed
+06.07.2024  17:01:59 - WARNING: " Tentacle Smash's rank" is not a valid TableTitle
+06.07.2024  17:01:59 - WARNING: Stats do not match regex: 1 / 1.5 / 2% of target's maximum health (+ 34.375% AD)
+06.07.2024  17:01:59 - WARNING: Stats do not match regex: 8 / 12 / 16% of target's maximum health (+ 275% AD)
+06.07.2024  17:01:59 - WARNING: Stats do not match regex: 16 / 24 / 32% of target's maximum health (+ 550% AD)
+06.07.2024  17:02:00 - WARNING: New Detail type 'Statistics' encountered!
+06.07.2024  17:02:00 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:00 - WARNING: 'per  Feast stack' is not a valid Stat
+06.07.2024  17:02:00 - WARNING: 'per  Feast stack' is not a valid Stat
+06.07.2024  17:02:01 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:01 - WARNING: could not convert string to float: '20 Mana + 1'
+06.07.2024  17:02:01 - WARNING: Stats do not match regex: 330 / 660 / 990 (+ 550% AD) (+ 330% AP) + 15 / 30 / 45 (+ 25% AD) (+ 15% AP) per 4% critical strike chance
+06.07.2024  17:02:01 - WARNING: Stats do not match regex: 660 / 1320 / 1980 (+ 1100% AD) (+ 660% AP) + 30 / 60 / 90 (+ 50% AD) (+ 30% AP) per 4% critical strike chance
+06.07.2024  17:02:02 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:02 - WARNING: 'seconds elapsed' is not a valid TableTitle
+06.07.2024  17:02:02 - WARNING: 'per 100 bonus health' is not a valid Stat
+06.07.2024  17:02:02 - WARNING: 'per 100 bonus health' is not a valid Stat
+06.07.2024  17:02:03 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:03 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:03 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:04 - WARNING: Stats do not match regex: 5 / 5.5 / 6 / 6.5 / 7% of target's maximum health (+ 1.5% per 100 AP) (+ 0.4% per 100 Pantheon's bonus health)
+06.07.2024  17:02:04 - WARNING: " Comet Spear's rank" is not a valid TableTitle
+06.07.2024  17:02:04 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:05 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:05 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:05 - WARNING: Stats do not match regex: 0 − 45 (based on level) (+ 80 / 110 / 140 / 170 / 200) (+ 70% AP)
+06.07.2024  17:02:05 - WARNING: could not convert string to float: '30 Mana + 1'
+06.07.2024  17:02:07 - WARNING: 'Forge Disable Time' is not a valid AbilityStatKey
+06.07.2024  17:02:07 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:07 - WARNING: 'missing health at the time of cast' is not a valid TableTitle
+06.07.2024  17:02:08 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:08 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:08 - WARNING: Stats do not match regex: 5 − 64.5 (based on level) (+ 12 / 14 / 16 / 18 / 20) (+ 40% bonus AD) (+ 20% AP)
+06.07.2024  17:02:09 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:09 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:09 - WARNING: could not convert string to float: '75 (+ 15 AD)'
+06.07.2024  17:02:09 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:09 - WARNING: "Kindred's missing health" is not a valid TableTitle
+06.07.2024  17:02:09 - WARNING: 'per  mark' is not a valid Stat
+06.07.2024  17:02:09 - WARNING: 'per  mark' is not a valid Stat
+06.07.2024  17:02:09 - WARNING: 'per  Mark' is not a valid Stat
+06.07.2024  17:02:09 - WARNING: Scales do not match regex: 80% bonus AD)  (+ 7.5% (+  2.25%
+06.07.2024  17:02:09 - WARNING: Scales do not match regex:  0.175%) per  Mark
+06.07.2024  17:02:09 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:10 - WARNING: could not convert string to float: 'X'
+06.07.2024  17:02:10 - WARNING: 'proximity' is not a valid TableTitle
+06.07.2024  17:02:10 - WARNING: Scales do not match regex: 0 − 8.2 (based on level)
+06.07.2024  17:02:10 - WARNING: Scales do not match regex: 0 − 10.25 (based on level)
+06.07.2024  17:02:10 - WARNING: Scales do not match regex: Siphoning Strike stacks
+06.07.2024  17:02:11 - WARNING: 'non-champions hit' is not a valid TableTitle
+06.07.2024  17:02:11 - WARNING: Stats do not match regex: 60 / 65 / 70 / 75 / 80% AD (+ 50% AP)
+06.07.2024  17:02:11 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:11 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:12 - WARNING: Stats do not match regex: 8 / 10.8 / 13.6 / 16.4 / 19.2 / 22% of target's maximum health (+ 100% bonus AD)
+06.07.2024  17:02:12 - WARNING: could not convert string to float: 'None'
+06.07.2024  17:02:12 - WARNING: 'Boots Tier' is not a valid TableTitle
+06.07.2024  17:02:12 - WARNING: could not convert string to float: 'None'
+06.07.2024  17:02:12 - WARNING: 'Boots Tier' is not a valid TableTitle
+06.07.2024  17:02:12 - WARNING: could not convert string to float: 'None'
+06.07.2024  17:02:12 - WARNING: 'Boots Tier' is not a valid TableTitle
+06.07.2024  17:02:12 - WARNING: could not convert string to float: 'None'
+06.07.2024  17:02:12 - WARNING: 'Boots Tier' is not a valid TableTitle
+06.07.2024  17:02:12 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:13 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:13 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:13 - WARNING: 'Plasma stacks before application' is not a valid TableTitle
+06.07.2024  17:02:13 - WARNING: 'bonus attack speed' is not a valid TableTitle
+06.07.2024  17:02:14 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:14 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:14 - WARNING: could not convert string to float: '30 Mana + 1'
+06.07.2024  17:02:18 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:19 - WARNING: Stats do not match regex: 20 − 150 (based on level) (+ 45 / 60 / 75 / 90 / 105 / 120) (+ 65% AP) (+ 8% maximum health)
+06.07.2024  17:02:19 - WARNING: Stats do not match regex: 10 − 75 (based on level) (+ 22.5 / 30 / 37.5 / 45 / 52.5 / 60) (+ 32.5% AP) (+ 4% maximum health)
+06.07.2024  17:02:19 - WARNING: Stats do not match regex: 0.63 − 4.69 (based on level) (+ 1.41 / 1.88 / 2.34 / 2.81 / 3.28 / 3.75) (+ 2.03% AP) (+ 0.25% maximum health)
+06.07.2024  17:02:19 - WARNING: "of Sona's AP" is not a valid Stat
+06.07.2024  17:02:19 - WARNING: "of Sona's AP" is not a valid Stat
+06.07.2024  17:02:19 - WARNING: "per 100 of Sona's AP" is not a valid Stat
+06.07.2024  17:02:19 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:19 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:19 - WARNING: could not convert string to float: '35 Mana + 1'
+06.07.2024  17:02:20 - WARNING: 'target range' is not a valid TableTitle
+06.07.2024  17:02:20 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:02:20 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:24 - WARNING: Weird Item stat: +3.5
+06.07.2024  17:02:29 - WARNING: 'his missing health' is not a valid TableTitle
+06.07.2024  17:02:30 - WARNING: Stats do not match regex: 0.15 / 0.25 / 0.35 / 0.45 / 0.55 per 1% missing health
+06.07.2024  17:02:30 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:02:31 - WARNING: 'per 1 Lethality' is not a valid Stat
+06.07.2024  17:02:31 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:31 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:31 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:31 - WARNING: Scales do not match regex: 40% AP)(+ 1.5 per  Mist collected
+06.07.2024  17:02:31 - WARNING: 'of expended Grit' is not a valid Stat
+06.07.2024  17:02:31 - WARNING: could not convert string to float: '100 Current'
+06.07.2024  17:02:31 - WARNING: "of primary target's bonus health" is not a valid Stat
+06.07.2024  17:02:31 - WARNING: "of primary target's bonus health" is not a valid Stat
+06.07.2024  17:02:31 - WARNING: Stats do not match regex: 4 / 5.5 / 7 / 8.5 / 10% (+「 1% per 35 」「 2.86% per 100 」bonus AD) of target's maximum health
+06.07.2024  17:02:31 - WARNING: could not convert string to float: '50 Mana + 1'
+06.07.2024  17:02:31 - WARNING: could not convert string to float: '13 Mana per'
+06.07.2024  17:02:31 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:32 - WARNING: " Realm Warp's Rank" is not a valid TableTitle
+06.07.2024  17:02:32 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:32 - WARNING: '' is not a valid Stat
+06.07.2024  17:02:32 - WARNING: '' is not a valid Stat
+06.07.2024  17:02:32 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:32 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:33 - WARNING: 'number of enemies hit' is not a valid TableTitle
+06.07.2024  17:02:33 - WARNING: " Piercing Arrow's charge time" is not a valid TableTitle
+06.07.2024  17:02:33 - WARNING: " Piercing Arrow's charge time" is not a valid TableTitle
+06.07.2024  17:02:33 - CRITICAL: Varus
+06.07.2024  17:02:33 - WARNING: could not convert string to float: '6 Style'
+06.07.2024  17:02:34 - WARNING: Stats do not match regex: 10 − 40 (based on level) (+ 2 / 2.5 / 3 / 3.5 / 4% (+ 1.5% per 100 AP) of target's maximum health)
+06.07.2024  17:02:34 - WARNING: Stats do not match regex: 30 − 120 (based on level) (+ 6 / 7.5 / 9 / 10.5 / 12% (+ 4.5% per 100 AP) of target's maximum health)
+06.07.2024  17:02:34 - WARNING: Stats do not match regex: 10 − 40 (based on level) (+ 4 / 4.5 / 5 / 5.5 / 6% (+ 2% per 100 AP) of target's maximum health)
+06.07.2024  17:02:34 - WARNING: Stats do not match regex: 30 − 120 (based on level) (+ 12 / 13.5 / 15 / 16.5 / 18% (+ 6% per 100 AP) of target's maximum health)
+06.07.2024  17:02:34 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:34 - WARNING: 'enemies hit' is not a valid TableTitle
+06.07.2024  17:02:34 - WARNING: 'per  Soul collected' is not a valid Stat
+06.07.2024  17:02:34 - WARNING: Stats do not match regex: 1.5 per  Soul collected (+ 0% AD)
+06.07.2024  17:02:34 - WARNING: Stats do not match regex: 1.5 per  Soul collected (+ 80 / 110 / 140 / 170 / 200% AD)
+06.07.2024  17:02:35 - WARNING: Stats do not match regex: 100% AD (+ 8 / 9.5 / 11 / 12.5 / 14% of target's maximum health)
+06.07.2024  17:02:35 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:36 - WARNING: Scales do not match regex: 70% AD) × (1 + 100% critical strike chance
+06.07.2024  17:02:36 - WARNING: Scales do not match regex: 70% AD) × (1 + 100% critical strike chance
+06.07.2024  17:02:36 - WARNING: 'ability haste' is not a valid TableTitle
+06.07.2024  17:02:36 - WARNING: could not convert string to float: '60 Mana + all'
+06.07.2024  17:02:36 - WARNING: "of Taric's armor" is not a valid Stat
+06.07.2024  17:02:37 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:38 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:38 - WARNING: could not convert string to float: '70 Mana + 1'
+06.07.2024  17:02:38 - WARNING: 'cast distance' is not a valid TableTitle
+06.07.2024  17:02:38 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:39 - WARNING: 'stones detonated' is not a valid TableTitle
+06.07.2024  17:02:39 - WARNING: 'of damage dealt' is not a valid Stat
+06.07.2024  17:02:39 - WARNING: 'seconds active' is not a valid TableTitle
+06.07.2024  17:02:40 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:02:40 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:02:40 - WARNING: Stats do not match regex: 6 / 7 / 8 / 9 / 10% of target's maximum health (+ 120% AD) (+ 100% AP)
+06.07.2024  17:02:41 - WARNING: "Anchor's critical strike chance" is not a valid TableTitle
+06.07.2024  17:02:41 - WARNING: "Anchor's missing mana" is not a valid TableTitle
+06.07.2024  17:02:41 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:41 - WARNING: 'orb travel distance' is not a valid TableTitle
+06.07.2024  17:02:41 - WARNING: could not convert string to float: "Head of Kha'Zix"
+06.07.2024  17:02:41 - WARNING: ' Trophies' is not a valid TableTitle
+06.07.2024  17:02:41 - WARNING: Stats do not match regex: 30 − 235 (based on level) (+ 30% AD)
+06.07.2024  17:02:41 - WARNING: Stats do not match regex: 50 − 220 (based on level) (+ 80% AP)
+06.07.2024  17:02:41 - WARNING: Stats do not match regex: 50 − 305 (based on level) (+ 80% bonus AD)
+06.07.2024  17:02:41 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:43 - WARNING: 'ATTACK RANGE' is not a valid AbilityStatKey
+06.07.2024  17:02:43 - WARNING: could not convert string to float: 'None'
+06.07.2024  17:02:43 - WARNING: 'previous feathers hit' is not a valid TableTitle
+06.07.2024  17:02:44 - WARNING: Stats do not match regex: 100% AD (+ 25 / 40 / 55% of damage stored)
+06.07.2024  17:02:44 - WARNING: "of Zac's maximum health" is not a valid Stat
+06.07.2024  17:02:44 - WARNING: "of Zac's maximum health" is not a valid Stat
+06.07.2024  17:02:44 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:02:44 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:02:44 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:44 - WARNING: '  percent' is not a valid Stat
+06.07.2024  17:02:48 - WARNING: Stats do not match regex: 10 − 68 (based on level) (+ 4 / 5 / 6 / 7 / 8% of his missing health)
+06.07.2024  17:02:48 - WARNING: Stats do not match regex: 5 − 34 (based on level) (+ 2 / 2.5 / 3 / 3.5 / 4% of his missing health)
+06.07.2024  17:02:48 - WARNING: New Detail type 'Statistics' encountered!
+06.07.2024  17:02:48 - WARNING: New Detail type 'Statistics' encountered!
+06.07.2024  17:02:54 - WARNING: 'outdated' is not a valid ItemClass
+06.07.2024  17:02:54 - ERROR: Could not scrape data for Item 'Lucky Dice'
+06.07.2024  17:02:54 - ERROR: 'NoneType' object has no attribute 'find_all'
+06.07.2024  17:02:55 - WARNING: 'critical strike damage percent' is not a valid Stat
+06.07.2024  17:02:56 - WARNING: 'distance from Vex' is not a valid TableTitle
+06.07.2024  17:02:56 - WARNING: Stats do not match regex: 75 / 85 / 95 / 105 / 115% AD (+ 50% AP)
+06.07.2024  17:02:56 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:57 - WARNING: Stats do not match regex: 20 / 40 / 60 / 80 / 100% AD (+ 25% AP)
+06.07.2024  17:02:57 - WARNING: Stats do not match regex: 75 − 135 (based on level) (+ 60 / 100 / 140 / 180 / 220) (+ 70% AD) (+ 120% AP)
+06.07.2024  17:02:57 - WARNING: ' ' is not a valid Stat
+06.07.2024  17:02:58 - WARNING: 'Seed' is not a valid Stat
+06.07.2024  17:02:58 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:02:58 - WARNING: "of turret's maximum health" is not a valid Stat
+06.07.2024  17:02:58 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:03:03 - WARNING: Stats do not match regex: 7 − 50 (based on level) (+ 50 / 80 / 110 / 140 / 170) (+ 60% AP)
+06.07.2024  17:03:03 - WARNING: Stats do not match regex: 17.5 − 125 (based on level) (+ 125 / 200 / 275 / 350 / 425) (+ 150% AP)
+06.07.2024  17:03:03 - WARNING: 'seconds' is not a valid Stat
+06.07.2024  17:03:03 - WARNING: could not convert string to float: '1 Spell'
+06.07.2024  17:03:06 - WARNING: 'bonus Attack Damage' is not a valid Stat
+06.07.2024  17:03:08 - ERROR: list index out of range
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader.py", line 70, in wrapper
+    await method(*args, **kwargs)
+  File "/app/src/server/loader/patchloader.py", line 224, in load_data
+    await asyncio.gather(
+  File "/app/src/server/loader/patchloader.py", line 274, in load_all_champions
+    await asyncio.gather(*champion_tasks)
+  File "/app/src/server/loader/patchloader.py", line 294, in load_champion
+    champion = ws.create_champion(champion_json, champion_wiki, self.patch.patch)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 92, in create_champion
+    w = create_ability(Skill.W, champion_soup, champion_json.spells[1])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 208, in create_ability
+    splitted_effects = get_ability_splitted_text(ability_content)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 287, in get_ability_splitted_text
+    table_stats = get_paragraph_tables(paragraph)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper.py", line 266, in get_paragraph_tables
+    effect_stat.scalings.append(Scaling(value=usify_tables(bot_values, top_values, title=title[0])))
+                                                                                         ~~~~~^^^
+IndexError: list index out of range
+06.07.2024  17:03:08 - ERROR: Patch 14.13.1 was not loaded successfully!
+06.07.2024  17:03:08 - ERROR: Successfully cleaned up patch '14.13.1'!
+07.07.2024  13:57:31 - INFO: --------------------------------------------------------------------------------------------
+07.07.2024  13:57:31 - INFO:  Loading patch: 14.13.1
+07.07.2024  13:57:37 - WARNING: 'mythic item' is not a valid ItemClass
+07.07.2024  13:57:50 - WARNING: 'mythic item' is not a valid ItemClass
+07.07.2024  13:57:54 - WARNING: 'recharge' is not a valid AbilityStatKey
+07.07.2024  13:57:55 - INFO: Can't find the wiki page for summoner Placeholder
+07.07.2024  13:57:55 - INFO: Can't find the wiki page for summoner Placeholder and Attack-Smite
+07.07.2024  13:57:56 - WARNING: could not convert string to float: '30 Mana + 4'
+07.07.2024  13:57:56 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:57:56 - WARNING: "of Ivern's AP" is not a valid Stat
+07.07.2024  13:57:57 - WARNING: 'time traveling' is not a valid TableTitle
+07.07.2024  13:57:57 - WARNING: 'time traveling' is not a valid TableTitle
+07.07.2024  13:57:57 - WARNING: could not convert string to float: '20 Mana + 1 Turret'
+07.07.2024  13:57:57 - WARNING: New Detail type 'Statistics' encountered!
+07.07.2024  13:57:57 - WARNING: New Detail type 'Statistics' encountered!
+07.07.2024  13:57:57 - WARNING: New Detail type 'Statistics' encountered!
+07.07.2024  13:57:57 - WARNING: New Detail type 'Statistics' encountered!
+07.07.2024  13:57:57 - WARNING: New Detail type 'Statistics' encountered!
+07.07.2024  13:57:57 - WARNING: New Detail type 'Statistics' encountered!
+07.07.2024  13:57:57 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:57:57 - WARNING: 'per  Feast stack' is not a valid Stat
+07.07.2024  13:57:57 - WARNING: 'per  Feast stack' is not a valid Stat
+07.07.2024  13:57:58 - WARNING: " GNAR!'s rank" is not a valid TableTitle
+07.07.2024  13:57:58 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:57:59 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:57:59 - WARNING: "of the target's missing health" is not a valid Stat
+07.07.2024  13:57:59 - WARNING: "of the target's missing health" is not a valid Stat
+07.07.2024  13:57:59 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:57:59 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:57:59 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:57:59 - WARNING: 'minutes' is not a valid TableTitle
+07.07.2024  13:57:59 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:57:59 - WARNING: 'per 100 bonus health' is not a valid Stat
+07.07.2024  13:57:59 - WARNING: 'per 100 bonus health' is not a valid Stat
+07.07.2024  13:58:00 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:01 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:01 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:02 - WARNING: Stats do not match regex: 52 − 120 (based on level) (+ 20 / 40 / 60 / 80 / 100) (+ 70% AP)
+07.07.2024  13:58:02 - WARNING: " Grand Challenge's Rank" is not a valid TableTitle
+07.07.2024  13:58:02 - WARNING: 'Vitals hit' is not a valid TableTitle
+07.07.2024  13:58:02 - WARNING: " Glacial Storm's Rank" is not a valid TableTitle
+07.07.2024  13:58:02 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:02 - WARNING: 'chunks of ice' is not a valid Stat
+07.07.2024  13:58:03 - WARNING: could not convert string to float: '60 mana\xa0+\xa035'
+07.07.2024  13:58:03 - WARNING: Scales do not match regex: 3% per 1% of health lost in the past 4 seconds
+07.07.2024  13:58:03 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:03 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:03 - WARNING: New Detail type 'Statistics' encountered!
+07.07.2024  13:58:04 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:04 - WARNING: could not convert string to float: '20 Mana + 1'
+07.07.2024  13:58:04 - WARNING: could not convert string to float: '35 mana + 1'
+07.07.2024  13:58:04 - WARNING: " Tentacle Smash's rank" is not a valid TableTitle
+07.07.2024  13:58:05 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:05 - WARNING: could not convert string to float: '30 Mana + 1'
+07.07.2024  13:58:05 - WARNING: Scales do not match regex: 15% AD)  ×  (1 + 0.3 per 100% bonus attack speed
+07.07.2024  13:58:05 - WARNING: Scales do not match regex: 15% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+07.07.2024  13:58:05 - WARNING: Scales do not match regex: 45% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+07.07.2024  13:58:05 - WARNING: Scales do not match regex: 75 / 90 / 105% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+07.07.2024  13:58:05 - WARNING: Scales do not match regex: 225 / 270 / 315% AD) ×  (1 + (0.5 +  0.2) per 100% critical strike chance
+07.07.2024  13:58:06 - WARNING: could not convert string to float: '8 mana per'
+07.07.2024  13:58:06 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:06 - WARNING: Stats do not match regex: 0 − 77 (based on level) (+ 50 / 65 / 80 / 95 / 110) (+ 55% AP)
+07.07.2024  13:58:06 - WARNING: could not convert string to float: '20 mana + 1 Sand'
+07.07.2024  13:58:06 - WARNING: 'soldiers' is not a valid Stat
+07.07.2024  13:58:07 - WARNING: "of Braum's maximum health" is not a valid Stat
+07.07.2024  13:58:07 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:07 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:07 - WARNING: Scales do not match regex: 0 − 8.2 (based on level)
+07.07.2024  13:58:07 - WARNING: Scales do not match regex: 0 − 10.25 (based on level)
+07.07.2024  13:58:08 - WARNING: " Human Form's Rank" is not a valid TableTitle
+07.07.2024  13:58:08 - WARNING: " Spider Form's Rank" is not a valid TableTitle
+07.07.2024  13:58:08 - WARNING: " Spider Form's Rank" is not a valid TableTitle
+07.07.2024  13:58:08 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:08 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:09 - WARNING: Stats do not match regex: 330 / 660 / 990 (+ 550% AD) (+ 330% AP) + 15 / 30 / 45 (+ 25% AD) (+ 15% AP) per 4% critical strike chance
+07.07.2024  13:58:09 - WARNING: Stats do not match regex: 660 / 1320 / 1980 (+ 1100% AD) (+ 660% AP) + 30 / 60 / 90 (+ 50% AD) (+ 30% AP) per 4% critical strike chance
+07.07.2024  13:58:09 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:09 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:09 - WARNING: could not convert string to float: '75 (+ 15 AD)'
+07.07.2024  13:58:10 - WARNING: Stats do not match regex: 5 / 5.5 / 6 / 6.5 / 7% of target's maximum health (+ 1.5% per 100 AP) (+ 0.4% per 100 Pantheon's bonus health)
+07.07.2024  13:58:10 - WARNING: " Comet Spear's rank" is not a valid TableTitle
+07.07.2024  13:58:10 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:11 - WARNING: 'enemies hit' is not a valid TableTitle
+07.07.2024  13:58:11 - WARNING: 'Forge Disable Time' is not a valid AbilityStatKey
+07.07.2024  13:58:12 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:12 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:12 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:12 - WARNING: Stats do not match regex: 0 − 45 (based on level) (+ 80 / 110 / 140 / 170 / 200) (+ 70% AP)
+07.07.2024  13:58:13 - WARNING: '' is not a valid Stat
+07.07.2024  13:58:13 - WARNING: '' is not a valid Stat
+07.07.2024  13:58:13 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:13 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:13 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:13 - WARNING: '' is not a valid Stat
+07.07.2024  13:58:13 - WARNING: '' is not a valid Stat
+07.07.2024  13:58:13 - WARNING: 'number of targets hit by the outer radius' is not a valid TableTitle
+07.07.2024  13:58:13 - WARNING: "target's  Hemorrhage stacks" is not a valid TableTitle
+07.07.2024  13:58:13 - WARNING: 'time active' is not a valid TableTitle
+07.07.2024  13:58:14 - WARNING: Scales do not match regex: Siphoning Strike stacks
+07.07.2024  13:58:15 - WARNING: could not convert string to float: 'None'
+07.07.2024  13:58:15 - WARNING: 'Boots Tier' is not a valid TableTitle
+07.07.2024  13:58:15 - WARNING: could not convert string to float: 'None'
+07.07.2024  13:58:15 - WARNING: 'Boots Tier' is not a valid TableTitle
+07.07.2024  13:58:15 - WARNING: could not convert string to float: 'None'
+07.07.2024  13:58:15 - WARNING: 'Boots Tier' is not a valid TableTitle
+07.07.2024  13:58:15 - WARNING: could not convert string to float: 'None'
+07.07.2024  13:58:15 - WARNING: 'Boots Tier' is not a valid TableTitle
+07.07.2024  13:58:15 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:15 - WARNING: 'Plasma stacks before application' is not a valid TableTitle
+07.07.2024  13:58:15 - WARNING: 'bonus attack speed' is not a valid TableTitle
+07.07.2024  13:58:16 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:16 - WARNING: 'seconds elapsed' is not a valid TableTitle
+07.07.2024  13:58:16 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:16 - WARNING: 'missing health at the time of cast' is not a valid TableTitle
+07.07.2024  13:58:16 - WARNING: could not convert string to float: '20 Mana per attack with '
+07.07.2024  13:58:17 - WARNING: could not convert string to float: '30 Mana + 1'
+07.07.2024  13:58:17 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:17 - WARNING: "Kindred's missing health" is not a valid TableTitle
+07.07.2024  13:58:17 - WARNING: 'per  mark' is not a valid Stat
+07.07.2024  13:58:17 - WARNING: 'per  mark' is not a valid Stat
+07.07.2024  13:58:17 - WARNING: 'per  Mark' is not a valid Stat
+07.07.2024  13:58:17 - WARNING: Scales do not match regex: 80% bonus AD)  (+ 7.5% (+  2.25%
+07.07.2024  13:58:17 - WARNING: Scales do not match regex:  0.175%) per  Mark
+07.07.2024  13:58:17 - WARNING: Scales do not match regex: 50% per 100% bonus attack speed
+07.07.2024  13:58:17 - WARNING: Scales do not match regex: 750% per 100% bonus attack speed
+07.07.2024  13:58:18 - WARNING: Stats do not match regex: 1 / 1.5 / 2% of target's maximum health (+ 34.375% AD)
+07.07.2024  13:58:18 - WARNING: Stats do not match regex: 8 / 12 / 16% of target's maximum health (+ 275% AD)
+07.07.2024  13:58:18 - WARNING: Stats do not match regex: 16 / 24 / 32% of target's maximum health (+ 550% AD)
+07.07.2024  13:58:18 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:19 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:19 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:19 - WARNING: Stats do not match regex: 5 − 64.5 (based on level) (+ 12 / 14 / 16 / 18 / 20) (+ 40% bonus AD) (+ 20% AP)
+07.07.2024  13:58:19 - WARNING: could not convert string to float: 'X'
+07.07.2024  13:58:19 - WARNING: 'proximity' is not a valid TableTitle
+07.07.2024  13:58:19 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:19 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:19 - WARNING: could not convert string to float: '78 Mana per'
+07.07.2024  13:58:20 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:21 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:21 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:21 - WARNING: Stats do not match regex: 8 / 10.8 / 13.6 / 16.4 / 19.2 / 22% of target's maximum health (+ 100% bonus AD)
+07.07.2024  13:58:22 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:27 - WARNING: Stats do not match regex: 75 / 85 / 95 / 105 / 115% AD (+ 50% AP)
+07.07.2024  13:58:27 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:29 - WARNING: Stats do not match regex: 20 / 40 / 60 / 80 / 100% AD (+ 25% AP)
+07.07.2024  13:58:29 - WARNING: Stats do not match regex: 75 − 135 (based on level) (+ 60 / 100 / 140 / 180 / 220) (+ 70% AD) (+ 120% AP)
+07.07.2024  13:58:29 - WARNING: ' ' is not a valid Stat
+07.07.2024  13:58:31 - WARNING: Weird Item stat: +3.5
+07.07.2024  13:58:35 - WARNING: could not convert string to float: '13 Mana per'
+07.07.2024  13:58:35 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:35 - WARNING: Stats do not match regex: 20 − 150 (based on level) (+ 45 / 60 / 75 / 90 / 105 / 120) (+ 65% AP) (+ 8% maximum health)
+07.07.2024  13:58:35 - WARNING: Stats do not match regex: 10 − 75 (based on level) (+ 22.5 / 30 / 37.5 / 45 / 52.5 / 60) (+ 32.5% AP) (+ 4% maximum health)
+07.07.2024  13:58:35 - WARNING: Stats do not match regex: 0.63 − 4.69 (based on level) (+ 1.41 / 1.88 / 2.34 / 2.81 / 3.28 / 3.75) (+ 2.03% AP) (+ 0.25% maximum health)
+07.07.2024  13:58:35 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:36 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:36 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:36 - WARNING: Stats do not match regex: 10 − 40 (based on level) (+ 2 / 2.5 / 3 / 3.5 / 4% (+ 1.5% per 100 AP) of target's maximum health)
+07.07.2024  13:58:36 - WARNING: Stats do not match regex: 30 − 120 (based on level) (+ 6 / 7.5 / 9 / 10.5 / 12% (+ 4.5% per 100 AP) of target's maximum health)
+07.07.2024  13:58:36 - WARNING: Stats do not match regex: 10 − 40 (based on level) (+ 4 / 4.5 / 5 / 5.5 / 6% (+ 2% per 100 AP) of target's maximum health)
+07.07.2024  13:58:36 - WARNING: Stats do not match regex: 30 − 120 (based on level) (+ 12 / 13.5 / 15 / 16.5 / 18% (+ 6% per 100 AP) of target's maximum health)
+07.07.2024  13:58:37 - WARNING: Stats do not match regex: 0.15 / 0.25 / 0.35 / 0.45 / 0.55 per 1% missing health
+07.07.2024  13:58:37 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:58:37 - WARNING: 'of expended Grit' is not a valid Stat
+07.07.2024  13:58:37 - WARNING: could not convert string to float: '100 Current'
+07.07.2024  13:58:37 - WARNING: "of primary target's bonus health" is not a valid Stat
+07.07.2024  13:58:37 - WARNING: "of primary target's bonus health" is not a valid Stat
+07.07.2024  13:58:37 - WARNING: Stats do not match regex: 100% AD (+ 8 / 9.5 / 11 / 12.5 / 14% of target's maximum health)
+07.07.2024  13:58:38 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:38 - WARNING: 'per  Soul collected' is not a valid Stat
+07.07.2024  13:58:38 - WARNING: Stats do not match regex: 1.5 per  Soul collected (+ 0% AD)
+07.07.2024  13:58:38 - WARNING: Stats do not match regex: 1.5 per  Soul collected (+ 80 / 110 / 140 / 170 / 200% AD)
+07.07.2024  13:58:39 - WARNING: could not convert string to float: '6 Style'
+07.07.2024  13:58:39 - WARNING: 'target range' is not a valid TableTitle
+07.07.2024  13:58:39 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:58:39 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:39 - WARNING: 'his missing health' is not a valid TableTitle
+07.07.2024  13:58:40 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:40 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:40 - WARNING: 'ability haste' is not a valid TableTitle
+07.07.2024  13:58:40 - WARNING: could not convert string to float: '60 Mana + all'
+07.07.2024  13:58:40 - WARNING: "of Taric's armor" is not a valid Stat
+07.07.2024  13:58:41 - WARNING: 'per 1 Lethality' is not a valid Stat
+07.07.2024  13:58:41 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:41 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:41 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:41 - WARNING: Scales do not match regex: 40% AP)(+ 1.5 per  Mist collected
+07.07.2024  13:58:42 - WARNING: 'number of enemies hit' is not a valid TableTitle
+07.07.2024  13:58:42 - WARNING: " Piercing Arrow's charge time" is not a valid TableTitle
+07.07.2024  13:58:42 - WARNING: " Piercing Arrow's charge time" is not a valid TableTitle
+07.07.2024  13:58:42 - WARNING: '?' is not a valid TableTitle
+07.07.2024  13:58:42 - WARNING: " Piercing Arrow's charge time" is not a valid TableTitle
+07.07.2024  13:58:42 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:42 - WARNING: '' is not a valid Stat
+07.07.2024  13:58:42 - WARNING: '' is not a valid Stat
+07.07.2024  13:58:43 - WARNING: " Realm Warp's Rank" is not a valid TableTitle
+07.07.2024  13:58:43 - WARNING: "of Sona's AP" is not a valid Stat
+07.07.2024  13:58:43 - WARNING: "of Sona's AP" is not a valid Stat
+07.07.2024  13:58:43 - WARNING: "per 100 of Sona's AP" is not a valid Stat
+07.07.2024  13:58:44 - WARNING: could not convert string to float: "Head of Kha'Zix"
+07.07.2024  13:58:44 - WARNING: ' Trophies' is not a valid TableTitle
+07.07.2024  13:58:44 - WARNING: Stats do not match regex: 30 − 235 (based on level) (+ 30% AD)
+07.07.2024  13:58:44 - WARNING: Stats do not match regex: 50 − 220 (based on level) (+ 80% AP)
+07.07.2024  13:58:44 - WARNING: Stats do not match regex: 50 − 305 (based on level) (+ 80% bonus AD)
+07.07.2024  13:58:44 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:44 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:44 - WARNING: 'enemies hit' is not a valid TableTitle
+07.07.2024  13:58:44 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:44 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:44 - WARNING: could not convert string to float: '35 Mana + 1'
+07.07.2024  13:58:45 - WARNING: 'non-champions hit' is not a valid TableTitle
+07.07.2024  13:58:45 - WARNING: Stats do not match regex: 60 / 65 / 70 / 75 / 80% AD (+ 50% AP)
+07.07.2024  13:58:45 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:45 - WARNING: 'stones detonated' is not a valid TableTitle
+07.07.2024  13:58:47 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:47 - WARNING: "Anchor's critical strike chance" is not a valid TableTitle
+07.07.2024  13:58:47 - WARNING: "Anchor's missing mana" is not a valid TableTitle
+07.07.2024  13:58:48 - WARNING: Stats do not match regex: 4 / 5.5 / 7 / 8.5 / 10% (+「 1% per 35 」「 2.86% per 100 」bonus AD) of target's maximum health
+07.07.2024  13:58:48 - WARNING: could not convert string to float: '50 Mana + 1'
+07.07.2024  13:58:48 - WARNING: Scales do not match regex: 70% AD) × (1 + 100% critical strike chance
+07.07.2024  13:58:48 - WARNING: Scales do not match regex: 70% AD) × (1 + 100% critical strike chance
+07.07.2024  13:58:49 - WARNING: 'outdated' is not a valid ItemClass
+07.07.2024  13:58:49 - ERROR: Could not scrape data for Item 'Lucky Dice'
+07.07.2024  13:58:49 - ERROR: 'NoneType' object has no attribute 'find_all'
+07.07.2024  13:58:49 - WARNING: 'distance from Vex' is not a valid TableTitle
+07.07.2024  13:58:50 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:58:50 - WARNING: could not convert string to float: '70 Mana + 1'
+07.07.2024  13:58:50 - WARNING: 'cast distance' is not a valid TableTitle
+07.07.2024  13:58:58 - WARNING: 'critical strike damage percent' is not a valid Stat
+07.07.2024  13:59:01 - WARNING: Stats do not match regex: 7 − 50 (based on level) (+ 50 / 80 / 110 / 140 / 170) (+ 60% AP)
+07.07.2024  13:59:01 - WARNING: Stats do not match regex: 17.5 − 125 (based on level) (+ 125 / 200 / 275 / 350 / 425) (+ 150% AP)
+07.07.2024  13:59:01 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:59:01 - WARNING: could not convert string to float: '1 Spell'
+07.07.2024  13:59:02 - WARNING: Stats do not match regex: 100% AD (+ 25 / 40 / 55% of damage stored)
+07.07.2024  13:59:02 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:59:03 - WARNING: 'orb travel distance' is not a valid TableTitle
+07.07.2024  13:59:03 - WARNING: "of Zac's maximum health" is not a valid Stat
+07.07.2024  13:59:03 - WARNING: "of Zac's maximum health" is not a valid Stat
+07.07.2024  13:59:03 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:59:03 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:59:03 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:59:03 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:59:03 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:59:03 - WARNING: '  percent' is not a valid Stat
+07.07.2024  13:59:04 - WARNING: 'of damage dealt' is not a valid Stat
+07.07.2024  13:59:04 - WARNING: 'seconds active' is not a valid TableTitle
+07.07.2024  13:59:04 - WARNING: Stats do not match regex: 6 / 7 / 8 / 9 / 10% of target's maximum health (+ 120% AD) (+ 100% AP)
+07.07.2024  13:59:05 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:59:05 - WARNING: 'Seed' is not a valid Stat
+07.07.2024  13:59:05 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:59:07 - WARNING: "of turret's maximum health" is not a valid Stat
+07.07.2024  13:59:07 - WARNING: 'ATTACK RANGE' is not a valid AbilityStatKey
+07.07.2024  13:59:07 - WARNING: could not convert string to float: 'None'
+07.07.2024  13:59:09 - WARNING: 'previous feathers hit' is not a valid TableTitle
+07.07.2024  13:59:09 - WARNING: Stats do not match regex: 10 − 68 (based on level) (+ 4 / 5 / 6 / 7 / 8% of his missing health)
+07.07.2024  13:59:09 - WARNING: Stats do not match regex: 5 − 34 (based on level) (+ 2 / 2.5 / 3 / 3.5 / 4% of his missing health)
+07.07.2024  13:59:09 - WARNING: New Detail type 'Statistics' encountered!
+07.07.2024  13:59:09 - WARNING: New Detail type 'Statistics' encountered!
+07.07.2024  13:59:17 - WARNING: 'bonus Attack Damage' is not a valid Stat
+07.07.2024  13:59:58 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  13:59:58 - WARNING: 'summoner spell cooldown' is not a valid TableTitle
+07.07.2024  13:59:59 - INFO: Can't find the wiki page for summoner Flee
+07.07.2024  13:59:59 - WARNING: Scales do not match regex: 6 − 48 (based on level
+07.07.2024  13:59:59 - WARNING: 'AP per 100 bonus health' is not a valid Stat
+07.07.2024  13:59:59 - WARNING: Scales do not match regex: 4% bonus health)
+07.07.2024  14:00:00 - WARNING: "of primary target's bonus health" is not a valid Stat
+07.07.2024  14:00:00 - WARNING: Stats do not match regex: 55 / 65 / 75 / 85 / 95 (+ 30% AP) (+ (3.1% Stardust)% of target's maximum health
+07.07.2024  14:00:00 - WARNING: '5' is not a valid Stat
+07.07.2024  14:00:00 - WARNING: 'probability' is not a valid TableTitle
+07.07.2024  14:00:00 - WARNING: 'probability' is not a valid TableTitle
+07.07.2024  14:00:00 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  14:00:00 - WARNING: 'seconds' is not a valid Stat
+07.07.2024  14:00:00 - WARNING: 'minutes' is not a valid TableTitle
+07.07.2024  14:00:00 - WARNING: 'minutes' is not a valid TableTitle
+07.07.2024  14:00:01 - WARNING: could not convert string to float: '40 mana + '
+07.07.2024  14:00:02 - WARNING: Stats do not match regex: 1050 / 1200 / 1350% AD (+ 350 / 400 / 450% AP)
+07.07.2024  14:00:02 - WARNING: ' ' is not a valid Stat
+07.07.2024  14:00:02 - WARNING: '  percent' is not a valid Stat
+07.07.2024  14:00:02 - WARNING: "Dr. Mundo's missing health" is not a valid TableTitle
+07.07.2024  14:00:02 - WARNING: ' ' is not a valid Stat
+07.07.2024  14:00:05 - INFO: Patching took 153.41033911705017 seconds.

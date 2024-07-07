@@ -290,9 +290,11 @@ class Patchloader():
             raise LoadError(e.errno, e.reason, e.filename, "Champion", champion_id)
         except ValidationError as e:
             raise LoadError(9, str(e), "", "Champion", champion_id)
-        
-        champion = ws.create_champion(champion_json, champion_wiki, self.patch.patch)
-        
+        try:
+            champion = ws.create_champion(champion_json, champion_wiki, self.patch.patch)
+        except Exception as e:
+            logger.critical(champion_id)
+            raise
         await self.load_image(champion_json.image)
         await self.load_image(champion_json.passive.image)
         for spell in champion_json.spells:
@@ -317,13 +319,12 @@ class Patchloader():
 
 
     async def load_item(self, item_id: str, item_json: ItemJson, wiki_names: dict) -> None:
-        debugger.debug(f"{item_json.name} - B - begin")
         if len(item_id) > 4:
+            #skipping removed Ornn -items
             return
         try:
             item_json.name = wiki_names[item_json.name] if item_json.name in wiki_names else item_json.name
             item_wiki = await self.session.html(self.urls.wiki + item_json.name)
-            debugger.debug(f"{item_json.name} - W - wiki")
         except HTTPError as e:
             raise LoadError(e.code, e.reason, e.url, "Item", item_json.name)
         except URLError as e:
@@ -332,20 +333,25 @@ class Patchloader():
             raise LoadError(9, str(e), "", "Item", item_json.name)
         
         try:
-            item = ws.create_item(item_id, item_json, item_wiki, self.patch.patch)
-            debugger.debug(f"{item_json.name} - S - scraped")
+            item = ws.create_item(item_id, item_json, item_wiki, self.patch.patch, masterwork=False)
+            masterwork = ws.is_masterwork(item_wiki)
+            if masterwork:
+                item_masterwork = ws.create_item(item_id, item_json, item_wiki, self.patch.patch, masterwork=True)
+                item_masterwork.name = item_masterwork.name + " - Masterwork"
         except (AttributeError, ValueError, TypeError) as e:
             logger.error(f"Could not scrape data for Item '{item_json.name}'")
             logger.error(e)
             return
-        
+        except Exception as e:
+            logger.critical(item_json.name)
+            raise
         await self.load_image(item_json.image)
-        debugger.debug(f"{item_json.name} - I - images downloaded")
         
         await db.add_item(item)
-        debugger.debug(f"{item_json.name} - A - added")
         await db.increment_loaded_documents(self.patch.id)
-        debugger.debug(f"{item_json.name} - C - counted")
+        if masterwork:
+            await db.add_item(item_masterwork)
+            await db.increment_loaded_documents(self.patch.id)
 
 
 
@@ -379,6 +385,9 @@ class Patchloader():
             logger.error(f"Could not scrape data for Rune '{rune_class.rune.name}'")
             logger.error(e)
             return
+        except Exception as e:
+            logger.critical(rune_class.rune.name)
+            raise
 
         await db.add_rune(rune)
         debugger.debug(f"{rune_class.rune.name} - A - added")
@@ -411,6 +420,9 @@ class Patchloader():
             logger.error(f"Could not scrape data for Summonerspell '{summonerspell_json.name}'")
             logger.error(e)
             return
+        except Exception as e:
+            logger.critical(summonerspell_json.name)
+            raise
         
         await self.load_image(summonerspell_json.image)
         debugger.debug(f"{summonerspell_json.name} - I - images downloaded")

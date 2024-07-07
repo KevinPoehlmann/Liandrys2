@@ -128,7 +128,7 @@ class ItemClass(str, MultiValueEnum):
     DISTRIBUTED="distributed item"
     EPIC="epic item"
     LEGENDARY="legendary item"
-    MYTHIC="mythic item"
+    MASTERWORK="masterwork item"
     NONE="None", ""
     STARTER="starter item"
     TRINKET="trinket item"
