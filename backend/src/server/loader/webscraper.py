@@ -478,7 +478,7 @@ def is_masterwork(item_wiki: str) -> bool:
     if not item_class: return False
     elements = get_item_elements(wiki_item)
     if "Stats" in elements:
-        masterwork = elements["Stats"].find("li", string=re.compile("Masterwork Total"))
+        masterwork = elements["Stats"].find("div", text=re.compile("Masterwork Total"))
     else:
         return False
     return bool(masterwork)
@@ -492,7 +492,9 @@ def get_item_stats(stat_content: Tag, masterwork: bool) -> dict:
         stats = tabs[0].find_all("div", class_="pi-data-value pi-font")
     item_stats = {}
     for stat in stats:
-        value = stat.contents[0] + stat.contents[1].text
+        value = ""
+        for content in stat.contents:
+            value += content.text
         pair = value.split(maxsplit=1)
         if len(pair) < 2:
             logger.warning(f"Weird Item stat: {value}")
@@ -500,14 +502,14 @@ def get_item_stats(stat_content: Tag, masterwork: bool) -> dict:
         if "%" in pair[0]:
             pair[0] = pair[0].strip(" %+")    #value
             pair[1] += " percent"           #unit
-        if pair[1].isdigit():
-            item_stats[Stat.GOLD_P_10] = int(pair[1])
+        if pair[0] == "+":
+            item_stats[Stat.GOLD_P_10] = int(pair[1].split()[0])
             continue
         try:
-            item_stats[Stat(pair[1])] = int(pair[0])
+            item_stats[Stat(pair[1])] = float(pair[0])
         except ValueError as e:
             logger.warning(e)
-            item_stats[Stat.ERROR] = int(pair[0])
+            item_stats[Stat.ERROR] = float(pair[0])
 
     return item_stats
 

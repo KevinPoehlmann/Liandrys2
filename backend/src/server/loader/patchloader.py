@@ -276,14 +276,11 @@ class Patchloader():
 
 
     async def load_champion(self, champion_id: str) -> None:
-        debugger.debug(f"{champion_id} - B - begin")
         try:
             champion_dict = await self.session.json(self.urls.dataLink + self.patch.patch + self.urls.championData + champion_id + ".json")
-            debugger.debug(f"{champion_id} - J - json")
             champions_json = ChampionsJson(**champion_dict)
             champion_json = ChampionJson(**champions_json.data.get(champion_id))
             champion_wiki = await self.session.html(self.urls.wiki + champion_json.name + self.urls.championWiki)
-            debugger.debug(f"{champion_id} - W - wiki")
         except HTTPError as e:
             raise LoadError(e.code, e.reason, e.url, "Champion", champion_id)
         except URLError as e:
@@ -299,12 +296,9 @@ class Patchloader():
         await self.load_image(champion_json.passive.image)
         for spell in champion_json.spells:
             await self.load_image(spell.image)
-        debugger.debug(f"{champion_id} - I - images downloaded")
         
         await db.add_champion(champion)
-        debugger.debug(f"{champion_id} - A - added")
         await db.increment_loaded_documents(self.patch.id)
-        debugger.debug(f"{champion_id} - C - counted")
 
 
 
@@ -363,11 +357,9 @@ class Patchloader():
 
 
     async def load_rune(self, rune_class: RuneClass, wiki_names: dict) -> None:
-        debugger.debug(f"{rune_class.rune.name} - B - begin")
         try:
             rune_class.rune.name = wiki_names[rune_class.rune.name] if rune_class.rune.name in wiki_names else rune_class.rune.name
             rune_wiki = await self.session.html(self.urls.wiki + rune_class.rune.name)
-            debugger.debug(f"{rune_class.rune.name} - W - wiki")
         except HTTPError as e:
             raise LoadError(e.code, e.msg, e.url, "Rune", rune_class.rune.name)
         except URLError as e:
@@ -376,11 +368,9 @@ class Patchloader():
             raise LoadError(9, str(e), "", "Rune", rune_class.rune.name)
 
         image = await self.load_image_rune(rune_class.rune.icon)
-        debugger.debug(f"{rune_class.rune.name} - I - images downloaded")
 
         try:
             rune = ws.create_rune(rune_class, rune_wiki, self.patch.patch, image)
-            debugger.debug(f"{rune_class.rune.name} - S - scraped")
         except (AttributeError, ValueError, TypeError) as e:
             logger.error(f"Could not scrape data for Rune '{rune_class.rune.name}'")
             logger.error(e)
@@ -390,9 +380,7 @@ class Patchloader():
             raise
 
         await db.add_rune(rune)
-        debugger.debug(f"{rune_class.rune.name} - A - added")
         await db.increment_loaded_documents(self.patch.id)
-        debugger.debug(f"{rune_class.rune.name} - C - counted")
 
 
 
@@ -403,10 +391,8 @@ class Patchloader():
 
 
     async def load_summonerspell(self, summonerspell_json: SummonerspellJson) -> None:
-        debugger.debug(f"{summonerspell_json.name} - B - begin")
         try:
             summonerspell_wiki = await self.session.html(self.urls.wiki + summonerspell_json.name)
-            debugger.debug(f"{summonerspell_json.name} - W - wiki")
         except HTTPError as e:
             raise LoadError(e.code, e.reason, e.url, "Summonerspell", summonerspell_json.name)
         except URLError as e:
@@ -415,7 +401,6 @@ class Patchloader():
             raise LoadError(9, str(e), "", "Summonerspell", summonerspell_json.name)
         try:
             summonerspell = ws.create_summonerspell(summonerspell_json, summonerspell_wiki, self.patch.patch)
-            debugger.debug(f"{summonerspell_json.name} - S - scraped")
         except (AttributeError, ValueError, TypeError) as e:
             logger.error(f"Could not scrape data for Summonerspell '{summonerspell_json.name}'")
             logger.error(e)
@@ -425,12 +410,9 @@ class Patchloader():
             raise
         
         await self.load_image(summonerspell_json.image)
-        debugger.debug(f"{summonerspell_json.name} - I - images downloaded")
         
         await db.add_summonerspell(summonerspell)
-        debugger.debug(f"{summonerspell_json.name} - A - added")
         await db.increment_loaded_documents(self.patch.id)
-        debugger.debug(f"{summonerspell_json.name} - C - counted")
 
 
 
@@ -451,7 +433,6 @@ class Patchloader():
             try:
                 with open(img_path, "wb") as img_file:
                     img_file.write(await self.session.read(img_url))
-                debugger.info(f"create_image: -> {image.full}")
             except HTTPError as e:
                 raise LoadError(e.code, e.reason, e.url, image.group, image.full)
             except URLError as e:
@@ -464,7 +445,6 @@ class Patchloader():
             try:
                 with open(sprite_path, "wb") as sprite_file:
                     sprite_file.write(await self.session.read(sprite_url))
-                #debugger.info(f"create_image: -> {image.sprite}")
             except HTTPError as e:
                 raise LoadError(e.code, e.reason, e.url, image.group, image.full)
             except URLError as e:
@@ -484,7 +464,6 @@ class Patchloader():
             try:
                 with open(img_path, "wb") as image_file:
                     image_file.write(await self.session.read(img_url))
-                debugger.info(f"create_image: -> {image.full}")
             except HTTPError as e:
                 raise LoadError(e.code, e.reason, e.url, image.group, image.full)
             except URLError as e:
