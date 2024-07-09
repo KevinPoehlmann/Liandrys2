@@ -51,10 +51,11 @@ class Stat(str, MultiValueEnum):
     MAX_HP_TARGET="target's maximum health", "of target's maximum health", "of the target's maximum health"
     MAX_MANA='maximum mana'
     MISSING_HP="missing health", "of missing health", 'his missing health', 'of his missing health'
-    MISSING_HP_TARGET="of target's missing health", "target's missing health"
+    MISSING_HP_TARGET="of target's missing health", "target's missing health", "of the target's missing health"
     MISSING_MANA='of missing mana'
     UNITS="units"
     
+    SECONDS="seconds"
     FLAT="Flat"
     ERROR="Error"
 

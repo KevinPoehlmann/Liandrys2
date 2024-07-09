@@ -96,6 +96,9 @@ async def increment_loaded_documents(id_: str) -> None:
     await patch_collection.update_one({"_id":ObjectId(id_)}, {"$inc":{"loaded_documents":1}})
 
 
+async def increment_item_count(id_: str, amount: int) -> None:
+    await patch_collection.update_one({"_id":ObjectId(id_)}, {"$inc":{"item_count":amount, "document_count":amount}})
+
 
 
 #--------Champion-----------------------------

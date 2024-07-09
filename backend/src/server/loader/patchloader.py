@@ -315,6 +315,7 @@ class Patchloader():
     async def load_item(self, item_id: str, item_json: ItemJson, wiki_names: dict) -> None:
         if len(item_id) > 4:
             #skipping removed Ornn -items
+            await db.increment_item_count(self.patch.id, -1)
             return
         try:
             item_json.name = wiki_names[item_json.name] if item_json.name in wiki_names else item_json.name
@@ -332,6 +333,7 @@ class Patchloader():
             if masterwork:
                 item_masterwork = ws.create_item(item_id, item_json, item_wiki, self.patch.patch, masterwork=True)
                 item_masterwork.name = item_masterwork.name + " - Masterwork"
+                await db.increment_item_count(self.patch.id, 1)
         except (AttributeError, ValueError, TypeError) as e:
             logger.error(f"Could not scrape data for Item '{item_json.name}'")
             logger.error(e)
