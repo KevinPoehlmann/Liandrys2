@@ -15,7 +15,7 @@ from src.server.models.unit import Unit, Fighter
 class Dummy():
     def __init__(self, unit: Unit):
         self.unit: Unit = unit
-        self.hp = unit.hp
+        self.hp:float  = unit.hp
 
 
 
@@ -45,8 +45,10 @@ class Dummy():
                 case DamageSubType.MAGIC:
                     results.append(self.calculate_damage(damage, self.unit.mr))
         result = sum(results)
+        result = round(result, 2)
         self.hp -= result
         return result
+    
 
 
 
@@ -55,6 +57,7 @@ class Attacker(Dummy):
     def __init__(self, fighter: Fighter):
         super().__init__(unit=fighter)
         self.unit: Fighter = fighter
+        self.attackspeed: float = fighter.attackspeed
 
 
     @abstractmethod
@@ -69,14 +72,23 @@ class Character(Attacker):
         self.unit: Champion = champion
         self.level: int = lvl
         self.items: list[Item] = items
+        self.hp: float = self.calculate_stat(self.unit.hp, self.unit.hp_per_lvl) + self.get_bonus_stat(Stat.HP)
+        self.attackspeed: float = self.calculate_attackspeed()
 
 
     def calculate_stat(self, stat: float, scaling: float) -> float:
         return (stat + scaling * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1)))
-    
+
 
     def get_bonus_stat(self, stat: Stat) -> float:
         return sum([item.stats[stat] for item in self.items if stat in item.stats])
+    
+
+    def calculate_attackspeed(self) -> float:
+        bonus = self.calculate_stat(0, self.unit.attackspeed_per_lvl)
+        bonus += self.get_bonus_stat(Stat.ATTACKSPEED_P)
+        result = self.unit.attackspeed + self.unit.attackspeed_ratio * bonus / 100
+        return round(result, 2)
 
 
 
@@ -105,5 +117,6 @@ class Character(Attacker):
                     mr = self.calculate_stat(self.unit.mr, self.unit.mr_per_lvl) + self.get_bonus_stat(Stat.MR)
                     results.append(self.calculate_damage(damage, mr))
         result = sum(results)
+        result = round(result, 2)
         self.hp -= result
         return result

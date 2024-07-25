@@ -2,38 +2,21 @@ from src.server.models.unit import Unit
 from src.server.models.champion import Champion
 from src.server.models.dataenums import ActionType
 from src.server.models.item import Item
+from src.server.models.request import V1Response
 from src.server.simulation.unit import Dummy, Character
 
 
 class DummySimulation():
-    def __init__(self, champion: Champion, lvl: int, items: list[Item], combo: list[ActionType]):
-        self.dummy = Dummy(Unit(hp=1000, armor=50, mr=50))
-        self.character = Character(champion, lvl, items)
-        self.combo = combo
-
-
-    def do_combo(self) -> int:
-        result = 0
-        for action in self.combo:
-            match action:
-                case ActionType.AA: result += self.attack()
-        return result
-
+    def __init__(self, dummy: Dummy, character: Character, combo: list[ActionType]):
+        self.dummy: Dummy = dummy
+        self.character: Character = character
+        self.combo: list[ActionType] = combo
 
 
     def attack(self) -> int:
         dmg = self.character.basic_attack()
         result = self.dummy.take_damge([dmg])
-        return round(result)
-
-
-
-
-class V1Simulation():
-    def __init__(self, attacker: Champion, alvl: int, aitems: list[Item], defender: Champion, dlvl: int, ditems: list[Item], combo: list[ActionType]):
-        self.attacker = Character(attacker, alvl, aitems)
-        self.defender = Character(defender, dlvl, ditems)
-        self.combo = combo
+        return result
 
 
     def do_combo(self) -> int:
@@ -42,9 +25,31 @@ class V1Simulation():
             match action:
                 case ActionType.AA: result += self.attack()
         return result
+
+
+
+
+
+class V1Simulation():
+    def __init__(self, attacker: Character, defender: Character, combo: list[ActionType]):
+        self.attacker: Character = attacker
+        self.defender: Character = defender
+        self.combo: list[ActionType] = combo
     
 
     def attack(self) -> int:
         dmg = self.attacker.basic_attack()
         result = self.defender.take_damge([dmg])
-        return round(result)
+        return result
+
+
+    def do_combo(self) -> V1Response:
+        result = 0
+        timer = 0.0
+        for action in self.combo:
+            match action:
+                case ActionType.AA:
+                    result += self.attack()
+                    timer += 1 / self.attacker.attackspeed
+
+        return V1Response(damage=result, time=round(timer, 2))

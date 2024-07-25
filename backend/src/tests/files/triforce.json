@@ -1,0 +1,75 @@
+{
+    "item_id": "3078",
+    "name": "Trinity Force",
+    "patch": "14.13.1",
+    "gold": 3333,
+    "into": [],
+    "from_": [
+      "3057",
+      "3044",
+      "3051"
+    ],
+    "class_": "legendary item",
+    "ready_to_use": true,
+    "stats": {
+      "attack damage": 45,
+      "ability haste": 20,
+      "attack speed percent": 33,
+      "health": 300
+    },
+    "active": null,
+    "passives": [
+      {
+        "name": "Unique – Spellblade",
+        "description": "",
+        "effects": [
+          {
+            "text": "Unique – Spellblade: After using an ability, your next basic attack within 10 seconds deals 200% base AD bonus physical damage on-hit (1.5 (begins after using the empowered attack) second cooldown).",
+            "stati": [],
+            "conditions": []
+          }
+        ],
+        "ability_stats": [],
+        "damage_type": null,
+        "damage_sub_type": null,
+        "counters": [],
+        "ready_to_use": false,
+        "changes": []
+      },
+      {
+        "name": "Unique – Quicken",
+        "description": "",
+        "effects": [
+          {
+            "text": "Unique – Quicken: Basic attacks on-hit grant 20 bonus movement speed for 2 seconds",
+            "stati": [],
+            "conditions": []
+          }
+        ],
+        "ability_stats": [],
+        "damage_type": null,
+        "damage_sub_type": null,
+        "counters": [],
+        "ready_to_use": false,
+        "changes": []
+      }
+    ],
+    "limitations": "Limited to 1 Spellblade item.",
+    "requirements": "",
+    "maps": [
+      "SR",
+      "HA",
+      "NB"
+    ],
+    "changes": [],
+    "image": {
+      "full": "3078.png",
+      "group": "item",
+      "sprite": "item2.png",
+      "x": 384,
+      "y": 384,
+      "h": 48,
+      "w": 48
+    },
+    "_id": "668d33c6902f45aece3c9fd3"
+  }

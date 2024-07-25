@@ -35,6 +35,7 @@ const goldDefender = ref(0)
 const combo = ref([]);
 const activeItems = ref([]);
 const damage = ref(0);
+const time = ref(0);
 
 
 
@@ -180,7 +181,8 @@ watchEffect(() => {
       combo: combo.value.map(e => e.action.id)
     })
     .then((res) => {
-      damage.value = res.data
+      damage.value = res.data.damage
+      time.value = res.data.time
     })
     .catch((error) => {
       console.error(`Error: ${error}`)
@@ -306,6 +308,7 @@ watchEffect(() => {
     <!--   CALCULATIONS   -->
     <div>
       <p class="text-4xl">{{ damage }} Damage</p>
+      <p class="text-4xl">{{ time }}s</p>
     </div>
   </div>
 </template>

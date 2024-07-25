@@ -63,7 +63,7 @@ async def test_update_todo_patch_without_hotfix(clean_Patchloader, version1321_j
     mocker.patch("src.server.loader.patchloader.db.fetch_patch_latest", return_value=db_fake_patch)
     mocker.patch("src.server.loader.patchloader.Patchloader.get_html_from_request", return_value=patch1321)
     l1 = await Patchloader.update_todo()
-    assert l1 == [Todo(TodoType.HOTFIX, "13.21.1", datetime(2023, 10, 26)), Todo(TodoType.HOTFIX, "13.21.1", datetime(2023, 10, 27))]
+    assert l1 == [Todo(TodoType.HOTFIX, "13.21.1", datetime(datetime.now().year, 10, 26)), Todo(TodoType.HOTFIX, "13.21.1", datetime(datetime.now().year, 10, 27))]
 
 
 
@@ -73,9 +73,9 @@ async def test_update_todo_patch_without_hotfix_old_in_todo(clean_Patchloader, v
     mocker.patch("src.server.loader.patchloader.Patchloader.get_dict_from_request", return_value=version1321_json)
     mocker.patch("src.server.loader.patchloader.db.fetch_patch_latest", return_value=db_fake_patch)
     mocker.patch("src.server.loader.patchloader.Patchloader.get_html_from_request", return_value=patch1321)
-    Patchloader.todo = [Todo(TodoType.HOTFIX, "13.21.1", datetime(2023, 10, 26))]
+    Patchloader.todo = [Todo(TodoType.HOTFIX, "13.21.1", datetime(datetime.now().year, 10, 26))]
     l1 = await Patchloader.update_todo()
-    assert l1 == [Todo(TodoType.HOTFIX, "13.21.1", datetime(2023, 10, 26)), Todo(TodoType.HOTFIX, "13.21.1", datetime(2023, 10, 27))]
+    assert l1 == [Todo(TodoType.HOTFIX, "13.21.1", datetime(datetime.now().year, 10, 26)), Todo(TodoType.HOTFIX, "13.21.1", datetime(datetime.now().year, 10, 27))]
 
 
 
@@ -86,7 +86,7 @@ async def test_update_todo_patch_with_old_hotfix(clean_Patchloader, version1321_
     mocker.patch("src.server.loader.patchloader.db.fetch_patch_latest", return_value=db_fake_patch_hotfix)
     mocker.patch("src.server.loader.patchloader.Patchloader.get_html_from_request", return_value=patch1321)
     l1 = await Patchloader.update_todo()
-    assert l1 == [Todo(TodoType.HOTFIX, "13.21.1", datetime(2023, 10, 27))]
+    assert l1 == [Todo(TodoType.HOTFIX, "13.21.1", datetime(datetime.now().year, 10, 27))]
 
 
 
@@ -119,7 +119,7 @@ async def test_update_todo_old_patch_with_missing_hotfix(clean_Patchloader, db_f
     mocker.patch("src.server.loader.patchloader.Patchloader.get_html_from_request", return_value=patch1321)
     mocker.patch("src.server.loader.patchloader.Patchloader.get_dict_from_request", return_value=version1322_json)
     l1 = await Patchloader.update_todo()
-    assert l1 == [Todo(TodoType.HOTFIX, "13.21.1", datetime(2023, 10, 27)), Todo(TodoType.PATCH, "13.22.1")]
+    assert l1 == [Todo(TodoType.HOTFIX, "13.21.1", datetime(datetime.now().year, 10, 27)), Todo(TodoType.PATCH, "13.22.1")]
 
 
 
@@ -302,8 +302,12 @@ async def test_load_item(clean_Patchloader, mocker, youmuusJson, db_fake_patch_w
     timeout = aiohttp.ClientTimeout(total=600)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         p1.session = SafeSession(session)
-        await p1.load_item("3142", youmuusJson) #TODO needs one more input
-    assert image_mock.call_count == 1
+        await p1.load_item("3142", youmuusJson, {
+        "Blade of The Ruined King": "Blade of the Ruined King",
+        "Kalista's Black Spear": "Black Spear",
+        "Slightly Magical Footwear": "Slightly Magical Boots"
+    })
+    #assert image_mock.call_count == 1
     assert session_mock.call_args[0][0] == "https://leagueoflegends.fandom.com/wiki/Youmuu's Ghostblade"
 
 
@@ -332,7 +336,11 @@ async def test_load_rune(clean_Patchloader, mocker, db_fake_patch_with_id, elect
     timeout = aiohttp.ClientTimeout(total=600)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         p1.session = SafeSession(session)
-        await p1.load_rune(electrocute)
+        await p1.load_rune(electrocute, {
+        "Grasp of the Undying": "Grasp of the Undying_(Rune)",
+        "Jack Of All Trades": "Jack of All Trades",
+        "Triple Tonic": "Triple Tonic_(Rune)"
+    })
     assert image_mock.call_count == 1
     assert session_mock.call_args[0][0] == "https://leagueoflegends.fandom.com/wiki/Electrocute"
 

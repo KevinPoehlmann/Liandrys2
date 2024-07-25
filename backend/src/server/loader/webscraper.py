@@ -645,7 +645,6 @@ def get_rune_passive(rune_wiki: BeautifulSoup) -> Passive:
                     bot_values = value["data-bot_values"]
                     title = re.findall(r"\(based on (.*)\)", value.text)
                     if not title:
-                        #debugger.warning(value.text)
                         title.append("level")
                     flat_table = usify_tables(bot_str=bot_values, title=title[0])
                     effect.stati.append(Status(scalings=[Scaling(value=flat_table)]))
@@ -734,7 +733,6 @@ def usify_scaling(value: str) -> list[Scaling]:
     if not matches:
         logger.warning(f"Scales do not match regex: {value}")
         return [Scaling(value=Table(bot=[1], title=TableTitle.ERROR), stat=Stat.ERROR)]
-        
     if matches["flats"]:
         flat = matches["flats"].split(" / ")
     else:
@@ -749,7 +747,7 @@ def usify_scaling(value: str) -> list[Scaling]:
     except ValueError as e:
         logger.warning(e)
         stat = Stat.ERROR
-    result.append(Scaling(value=Table(top=top, bot=bot, title=title), stat=Stat.FLAT))
+    result.append(Scaling(value=Table(top=top, bot=bot, title=title), stat=stat))
 
     if matches["scalings"]:
         for scale in matches["scalings"].split(") (+ "):

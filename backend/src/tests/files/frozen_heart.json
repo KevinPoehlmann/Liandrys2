@@ -1,0 +1,73 @@
+{
+    "item_id": "3110",
+    "name": "Frozen Heart",
+    "patch": "14.13.1",
+    "gold": 2500,
+    "into": [],
+    "from_": [
+      "3082",
+      "3024"
+    ],
+    "class_": "legendary item",
+    "ready_to_use": true,
+    "stats": {
+      "ability haste": 20,
+      "armor": 65,
+      "mana": 400
+    },
+    "active": null,
+    "passives": [
+      {
+        "name": "Unique – Rock Solid",
+        "description": "",
+        "effects": [
+          {
+            "text": "Unique – Rock Solid: Every first incoming instance of post-mitigation  basic damage per cast instance is reduced by 5 (+ 3.5 per 1000 maximum health), maximum 20% reduction each.",
+            "stati": [],
+            "conditions": []
+          }
+        ],
+        "ability_stats": [],
+        "damage_type": null,
+        "damage_sub_type": null,
+        "counters": [],
+        "ready_to_use": false,
+        "changes": []
+      },
+      {
+        "name": "Unique – Winter's Caress",
+        "description": "",
+        "effects": [
+          {
+            "text": "Unique – Winter's Caress:  Cripples the attack speed of enemies within 700 units by 20%.",
+            "stati": [],
+            "conditions": []
+          }
+        ],
+        "ability_stats": [],
+        "damage_type": null,
+        "damage_sub_type": null,
+        "counters": [],
+        "ready_to_use": false,
+        "changes": []
+      }
+    ],
+    "limitations": "Limited to 1 Frozen Heart.",
+    "requirements": "",
+    "maps": [
+      "SR",
+      "HA",
+      "NB"
+    ],
+    "changes": [],
+    "image": {
+      "full": "3110.png",
+      "group": "item",
+      "sprite": "item3.png",
+      "x": 240,
+      "y": 0,
+      "h": 48,
+      "w": 48
+    },
+    "_id": "668d3396902f45aece3c9f25"
+  }

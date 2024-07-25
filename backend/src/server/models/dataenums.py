@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from aenum import MultiValueEnum
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, validator
 
 
 
@@ -319,6 +319,8 @@ class Mythic(BaseModel):
     value: float
 
 
+class Combo(BaseModel):
+    pass
 
 
 

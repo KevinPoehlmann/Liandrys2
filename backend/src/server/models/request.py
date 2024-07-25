@@ -19,6 +19,12 @@ class V1Request(BaseModel):
     combo: list[ActionType]
 
 
+class V1Response(BaseModel):
+    damage: int
+    time: float
+
+
 class ItemRequest(BaseModel):
     items: list[str]
     new_item: str
+
