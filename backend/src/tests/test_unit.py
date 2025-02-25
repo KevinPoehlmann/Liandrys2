@@ -46,3 +46,6 @@ class TestCharacter():
         assert result == 134.30
         assert aatrox_with_items.hp == 1167.96
 
+
+    def test_do_ability(self):
+        pass

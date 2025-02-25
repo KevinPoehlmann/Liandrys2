@@ -1,0 +1,8 @@
+next up:
+
+    - calculate time right
+    - tests for ability usage
+    - ability usage
+    - make Ability editable in editor
+    - add Rune choice in simulation
+    - update webscraper to new website

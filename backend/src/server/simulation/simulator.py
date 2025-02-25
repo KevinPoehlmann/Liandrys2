@@ -43,6 +43,13 @@ class V1Simulation():
         return result
 
 
+    def ability(self, key: ActionType) -> int:
+        dmg = self.attacker.do_ability(key)
+        result = self.defender.take_damge([dmg])
+        return result
+
+
+
     def do_combo(self) -> V1Response:
         result = 0
         timer = 0.0
@@ -51,5 +58,8 @@ class V1Simulation():
                 case ActionType.AA:
                     result += self.attack()
                     timer += 1 / self.attacker.attackspeed
+                case ActionType.Q | ActionType.W | ActionType.E | ActionType.R:
+                    result += self.ability(action)
+
 
         return V1Response(damage=result, time=round(timer, 2))

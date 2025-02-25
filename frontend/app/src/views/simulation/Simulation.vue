@@ -27,6 +27,7 @@ const w = ref({});
 const e = ref({});
 const r = ref({});
 const levelAttacker = ref(1);
+const levelSpellsAttacker = ref({q: 0, w: 0, e: 0, r:0});
 const levelDefender = ref(1);
 const itemsAttacker = ref([]);
 const itemsDefender = ref([]);
@@ -61,27 +62,33 @@ onBeforeMount(() => {
 const selectAttacker = (championId) => {
   axios.get(`${URL}champion/${championId}`)
     .then((res) => {
-      //console.log(res.data)
       combo.value = []
+      levelAttacker.value = 1
+      levelSpellsAttacker.value = {q: 0, w: 0, e: 0, r:0}
+      itemsAttacker.value = []
       attacker.value = res.data;
       q.value = {
         id: "q",
         name: res.data.q.name,
+        maxRank: res.data.q.maxrank,
         img: `${URL}images/${res.data.q.image.group}/${res.data.q.image.full}`
       }      
       w.value = {
         id: "w",
         name: res.data.w.name,
+        maxRank: res.data.w.maxrank,
         img: `${URL}images/${res.data.w.image.group}/${res.data.w.image.full}`
       }      
       e.value = {
         id: "e",
         name: res.data.e.name,
+        maxRank: res.data.e.maxrank,
         img: `${URL}images/${res.data.e.image.group}/${res.data.e.image.full}`
       }      
       r.value = {
         id: "r",
         name: res.data.r.name,
+        maxRank: res.data.r.maxrank,
         img: `${URL}images/${res.data.r.image.group}/${res.data.r.image.full}`
       }
     })
@@ -93,6 +100,8 @@ const selectAttacker = (championId) => {
 const selectDefender = (championId) => {
   axios.get(`${URL}champion/${championId}`)
     .then((res) => {
+      levelDefender.value = 1
+      itemsDefender.value = []
       defender.value = res.data;
     })
     .catch((error) => {
@@ -112,17 +121,55 @@ const removeAction = (id) => {
   combo.value = combo.value.filter((act) => act.id !== id)
 }
 
-const changeLevel = (i, role) => {
-  let levelRef
+const increaseLevel = (role) => {
   if(role === "A") {
-    levelRef = levelAttacker
+    if(levelAttacker.value < 18) {
+      levelAttacker.value += 1
+    }
   }
   if(role === "D") {
-    levelRef = levelDefender
+    if(levelDefender.value < 18) {
+      levelDefender.value += 1
+    }
   }
-  if (levelRef.value + i > 0 && levelRef.value + i < 19) {
-    
-    levelRef.value += i
+}
+
+const decreaseLevel = (role) => {
+  if(role === "A") {
+    if(levelAttacker.value > 1) {
+      levelAttacker.value -= 1
+    }
+  }
+  if(role === "D") {
+    if(levelDefender.value > 1) {
+      levelDefender.value -= 1
+    }
+  }
+}
+
+const increaseAbility = (ability) => {
+
+  let levelRef = levelSpellsAttacker.value[ability.id]
+  const sum = Object.values(levelSpellsAttacker.value).reduce((acc, val) => acc + val, 0)
+  if(levelRef < ability.maxRank && sum < levelAttacker.value){
+    if(ability.id == "r") {
+      if(((levelRef+1)*5) < levelAttacker.value) {
+      console.log("Ulti")
+      levelRef += 1
+      }
+    } else if((levelRef*2) < levelAttacker.value) {
+      levelRef += 1
+    }
+    levelSpellsAttacker.value[ability.id] = levelRef
+  }
+}
+
+const decreaseAbility = (ability) => {
+
+  let levelRef = levelSpellsAttacker.value[ability.id]
+  if(levelRef > 0) {
+    levelRef -= 1
+    levelSpellsAttacker.value[ability.id] = levelRef
   }
 }
 
@@ -174,6 +221,7 @@ watchEffect(() => {
     {
       id_attacker: attacker.value._id,
       lvl_attacker: levelAttacker.value,
+      ability_levels: levelSpellsAttacker.value,
       items_attacker: itemsAttacker.value.map(e => e.item._id),
       id_defender: defender.value._id,
       lvl_defender: levelDefender.value,
@@ -204,10 +252,10 @@ watchEffect(() => {
           <h2 class="text-bold text-white text-4xl">{{ attacker.name ? attacker.name : "Select Champion" }}</h2>
           <p class="text-white">Level:</p>
           <div class="inline-flex bg-white rounded-md">
-            <button type="button" @click="changeLevel(-1, 'A')"
+            <button type="button" @click="decreaseLevel('A')"
               class="border-x-2 border-black rounded-sm w-6 active:bg-slate-200">-</button>
             <p class="w-8 text-center">{{ levelAttacker }}</p>
-            <button type="button" @click="changeLevel(1, 'A')"
+            <button type="button" @click="increaseLevel('A')"
               class=" border-x-2 border-black rounded-sm w-6 active:bg-slate-200">+</button>
           </div>
         </div>
@@ -247,10 +295,10 @@ watchEffect(() => {
           <h2 class="text-bold text-white text-4xl">{{ defender.name ? defender.name : "Select Champion" }}</h2>
           <p class="text-white">Level:</p>
           <div class="inline-flex bg-white rounded-md">
-            <button type="button" @click="changeLevel(-1, 'D')"
+            <button type="button" @click="decreaseLevel('D')"
               class="border-x-2 border-black rounded-sm w-6 active:bg-slate-200">-</button>
             <p class="w-8 text-center">{{ levelDefender }}</p>
-            <button type="button" @click="changeLevel(1, 'D')"
+            <button type="button" @click="increaseLevel('D')"
               class=" border-x-2 border-black rounded-sm w-6 active:bg-slate-200">+</button>
           </div>
         </div>
@@ -266,31 +314,31 @@ watchEffect(() => {
             <img :src="basicAttack.img" :alt="basicAttack.name" />
           </button>
         </div>
-        <div class="inline-flex flex-row flex-wrap border-4 border-black rounded-md m-2">
-          <button type="button" @click="addAction(q)"
-          :disabled="!q.ready_to_use"
-          :class="{ 'opacity-50 cursor-not-allowed': !q.ready_to_use }"
-          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
-            <img :src="q.img" :alt="q.name" />
-          </button>
-          <button type="button" @click="addAction(w)"
-          :disabled="!w.ready_to_use"
-          :class="{ 'opacity-50 cursor-not-allowed': !w.ready_to_use }"
-          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
-            <img :src="w.img" :alt="w.name" />
-          </button>
-          <button type="button" @click="addAction(e)"
-          :disabled="!e.ready_to_use"
-          :class="{ 'opacity-50 cursor-not-allowed': !e.ready_to_use }"
-          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
-            <img :src="e.img" :alt="e.name" />
-          </button>
-          <button type="button" @click="addAction(r)"
-          :disabled="!r.ready_to_use"
-          :class="{ 'opacity-50 cursor-not-allowed': !r.ready_to_use }"
-          class="border-2 border-black rounded-sm w-16 h-16 hover:border-white">
-            <img :src="r.img" :alt="r.name" />
-          </button>
+        <div class="inline-flex flex-row flex-wrap border-4 border-black rounded-md m-2 space-x-2">
+          <div v-for="action in [q, w, e, r]" :key="action.name" class="flex flex-col items-center">
+            <!-- Plus Button -->
+            <button type="button" @click="increaseAbility(action)"
+              class="border-2 border-black rounded-sm w-16 h-8 hover:border-white bg-white active:bg-slate-200">
+              ^
+            </button>
+            <!-- Main Action Button -->
+            <div class="relative w-16 h-16">
+              <button type="button" @click="addAction(action)"
+                :disabled="!action.ready_to_use"
+                :class="{ 'opacity-50 cursor-not-allowed': !action.ready_to_use }"
+                class="border-2 border-black rounded-sm w-full h-full hover:border-white flex items-center justify-center">
+                <img :src="action.img" :alt="action.name" />
+                <span class="absolute top-0 left-1/4 transform -translate-x-1/2 text-xs font-bold text-white bg-black bg-opacity-50 px-1 rounded">
+                  {{ levelSpellsAttacker[action.id] }}
+                </span>
+              </button>
+            </div>
+            <!-- Minus Button -->
+            <button type="button" @click="decreaseAbility(action)"
+              class="border-2 border-black rounded-sm w-16 h-8 hover:border-white bg-white active:bg-slate-200">
+              v
+            </button>
+          </div>
         </div>
         <div class="inline-flex flex-row flex-wrap border-4 border-black rounded-md m-2">
         </div>

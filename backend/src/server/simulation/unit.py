@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
 
-from src.server.models.dataenums import Damage, DamageCalculation, DamageSubType, Stat
+from src.server.models.dataenums import Damage, DamageCalculation, DamageSubType, Stat, ActionType
 from src.server.models.champion import Champion
 from src.server.models.item import Item
 from src.server.models.rune import Rune
@@ -75,6 +75,13 @@ class Character(Attacker):
         self.hp: float = self.calculate_stat(self.unit.hp, self.unit.hp_per_lvl) + self.get_bonus_stat(Stat.HP)
         self.attackspeed: float = self.calculate_attackspeed()
 
+        self.ability_dict: dict = {
+            ActionType.Q: self.unit.q,
+            ActionType.E: self.unit.w,
+            ActionType.W: self.unit.e,
+            ActionType.R: self.unit.r
+        }
+
 
     def calculate_stat(self, stat: float, scaling: float) -> float:
         return (stat + scaling * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1)))
@@ -120,3 +127,9 @@ class Character(Attacker):
         result = round(result, 2)
         self.hp -= result
         return result
+    
+
+
+    def do_ability(self, key: ActionType) -> None:
+        ability = self.ability_dict[key]
+        
