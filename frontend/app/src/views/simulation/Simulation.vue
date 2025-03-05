@@ -27,7 +27,8 @@ const w = ref({});
 const e = ref({});
 const r = ref({});
 const levelAttacker = ref(1);
-const levelSpellsAttacker = ref({q: 0, w: 0, e: 0, r:0});
+const pointsSpellsAttacker = ref({q: 0, w: 0, e: 0, r:0});
+const pointsSpellsDefender = ref({q: 0, w: 0, e: 0, r:0});
 const levelDefender = ref(1);
 const itemsAttacker = ref([]);
 const itemsDefender = ref([]);
@@ -64,7 +65,8 @@ const selectAttacker = (championId) => {
     .then((res) => {
       combo.value = []
       levelAttacker.value = 1
-      levelSpellsAttacker.value = {q: 0, w: 0, e: 0, r:0}
+      pointsSpellsAttacker.value = {q: 0, w: 0, e: 0, r:0}
+      pointsSpellsDefender.value = {q: 0, w: 0, e: 0, r:0}
       itemsAttacker.value = []
       attacker.value = res.data;
       q.value = {
@@ -149,8 +151,8 @@ const decreaseLevel = (role) => {
 
 const increaseAbility = (ability) => {
 
-  let levelRef = levelSpellsAttacker.value[ability.id]
-  const sum = Object.values(levelSpellsAttacker.value).reduce((acc, val) => acc + val, 0)
+  let levelRef = pointsSpellsAttacker.value[ability.id]
+  const sum = Object.values(pointsSpellsAttacker.value).reduce((acc, val) => acc + val, 0)
   if(levelRef < ability.maxRank && sum < levelAttacker.value){
     if(ability.id == "r") {
       if(((levelRef+1)*5) < levelAttacker.value) {
@@ -160,16 +162,16 @@ const increaseAbility = (ability) => {
     } else if((levelRef*2) < levelAttacker.value) {
       levelRef += 1
     }
-    levelSpellsAttacker.value[ability.id] = levelRef
+    pointsSpellsAttacker.value[ability.id] = levelRef
   }
 }
 
 const decreaseAbility = (ability) => {
 
-  let levelRef = levelSpellsAttacker.value[ability.id]
+  let levelRef = pointsSpellsAttacker.value[ability.id]
   if(levelRef > 0) {
     levelRef -= 1
-    levelSpellsAttacker.value[ability.id] = levelRef
+    pointsSpellsAttacker.value[ability.id] = levelRef
   }
 }
 
@@ -221,10 +223,11 @@ watchEffect(() => {
     {
       id_attacker: attacker.value._id,
       lvl_attacker: levelAttacker.value,
-      ability_levels: levelSpellsAttacker.value,
+      ability_points_attacker: pointsSpellsAttacker.value,
       items_attacker: itemsAttacker.value.map(e => e.item._id),
       id_defender: defender.value._id,
       lvl_defender: levelDefender.value,
+      ability_points_defender: pointsSpellsDefender.value,
       items_defender: itemsDefender.value.map(e => e.item._id),
       combo: combo.value.map(e => e.action.id)
     })
@@ -329,7 +332,7 @@ watchEffect(() => {
                 class="border-2 border-black rounded-sm w-full h-full hover:border-white flex items-center justify-center">
                 <img :src="action.img" :alt="action.name" />
                 <span class="absolute top-0 left-1/4 transform -translate-x-1/2 text-xs font-bold text-white bg-black bg-opacity-50 px-1 rounded">
-                  {{ levelSpellsAttacker[action.id] }}
+                  {{ pointsSpellsAttacker[action.id] }}
                 </span>
               </button>
             </div>

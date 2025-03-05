@@ -53,13 +53,17 @@ class V1Simulation():
     def do_combo(self) -> V1Response:
         result = 0
         timer = 0.0
+        prev_action = (ActionType.AA, 0)
         for action in self.combo:
             match action:
                 case ActionType.AA:
                     result += self.attack()
-                    timer += 1 / self.attacker.attackspeed
+                    attack_time = 1 / self.attacker.attackspeed
+                    timer += prev_action[1]
+                    #TODO delete /100 again
+                    timer += attack_time * self.attacker.unit.attack_windup/100
+                    prev_action = (action, (attack_time * (100 - self.attacker.unit.attack_windup)/100))
                 case ActionType.Q | ActionType.W | ActionType.E | ActionType.R:
                     result += self.ability(action)
-
-
+                    prev_action = (action, 0)
         return V1Response(damage=result, time=round(timer, 2))

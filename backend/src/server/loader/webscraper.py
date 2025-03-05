@@ -121,7 +121,7 @@ def create_champion(champion_json: ChampionJson, champion_wiki: str, patch: str)
         attackspeed_ratio=attackspeed.attackspeed_ratio,
         attackspeed_per_lvl=champion_json.stats.attackspeedperlevel,
         attack_windup=attackspeed.attack_windup,
-        windup_modifier=attackspeed.windup_modifier,
+        windup_modifier=attackspeed.windup_modifier/100,
         missile_speed=attackspeed.missile_speed,
         passive=passive,
         q=q,

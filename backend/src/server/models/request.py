@@ -9,7 +9,7 @@ class DummyRequest(BaseModel):
     combo: list[ActionType]
 
 
-class AbilityLevels(BaseModel):
+class AbilityPoints(BaseModel):
     q: int
     w: int
     e: int
@@ -19,10 +19,11 @@ class AbilityLevels(BaseModel):
 class V1Request(BaseModel):
     id_attacker: str
     lvl_attacker: int
-    ability_levels: AbilityLevels
+    ability_points_attacker: AbilityPoints
     items_attacker: list[str]
     id_defender: str
     lvl_defender: int
+    ability_points_defender: AbilityPoints
     items_defender: list[str]
     combo: list[ActionType]
 

@@ -7,6 +7,7 @@ from src.server.models.item import Item
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 from src.server.models.unit import Unit, Fighter
+from src.server.models.request import AbilityPoints
 
 
     
@@ -66,7 +67,7 @@ class Attacker(Dummy):
 
 
 class Character(Attacker):
-    def __init__(self, champion: Champion, lvl: int, items: list[Item]) -> None:
+    def __init__(self, champion: Champion, lvl: int, ability_points: AbilityPoints ,items: list[Item]) -> None:
         #TODO add runes and summonerspells
         super().__init__(champion)
         self.unit: Champion = champion
@@ -76,10 +77,10 @@ class Character(Attacker):
         self.attackspeed: float = self.calculate_attackspeed()
 
         self.ability_dict: dict = {
-            ActionType.Q: self.unit.q,
-            ActionType.E: self.unit.w,
-            ActionType.W: self.unit.e,
-            ActionType.R: self.unit.r
+            ActionType.Q: (self.unit.q, ability_points.q),
+            ActionType.E: (self.unit.w, ability_points.w),
+            ActionType.W: (self.unit.e, ability_points.e),
+            ActionType.R: (self.unit.r, ability_points.r)
         }
 
 
@@ -131,5 +132,6 @@ class Character(Attacker):
 
 
     def do_ability(self, key: ActionType) -> None:
-        ability = self.ability_dict[key]
+        ability = self.ability_dict[key][0]
+        ability_points = self.ability_dict[key][1]
         

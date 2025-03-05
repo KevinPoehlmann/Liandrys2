@@ -31,12 +31,12 @@ async def v1_simulation(v1_request: V1Request) -> V1Response:
     for item_id in v1_request.items_attacker:
         item = await fetch_item_by_id(item_id)
         items_attacker.append(item)
-    char_a = Character(attacker, v1_request.lvl_attacker, items_attacker)
+    char_a = Character(attacker, v1_request.lvl_attacker, v1_request.ability_points_attacker, items_attacker)
     items_defender = []
     for item_id in v1_request.items_defender:
         item = await fetch_item_by_id(item_id)
         items_defender.append(item)
-    char_d = Character(defender, v1_request.lvl_defender, items_defender)
+    char_d = Character(defender, v1_request.lvl_defender, v1_request.ability_points_defender, items_defender)
     sim = V1Simulation(char_a, char_d, v1_request.combo)
     return sim.do_combo()
 
