@@ -293,3 +293,18 @@
 24.07.2024  11:20:11 - INFO: Patching took 0.3534700870513916 seconds.
 24.07.2024  11:20:11 - ERROR: Could not scrape data for Item 'Youmuu's Ghostblade'
 24.07.2024  11:20:11 - ERROR: object of type 'NoneType' has no len()
+11.03.2025  12:53:38 - INFO: --------------------------------------------------------------------------------------------
+11.03.2025  12:53:38 - INFO:  Loading patch: 13.21.1
+11.03.2025  12:53:39 - INFO: Patching took 0.3078114986419678 seconds.
+11.03.2025  12:53:39 - ERROR: Could not scrape data for Item 'Youmuu's Ghostblade'
+11.03.2025  12:53:39 - ERROR: object of type 'NoneType' has no len()
+11.03.2025  13:03:01 - INFO: --------------------------------------------------------------------------------------------
+11.03.2025  13:03:01 - INFO:  Loading patch: 13.21.1
+11.03.2025  13:03:01 - INFO: Patching took 0.29638099670410156 seconds.
+11.03.2025  13:03:01 - ERROR: Could not scrape data for Item 'Youmuu's Ghostblade'
+11.03.2025  13:03:01 - ERROR: object of type 'NoneType' has no len()
+11.03.2025  13:04:21 - INFO: --------------------------------------------------------------------------------------------
+11.03.2025  13:04:21 - INFO:  Loading patch: 13.21.1
+11.03.2025  13:04:21 - INFO: Patching took 0.2887108325958252 seconds.
+11.03.2025  13:04:21 - ERROR: Could not scrape data for Item 'Youmuu's Ghostblade'
+11.03.2025  13:04:21 - ERROR: object of type 'NoneType' has no len()

@@ -1,6 +1,6 @@
 import pytest
 
-from src.server.models.dataenums import Stat
+from src.server.models.dataenums import Stat, ActionType
 
 
 
@@ -46,6 +46,6 @@ class TestCharacter():
         assert result == 134.30
         assert aatrox_with_items.hp == 1167.96
 
-
-    def test_do_ability(self):
-        pass
+    @pytest.mark.skip
+    def test_do_ability(self, aatrox_with_items):
+        result = aatrox_with_items.do_ability(ActionType.Q)

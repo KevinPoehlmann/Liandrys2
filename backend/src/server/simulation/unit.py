@@ -101,7 +101,6 @@ class Character(Attacker):
 
 
     def basic_attack(self) -> Damage:
-
         dmg = Damage(
             value=self.calculate_stat(self.unit.ad, self.unit.ad_per_lvl) + self.get_bonus_stat(Stat.AD),
             flat_pen=self.get_bonus_stat(Stat.LETHALITY),
@@ -134,4 +133,6 @@ class Character(Attacker):
     def do_ability(self, key: ActionType) -> None:
         ability = self.ability_dict[key][0]
         ability_points = self.ability_dict[key][1]
+        for effect in ability.effects:
+            pass
         

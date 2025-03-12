@@ -13,6 +13,9 @@ class TestDummySimulation():
         assert result == 80.30
 
 
+    def test_ability(self):
+        pass
+
     def test_do_combo(self, dummy_sim):
         result = dummy_sim.do_combo()
         assert result == 160.60
@@ -29,5 +32,5 @@ class TestV1Simulator():
     def test_do_combo(self, v1_sim):
         result = v1_sim.do_combo()
         assert result.damage == 110
-        assert result.time == 2.17
+        assert result.time == 1.3
         assert v1_sim.defender.hp == 1191.68

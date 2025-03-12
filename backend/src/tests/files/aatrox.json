@@ -525,16 +525,11 @@
       }
     },
     "w": {
-      "name": "Infernal Chains",
-      "description": "Aatrox smashes the ground, dealing damage to the first enemy hit. Champions and large monsters have to leave the impact area quickly or they will be dragged to the center and take the damage again.",
+      "name": "Just Damage",
+      "description": "We just deal dmg here.",
       "effects": [
         {
-          "text": "If this hits an enemy  champion or large  monster, a  tether is formed between the target and the ground beneath them for 1.5 seconds, during which they are  revealed.",
-          "stati": [],
-          "conditions": []
-        },
-        {
-          "text": "Active: Aatrox sends a chain in the target direction that deals magic damage to the first enemy hit, doubled against  minions, and  slowing them for 1.5 seconds.",
+          "text": "Damage",
           "stati": [
             {
               "scalings": [
@@ -568,145 +563,36 @@
                     ],
                     "title": "Flat"
                   },
-                  "stat": "Flat"
+                  "stat": "AD"
                 }
               ],
               "type_": "Damage",
               "comment": "Magic Damage"
-            },
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      60,
-                      80,
-                      100,
-                      120,
-                      140
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1
-                    ],
-                    "bot": [
-                      80
-                    ],
-                    "title": "Flat"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "Minion Damage"
-            },
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      25,
-                      27.5,
-                      30,
-                      32.5,
-                      35
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Replace",
-              "comment": "Slow"
-            }
-          ],
-          "conditions": []
-        },
-        {
-          "text": "If the tether is not broken by the end of its duration, the target is dealt the same magic damage again and  pulled to the center of the area.",
-          "stati": [
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      60,
-                      80,
-                      100,
-                      120,
-                      140
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1
-                    ],
-                    "bot": [
-                      80
-                    ],
-                    "title": "Flat"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "Total Damage"
             }
           ],
           "conditions": []
         }
       ],
       "cast_time": 0.25,
-      "cooldown": null,
+      "cooldown": {
+        "top": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "bot": [
+          20,
+          18,
+          16,
+          14,
+          12
+        ],
+        "title": "Rank"
+      },
       "costs": null,
-      "ability_stats": [
-        {
-          "key": "COOLDOWN",
-          "values": "20 / 18 / 16 / 14 / 12"
-        },
-        {
-          "key": "RANGE",
-          "values": " 825 /  765"
-        },
-        {
-          "key": "WIDTH",
-          "values": " 160"
-        },
-        {
-          "key": "SPEED",
-          "values": "1800"
-        }
-      ],
+      "ability_stats": [],
       "damage_type": "Spell damage",
       "damage_sub_type": [
         "Magic"

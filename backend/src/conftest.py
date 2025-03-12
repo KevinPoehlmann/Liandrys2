@@ -27,6 +27,7 @@ from src.server.models.item import Item
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 from src.server.models.patch import NewPatch, Patch
+from src.server.models.request import AbilityPoints
 from src.server.models.unit import Unit
 from src.server.simulation.unit import Dummy, Character
 from src.server.simulation.simulator import DummySimulation, V1Simulation
@@ -281,9 +282,16 @@ def aatrox_with_items():
         tri = Item(**json.load(item))
     with open("src/tests/files/frozen_heart.json", encoding='UTF-8') as item:
         fheart = Item(**json.load(item))
+    ap = AbilityPoints(
+        q=3,
+        w=1,
+        e=1,
+        r=0
+    )
     character = Character(
         champion=aatrox,
         lvl=5,
+        ability_points=ap,
         items=[tri, fheart]
     )
     yield character
