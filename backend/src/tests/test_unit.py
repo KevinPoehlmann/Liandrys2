@@ -19,8 +19,8 @@ class TestDummy():
 
 class TestCharacter():
 
-    def test_calculate_stat(self, aatrox_with_items):
-        result = aatrox_with_items.calculate_stat(60, 5)
+    def test_get_base_stat(self, aatrox_with_items):
+        result = aatrox_with_items.get_base_stat(Stat.AD)
         assert result == 75.45
 
 
@@ -28,9 +28,14 @@ class TestCharacter():
         result = aatrox_with_items.get_bonus_stat(Stat.AD)
         assert result == 45
 
+    
+    def test_get_stat(self, aatrox_with_items):
+        result = aatrox_with_items.get_stat(Stat.AD)
+        assert result == 120.45
+
 
     def test_calculate_attackspeed(self, aatrox_with_items):
-        result = aatrox_with_items.calculate_attackspeed()
+        result = aatrox_with_items.get_attackspeed()
         assert result == 0.92
 
 
@@ -49,3 +54,4 @@ class TestCharacter():
     @pytest.mark.skip
     def test_do_ability(self, aatrox_with_items):
         result = aatrox_with_items.do_ability(ActionType.Q)
+        assert result == 130.34

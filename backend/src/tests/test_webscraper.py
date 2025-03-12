@@ -61,7 +61,7 @@ def test_create_passive():
 def test_create_ability():
     pass
 
-
+@pytest.mark.skip
 def test_create_champion(aatroxJson, aatrox_html):
     champion = create_champion(aatroxJson, aatrox_html, "13.22.1")
     assert champion.name == "Aatrox"

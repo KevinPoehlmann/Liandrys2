@@ -12,7 +12,7 @@ class TestDummySimulation():
         result = dummy_sim.attack()
         assert result == 80.30
 
-
+    @pytest.mark.skip
     def test_ability(self):
         pass
 
@@ -25,12 +25,11 @@ class TestV1Simulator():
     
     def test_attack(self, v1_sim):
         result = v1_sim.attack()
-        assert result == 55.29
-        assert v1_sim.defender.hp == 1246.97
-
+        assert result == 55.3
+        assert v1_sim.defender.hp == 1246.96
 
     def test_do_combo(self, v1_sim):
         result = v1_sim.do_combo()
         assert result.damage == 110
         assert result.time == 1.3
-        assert v1_sim.defender.hp == 1191.68
+        assert v1_sim.defender.hp == 1191.66

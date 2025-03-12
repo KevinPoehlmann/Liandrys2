@@ -11,25 +11,27 @@ from pydantic import BaseModel, Field, validator
     
 class Stat(str, MultiValueEnum):
     ABILITY_HASTE="ability haste"
-    AP="ability power", "AP", 'per 100 AP'
+    AP="ap", "ability power", "AP", 'per 100 AP'
     ARMOR="armor", "total armor"
     ARMOR_PEN_P="armor penetration percent"
-    AD="attack damage", "AD", 'per 100 AD'
-    ATTACKSPEED_P="attack speed percent"
-    MANA_REG_P="base mana regen percent", "base mana regeneration percent"
-    HP_REG_P="base health regen percent", "base health regeneration percent"
+    AD="ad", "attack damage", "AD", 'per 100 AD'
+    ATTACKSPEED_P="attackspeed", "attack speed percent"
     CRIT_P="critical strike chance percent", 'critical strike chance'
     ENERGY="Energy", "energy"
     GOLD_P_10="gold per 10 seconds"
-    HP="health"
+    HP="hp", "health"
+    HP_REG="hp_regen"
+    HP_REG_P="base health regen percent", "base health regeneration percent"
     HEAL_N_SHIELD_P="heal and shield power percent"
     LETHALITY="lethality", "Lethality"
     LIFE_STEAL_P="life steal percent"
     MAGIC_PEN="magic penetration"
     MAGIC_PEN_P="magic penetration percent"
-    MR="magic resist", "magic resistance", "total magic resistance"
+    MR="mr", "magic resist", "magic resistance", "total magic resistance"
     MANA="mana", "Mana", " Mana", " mana"
-    MOVESPEED="move speed", "movement speed"
+    MANA_REG="mana_regen"
+    MANA_REG_P="base mana regen percent", "base mana regeneration percent" 
+    MOVESPEED="movementspeed", "move speed", "movement speed"
     MOVESPEED_P="move speed percent", "movement speed percent", "bonus movement speed percent"
     OMNIVAMP_P="omnivamp percent"
     SLOW_RESIST_P="slow resist percent"

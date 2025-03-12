@@ -9,7 +9,7 @@ from src.server.loader.helper import info_loader, RuneClass
 from src.server.loader.patchexceptions import ScrapeError
 from src.server.models.ability import Ability, ItemActive
 from src.server.models.champion import NewChampion
-from src.server.models.effect import Effect, Scaling, Status, Formula
+from src.server.models.effect import Effect, Scaling, Status
 from src.server.models.item import NewItem
 from src.server.models.passive import Passive, ItemPassive
 from src.server.models.rune import NewRune

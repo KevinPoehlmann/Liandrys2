@@ -76,431 +76,25 @@
       }
     },
     "q": {
-      "name": "The Darkin Blade",
-      "description": "Aatrox slams his greatsword down, dealing physical damage. He can swing three times, each with a different area of effect.",
+      "name": "Simple Damage",
+      "description": "Only dealing damage.",
       "effects": [
         {
-          "text": "Aatrox can activate The Darkin Blade three times before the ability goes on cooldown, with a 1-second static cooldown between casts. If Aatrox does not recast the ability within 4 seconds of the previous cast, it goes on cooldown.",
-          "stati": [],
-          "conditions": []
-        },
-        {
-          "text": "Active: Aatrox performs a strike with his greatsword for each of the three casts, dealing physical damage to enemies hit within an area. Enemies hit within a Sweetspot of the area take  60% bonus damage and also  knocked up for 0.25 seconds. Each subsequent cast increases The Darkin Blade's damage by 25%.",
-          "stati": [],
-          "conditions": []
-        },
-        {
-          "text": "First Cast: Aatrox's first strike affects a 625 × 180-unit rectangular area in the target direction, with him centered on the back line and the Sweetspot at the farthest edge.",
+          "text": "Very simple damage.",
           "stati": [
             {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      10,
-                      25,
-                      40,
-                      55,
-                      70
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      60,
-                      67.5,
-                      75,
-                      82.5,
-                      90
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
+              "scaling": "-5 + Rank * 15 + (0.525 + Rank * 0.075) * AD",
               "type_": "Damage",
               "comment": "First Cast Damage"
-            },
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      16,
-                      40,
-                      64,
-                      88,
-                      112
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      96,
-                      108,
-                      120,
-                      132,
-                      144
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "First Sweetspot Damage"
-            }
-          ],
-          "conditions": []
-        },
-        {
-          "text": "Second Cast: Aatrox's second strike affects a trapezoidal area in the target direction, with the Sweetspot at the farthest edge. The hitbox begins 100-units behind Aatrox and extends 475-units in front of him, measuring between 300 and 500-units wide from behind to in front.",
-          "stati": [
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      12.5,
-                      31.25,
-                      50,
-                      68.75,
-                      87.5
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      75,
-                      84.375,
-                      93.75,
-                      103.125,
-                      112.5
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "Second Cast Damage"
-            },
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      20,
-                      50,
-                      80,
-                      110,
-                      140
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      120,
-                      135,
-                      150,
-                      165,
-                      180
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "Second Sweetspot Damage"
-            }
-          ],
-          "conditions": []
-        },
-        {
-          "text": "Third Cast: Aatrox's third strike affects a 300-radius circular area centered on a target location that is 200 units in front of him, with a 180-radius Sweetspot within.",
-          "stati": [
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      15,
-                      37.5,
-                      60,
-                      82.5,
-                      105
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      90,
-                      101.25,
-                      112.5,
-                      123.75,
-                      135
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "Third Cast Damage"
-            },
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      24,
-                      60,
-                      96,
-                      132,
-                      168
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      144,
-                      162,
-                      180,
-                      198,
-                      216
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "Third Sweetspot Damage"
-            }
-          ],
-          "conditions": []
-        },
-        {
-          "text": "The Darkin Blade deals 55 / 60 / 65 / 70% (based on level) damage against  minions, and the  knock up duration from hitting the Sweetspot is doubled to 0.5 seconds against  monsters.",
-          "stati": [
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      60,
-                      150,
-                      240,
-                      330,
-                      420
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      360,
-                      405,
-                      450,
-                      495,
-                      540
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "Maximum Non-Minion Damage"
-            },
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5,
-                      6,
-                      7,
-                      8,
-                      9,
-                      10,
-                      11,
-                      12,
-                      13,
-                      14,
-                      15,
-                      16,
-                      17,
-                      18
-                    ],
-                    "bot": [
-                      55,
-                      55,
-                      55,
-                      55,
-                      55,
-                      60,
-                      60,
-                      60,
-                      60,
-                      60,
-                      65,
-                      65,
-                      65,
-                      65,
-                      65,
-                      70,
-                      70,
-                      70
-                    ],
-                    "title": "level"
-                  },
-                  "stat": null
-                }
-              ],
-              "type_": null,
-              "comment": " damage against  minions, and the  knock up duration from hitting the Sweetspot is doubled to 0.5 seconds against  monsters."
             }
           ],
           "conditions": []
         }
       ],
       "cast_time": 0.6,
-      "cooldown": null,
-      "costs": null,
-      "ability_stats": [
-        {
-          "key": "COOLDOWN",
-          "values": "14 / 12 / 10 / 8 / 6"
-        },
-        {
-          "key": "RANGE",
-          "values": "Varied"
-        }
-      ],
+      "cooldown": "2",
+      "costs": "0",
+      "ability_stats": [],
       "damage_type": "Area damage",
       "damage_sub_type": [
         "Physical"
@@ -525,88 +119,18 @@
       }
     },
     "w": {
-      "name": "Just Damage",
-      "description": "We just deal dmg here.",
-      "effects": [
-        {
-          "text": "Damage",
-          "stati": [
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5
-                    ],
-                    "bot": [
-                      30,
-                      40,
-                      50,
-                      60,
-                      70
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                },
-                {
-                  "value": {
-                    "top": [
-                      1
-                    ],
-                    "bot": [
-                      40
-                    ],
-                    "title": "Flat"
-                  },
-                  "stat": "AD"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "Magic Damage"
-            }
-          ],
-          "conditions": []
-        }
-      ],
+      "name": "Nothing yet",
+      "description": "Not doing anything",
+      "effects": [],
       "cast_time": 0.25,
-      "cooldown": {
-        "top": [
-          1,
-          2,
-          3,
-          4,
-          5
-        ],
-        "bot": [
-          20,
-          18,
-          16,
-          14,
-          12
-        ],
-        "title": "Rank"
-      },
-      "costs": null,
+      "cooldown": "0",
+      "costs": "0",
       "ability_stats": [],
       "damage_type": "Spell damage",
       "damage_sub_type": [
         "Magic"
       ],
-      "counters": [
-        {
-          "type_": "Spell shield",
-          "effect": "See Notes"
-        },
-        {
-          "type_": "Projectile",
-          "effect": "Blocked"
-        }
-      ],
+      "counters": [],
       "ready_to_use": false,
       "changes": [],
       "maxrank": 5,
@@ -621,58 +145,18 @@
       }
     },
     "e": {
-      "name": "Umbral Dash",
-      "description": "Passively, Aatrox heals when damaging enemy champions. On activation, he dashes in a direction.",
-      "effects": [
-        {
-          "text": "Passive: Aatrox  heals for 16% (+ 0.9% per 100 bonus health) of non- persistent post-mitigation damage he deals against enemy champions.",
-          "stati": [],
-          "conditions": []
-        },
-        {
-          "text": "Active: Aatrox  dashes in the target direction.",
-          "stati": [],
-          "conditions": []
-        },
-        {
-          "text": "Umbral Dash  resets Aatrox's basic attack timer and can be cast during his other abilities without cancelling them and vice versa.",
-          "stati": [],
-          "conditions": []
-        }
+      "name": "Also Nothing",
+      "description": "Not doing anything",
+      "effects": [],
+      "cast_time": 0.25,
+      "cooldown": "0",
+      "costs": "0",
+      "ability_stats": [],
+      "damage_type": "Spell damage",
+      "damage_sub_type": [
+        "Magic"
       ],
-      "cast_time": 0,
-      "cooldown": null,
-      "costs": null,
-      "ability_stats": [
-        {
-          "key": "COOLDOWN",
-          "values": "9 / 8 / 7 / 6 / 5"
-        },
-        {
-          "key": "CAST TIME",
-          "values": "none"
-        },
-        {
-          "key": "TARGET RANGE",
-          "values": "75 / 300 / 500"
-        },
-        {
-          "key": "SPEED",
-          "values": "800 / Up to 1340"
-        }
-      ],
-      "damage_type": null,
-      "damage_sub_type": [],
-      "counters": [
-        {
-          "type_": "Grounded",
-          "effect": "Disabled"
-        },
-        {
-          "type_": "Knockdown",
-          "effect": "Interrupted"
-        }
-      ],
+      "counters": [],
       "ready_to_use": false,
       "changes": [],
       "maxrank": 5,
@@ -687,108 +171,17 @@
       }
     },
     "r": {
-      "name": "World Ender",
-      "description": "Aatrox unleashes his demonic form, fearing nearby enemy minions and gaining attack damage, increased healing, and Move Speed. If he gets a takedown, this effect is extended.",
-      "effects": [
-        {
-          "text": "Whenever Aatrox scores a champion  takedown, he extends the duration by 5 seconds and becomes unleashed again.",
-          "stati": [],
-          "conditions": []
-        },
-        {
-          "text": "Active: Aatrox unleashes his true form for 10 seconds,  fearing nearby enemy  minions and  monsters for 3 seconds, during which they are gradually  slowed by up to 99% over the duration. He also gains  ghosting and  bonus movement speed that decays by 10% of the current bonus every 0.25 seconds, lasting until World Ender has ended.",
-          "stati": [
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3
-                    ],
-                    "bot": [
-                      60,
-                      80,
-                      100
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Replace",
-              "comment": "Bonus Movement Speed"
-            }
-          ],
-          "conditions": []
-        },
-        {
-          "text": "During World Ender, Aatrox gains  bonus attack damage and 5% increased size, and receives increased  self-healing from all sources.",
-          "stati": [
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3
-                    ],
-                    "bot": [
-                      20,
-                      32.5,
-                      45
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "attack damage"
-                }
-              ],
-              "type_": "Damage",
-              "comment": "Bonus Attack Damage"
-            },
-            {
-              "scalings": [
-                {
-                  "value": {
-                    "top": [
-                      1,
-                      2,
-                      3
-                    ],
-                    "bot": [
-                      50,
-                      75,
-                      100
-                    ],
-                    "title": "Rank"
-                  },
-                  "stat": "Flat"
-                }
-              ],
-              "type_": "Heal",
-              "comment": "Increased Healing"
-            }
-          ],
-          "conditions": []
-        }
-      ],
+      "name": "None",
+      "description": "Not doing anything",
+      "effects": [],
       "cast_time": 0.25,
-      "cooldown": null,
-      "costs": null,
-      "ability_stats": [
-        {
-          "key": "COOLDOWN",
-          "values": "120 / 100 / 80"
-        },
-        {
-          "key": "EFFECT RADIUS",
-          "values": "600"
-        }
+      "cooldown": "0",
+      "costs": "0",
+      "ability_stats": [],
+      "damage_type": "Spell damage",
+      "damage_sub_type": [
+        "Magic"
       ],
-      "damage_type": null,
-      "damage_sub_type": [],
       "counters": [],
       "ready_to_use": false,
       "changes": [],

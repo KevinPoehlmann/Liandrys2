@@ -7,7 +7,7 @@ from src.server.models.item import Item
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 from src.server.models.unit import Unit, Fighter
-from src.server.models.request import AbilityPoints
+from src.server.models.request import Rank
 
 
     
@@ -67,33 +67,48 @@ class Attacker(Dummy):
 
 
 class Character(Attacker):
-    def __init__(self, champion: Champion, lvl: int, ability_points: AbilityPoints ,items: list[Item]) -> None:
+    def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item]) -> None:
         #TODO add runes and summonerspells
         super().__init__(champion)
         self.unit: Champion = champion
         self.level: int = lvl
         self.items: list[Item] = items
-        self.hp: float = self.calculate_stat(self.unit.hp, self.unit.hp_per_lvl) + self.get_bonus_stat(Stat.HP)
-        self.attackspeed: float = self.calculate_attackspeed()
+        self.hp: float = self.get_stat(Stat.HP)
+        self.attackspeed: float = self.get_attackspeed()
 
         self.ability_dict: dict = {
-            ActionType.Q: (self.unit.q, ability_points.q),
-            ActionType.E: (self.unit.w, ability_points.w),
-            ActionType.W: (self.unit.e, ability_points.e),
-            ActionType.R: (self.unit.r, ability_points.r)
+            ActionType.Q: (self.unit.q, rank.q),
+            ActionType.E: (self.unit.w, rank.w),
+            ActionType.W: (self.unit.e, rank.e),
+            ActionType.R: (self.unit.r, rank.r)
         }
 
 
-    def calculate_stat(self, stat: float, scaling: float) -> float:
-        return (stat + scaling * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1)))
+    def get_base_stat(self, stat: Stat) -> float:
+        stat_name = stat.value
+        base_value = getattr(self.unit, stat_name, None)
+        if base_value is None:
+            return None    
+        scaling_attr = f"{stat_name}_per_lvl"
+        scaling_value = getattr(self.unit, scaling_attr, 0)
+        return base_value + scaling_value * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
 
 
     def get_bonus_stat(self, stat: Stat) -> float:
         return sum([item.stats[stat] for item in self.items if stat in item.stats])
     
 
-    def calculate_attackspeed(self) -> float:
-        bonus = self.calculate_stat(0, self.unit.attackspeed_per_lvl)
+    def get_stat(self, stat: Stat) -> float:
+        if stat == Stat.ATTACKSPEED_P:
+            return self.get_attackspeed()
+        base_stat = self.get_base_stat(stat)
+        bonus_stat = self.get_bonus_stat(stat)
+        result = base_stat + bonus_stat
+        return round(result, 2)
+
+
+    def get_attackspeed(self) -> float:
+        bonus = self.unit.attackspeed_per_lvl * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
         bonus += self.get_bonus_stat(Stat.ATTACKSPEED_P)
         result = self.unit.attackspeed + self.unit.attackspeed_ratio * bonus / 100
         return round(result, 2)
@@ -102,7 +117,7 @@ class Character(Attacker):
 
     def basic_attack(self) -> Damage:
         dmg = Damage(
-            value=self.calculate_stat(self.unit.ad, self.unit.ad_per_lvl) + self.get_bonus_stat(Stat.AD),
+            value=self.get_stat(Stat.AD),
             flat_pen=self.get_bonus_stat(Stat.LETHALITY),
             perc_pen=self.get_bonus_stat(Stat.ARMOR_PEN_P),
             dtype=DamageSubType.PHYSIC,
@@ -118,10 +133,10 @@ class Character(Attacker):
                 case DamageSubType.TRUE:
                     results.append(self.calculate_damage(damage, 0))
                 case DamageSubType.PHYSIC:
-                    armor = self.calculate_stat(self.unit.armor, self.unit.armor_per_lvl) + self.get_bonus_stat(Stat.ARMOR)
+                    armor = self.get_stat(Stat.ARMOR)
                     results.append(self.calculate_damage(damage, armor))
                 case DamageSubType.MAGIC:
-                    mr = self.calculate_stat(self.unit.mr, self.unit.mr_per_lvl) + self.get_bonus_stat(Stat.MR)
+                    mr = self.get_stat(Stat.MR)
                     results.append(self.calculate_damage(damage, mr))
         result = sum(results)
         result = round(result, 2)
@@ -132,7 +147,9 @@ class Character(Attacker):
 
     def do_ability(self, key: ActionType) -> None:
         ability = self.ability_dict[key][0]
-        ability_points = self.ability_dict[key][1]
+        rank = self.ability_dict[key][1]
         for effect in ability.effects:
-            pass
+            scaling_d = {
+                "AD": self.ad
+            }
         

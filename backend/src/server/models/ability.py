@@ -22,8 +22,8 @@ class Ability(BaseModel):
     description: str = ""
     effects: list[Effect] = []
     cast_time: float = 0
-    cooldown: Table = None
-    costs: AbilityCosts = None
+    cooldown: str = "0"
+    costs: str = "0"
     ability_stats: list[AbilityStat] = []
     damage_type: DamageType = None
     damage_sub_type: list[DamageSubType] = None
