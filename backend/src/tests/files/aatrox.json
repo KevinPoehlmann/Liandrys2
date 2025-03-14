@@ -83,11 +83,12 @@
           "text": "Very simple damage.",
           "stati": [
             {
-              "scaling": "-5 + Rank * 15 + (0.525 + Rank * 0.075) * AD",
+              "scaling": "-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
               "type_": "Damage",
               "comment": "First Cast Damage"
             }
           ],
+          "damage_sub_type": "Physical",
           "conditions": []
         }
       ],

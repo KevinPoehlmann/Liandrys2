@@ -25,4 +25,5 @@ class Condition(BaseModel):
 class Effect(BaseModel):
     text: str
     stati: list[Status] = []
+    damage_sub_type: DamageSubType = None
     conditions: list[Condition] = []

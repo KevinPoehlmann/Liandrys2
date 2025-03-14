@@ -18,9 +18,11 @@ from src.server.models.json_validation import (
 )
 from src.server.models.champion import Champion
 from src.server.models.dataenums import (
+    ActionEffect,
     ActionType,
     Damage,
     DamageSubType,
+    DamageType,
     DamageCalculation
 )
 from src.server.models.item import Item
@@ -267,11 +269,21 @@ def damage():
     d = Damage(
         value=100,
         flat_pen=10,
-        perc_pen=50,
-        dtype=DamageSubType.PHYSIC,
-        dcalc=DamageCalculation.FLAT
+        percent_pen=50,
+        dmg_type=DamageType.BASIC,
+        dmg_sub_type=DamageSubType.PHYSIC,
+        dmg_calc=DamageCalculation.FLAT
     )
     return d
+
+
+@pytest.fixture()
+def action_effect(damage):
+    a = ActionEffect(
+        time=1.0,
+        damages=[damage, damage]
+    )
+    return a
 
 
 @pytest.fixture()

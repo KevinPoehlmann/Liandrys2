@@ -330,7 +330,6 @@ class Combo(BaseModel):
 
 @dataclass
 class ChampionSideBox():
-    """Class for storing side box stats from a champion"""
     last_changed: str
     range_type: RangeType
 
@@ -338,7 +337,6 @@ class ChampionSideBox():
 
 @dataclass
 class AttackspeedStats():
-    """Class for champion's stats for its attack windup, windup modificator and attackspeed ratio."""
     attackspeed_ratio: float
     attack_windup: float = 0.0
     windup_modifier: float = 1.0
@@ -348,7 +346,6 @@ class AttackspeedStats():
 
 @dataclass
 class AbilityDetails():
-    """"""
     damage_type: DamageType = None
     damage_sub_type: list[DamageSubType] = field(default_factory=list)
     minion_aggro: MinionAggro = None
@@ -357,7 +354,6 @@ class AbilityDetails():
     
 @dataclass
 class AbilityBaseStats():
-    """"""
     cast_time: float = 0
     cooldown: Table = None
     costs: AbilityCosts = None
@@ -366,9 +362,16 @@ class AbilityBaseStats():
 
 @dataclass
 class Damage():
-    """"""
     value: float
     flat_pen: float
-    perc_pen: float
-    dtype: DamageSubType
-    dcalc: DamageCalculation
+    percent_pen: float
+    dmg_type: DamageType
+    dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
+    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+
+
+@dataclass
+class ActionEffect():
+    time: float
+    damages: list[Damage] = field(default_factory=list)
+    stati: list[tuple[StatusType, float]] = field(default_factory=list)

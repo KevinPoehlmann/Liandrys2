@@ -7,6 +7,7 @@ class Stat(str, MultiValueEnum):
     AP = "ap"
     ARMOR = "armor"
     MR = "mr"
+    ABILITY_HASTE="ability_haste"
 
 class Unit:
     def __init__(self, hp: int, ad: int, ap: int, armor: int, mr: int,
@@ -49,9 +50,11 @@ class Character:
 
     def use_ability(self):
         """Calculates the ability value using the dynamically updated stats."""
-        return eval(self.ability, {}, {
+        variables = {
             stat.value: self.get_stat(stat) for stat in Stat
-        })
+        }
+        print(variables)
+        return eval(self.ability, {}, variables)
 
 
 # **Example Usage:**
