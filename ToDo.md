@@ -1,8 +1,10 @@
 # Project TODO & Notes
 
 ## ✅ Tasks to Do
-- [ ] Make a better readme file with chatgpt
-- [ ] Make type hints work in database
+### General Tasks ###
+- [x] Make a better readme file with chatgpt
+- [x] Make type hints work in database
+### Functionality ###
 - [ ] Make abilities work
     - [ ] Make simple abilities work
         - [x] Implement simple ability usage
@@ -51,6 +53,7 @@
         - [ ] Update to new Rune Structure
         - [ ] Update to new Summonerspell Structure
 - [ ] Make `Ability` editable in the editor
+### Production ###
 - [ ] Making the project ready for production
     - [ ] Add a disclaimer stating that your project isn’t affiliated with Riot Games.
     - [ ] Register the project through Riot’s Developer Portal.
@@ -60,7 +63,10 @@
 - **Testing:**
     - cd backend
     - pytest
+    - or pytest src/tests/*test_file.py*
 - **Installation on raspberrypi:**
+    - probably just use "docker-compose -f docker-compose.yml -f docker-compose.rpi.yml up -d
+"
     - swap outcommented lines:
         - docker-compose: mongo image
         - database.py: client?
@@ -71,7 +77,6 @@
         - donwload it
     - swap back lines and put it back on github
 - **Common Issues:**
-    - don't know how to make pytest work on just one single file
     - login data for the mongo express server in docker-compose file
 
 ---

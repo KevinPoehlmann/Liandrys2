@@ -3,6 +3,7 @@ import logging
 import os
 
 from bson import ObjectId
+from motor.core import AgnosticCollection
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pymongo.errors import InvalidURI
 from pymongo.results import UpdateResult
@@ -17,7 +18,7 @@ from src.server.models.summonerspell import NewSummonerspell, Summonerspell, Sho
 
 
 
-def connect_database() -> AsyncIOMotorDatabase:
+def connect_database() -> AgnosticCollection:
     host = os.getenv("MONGODB_HOST", "")
     user = os.getenv("MONGODB_USER", "")
     password = os.getenv("MONGODB_PASSWORD", "")
@@ -35,11 +36,11 @@ def connect_database() -> AsyncIOMotorDatabase:
 
 database = connect_database()
 
-patch_collection: AsyncIOMotorCollection = database.patches
-champion_collection: AsyncIOMotorCollection = database.champions
-item_collection: AsyncIOMotorCollection = database.items
-rune_collection: AsyncIOMotorCollection = database.runes
-summonerspell_collection: AsyncIOMotorCollection = database.summonerspells
+patch_collection: AgnosticCollection = database.patches
+champion_collection: AgnosticCollection = database.champions
+item_collection: AgnosticCollection = database.items
+rune_collection: AgnosticCollection = database.runes
+summonerspell_collection: AgnosticCollection = database.summonerspells
 
 debugger = logging.getLogger("debugger")
 
