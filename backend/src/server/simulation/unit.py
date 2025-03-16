@@ -1,6 +1,4 @@
 
-from abc import ABC, abstractmethod
-
 from src.server.models.ability import ChampionAbility
 from src.server.models.champion import Champion
 from src.server.models.dataenums import (
@@ -17,7 +15,7 @@ from src.server.models.item import Item
 from src.server.models.request import Rank
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
-from src.server.models.unit import Unit, Fighter
+from src.server.models.unit import Unit
 
 
     
@@ -27,56 +25,48 @@ class Dummy():
     def __init__(self, unit: Unit):
         self.unit: Unit = unit
         self.hp:float  = unit.hp
+        self.damage_taken: float = 0
 
+    def get_stat(self, stat: Stat) -> float:
+        base_stat = getattr(self.unit, stat.value, 0)
+        return base_stat
 
+    def get_resistance(self, dmg_sub_type: DamageSubType) -> float:
+        if dmg_sub_type == DamageSubType.PHYSIC:
+            return self.unit.armor
+        elif dmg_sub_type == DamageSubType.MAGIC:
+            return self.unit.mr
+        else:
+            return 0
 
-    def calculate_damage(self, damage: Damage, resistance: float) -> float:
+    def calculate_damage(self, damage: Damage) -> float:
         match damage.dmg_calc:
             case DamageCalculation.MAX_HP:
-                damage.value *= self.unit.hp
+                damage.value *= self.get_stat(Stat.HP)
             case DamageCalculation.CURRENT_HP:
                 damage.value *= self.hp
             case DamageCalculation.MISSING_HP:
-                damage.value *= (self.unit.hp - self.hp)
+                damage.value *= (self.get_stat(Stat.HP) - self.hp)
+        resistance = self.get_resistance(damage.dmg_sub_type)
         resistance -= (resistance * damage.percent_pen / 100)
         resistance -= damage.flat_pen
         resistance = max(resistance, 0)
         result = damage.value * (100 / (resistance + 100))
-        return result
+        return round(result, 3)
 
 
-    def take_damge(self, action_effect: ActionEffect) -> int:
+    def take_damge(self, action_effect: ActionEffect) -> None:
         results = []
         for damage in action_effect.damages:
-            match damage.dmg_sub_type:
-                case DamageSubType.TRUE:
-                    results.append(self.calculate_damage(damage, 0))
-                case DamageSubType.PHYSIC:
-                    results.append(self.calculate_damage(damage, self.unit.armor))
-                case DamageSubType.MAGIC:
-                    results.append(self.calculate_damage(damage, self.unit.mr))
+            results.append(self.calculate_damage(damage))
         result = sum(results)
-        result = round(result, 2)
-        self.hp -= result
-        return result
+        result = round(result, 3)
+        self.hp = round(self.hp - result, 3)
+        self.damage_taken = round(self.damage_taken + result, 3)
     
 
 
-
-#TODO get rid of Attacker class and Fighter class (unnecessary inheritance)
-class Attacker(Dummy):
-    def __init__(self, fighter: Fighter):
-        super().__init__(unit=fighter)
-        self.unit: Fighter = fighter
-        self.attackspeed: float = fighter.attackspeed
-
-
-    @abstractmethod
-    def basic_attack(self) -> None:
-        pass
-
-
-class Character(Attacker):
+class Character(Dummy):
     def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item]) -> None:
         #TODO add runes and summonerspells
         super().__init__(champion)
@@ -84,7 +74,6 @@ class Character(Attacker):
         self.level: int = lvl
         self.items: list[Item] = items
         self.hp: float = self.get_stat(Stat.HP)
-        self.attackspeed: float = self.get_attackspeed()
 
         self.ability_dict: dict = {
             ActionType.Q: (self.unit.q, rank.q),
@@ -115,13 +104,13 @@ class Character(Attacker):
         base_stat = self.get_base_stat(stat)
         bonus_stat = self.get_bonus_stat(stat)
         result = base_stat + bonus_stat
-        return round(result, 2)
+        return round(result, 3)
 
     def get_attackspeed(self) -> float:
         bonus = self.unit.attackspeed_per_lvl * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
         bonus += self.get_bonus_stat(Stat.ATTACKSPEED_P)
         result = self.unit.attackspeed + self.unit.attackspeed_ratio * bonus / 100
-        return round(result, 2)
+        return round(result, 3)
     
     def get_penetration(self, dmg_sub_type: DamageSubType) -> tuple[float, float]:
         if dmg_sub_type == DamageSubType.PHYSIC:
@@ -134,14 +123,15 @@ class Character(Attacker):
             flat_pen = 0
             percent_pen = 0
         return (flat_pen, percent_pen)
+    
+    def get_resistance(self, dmg_sub_type: DamageSubType) -> float:
+        if dmg_sub_type == DamageSubType.PHYSIC:
+            return self.get_stat(Stat.ARMOR)
+        elif dmg_sub_type == DamageSubType.MAGIC:
+            return self.get_stat(Stat.MR)
+        else:
+            return 0
 
-
-
-    def do_action(self, key: ActionType) -> ActionEffect:
-        if key == ActionType.AA:
-            return self.basic_attack()
-        elif key in self.ability_dict:
-            return self.do_ability(key)
 
 
     def basic_attack(self) -> ActionEffect:
@@ -156,25 +146,7 @@ class Character(Attacker):
             dmg_type=DamageType.BASIC  #TODO check actual damage type for basic attacks
         )
         self.last_action = ActionType.AA
-        return ActionEffect(time=round(time, 2), damages=[dmg])
-    
-
-    def take_damge(self, action_effect: ActionEffect) -> int:
-        results = []
-        for damage in action_effect.damages:
-            match damage.dmg_sub_type:
-                case DamageSubType.TRUE:
-                    results.append(self.calculate_damage(damage, 0))
-                case DamageSubType.PHYSIC:
-                    armor = self.get_stat(Stat.ARMOR)
-                    results.append(self.calculate_damage(damage, armor))
-                case DamageSubType.MAGIC:
-                    mr = self.get_stat(Stat.MR)
-                    results.append(self.calculate_damage(damage, mr))
-        result = sum(results)
-        result = round(result, 2)
-        self.hp -= result
-        return result
+        return ActionEffect(time=round(time, 3), damages=[dmg])
     
 
     def do_ability(self, key: ActionType) -> ActionEffect:
@@ -191,7 +163,7 @@ class Character(Attacker):
         for effect in ability.effects:
             flat_pen, percent_pen = self.get_penetration(effect.damage_sub_type)
             for status in effect.stati:
-                result = round(eval(status.scaling, {}, variables), 2)
+                result = round(eval(status.scaling, {}, variables), 3)
                 if status.type_ == StatusType.DAMAGE:
                     action_effect.damages.append(Damage(
                         value=result,
@@ -203,3 +175,10 @@ class Character(Attacker):
                 else:
                     action_effect.stati.append((status.type_, result))
         return action_effect
+
+
+    def do_action(self, key: ActionType) -> ActionEffect:
+        if key == ActionType.AA:
+            return self.basic_attack()
+        elif key in self.ability_dict:
+            return self.do_ability(key)

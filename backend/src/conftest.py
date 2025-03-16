@@ -36,6 +36,12 @@ from src.server.simulation.simulator import DummySimulation, V1Simulation
 
 
 
+@pytest.fixture
+def resolve_fixture(request):
+    return request.getfixturevalue(request.param)  # Resolves fixture dynamically
+
+
+
 @pytest.fixture()
 def clean_Patchloader():
     yield
@@ -265,7 +271,7 @@ def dummy():
 
 
 @pytest.fixture()
-def damage():
+def damage_ad_flat():
     d = Damage(
         value=100,
         flat_pen=10,
@@ -278,10 +284,49 @@ def damage():
 
 
 @pytest.fixture()
-def action_effect(damage):
+def damage_ap_maxhp():
+    d = Damage(
+        value=0.1,
+        flat_pen=18,
+        percent_pen=0,
+        dmg_type=DamageType.BASIC,
+        dmg_sub_type=DamageSubType.MAGIC,
+        dmg_calc=DamageCalculation.MAX_HP
+    )
+    return d
+
+
+@pytest.fixture()
+def damage_true_missinghp():
+    d = Damage(
+        value=0.3,
+        flat_pen=0,
+        percent_pen=0,
+        dmg_type=DamageType.BASIC,
+        dmg_sub_type=DamageSubType.TRUE,
+        dmg_calc=DamageCalculation.MISSING_HP
+    )
+    return d
+
+
+@pytest.fixture()
+def damage_true_currenthp():
+    d = Damage(
+        value=0.08,
+        flat_pen=0,
+        percent_pen=0,
+        dmg_type=DamageType.BASIC,
+        dmg_sub_type=DamageSubType.TRUE,
+        dmg_calc=DamageCalculation.CURRENT_HP
+    )
+    return d
+
+
+@pytest.fixture()
+def action_effect(damage_ad_flat, damage_ap_maxhp):
     a = ActionEffect(
         time=1.0,
-        damages=[damage, damage]
+        damages=[damage_ad_flat, damage_ap_maxhp]
     )
     return a
 

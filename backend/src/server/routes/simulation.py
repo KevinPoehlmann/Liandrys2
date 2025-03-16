@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from src.server.database import fetch_champion_by_id, fetch_item_by_id
 from src.server.simulation.simulator import DummySimulation, V1Simulation
 from src.server.simulation.unit import Unit, Dummy, Character
-from src.server.models.request import DummyRequest, ItemRequest, V1Request, V1Response
+from src.server.models.request import DummyRequest, DummyResponse, ItemRequest, V1Request, V1Response
 
 
 router = APIRouter()
@@ -11,14 +11,14 @@ router = APIRouter()
 
 #TODO add runes, summonerspells
 @router.post("/dummy")
-async def attack_dummy(dummy_request: DummyRequest) -> int:
+async def attack_dummy(dummy_request: DummyRequest) -> DummyResponse:
     champion = await fetch_champion_by_id(dummy_request.champion_id)
     items = []
     for item_id in dummy_request.items:
         item = await fetch_item_by_id(item_id)
         items.append(item)
     dummy = Dummy(Unit(hp=1000, armor=50, mr=50))
-    character = Character(champion, dummy_request.lvl, items)
+    character = Character(champion, dummy_request.lvl, dummy_request.ability_points, items)
     sim = DummySimulation(dummy, character, dummy_request.combo)
     return sim.do_combo()
 

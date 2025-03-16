@@ -6,10 +6,10 @@
 - [x] Make type hints work in database
 ### Functionality ###
 - [ ] Make abilities work
-    - [ ] Make simple abilities work
+    - [x] Make simple abilities work
         - [x] Implement simple ability usage
-        - [ ] Create simple abilities for testing
-        - [ ] Tests for simple ability usage
+        - [x] Create simple abilities for testing
+        - [x] Tests for simple ability usage
     - [ ] Make harder abilities work
         - [ ] Implement harder ability usage
         - [ ] Create harder abilities for testing
@@ -52,7 +52,10 @@
         - [ ] Update to new Item Structure
         - [ ] Update to new Rune Structure
         - [ ] Update to new Summonerspell Structure
-- [ ] Make `Ability` editable in the editor
+### Admin Functions ###
+- [ ] Make Dataset updateable
+- [ ] Make Abilities editable in the editor
+- [ ] Make Passives editable in the editor
 ### Production ###
 - [ ] Making the project ready for production
     - [ ] Add a disclaimer stating that your project isn’t affiliated with Riot Games.

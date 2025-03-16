@@ -2,18 +2,24 @@ from pydantic import BaseModel
 from src.server.models.dataenums import ActionType
 
 
-class DummyRequest(BaseModel):
-    champion_id: str
-    lvl: int
-    items: list[str]
-    combo: list[ActionType]
-
-
 class Rank(BaseModel):
     q: int
     w: int
     e: int
     r: int
+
+
+class DummyRequest(BaseModel):
+    champion_id: str
+    lvl: int
+    ability_points: Rank
+    items: list[str]
+    combo: list[ActionType]
+
+
+class DummyResponse(BaseModel):
+    damage: int
+    time: float
 
 
 class V1Request(BaseModel):
