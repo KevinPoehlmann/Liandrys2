@@ -368,10 +368,38 @@ class Damage():
     dmg_type: DamageType
     dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
     dmg_calc: DamageCalculation = DamageCalculation.FLAT
+    source: ActionType = None
+
+
+@dataclass
+class QueueDamage():
+    source: ActionType
+    scaling: str
+    dmg_type: DamageType
+    dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
+    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+
+
+@dataclass
+class EffectDamage():
+    source: ActionType
+    scaling: str
+    dmg_type: DamageType
+    dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
+    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+    duration: float = 0.0
+    interval: float = 0.0
+
+
+@dataclass
+class EffectStatus():
+    source: ActionType
+    type_: StatusType
+    scaling: str
 
 
 @dataclass
 class ActionEffect():
     time: float
-    damages: list[Damage] = field(default_factory=list)
-    stati: list[tuple[StatusType, float]] = field(default_factory=list)
+    damages: list[EffectDamage] = field(default_factory=list)
+    stati: list[EffectStatus] = field(default_factory=list)

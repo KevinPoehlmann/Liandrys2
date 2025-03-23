@@ -19,8 +19,8 @@ async def attack_dummy(dummy_request: DummyRequest) -> DummyResponse:
         items.append(item)
     dummy = Dummy(Unit(hp=1000, armor=50, mr=50))
     character = Character(champion, dummy_request.lvl, dummy_request.ability_points, items)
-    sim = DummySimulation(dummy, character, dummy_request.combo)
-    return sim.do_combo()
+    sim = DummySimulation(dummy, character)
+    return sim.do_combo(dummy_request.combo)
 
 
 @router.post("/v1")
@@ -37,8 +37,8 @@ async def v1_simulation(v1_request: V1Request) -> V1Response:
         item = await fetch_item_by_id(item_id)
         items_defender.append(item)
     char_d = Character(defender, v1_request.lvl_defender, v1_request.ability_points_defender, items_defender)
-    sim = V1Simulation(char_a, char_d, v1_request.combo)
-    return sim.do_combo()
+    sim = V1Simulation(char_a, char_d)
+    return sim.do_combo(v1_request.combo)
 
 
 

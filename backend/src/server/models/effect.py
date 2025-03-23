@@ -1,7 +1,14 @@
 from pydantic import BaseModel
 from typing import Union
 
-from src.server.models.dataenums import ConditionType, StatusType, Stat, DamageType, DamageSubType, Table
+from src.server.models.dataenums import (
+    ConditionType,
+    StatusType,
+    Stat,
+    DamageCalculation,
+    DamageSubType, 
+    Table
+)
 
 
 class Scaling(BaseModel):
@@ -11,6 +18,7 @@ class Scaling(BaseModel):
 class Status(BaseModel):
     scaling: str = "0"
     type_: StatusType = None
+    dmg_calc: DamageCalculation = None
     comment: str = ""
 
     class Config:

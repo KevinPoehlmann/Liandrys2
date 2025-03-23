@@ -23,7 +23,9 @@ from src.server.models.dataenums import (
     Damage,
     DamageSubType,
     DamageType,
-    DamageCalculation
+    DamageCalculation,
+    EffectDamage,
+    QueueDamage
 )
 from src.server.models.item import Item
 from src.server.models.rune import Rune
@@ -323,6 +325,80 @@ def damage_true_currenthp():
 
 
 @pytest.fixture()
+def e_damage_aa():
+    d = EffectDamage(
+        source=ActionType.AA,
+        scaling="ad",
+        dmg_type=DamageType.BASIC,
+        dmg_sub_type=DamageSubType.PHYSIC,
+        dmg_calc=DamageCalculation.FLAT,
+        duration=0,
+        interval=0
+    )
+    return d
+
+
+@pytest.fixture()
+def e_damage_w():
+    d = EffectDamage(
+        source=ActionType.W,
+        scaling="20 + 0.3 * ap",
+        dmg_type=DamageType.DOT,
+        dmg_sub_type=DamageSubType.MAGIC,
+        dmg_calc=DamageCalculation.FLAT,
+        duration=2,
+        interval=0.5
+    )
+    return d
+
+
+@pytest.fixture()
+def q_damage_aa():
+    d = QueueDamage(
+        source=ActionType.AA,
+        scaling="ad",
+        dmg_type=DamageType.BASIC,
+        dmg_sub_type=DamageSubType.PHYSIC,
+        dmg_calc=DamageCalculation.FLAT
+    )
+    return d
+
+
+@pytest.fixture()
+def q_damage_q():
+    d = QueueDamage(
+        source=ActionType.Q,
+        scaling="-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
+        dmg_type=DamageType.AOE,
+        dmg_sub_type=DamageSubType.PHYSIC,
+        dmg_calc=DamageCalculation.FLAT
+    )
+    return d
+
+
+@pytest.fixture()
+def q_damage_w():
+    d = QueueDamage(
+        source=ActionType.W,
+        scaling="20 + 0.3 * ap",
+        dmg_type=DamageType.DOT,
+        dmg_sub_type=DamageSubType.MAGIC,
+        dmg_calc=DamageCalculation.FLAT
+    )
+    return d
+
+
+@pytest.fixture()
+def q_damage_w_shadow():
+    d = QueueDamage(
+        source=ActionType.W,
+        scaling="shadow",
+        dmg_type=None
+    )
+    return d
+
+
+@pytest.fixture()
 def action_effect(damage_ad_flat, damage_ap_maxhp):
     a = ActionEffect(
         time=1.0,
@@ -359,13 +435,11 @@ def aatrox_with_items():
 def dummy_sim(aatrox_with_items):
     unit = Unit(hp=1000, armor=50, mr=50)
     dummy = Dummy(unit)
-    combo = [ActionType.AA, ActionType.AA]
-    dumsim = DummySimulation(dummy, aatrox_with_items, combo)
+    dumsim = DummySimulation(dummy, aatrox_with_items,)
     return dumsim
 
 
 @pytest.fixture
 def v1_sim(aatrox_with_items):
-    combo = [ActionType.AA, ActionType.AA]
-    v1sim = V1Simulation(aatrox_with_items, aatrox_with_items, combo)
+    v1sim = V1Simulation(aatrox_with_items, aatrox_with_items)
     return v1sim

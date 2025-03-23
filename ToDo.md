@@ -5,42 +5,59 @@
 - [x] Make a better readme file with chatgpt
 - [x] Make type hints work in database
 ### Functionality ###
-- [ ] Make abilities work
-    - [x] Make simple abilities work
-        - [x] Implement simple ability usage
-        - [x] Create simple abilities for testing
-        - [x] Tests for simple ability usage
-    - [ ] Make harder abilities work
-        - [ ] Implement harder ability usage
-        - [ ] Create harder abilities for testing
-        - [ ] Tests for harder ability usage
-    - [ ] Make complex abilities work
-        - [ ] Implement complex ability usage
-        - [ ] Create complex abilities for testing
-        - [ ] Tests for complex ability usage
-- [ ] Make passives work
-    - [ ] Make simple passives work
-        - [ ] Implement simple passive usage
-        - [ ] Create simple passive for testing
-        - [ ] Tests for simple passive usage
-    - [ ] Make harder passives work
-        - [ ] Implement harder passive usage
-        - [ ] Create harder passive for testing
-        - [ ] Tests for harder passive usage
-    - [ ] Make complex passives work
-        - [ ] Implement complex passive usage
-        - [ ] Create complex passive for testing
-        - [ ] Tests for complex passive usage
-    - [ ] Make item passives work
-        - [ ] Implement item passives
-        - [ ] Create item passives for testing
-        - [ ] Tests for item passives
-- [ ] Make item actives work
-    - [ ] Add item active choices in frontend
-    - [ ] Make item actives work in backend
-        - [ ] Implement item actives
-        - [ ] Create item actives for testing
-        - [ ] Tests for item actives
+- [x] Inject combo into simulation
+- [ ] Make damage calculation handle most things
+    - [ ] Implement distance
+    - [ ] Make abilities work
+        - [ ] Implement delay on ability damage
+        - [x] Make cooldowns matter
+        - [x] Make simple damage abilities work
+            - [x] Implement simple ability usage
+            - [x] Create simple abilities for testing
+            - [x] Tests for simple ability usage
+        - [x] Make simple dot abilities work
+            - [x] Implement simple dot ability usage
+            - [x] Create simple dot abilities for testing
+            - [x] Tests for simple dot ability usage
+        - [ ] Make simple healing abilities work
+            - [ ] Implement simple healing ability usage
+            - [ ] Create simple healing abilities for testing
+            - [ ] Tests for simple healing ability usage
+        - [ ] Make simple shielding abilities work
+            - [ ] Implement simple shielding ability usage
+            - [ ] Create simple shielding abilities for testing
+            - [ ] Tests for simple shielding  bility usage
+        - [ ] Make harder abilities work
+            - [ ] Implement harder ability usage
+            - [ ] Create harder abilities for testing
+            - [ ] Tests for harder ability usage
+        - [ ] Make complex abilities work
+            - [ ] Implement complex ability usage
+            - [ ] Create complex abilities for testing
+            - [ ] Tests for complex ability usage
+    - [ ] Make passives work
+        - [ ] Make simple passives work
+            - [ ] Implement simple passive usage
+            - [ ] Create simple passive for testing
+            - [ ] Tests for simple passive usage
+        - [ ] Make harder passives work
+            - [ ] Implement harder passive usage
+            - [ ] Create harder passive for testing
+            - [ ] Tests for harder passive usage
+        - [ ] Make complex passives work
+            - [ ] Implement complex passive usage
+            - [ ] Create complex passive for testing
+            - [ ] Tests for complex passive usage
+        - [ ] Make item passives work
+            - [ ] Implement item passives
+            - [ ] Create item passives for testing
+            - [ ] Tests for item passives
+    - [ ] Make item actives work
+        - [ ] Add item active choices in frontend
+        - [ ] Make item actives work in backend
+            - [ ] Implement item actives
+            - [ ] Create item actives for testing
+            - [ ] Tests for item actives
 - [ ] Add Rune choice in simulation
 - [ ] Add Summonerspell choice in simulation
 - [ ] Update the web scraper
