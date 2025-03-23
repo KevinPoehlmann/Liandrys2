@@ -389,6 +389,8 @@ class EffectDamage():
     dmg_calc: DamageCalculation = DamageCalculation.FLAT
     duration: float = 0.0
     interval: float = 0.0
+    delay: float = 0.0
+    speed: int = 0
 
 
 @dataclass

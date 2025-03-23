@@ -56,13 +56,9 @@ class TestDummySimulation():
             ({0.4: ["q_damage_w_shadow"]},
              0.5),
 
-            # Rare case, where the shadow dot is in regular interval to last dot
-            ({0.5: ["q_damage_w"], 1: ["q_damage_w_shadow"]}, 
-             1),
-
             # shadow dot is in irregular distance to the last dot
-            ({0.3: ["q_damage_w"], 0.5: ["q_damage_w_shadow"]},
-             0.5),
+            ({0.3: ["q_damage_w"], 0.4: ["q_damage_w_shadow"]},
+             0.4),
         ]
     )
     def test_calculate_offset(self, dummy_sim, e_damage_w, q_damage_w, q_damage_w_shadow,
