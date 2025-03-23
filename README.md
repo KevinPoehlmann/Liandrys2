@@ -23,6 +23,7 @@ Liandrys2 is a web app designed to calculate and compare damage differences in L
 
 ## ⚠️ Project Status
 Liandrys2 is currently under development and not yet ready for production. Since some data manipulation is required for proper functionality, installation by others is not yet a focus.
+**Not** in a functioning state right now!
 
 ## 🎯 Motivation & Learnings
 This project was created to:
@@ -32,6 +33,7 @@ This project was created to:
 
 Key learnings so far:
 - **Planning is essential**—many things turned out to be more complex than expected! 😅
+- Realizing the advantage of **Dependency Injection** when it comes to testing. 
 - Gained hands-on experience with Docker, Vue, FastAPI, and MongoDB.
 
 ## 📸 Screenshots
