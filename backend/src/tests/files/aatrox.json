@@ -83,20 +83,26 @@
           "text": "Very simple damage.",
           "stati": [
             {
-              "scaling": "-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
               "type_": "Damage",
-              "dmg_calc": "flat",
+              "props": {
+                "scaling": "-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
+                "dmg_type": "Area damage",
+                "damage_sub_type": "Physical",
+                "dmg_calc": "flat"
+              },
+              "duration": 0.0,
+              "interval": 0.0,
+              "speed": 0,
+              "delay": 0.0,
               "comment": "First Cast Damage"
             }
           ],
-          "damage_sub_type": "Physical",
           "conditions": []
         }
       ],
       "cast_time": 0.6,
       "cooldown": "2",
       "costs": "0",
-      "ability_stats": [],
       "damage_type": "Area damage",
       "damage_sub_type": [
         "Physical"
@@ -121,17 +127,12 @@
       }
     },
     "w": {
-      "name": "Nothing yet",
-      "description": "Not doing anything",
+      "name": "DoT",
+      "description": "Does DoT damage",
       "effects": [],
       "cast_time": 0.25,
       "cooldown": "0",
       "costs": "0",
-      "ability_stats": [],
-      "damage_type": "Spell damage",
-      "damage_sub_type": [
-        "Magic"
-      ],
       "counters": [],
       "ready_to_use": false,
       "changes": [],
@@ -147,17 +148,12 @@
       }
     },
     "e": {
-      "name": "Also Nothing",
-      "description": "Not doing anything",
+      "name": "Healing",
+      "description": "Heals",
       "effects": [],
       "cast_time": 0.25,
       "cooldown": "0",
       "costs": "0",
-      "ability_stats": [],
-      "damage_type": "Spell damage",
-      "damage_sub_type": [
-        "Magic"
-      ],
       "counters": [],
       "ready_to_use": false,
       "changes": [],
@@ -179,11 +175,6 @@
       "cast_time": 0.25,
       "cooldown": "0",
       "costs": "0",
-      "ability_stats": [],
-      "damage_type": "Spell damage",
-      "damage_sub_type": [
-        "Magic"
-      ],
       "counters": [],
       "ready_to_use": false,
       "changes": [],

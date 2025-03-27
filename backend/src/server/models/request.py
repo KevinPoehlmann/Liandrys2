@@ -9,19 +9,6 @@ class Rank(BaseModel):
     r: int
 
 
-class DummyRequest(BaseModel):
-    champion_id: str
-    lvl: int
-    ability_points: Rank
-    items: list[str]
-    combo: list[ActionType]
-
-
-class DummyResponse(BaseModel):
-    damage: int
-    time: float
-
-
 class V1Request(BaseModel):
     id_attacker: str
     lvl_attacker: int

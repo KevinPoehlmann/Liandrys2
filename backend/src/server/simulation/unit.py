@@ -4,85 +4,42 @@ from src.server.models.champion import Champion
 from src.server.models.dataenums import (
     ActionEffect,
     ActionType,
-    Damage, 
     DamageCalculation,
+    DamageProperties,
     DamageSubType,
     DamageType,
     EffectDamage,
     EffectStatus,
-    QueueDamage,
+    ProcessedDamageProperties,
+    ProcessedHealProperties,
+    QueueStatus,
     Stat,
-    StatusType
+    StatusType,
+    Target
 )
 from src.server.models.item import Item
 from src.server.models.request import Rank
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
-from src.server.models.unit import Unit
 
-
+                    
     
 
 
-class Dummy():
-    def __init__(self, unit: Unit):
-        self.unit: Unit = unit
-        self.hp:float  = unit.hp
-        self.damage_taken: float = 0
-
-    def get_stat(self, stat: Stat) -> float:
-        base_stat = getattr(self.unit, stat.value, 0)
-        return base_stat
-
-    def get_resistance(self, dmg_sub_type: DamageSubType) -> float:
-        if dmg_sub_type == DamageSubType.PHYSIC:
-            return self.unit.armor
-        elif dmg_sub_type == DamageSubType.MAGIC:
-            return self.unit.mr
-        else:
-            return 0
-
-    def calculate_damage(self, damage: Damage) -> float:
-        match damage.dmg_calc:
-            case DamageCalculation.MAX_HP:
-                damage.value *= self.get_stat(Stat.HP)
-            case DamageCalculation.CURRENT_HP:
-                damage.value *= self.hp
-            case DamageCalculation.MISSING_HP:
-                damage.value *= (self.get_stat(Stat.HP) - self.hp)
-        resistance = self.get_resistance(damage.dmg_sub_type)
-        resistance -= (resistance * damage.percent_pen / 100)
-        resistance -= damage.flat_pen
-        resistance = max(resistance, 0)
-        result = damage.value * (100 / (resistance + 100))
-        return result
-
-
-    def take_damge(self, damage_list: list[Damage]) -> None:
-        results = []
-        for damage in damage_list:
-            results.append(self.calculate_damage(damage))
-        result = sum(results)
-        result = result
-        self.hp = self.hp - result
-        self.damage_taken = self.damage_taken + result
-    
-
-
-class Character(Dummy):
+class Character():
     def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item]) -> None:
-        #TODO add runes and summonerspells
-        super().__init__(champion)
-        self.unit: Champion = champion
+        self.champion: Champion = champion
         self.level: int = lvl
         self.items: list[Item] = items
         self.hp: float = self.get_stat(Stat.HP)
+        self.damage_taken: float = 0
+        self.healed: float = 0
 
         self.ability_dict: dict[ActionType, tuple[ChampionAbility, int]] = {
-            ActionType.Q: (self.unit.q, rank.q),
-            ActionType.W: (self.unit.w, rank.w),
-            ActionType.E: (self.unit.e, rank.e),
-            ActionType.R: (self.unit.r, rank.r)
+            ActionType.Q: (self.champion.q, rank.q),
+            ActionType.W: (self.champion.w, rank.w),
+            ActionType.E: (self.champion.e, rank.e),
+            ActionType.R: (self.champion.r, rank.r)
         }
         self.last_action: ActionType = None
         self.cooldowns: dict[ActionType, float] = {
@@ -97,11 +54,11 @@ class Character(Dummy):
 
     def get_base_stat(self, stat: Stat) -> float:
         stat_name = stat.value
-        base_value = getattr(self.unit, stat_name, None)
+        base_value = getattr(self.champion, stat_name, None)
         if base_value is None:
             return 0    
         scaling_attr = f"{stat_name}_per_lvl"
-        scaling_value = getattr(self.unit, scaling_attr, 0)
+        scaling_value = getattr(self.champion, scaling_attr, 0)
         return base_value + scaling_value * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
 
     def get_bonus_stat(self, stat: Stat) -> float:
@@ -116,9 +73,9 @@ class Character(Dummy):
         return result
 
     def get_attackspeed(self) -> float:
-        bonus = self.unit.attackspeed_per_lvl * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
+        bonus = self.champion.attackspeed_per_lvl * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
         bonus += self.get_bonus_stat(Stat.ATTACKSPEED_P)
-        result = self.unit.attackspeed + self.unit.attackspeed_ratio * bonus / 100
+        result = self.champion.attackspeed + self.champion.attackspeed_ratio * bonus / 100
         return result
     
     def get_penetration(self, dmg_sub_type: DamageSubType) -> tuple[float, float]:
@@ -141,6 +98,7 @@ class Character(Dummy):
         else:
             return 0
         
+        
     def evaluate_formula(self, formula: str, additional_keywords: dict = {}) -> float:
         variables = {
             stat.value: self.get_stat(stat) for stat in Stat
@@ -148,6 +106,27 @@ class Character(Dummy):
             "level": self.level
         } | additional_keywords
         return eval(formula, {}, variables)
+    
+
+    def calculate_hp_scaling(self, value: float, dmg_calc: DamageCalculation) -> float:
+        match dmg_calc:
+            case DamageCalculation.MAX_HP:
+                return value * self.get_stat(Stat.HP)
+            case DamageCalculation.CURRENT_HP:
+                return value * self.hp
+            case DamageCalculation.MISSING_HP:
+                return value * (self.get_stat(Stat.HP) - self.hp)
+        return value
+
+
+    def calculate_damage(self, damage: ProcessedDamageProperties) -> float:
+        value = self.calculate_hp_scaling(damage.value, damage.dmg_calc)
+        resistance = self.get_resistance(damage.dmg_sub_type)
+        resistance -= (resistance * damage.percent_pen / 100)
+        resistance -= damage.flat_pen
+        resistance = max(resistance, 0)
+        result = value * (100 / (resistance + 100))
+        return result
 
 
 
@@ -163,14 +142,20 @@ class Character(Dummy):
         time = max(self.cooldowns[ActionType.AA], timer)
         self.cooldowns[ActionType.AA] = time + attack_time
         #TODO delete /100 again
-        time += attack_time * self.unit.attack_windup/100
+        time += attack_time * self.champion.attack_windup/100
+        aa_props = DamageProperties(
+            scaling=Stat.AD.value,
+            dmg_type=DamageType.BASIC  #TODO check if Basic is right damage type
+        )
         dmg = EffectDamage(
             source=ActionType.AA,
-            scaling=Stat.AD.value,
-            dmg_type=DamageType.BASIC  #TODO check actual damage type for basic attacks
+            target=Target.DEFENDER,
+            type_= StatusType.DAMAGE,
+            speed=self.champion.missile_speed,
+            props=aa_props
         )
         self.last_action = ActionType.AA
-        return ActionEffect(time=time, damages=[dmg])
+        return ActionEffect(time=time, stati=[dmg])
     
 
     def do_ability(self, key: ActionType, timer: float) -> ActionEffect:
@@ -183,47 +168,76 @@ class Character(Dummy):
         self.last_action = key
         for effect in ability.effects:
             for status in effect.stati:
-                if status.type_ == StatusType.DAMAGE:
-                    action_effect.damages.append(EffectDamage(
-                        source=key,
-                        scaling=status.scaling,
-                        dmg_type=ability.damage_type,
-                        dmg_sub_type=effect.damage_sub_type,
-                        dmg_calc=status.dmg_calc,
-                ))
-                else:
-                    action_effect.stati.append(EffectStatus(
-                        source=key,
-                        scaling=status.scaling,
-                        type_=status.type_
-                    ))
+                effect_status = EffectStatus(
+                    source=key,
+                    target=Target.DEFENDER,
+                    type_=status.type_,
+                    duration=status.duration,
+                    interval=status.interval,
+                    delay=status.delay,
+                    speed=status.speed,
+                    props=status.props
+                )
+                if status.type_ == StatusType.HEAL:
+                    effect_status.target=Target.ATTACKER
+                action_effect.stati.append(effect_status)
         return action_effect
+    
 
 
-    def evaluate_scaling(self, queue_damages: list[QueueDamage]) -> list[Damage]:
-        """ variables = {
-            stat.value: self.get_stat(stat) for stat in Stat
-        } | {
-            "level": self.level
-        } """
-        damage_list = []
-        for damage in queue_damages:
-            if damage.scaling == "shadow":
+    def evaluate(self, queue_stati:list[QueueStatus]) -> list[QueueStatus]:
+        status_list = []
+        for status in queue_stati:
+            if status.type_ == StatusType.SHADOW:
                 continue
-            variables = {"rank": self.ability_dict[damage.source][1]} if damage.source in self.ability_dict else {}
-            result = self.evaluate_formula(damage.scaling, variables)
-            """ if damage.source in self.ability_dict:
-                variables["rank"] = self.ability_dict[damage.source][1] """
-            flat_pen, percent_pen = self.get_penetration(damage.dmg_sub_type)
-            """ result = eval(damage.scaling, {}, variables) """
-            damage_list.append(Damage(
-                value=result,
-                flat_pen=flat_pen,
-                percent_pen=percent_pen,
-                dmg_type=damage.dmg_type,
-                dmg_sub_type=damage.dmg_sub_type,
-                dmg_calc=damage.dmg_calc,
-                source=damage.source
-            ))
-        return damage_list
+            variables = {"rank": self.ability_dict[status.source][1]} if status.source in self.ability_dict else {}
+            result = self.evaluate_formula(status.props.scaling, variables)
+            
+            match status.type_:
+                case StatusType.DAMAGE:
+                    flat_pen, percent_pen = self.get_penetration(status.props.dmg_sub_type)
+                    props=ProcessedDamageProperties(
+                        value=result,
+                        flat_pen=flat_pen,
+                        percent_pen=percent_pen,
+                        dmg_type=status.props.dmg_type,
+                        dmg_sub_type=status.props.dmg_sub_type,
+                        dmg_calc=status.props.dmg_calc,
+                    )
+                case StatusType.HEAL:
+                    props=ProcessedHealProperties(
+                        value=result,
+                        dmg_calc=status.props.dmg_calc
+                    )
+                case _:
+                   raise ValueError(f"Unhandled StatusType: {status.type_}")  # Catch future issues early
+
+            queue_status = QueueStatus(
+                source=status.source,
+                type_=status.type_,
+                target=status.target,
+                props=props
+        )
+            queue_status.props=props
+            status_list.append(queue_status)
+        return status_list
+
         
+
+    def take_stati(self, status_list: list[QueueStatus]) -> None:
+        damages = []
+        heals = []
+        for status in status_list:
+            match status.type_:
+                case StatusType.DAMAGE:
+                    damages.append(self.calculate_damage(status.props))
+                case StatusType.HEAL:
+                    heals.append(self.calculate_hp_scaling(status.props.value, status.props.dmg_calc))
+                case _:
+                    pass
+        result = sum(damages)
+        self.damage_taken += result
+        self.healed += sum(heals)
+        self.healed
+        result -= sum(heals)
+        self.hp = min(self.hp - result, self.get_stat(Stat.HP))

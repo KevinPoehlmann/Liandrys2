@@ -20,12 +20,17 @@ from src.server.models.champion import Champion
 from src.server.models.dataenums import (
     ActionEffect,
     ActionType,
-    Damage,
+    DamageProperties,
     DamageSubType,
     DamageType,
     DamageCalculation,
     EffectDamage,
-    QueueDamage
+    HealProperties,
+    ProcessedDamageProperties,
+    ProcessedHealProperties,
+    QueueStatus,
+    StatusType,
+    Target
 )
 from src.server.models.item import Item
 from src.server.models.rune import Rune
@@ -33,8 +38,8 @@ from src.server.models.summonerspell import Summonerspell
 from src.server.models.patch import NewPatch, Patch
 from src.server.models.request import Rank
 from src.server.models.unit import Unit
-from src.server.simulation.unit import Dummy, Character
-from src.server.simulation.simulator import DummySimulation, V1Simulation
+from src.server.simulation.unit import Character
+from src.server.simulation.simulator import Simulation
 
 
 
@@ -258,23 +263,9 @@ def db_fake_patch_with_id():
 
 
 
-
-@pytest.fixture()
-def dummy():
-    unit = Unit(
-        hp=1000,
-        armor=100,
-        mr=50
-    )
-    d = Dummy(
-        unit=unit
-    )
-    return d
-
-
 @pytest.fixture()
 def damage_ad_flat():
-    d = Damage(
+    d = ProcessedDamageProperties(
         value=100,
         flat_pen=10,
         percent_pen=50,
@@ -287,7 +278,7 @@ def damage_ad_flat():
 
 @pytest.fixture()
 def damage_ap_maxhp():
-    d = Damage(
+    d = ProcessedDamageProperties(
         value=0.1,
         flat_pen=18,
         percent_pen=0,
@@ -300,7 +291,7 @@ def damage_ap_maxhp():
 
 @pytest.fixture()
 def damage_true_missinghp():
-    d = Damage(
+    d = ProcessedDamageProperties(
         value=0.3,
         flat_pen=0,
         percent_pen=0,
@@ -313,7 +304,7 @@ def damage_true_missinghp():
 
 @pytest.fixture()
 def damage_true_currenthp():
-    d = Damage(
+    d = ProcessedDamageProperties(
         value=0.08,
         flat_pen=0,
         percent_pen=0,
@@ -328,13 +319,14 @@ def damage_true_currenthp():
 def e_damage_aa():
     d = EffectDamage(
         source=ActionType.AA,
-        scaling="ad",
-        dmg_type=DamageType.BASIC,
-        dmg_sub_type=DamageSubType.PHYSIC,
-        dmg_calc=DamageCalculation.FLAT,
-        duration=0,
-        interval=0
-    )
+        target=Target.DEFENDER,
+        type_=StatusType.DAMAGE,
+        props=DamageProperties(
+            scaling="ad",
+            dmg_type=DamageType.BASIC,
+            dmg_sub_type=DamageSubType.PHYSIC,
+            dmg_calc=DamageCalculation.FLAT,
+    ))
     return d
 
 
@@ -342,67 +334,168 @@ def e_damage_aa():
 def e_damage_w():
     d = EffectDamage(
         source=ActionType.W,
-        scaling="20 + 0.3 * ap",
-        dmg_type=DamageType.DOT,
-        dmg_sub_type=DamageSubType.MAGIC,
-        dmg_calc=DamageCalculation.FLAT,
+        target=Target.DEFENDER,
+        type_=StatusType.DAMAGE,
         duration=2,
-        interval=0.5
+        interval=0.5,
+        props=DamageProperties(
+            scaling="20 + 0.3 * ap",
+            dmg_type=DamageType.DOT,
+            dmg_sub_type=DamageSubType.MAGIC,
+            dmg_calc=DamageCalculation.FLAT,
+        )
     )
+    return d
+
+
+@pytest.fixture()
+def e_damage_e():
+    d = EffectDamage(
+        source=ActionType.E,
+        target=Target.DEFENDER,
+        type_=StatusType.DAMAGE,
+        duration=2,
+        interval=0.5,
+        delay=0.2,
+        props=DamageProperties(
+            scaling="20 + 0.3 * ap",
+            dmg_type=DamageType.DOT,
+            dmg_sub_type=DamageSubType.MAGIC,
+            dmg_calc=DamageCalculation.FLAT,
+        )
+    )
+    return d
+
+
+@pytest.fixture()
+def e_damage_r():
+    d = EffectDamage(
+        source=ActionType.R,
+        target=Target.DEFENDER,
+        type_=StatusType.DAMAGE,
+        duration=2,
+        interval=0.5,
+        delay=0,
+        speed=2000,
+        props=DamageProperties(
+            scaling="20 + 0.3 * ap",
+            dmg_type=DamageType.DOT,
+            dmg_sub_type=DamageSubType.MAGIC,
+            dmg_calc=DamageCalculation.FLAT,
+        )
+    )
+    return d
+
+
+@pytest.fixture()
+def q_processed_ad_flat(damage_ad_flat):
+    p = QueueStatus(
+        source=ActionType.AA,
+        type_=StatusType.DAMAGE,
+        target=Target.DEFENDER,
+        props=damage_ad_flat
+    )
+    return p
+
+
+@pytest.fixture()
+def q_processed_ap_maxhp(damage_ap_maxhp):
+    p = QueueStatus(
+        source=ActionType.AA,
+        type_=StatusType.DAMAGE,
+        target=Target.DEFENDER,
+        props=damage_ap_maxhp
+    )
+    return p
+
+
+@pytest.fixture()
+def q_processed_heal_flat():
+    d = QueueStatus(
+        source=ActionType.E,
+        target=Target.DEFENDER,
+        type_=StatusType.HEAL,
+        props=ProcessedHealProperties(
+            value="440.15" ,
+            dmg_calc=DamageCalculation.FLAT
+    ))
     return d
 
 
 @pytest.fixture()
 def q_damage_aa():
-    d = QueueDamage(
+    d = QueueStatus(
         source=ActionType.AA,
-        scaling="ad",
-        dmg_type=DamageType.BASIC,
-        dmg_sub_type=DamageSubType.PHYSIC,
-        dmg_calc=DamageCalculation.FLAT
-    )
+        target=Target.DEFENDER,
+        type_=StatusType.DAMAGE,
+        props=DamageProperties(
+            scaling="ad",
+            dmg_type=DamageType.BASIC,
+            dmg_sub_type=DamageSubType.PHYSIC,
+            dmg_calc=DamageCalculation.FLAT
+    ))
     return d
 
 
 @pytest.fixture()
 def q_damage_q():
-    d = QueueDamage(
+    d = QueueStatus(
         source=ActionType.Q,
-        scaling="-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
-        dmg_type=DamageType.AOE,
-        dmg_sub_type=DamageSubType.PHYSIC,
-        dmg_calc=DamageCalculation.FLAT
-    )
+        target=Target.DEFENDER,
+        type_=StatusType.DAMAGE,
+        props=DamageProperties(
+            scaling="-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
+            dmg_type=DamageType.AOE,
+            dmg_sub_type=DamageSubType.PHYSIC,
+            dmg_calc=DamageCalculation.FLAT
+    ))
     return d
 
 
 @pytest.fixture()
 def q_damage_w():
-    d = QueueDamage(
+    d = QueueStatus(
         source=ActionType.W,
-        scaling="20 + 0.3 * ap",
-        dmg_type=DamageType.DOT,
-        dmg_sub_type=DamageSubType.MAGIC,
-        dmg_calc=DamageCalculation.FLAT
-    )
+        target=Target.DEFENDER,
+        type_=StatusType.DAMAGE,
+        props=DamageProperties(
+            scaling="20 + 0.3 * ap" ,
+            dmg_type=DamageType.DOT,
+            dmg_sub_type=DamageSubType.MAGIC,
+            dmg_calc=DamageCalculation.FLAT
+    ))
     return d
 
 
 @pytest.fixture()
 def q_damage_w_shadow():
-    d = QueueDamage(
+    d = QueueStatus(
         source=ActionType.W,
-        scaling="shadow",
-        dmg_type=None
+        target=Target.DEFENDER,
+        type_=StatusType.SHADOW,
+        props=None
     )
     return d
 
 
 @pytest.fixture()
-def action_effect(damage_ad_flat, damage_ap_maxhp):
+def q_heal_e():
+    d = QueueStatus(
+        source=ActionType.E,
+        target=Target.DEFENDER,
+        type_=StatusType.HEAL,
+        props=HealProperties(
+            scaling="400 + 0.3 * ad" ,
+            dmg_calc=DamageCalculation.FLAT
+    ))
+    return d
+
+
+@pytest.fixture()
+def action_effect(q_processed_ad_flat, q_processed_ap_maxhp):
     a = ActionEffect(
         time=1.0,
-        damages=[damage_ad_flat, damage_ap_maxhp]
+        stati=[q_processed_ad_flat, q_processed_ap_maxhp]
     )
     return a
 
@@ -432,14 +525,6 @@ def aatrox_with_items():
 
 
 @pytest.fixture
-def dummy_sim(aatrox_with_items):
-    unit = Unit(hp=1000, armor=50, mr=50)
-    dummy = Dummy(unit)
-    dumsim = DummySimulation(dummy, aatrox_with_items,)
-    return dumsim
-
-
-@pytest.fixture
-def v1_sim(aatrox_with_items):
-    v1sim = V1Simulation(aatrox_with_items, aatrox_with_items)
-    return v1sim
+def sim(aatrox_with_items):
+    sim = Simulation(aatrox_with_items, aatrox_with_items)
+    return sim

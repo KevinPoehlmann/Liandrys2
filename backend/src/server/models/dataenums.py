@@ -1,6 +1,7 @@
+from abc import ABC
+from aenum import MultiValueEnum
 from dataclasses import dataclass, field
 from enum import Enum
-from aenum import MultiValueEnum
 from pydantic import BaseModel, Field, validator
 
 
@@ -91,6 +92,11 @@ class Map(str, MultiValueEnum):
     NB="NB", "21"
     AR="Arena", "30"
     TFT="TFT", "22"
+
+
+class Target(Enum):
+    ATTACKER = "attacker"
+    DEFENDER = "defender"
 
 #Champions
 
@@ -251,6 +257,7 @@ class StatusType(str, Enum):
     POLYMOROPH="Polymorph"
     REPLACE="Replace"
     ROOT="Root"
+    SHADOW="Shadow"
     SILENCE="Silence"
     SLEEP="Sleep"
     SLOW="Slow"
@@ -326,6 +333,35 @@ class Combo(BaseModel):
 
 
 
+class StatusProperties(BaseModel):
+    pass
+
+
+class DamageProperties(StatusProperties):
+    scaling: str
+    dmg_type: DamageType
+    dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
+    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+
+
+class HealProperties(StatusProperties):
+    scaling: str
+    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+
+
+class ProcessedDamageProperties(StatusProperties):
+    value: float
+    flat_pen: float
+    percent_pen: float
+    dmg_type: DamageType
+    dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
+    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+
+
+class ProcessedHealProperties(StatusProperties):
+    value: float
+    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+
 ############### Dataclasses ###############
 
 @dataclass
@@ -360,48 +396,69 @@ class AbilityBaseStats():
     ability_stats: list[AbilityStat] = field(default_factory=list)
 
 
-@dataclass
-class Damage():
-    value: float
-    flat_pen: float
-    percent_pen: float
-    dmg_type: DamageType
-    dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
-    dmg_calc: DamageCalculation = DamageCalculation.FLAT
-    source: ActionType = None
 
 
-@dataclass
-class QueueDamage():
+### Status Queue ###
+
+
+#Queue
+
+
+@dataclass 
+class QueueStatus():
     source: ActionType
-    scaling: str
-    dmg_type: DamageType
-    dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
-    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+    type_: StatusType
+    target: Target
+    props: StatusProperties = None
 
 
 @dataclass
-class EffectDamage():
-    source: ActionType
-    scaling: str
-    dmg_type: DamageType
-    dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
-    dmg_calc: DamageCalculation = DamageCalculation.FLAT
-    duration: float = 0.0
-    interval: float = 0.0
-    delay: float = 0.0
-    speed: int = 0
+class QueueDamage(QueueStatus):
+    props: DamageProperties
 
+
+@dataclass
+class QueueHeal(QueueStatus):
+    props: HealProperties
+
+""" 
+@dataclass
+class QueueProcessedDamage(QueueStatus):
+    props:  ProcessedDamage
+
+
+@dataclass
+class QueueProcessedHeal(QueueStatus):
+    props:  ProcessedHeal """
+
+
+
+#Status
 
 @dataclass
 class EffectStatus():
     source: ActionType
+    target: Target
     type_: StatusType
-    scaling: str
+    duration: float = 0.0
+    interval: float = 0.0
+    delay: float = 0.0
+    speed: int = 0
+    props: StatusProperties = None
+
+
+@dataclass
+class EffectDamage(EffectStatus):
+    props: DamageProperties
+
 
 
 @dataclass
 class ActionEffect():
     time: float
-    damages: list[EffectDamage] = field(default_factory=list)
     stati: list[EffectStatus] = field(default_factory=list)
+
+
+@dataclass
+class Damage():
+    pass

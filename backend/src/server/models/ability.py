@@ -4,13 +4,8 @@ from src.server.models.effect import Effect
 from src.server.models.image import Image
 
 from src.server.models.dataenums import (
-    AbilityCosts,
-    AbilityStat,
     ActiveType,
-    Counter,
-    DamageType,
-    DamageSubType,
-    Table
+    Counter
 )
 
 
@@ -24,9 +19,6 @@ class Ability(BaseModel):
     cast_time: float = 0
     cooldown: str = "0"
     costs: str = "0"
-    ability_stats: list[AbilityStat] = []
-    damage_type: DamageType = None
-    damage_sub_type: list[DamageSubType] = None
     counters: list[Counter] = []
     ready_to_use: bool = False
     changes: list[str] = []

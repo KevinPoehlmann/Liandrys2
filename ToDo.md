@@ -7,9 +7,9 @@
 ### Functionality ###
 - [x] Inject combo into simulation
 - [ ] Make damage calculation handle most things
-    - [ ] Implement distance
+    - [x] Implement distance
     - [ ] Make abilities work
-        - [ ] Implement delay on ability damage
+        - [x] Implement delay on ability damage
         - [x] Make cooldowns matter
         - [x] Make simple damage abilities work
             - [x] Implement simple ability usage
@@ -19,10 +19,10 @@
             - [x] Implement simple dot ability usage
             - [x] Create simple dot abilities for testing
             - [x] Tests for simple dot ability usage
-        - [ ] Make simple healing abilities work
-            - [ ] Implement simple healing ability usage
-            - [ ] Create simple healing abilities for testing
-            - [ ] Tests for simple healing ability usage
+        - [x] Make simple healing abilities work
+            - [x] Implement simple healing ability usage
+            - [x] Create simple healing abilities for testing
+            - [x] Tests for simple healing ability usage
         - [ ] Make simple shielding abilities work
             - [ ] Implement simple shielding ability usage
             - [ ] Create simple shielding abilities for testing
@@ -31,6 +31,7 @@
             - [ ] Implement harder ability usage
             - [ ] Create harder abilities for testing
             - [ ] Tests for harder ability usage
+        - [ ] Implement pets
         - [ ] Make complex abilities work
             - [ ] Implement complex ability usage
             - [ ] Create complex abilities for testing
@@ -97,7 +98,7 @@
         - donwload it
     - swap back lines and put it back on github
 - **Common Issues:**
-    - login data for the mongo express server in docker-compose file
+    - login data for the mongo express admin and pass (default)
 
 ---
 *This file is meant to keep track of development tasks and useful notes for future reference.*
