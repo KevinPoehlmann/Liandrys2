@@ -25,6 +25,7 @@ from src.server.models.dataenums import (
     DamageType,
     DamageCalculation,
     EffectDamage,
+    EffectStatus,
     HealProperties,
     ProcessedDamageProperties,
     ProcessedHealProperties,
@@ -40,6 +41,27 @@ from src.server.models.request import Rank
 from src.server.models.unit import Unit
 from src.server.simulation.unit import Character
 from src.server.simulation.simulator import Simulation
+
+
+
+
+@pytest.fixture
+def compare_objects():
+    def _compare(obj1, obj2, float_precision=3):
+        if type(obj1) != type(obj2):
+            return False
+        if isinstance(obj1, float) and isinstance(obj2, float):
+            return round(obj1, float_precision) == round(obj2, float_precision)
+        if isinstance(obj1, (list, tuple)):
+            return len(obj1) == len(obj2) and all(_compare(a, b, float_precision) for a, b in zip(obj1, obj2))
+        if isinstance(obj1, dict):
+            return obj1.keys() == obj2.keys() and all(_compare(obj1[k], obj2[k], float_precision) for k in obj1)
+        if hasattr(obj1, "__dict__") and hasattr(obj2, "__dict__"):
+            return _compare(vars(obj1), vars(obj2), float_precision)
+        return obj1 == obj2
+    return _compare
+
+
 
 
 
@@ -263,56 +285,57 @@ def db_fake_patch_with_id():
 
 
 
-@pytest.fixture()
-def damage_ad_flat():
-    d = ProcessedDamageProperties(
-        value=100,
-        flat_pen=10,
-        percent_pen=50,
-        dmg_type=DamageType.BASIC,
-        dmg_sub_type=DamageSubType.PHYSIC,
-        dmg_calc=DamageCalculation.FLAT
+@pytest.fixture
+def processed_damage_props(request):
+    params = getattr(request, "param", {})
+    return ProcessedDamageProperties(
+        value=params.get("val", 50),
+        flat_pen=params.get("flat_pen", 100),
+        percent_pen=params.get("perc_pen", 50),
+        dmg_type=params.get("dmg_type", DamageType.BASIC),
+        dmg_sub_type=params.get("dmg_sub_type", DamageSubType.PHYSIC),
+        dmg_calc=params.get("dmg_calc", DamageCalculation.FLAT)
     )
-    return d
 
 
-@pytest.fixture()
-def damage_ap_maxhp():
-    d = ProcessedDamageProperties(
-        value=0.1,
-        flat_pen=18,
-        percent_pen=0,
-        dmg_type=DamageType.BASIC,
-        dmg_sub_type=DamageSubType.MAGIC,
-        dmg_calc=DamageCalculation.MAX_HP
+@pytest.fixture
+def action_effect_aa():
+    return ActionEffect(
+        time=0.215,
+        stati=[
+            EffectDamage(
+                source=ActionType.AA,
+                target=Target.DEFENDER,
+                type_=StatusType.DAMAGE,
+                props=DamageProperties(
+                    scaling="ad",
+                    dmg_type=DamageType.BASIC,
+                    dmg_sub_type=DamageSubType.PHYSIC,
+                    dmg_calc=DamageCalculation.FLAT
+                )
+            )
+        ]
     )
-    return d
 
 
-@pytest.fixture()
-def damage_true_missinghp():
-    d = ProcessedDamageProperties(
-        value=0.3,
-        flat_pen=0,
-        percent_pen=0,
-        dmg_type=DamageType.BASIC,
-        dmg_sub_type=DamageSubType.TRUE,
-        dmg_calc=DamageCalculation.MISSING_HP
+@pytest.fixture
+def action_effect_q():
+    return ActionEffect(
+        time=1.6,
+        stati=[
+            EffectStatus(
+                source=ActionType.Q,
+                target=Target.DEFENDER,
+                type_=StatusType.DAMAGE,
+                props=DamageProperties(
+                    scaling="-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
+                    dmg_type=DamageType.AOE,
+                    dmg_sub_type=DamageSubType.PHYSIC,
+                    dmg_calc=DamageCalculation.FLAT
+                )
+            )
+        ]
     )
-    return d
-
-
-@pytest.fixture()
-def damage_true_currenthp():
-    d = ProcessedDamageProperties(
-        value=0.08,
-        flat_pen=0,
-        percent_pen=0,
-        dmg_type=DamageType.BASIC,
-        dmg_sub_type=DamageSubType.TRUE,
-        dmg_calc=DamageCalculation.CURRENT_HP
-    )
-    return d
 
 
 @pytest.fixture()
@@ -387,29 +410,41 @@ def e_damage_r():
     return d
 
 
-@pytest.fixture()
-def q_processed_ad_flat(damage_ad_flat):
+@pytest.fixture
+def q_processed_ad_flat():
     p = QueueStatus(
         source=ActionType.AA,
         type_=StatusType.DAMAGE,
         target=Target.DEFENDER,
-        props=damage_ad_flat
-    )
+        props=ProcessedDamageProperties(
+            value=100,
+            flat_pen=10,
+            percent_pen=50,
+            dmg_type=DamageType.BASIC,
+            dmg_sub_type=DamageSubType.PHYSIC,
+            dmg_calc=DamageCalculation.FLAT
+        ))
     return p
 
 
-@pytest.fixture()
-def q_processed_ap_maxhp(damage_ap_maxhp):
+@pytest.fixture
+def q_processed_ap_maxhp():
     p = QueueStatus(
         source=ActionType.AA,
         type_=StatusType.DAMAGE,
         target=Target.DEFENDER,
-        props=damage_ap_maxhp
-    )
+        props=ProcessedDamageProperties(
+            value=0.1,
+            flat_pen=18,
+            percent_pen=0,
+            dmg_type=DamageType.BASIC,
+            dmg_sub_type=DamageSubType.MAGIC,
+            dmg_calc=DamageCalculation.MAX_HP
+        ))
     return p
 
 
-@pytest.fixture()
+@pytest.fixture
 def q_processed_heal_flat():
     d = QueueStatus(
         source=ActionType.E,
@@ -422,7 +457,7 @@ def q_processed_heal_flat():
     return d
 
 
-@pytest.fixture()
+@pytest.fixture
 def q_damage_aa():
     d = QueueStatus(
         source=ActionType.AA,
@@ -437,7 +472,7 @@ def q_damage_aa():
     return d
 
 
-@pytest.fixture()
+@pytest.fixture
 def q_damage_q():
     d = QueueStatus(
         source=ActionType.Q,
@@ -452,7 +487,7 @@ def q_damage_q():
     return d
 
 
-@pytest.fixture()
+@pytest.fixture
 def q_damage_w():
     d = QueueStatus(
         source=ActionType.W,
@@ -467,7 +502,7 @@ def q_damage_w():
     return d
 
 
-@pytest.fixture()
+@pytest.fixture
 def q_damage_w_shadow():
     d = QueueStatus(
         source=ActionType.W,
@@ -478,7 +513,7 @@ def q_damage_w_shadow():
     return d
 
 
-@pytest.fixture()
+@pytest.fixture
 def q_heal_e():
     d = QueueStatus(
         source=ActionType.E,

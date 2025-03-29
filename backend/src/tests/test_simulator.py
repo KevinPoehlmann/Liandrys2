@@ -11,14 +11,15 @@ class TestSimulator():
     @pytest.mark.parametrize(
         "resolve_fixture, distance, output",
         [
-            ("e_damage_aa", 0, 0),
-            ("e_damage_e", 0, 0.2),
-            ("e_damage_r", 500, 0.25)
+            ("e_damage_aa", 0, 1),  # general
+            ("e_damage_e", 0, 1.2),  # delay
+            ("e_damage_r", 500, 1.25)  # travel time
         ],
     indirect=["resolve_fixture"])
     def test_calculate_delay(self, sim,
                                     resolve_fixture, distance, output):
         sim.distance = distance
+        sim.timer = 1
         result = sim.calculate_delay(resolve_fixture)
         assert result == output
     
@@ -27,23 +28,24 @@ class TestSimulator():
         "initial_queue, remove_args, expected_queue",
         [
             # Only the last dot remaining
-            ({0.5: ["q_damage_w"]},  # Initial state
-             ([(0.5, ["q_damage_w"])], "q_damage_w"),  # Arguments to function
+            ({1.5: ["q_damage_w"]},  # Initial state
+             ([(1.5, ["q_damage_w"])], "q_damage_w"),  # Arguments to function
              {}),  # Expected result
 
             # shadow dot is in irregular distance to the last dot
-            ({0.3: ["q_damage_w"], 0.5: ["q_damage_w_shadow"]},
-             ([(0.5, ["q_damage_w_shadow"]), (0.3, ["q_damage_w"])], "q_damage_w_shadow"),
+            ({1.3: ["q_damage_w"], 1.5: ["q_damage_w_shadow"]},
+             ([(1.5, ["q_damage_w_shadow"]), (1.3, ["q_damage_w"])], "q_damage_w_shadow"),
              {}),
 
             # removed dot shares its timestamp with another damage instance
-            ({0.3: ["q_damage_w", "q_damage_aa"], 0.5: ["q_damage_aa", "q_damage_w_shadow"]},
-             ([(0.5, ["q_damage_aa", "q_damage_w_shadow"]), (0.3, ["q_damage_w", "q_damage_aa"])], "q_damage_w_shadow"),
-             {0.3: ["q_damage_aa"], 0.5: ["q_damage_aa"]})
+            ({1.3: ["q_damage_w", "q_damage_aa"], 1.5: ["q_damage_aa", "q_damage_w_shadow"]},
+             ([(1.5, ["q_damage_aa", "q_damage_w_shadow"]), (1.3, ["q_damage_w", "q_damage_aa"])], "q_damage_w_shadow"),
+             {1.3: ["q_damage_aa"], 1.5: ["q_damage_aa"]})
         ]
     )
     def test_remove_last_dots(self, sim, e_damage_w, q_damage_w, q_damage_w_shadow, q_damage_aa,
                             initial_queue, remove_args, expected_queue):
+        sim.timer = 1
         mapping = {
             "q_damage_w": q_damage_w,
             "q_damage_w_shadow": q_damage_w_shadow,
@@ -62,23 +64,24 @@ class TestSimulator():
         [
             # empty damge_queue
             ({},  # Initial state
-             0.5),  # Offset
+             1.5),  # Offset
 
             # Only the last dot remaining
-            ({0.5: ["q_damage_w"]},
-             1),
+            ({1.5: ["q_damage_w"]},
+             2),
 
              # Only the shadow dot remaining
-            ({0.4: ["q_damage_w_shadow"]},
-             0.5),
+            ({1.4: ["q_damage_w_shadow"]},
+             1.5),
 
             # shadow dot is in irregular distance to the last dot
-            ({0.3: ["q_damage_w"], 0.5: ["q_damage_w_shadow"]},
-             0.5),
+            ({1.3: ["q_damage_w"], 1.5: ["q_damage_w_shadow"]},
+             1.5),
         ]
     )
     def test_calculate_offset(self, sim, e_damage_w, q_damage_w, q_damage_w_shadow,
                             initial_queue, offset):
+        sim.timer = 1
         mapping = {
             "q_damage_w": q_damage_w,
             "q_damage_w_shadow": q_damage_w_shadow,

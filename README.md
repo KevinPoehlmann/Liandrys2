@@ -33,7 +33,8 @@ This project was created to:
 
 Key learnings so far:
 - **Planning is essential**—many things turned out to be more complex than expected! 😅
-- Realizing the advantage of **Dependency Injection** when it comes to testing. 
+- **Refactoring** can be quite time consuming.
+- Realizing the advantage of **Dependency Injection** when it comes to testing.
 - Gained hands-on experience with Docker, Vue, FastAPI, and MongoDB.
 
 ## 📸 Screenshots

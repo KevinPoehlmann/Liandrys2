@@ -23,10 +23,10 @@
             - [x] Implement simple healing ability usage
             - [x] Create simple healing abilities for testing
             - [x] Tests for simple healing ability usage
-        - [ ] Make simple shielding abilities work
-            - [ ] Implement simple shielding ability usage
-            - [ ] Create simple shielding abilities for testing
-            - [ ] Tests for simple shielding  bility usage
+        - [x] Make simple shielding abilities work
+            - [x] Implement simple shielding ability usage
+            - [x] Create simple shielding abilities for testing
+            - [x] Tests for simple shielding  bility usage
         - [ ] Make harder abilities work
             - [ ] Implement harder ability usage
             - [ ] Create harder abilities for testing

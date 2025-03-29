@@ -1,4 +1,3 @@
-
 from src.server.models.ability import ChampionAbility
 from src.server.models.champion import Champion
 from src.server.models.dataenums import (
@@ -12,6 +11,7 @@ from src.server.models.dataenums import (
     EffectStatus,
     ProcessedDamageProperties,
     ProcessedHealProperties,
+    ProcessedShieldProperties,
     QueueStatus,
     Stat,
     StatusType,
@@ -34,6 +34,8 @@ class Character():
         self.hp: float = self.get_stat(Stat.HP)
         self.damage_taken: float = 0
         self.healed: float = 0
+        self.damage_shielded: float = 0
+        self.shields: list[tuple[float, float]] = []
 
         self.ability_dict: dict[ActionType, tuple[ChampionAbility, int]] = {
             ActionType.Q: (self.champion.q, rank.q),
@@ -108,6 +110,8 @@ class Character():
         return eval(formula, {}, variables)
     
 
+
+
     def calculate_hp_scaling(self, value: float, dmg_calc: DamageCalculation) -> float:
         match dmg_calc:
             case DamageCalculation.MAX_HP:
@@ -127,19 +131,49 @@ class Character():
         resistance = max(resistance, 0)
         result = value * (100 / (resistance + 100))
         return result
+    
+
+    def apply_heals(self, values: list[float]) -> None:
+        heal = sum(values)
+        max_hp = self.get_stat(Stat.HP)
+        heal = min(heal, max_hp - self.hp)
+        self.healed += heal
+        self.hp += heal
+    
+
+    def apply_shields(self, values: list[tuple[float, float]], timestamp: float) -> None:
+        self.shields = [(exp, val) for exp, val in self.shields if exp > timestamp and val > 0]
+        new_shields = [(duration+timestamp, val) for duration, val in values]
+        self.shields.extend(new_shields)
+        self.shields.sort()
+    
+
+    def apply_damages(self, values: list[float]) -> None:
+        damage = sum(values)
+        self.damage_taken += damage
+        for i, (exp, shield_val) in enumerate(self.shields):
+            absorbed = min(damage, shield_val)
+            self.damage_shielded += absorbed
+            damage -= absorbed
+            self.shields[i] = (exp, shield_val-absorbed)
+            if damage <= 0:
+                break
+        if damage > 0:
+            self.hp -= damage
 
 
 
-    def do_action(self, key: ActionType, timer: float) -> ActionEffect:
+
+    def do_action(self, key: ActionType, timestamp: float) -> ActionEffect:
         if key == ActionType.AA:
-            return self.basic_attack(timer)
+            return self.basic_attack(timestamp)
         elif key in self.ability_dict:
-            return self.do_ability(key, timer)
+            return self.do_ability(key, timestamp)
 
 
-    def basic_attack(self, timer: float) -> ActionEffect:
+    def basic_attack(self, timestamp: float) -> ActionEffect:
         attack_time = 1 / self.get_attackspeed()
-        time = max(self.cooldowns[ActionType.AA], timer)
+        time = max(self.cooldowns[ActionType.AA], timestamp)
         self.cooldowns[ActionType.AA] = time + attack_time
         #TODO delete /100 again
         time += attack_time * self.champion.attack_windup/100
@@ -158,9 +192,9 @@ class Character():
         return ActionEffect(time=time, stati=[dmg])
     
 
-    def do_ability(self, key: ActionType, timer: float) -> ActionEffect:
+    def do_ability(self, key: ActionType, timestamp: float) -> ActionEffect:
         ability: ChampionAbility = self.ability_dict[key][0]
-        time = max(self.cooldowns[key], timer)
+        time = max(self.cooldowns[key], timestamp)
         cooldown = self.evaluate_formula(ability.cooldown, {"rank": self.ability_dict[key][1]})
         cooldown *= 100 / (100 + self.get_bonus_stat(Stat.ABILITY_HASTE))
         self.cooldowns[key] = time + ability.cast_time + cooldown
@@ -178,7 +212,7 @@ class Character():
                     speed=status.speed,
                     props=status.props
                 )
-                if status.type_ == StatusType.HEAL:
+                if status.type_ in [StatusType.HEAL, StatusType.SHIELD]:
                     effect_status.target=Target.ATTACKER
                 action_effect.stati.append(effect_status)
         return action_effect
@@ -209,6 +243,13 @@ class Character():
                         value=result,
                         dmg_calc=status.props.dmg_calc
                     )
+                case StatusType.SHIELD:
+                    props=ProcessedShieldProperties(
+                        value=result,
+                        duration=status.props.duration,
+                        dmg_sub_type=status.props.dmg_sub_type,
+                        dmg_calc=status.props.dmg_calc
+                    )
                 case _:
                    raise ValueError(f"Unhandled StatusType: {status.type_}")  # Catch future issues early
 
@@ -224,20 +265,20 @@ class Character():
 
         
 
-    def take_stati(self, status_list: list[QueueStatus]) -> None:
+    def take_stati(self, status_list: list[QueueStatus], timestamp: float) -> None:
         damages = []
         heals = []
+        shields = []
         for status in status_list:
             match status.type_:
                 case StatusType.DAMAGE:
                     damages.append(self.calculate_damage(status.props))
                 case StatusType.HEAL:
                     heals.append(self.calculate_hp_scaling(status.props.value, status.props.dmg_calc))
+                case StatusType.SHIELD:
+                    shields.append((status.props.duration, self.calculate_hp_scaling(status.props.value, status.props.dmg_calc)))
                 case _:
                     pass
-        result = sum(damages)
-        self.damage_taken += result
-        self.healed += sum(heals)
-        self.healed
-        result -= sum(heals)
-        self.hp = min(self.hp - result, self.get_stat(Stat.HP))
+        self.apply_shields(shields, timestamp)
+        self.apply_damages(damages)
+        self.apply_heals(heals)

@@ -52,7 +52,7 @@ class Simulation():
                 break
             queue_entries = self.queue.pop(timestamp)
 
-            evaluation_types = [StatusType.DAMAGE, StatusType.HEAL]
+            evaluation_types = [StatusType.DAMAGE, StatusType.HEAL, StatusType.SHIELD]
             evaluation_entries = [entry for entry in queue_entries if entry.type_ in evaluation_types]
             other_entries = [entry for entry in queue_entries if entry.type_ not in evaluation_types]
             evaluated_entries = self.attacker.evaluate(evaluation_entries)
@@ -61,8 +61,8 @@ class Simulation():
             defender_list = [entry for entry in other_entries if entry.target == Target.DEFENDER]
             attacker_list = [entry for entry in other_entries if entry.target == Target.ATTACKER]
 
-            self.defender.take_stati(defender_list)
-            self.attacker.take_stati(attacker_list)
+            self.defender.take_stati(defender_list, timestamp)
+            self.attacker.take_stati(attacker_list, timestamp)
 
 
     def apply_dot(self, effect_status: EffectStatus) -> None:

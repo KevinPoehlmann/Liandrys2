@@ -258,6 +258,7 @@ class StatusType(str, Enum):
     REPLACE="Replace"
     ROOT="Root"
     SHADOW="Shadow"
+    SHIELD="Shield"
     SILENCE="Silence"
     SLEEP="Sleep"
     SLOW="Slow"
@@ -349,6 +350,13 @@ class HealProperties(StatusProperties):
     dmg_calc: DamageCalculation = DamageCalculation.FLAT
 
 
+class ShieldProperties(StatusProperties):
+    scaling: str
+    duration: float
+    dmg_sub_type: DamageSubType = DamageSubType.TRUE
+    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+
+
 class ProcessedDamageProperties(StatusProperties):
     value: float
     flat_pen: float
@@ -360,6 +368,13 @@ class ProcessedDamageProperties(StatusProperties):
 
 class ProcessedHealProperties(StatusProperties):
     value: float
+    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+
+
+class ProcessedShieldProperties(StatusProperties):
+    value: float
+    duration: float
+    dmg_sub_type: DamageSubType = DamageSubType.TRUE
     dmg_calc: DamageCalculation = DamageCalculation.FLAT
 
 ############### Dataclasses ###############
@@ -421,15 +436,10 @@ class QueueDamage(QueueStatus):
 class QueueHeal(QueueStatus):
     props: HealProperties
 
-""" 
-@dataclass
-class QueueProcessedDamage(QueueStatus):
-    props:  ProcessedDamage
-
 
 @dataclass
-class QueueProcessedHeal(QueueStatus):
-    props:  ProcessedHeal """
+class QueueShield(QueueStatus):
+    props: ShieldProperties
 
 
 
