@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 
-from src.server.models.dataenums import ActionType, EffectComp, QueueComponent, EffectType, Target
+from src.server.models.dataenums import Action, ActionType, EffectComp, QueueComponent, EffectType, Actor
 from src.server.models.request import V1Response
 from src.server.simulation.character import Character
 
@@ -9,42 +9,44 @@ from src.server.simulation.character import Character
 
 
 class Simulation():
-    def __init__(self, attacker: Character, defender: Character, distance: int = 0):
+    def __init__(self, blue: Character, red: Character, distance: int = 0):
         self.timer: float = 0.0
-        self.attacker: Character = attacker
-        self.defender: Character = defender
         self.distance: int = distance
-        self.queue: dict[float, QueueComponent] = defaultdict(list)
+        self.queue: dict[float, list[QueueComponent]] = defaultdict(list)
+        self.actors: dict[Actor, Character] = {
+            Actor.BLUE: blue,
+            Actor.RED: red
+        }
 
 
 
-    def do_combo(self, combo: list[ActionType]) -> V1Response:
+    def do_combo(self, combo: list[Action]) -> V1Response:
         for action in combo:
-            delay = self.attacker.check_action_delay(action, self.timer)
+            delay = self.actors[action.actor].check_action_delay(action.action_type, self.timer)
             if delay:
                 self.timer = delay
-                self.process_queue()
+            self.process_queue()
             self.do_action(action)
         self.process_queue()
-        return V1Response(damage=round(self.defender.damage_taken), time=round(self.timer, 2))
+        return V1Response(damage=round(self.actors[Actor.RED].damage_taken), time=round(self.timer, 2))
     
 
-    def do_action(self, key: ActionType) -> None:
-        action_effect = self.attacker.do_action(key, self.timer)
+    def do_action(self, action: Action) -> None:
+        action_effect = self.actors[action.actor].do_action(action, self.timer)
         self.timer = action_effect.time
-        self.queue_status(action_effect.effect_comps)
-        self.process_queue()
+        self.queue_status(action_effect.effect_comps, action.actor)
     
 
-    def queue_status(self, effect_comps: list[EffectComp]) -> None:
+    def queue_status(self, effect_comps: list[EffectComp], actor: Actor) -> None:
         for effect_component in effect_comps:
             if effect_component.duration > 0:
-                self.apply_dot(effect_component)
+                self.apply_dot(effect_component, actor)
             status_time = self.calculate_delay(effect_component) + effect_component.duration
             self.queue.setdefault(status_time, []).append(QueueComponent(
                 source=effect_component.source,
-                type_=effect_component.type_,
+                actor=actor,
                 target=effect_component.target,
+                type_=effect_component.type_,
                 props=effect_component.props
                 ))
 
@@ -58,42 +60,46 @@ class Simulation():
 
             evaluation_types = [EffectType.DAMAGE, EffectType.HEAL, EffectType.SHIELD]
             evaluation_entries = [entry for entry in queue_entries if entry.type_ in evaluation_types]
-            other_entries = [entry for entry in queue_entries if entry.type_ not in evaluation_types]
-            evaluated_entries = self.attacker.evaluate(evaluation_entries)
-            other_entries.extend(evaluated_entries)
+            evaluated_entries = [entry for entry in queue_entries if entry.type_ not in evaluation_types]
+            evaluation_blue = [entry for entry in evaluation_entries if entry.actor == Actor.BLUE]
+            evaluation_red = [entry for entry in evaluation_entries if entry.actor == Actor.RED]
+            evaluated_entries.extend(self.actors[Actor.BLUE].evaluate(evaluation_blue))
+            evaluated_entries.extend(self.actors[Actor.RED].evaluate(evaluation_red))
 
-            defender_list = [entry for entry in other_entries if entry.target == Target.DEFENDER]
-            attacker_list = [entry for entry in other_entries if entry.target == Target.ATTACKER]
+            blue_list = [entry for entry in evaluated_entries if entry.target == Actor.BLUE]
+            red_list = [entry for entry in evaluated_entries if entry.target == Actor.RED]
 
-            self.defender.take_effects(defender_list, timestamp)
-            self.attacker.take_effects(attacker_list, timestamp)
+            self.actors[Actor.BLUE].take_effects(blue_list, timestamp)
+            self.actors[Actor.RED].take_effects(red_list, timestamp)
 
 
-    def apply_dot(self, effect_comp: EffectComp) -> None:
-        offset = self.calculate_offset(effect_comp)
+    def apply_dot(self, effect_comp: EffectComp, actor: Actor) -> None:
+        offset = self.calculate_offset(effect_comp, actor)
         while offset < effect_comp.duration + self.calculate_delay(effect_comp):
             self.queue.setdefault(offset, []).append(QueueComponent(
-                effect_comp.source,
-                type_=effect_comp.type_,
+                source=effect_comp.source,
+                actor=actor,
                 target=effect_comp.target,
+                type_=effect_comp.type_,
                 props=effect_comp.props
                 ))
             offset += effect_comp.interval
         if offset > effect_comp.duration + self.calculate_delay(effect_comp):
             self.queue.setdefault(offset, []).append(QueueComponent(
                 source=effect_comp.source,
-                type_=EffectType.SHADOW,
-                target=effect_comp.target
+                actor=actor,
+                target=effect_comp.target,
+                type_=EffectType.SHADOW
             ))
 
 
 
-    def calculate_offset(self, effect_comp: EffectComp) -> float:
+    def calculate_offset(self, effect_comp: EffectComp, actor: Actor) -> float:
         offset = self.calculate_delay(effect_comp) + effect_comp.interval
-        existing_dots: list[tuple[float, QueueComponent]] = [dot for dot in self.queue.items() for d in dot[1] if d.source == effect_comp.source]
+        existing_dots: list[tuple[float, QueueComponent]] = [dot for dot in self.queue.items() for d in dot[1] if d.source == effect_comp.source and d.actor == actor]
         if existing_dots:
             existing_dots.sort(reverse=True)
-            last_dot = next((d for d in existing_dots[0][1] if d.source == effect_comp.source), None)
+            last_dot = next((d for d in existing_dots[0][1] if d.source == effect_comp.source and d.actor == actor), None)
             if last_dot.type_ != EffectType.SHADOW:
                 offset = max(offset, existing_dots[0][0] + effect_comp.interval)
             else:
@@ -112,7 +118,7 @@ class Simulation():
                 return
             if existing_dots[0][0] - existing_dots[1][0] < effect_comp.interval:
                 # removing the last, irregularly ticking dot
-                self.queue[existing_dots[1][0]] = [d for d in existing_dots[1][1] if d.source != effect_comp.source]
+                self.queue[existing_dots[1][0]] = [d for d in existing_dots[1][1] if d.source != effect_comp.source or d.actor != last_dot.actor]
                 if len(self.queue[existing_dots[1][0]]) == 0:
                     self.queue.pop(existing_dots[1][0])
 

@@ -4,6 +4,7 @@ import math
 from src.server.models.ability import ChampionAbility
 from src.server.models.champion import Champion
 from src.server.models.dataenums import (
+    Action,
     ActionEffect,
     ActionType,
     HpScaling,
@@ -19,7 +20,7 @@ from src.server.models.dataenums import (
     QueueComponent,
     Stat,
     StatusType,
-    Target
+    Actor
 )
 from src.server.models.item import Item
 from src.server.models.request import Rank
@@ -235,14 +236,14 @@ class Character():
 
 
 
-    def do_action(self, key: ActionType, timestamp: float) -> ActionEffect:
-        if key == ActionType.AA:
-            return self._basic_attack(timestamp)
-        elif key in self.ability_dict:
-            return self._do_ability(key, timestamp)
+    def do_action(self, action: Action, timestamp: float) -> ActionEffect:
+        if action.action_type == ActionType.AA:
+            return self._basic_attack(action.target, timestamp)
+        elif action.action_type in self.ability_dict:
+            return self._do_ability(action, timestamp)
 
 
-    def _basic_attack(self, timestamp: float) -> ActionEffect:
+    def _basic_attack(self, target: Actor, timestamp: float) -> ActionEffect:
         attack_time = 1 / self._get_attackspeed()
         self.cooldowns[ActionType.AA] = timestamp + attack_time
         timestamp += attack_time * self.champion.attack_windup
@@ -254,7 +255,7 @@ class Character():
             aa_props.scaling = 0
         dmg = EffectComp(
             source=ActionType.AA,
-            target=Target.DEFENDER,
+            target=target,
             type_= EffectType.DAMAGE,
             speed=self.champion.missile_speed,
             props=aa_props
@@ -262,17 +263,17 @@ class Character():
         return ActionEffect(time=timestamp, effect_comps=[dmg])
     
 
-    def _do_ability(self, key: ActionType, timestamp: float) -> ActionEffect:
-        ability: ChampionAbility = self.ability_dict[key][0]
-        cooldown = self._evaluate_formula(ability.cooldown, {"rank": self.ability_dict[key][1]})
+    def _do_ability(self, action: Action, timestamp: float) -> ActionEffect:
+        ability: ChampionAbility = self.ability_dict[action.action_type][0]
+        cooldown = self._evaluate_formula(ability.cooldown, {"rank": self.ability_dict[action.action_type][1]})
         cooldown *= 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
-        self.cooldowns[key] = timestamp + ability.cast_time + cooldown
+        self.cooldowns[action.action_type] = timestamp + ability.cast_time + cooldown
         action_effect = ActionEffect(time=timestamp + ability.cast_time)
         for effect in ability.effects:
             for component in effect.effect_components:
                 effect_comp = EffectComp(
-                    source=key,
-                    target=Target.DEFENDER,
+                    source=action.action_type,
+                    target=action.target,
                     type_=component.type_,
                     duration=component.duration,
                     interval=component.interval,
@@ -280,8 +281,6 @@ class Character():
                     speed=component.speed,
                     props=component.props
                 )
-                if component.type_ in [EffectType.HEAL, EffectType.SHIELD]:
-                    effect_comp.target=Target.ATTACKER
                 action_effect.effect_comps.append(effect_comp)
         return action_effect
     
@@ -323,8 +322,9 @@ class Character():
 
             queue_component = QueueComponent(
                 source=component.source,
-                type_=component.type_,
+                actor=component.actor,
                 target=component.target,
+                type_=component.type_,
                 props=props
         )
             queue_component.props=props

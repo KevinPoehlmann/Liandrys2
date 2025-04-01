@@ -1,7 +1,7 @@
 import pytest
 
 
-from src.server.models.dataenums import ActionType
+from src.server.models.dataenums import Action, ActionType, Actor
 
 
 
@@ -87,7 +87,7 @@ class TestSimulator():
             "q_damage_w_shadow": q_damage_w_shadow,
         }
         sim.queue = {k: [mapping[v] for v in values] for k, values in initial_queue.items()}
-        result = sim.calculate_offset(e_damage_w)
+        result = sim.calculate_offset(e_damage_w, Actor.BLUE)
         assert result == offset
 
     
@@ -126,7 +126,7 @@ class TestSimulator():
             "q_damage_w_shadow": q_damage_w_shadow
         }
         sim.queue = {k: [mapping[v] for v in values] for k, values in initial_queue.items()}
-        sim.apply_dot(e_damage_w)
+        sim.apply_dot(e_damage_w, Actor.BLUE)
         expected_queue_mapped = {k: [mapping[v] for v in values] for k, values in expected_queue.items()}
         assert sim.queue == expected_queue_mapped
 
@@ -186,7 +186,7 @@ class TestSimulator():
         }
         sim.queue = {k: [mapping[v] for v in values] for k, values in initial_queue.items()}
         args_mapped = [mapping[value] for value in queue_args]
-        sim.queue_status(args_mapped)
+        sim.queue_status(args_mapped, Actor.BLUE)
         expected_queue_mapped = {k: [mapping[v] for v in values] for k, values in expected_queue.items()}
         assert sim.queue == expected_queue_mapped
 
@@ -229,23 +229,23 @@ class TestSimulator():
         assert sim.queue == expected_queue_mapped
 
 
-    def test_do_action(self, sim):
-        sim.do_action(ActionType.AA)
+    def test_do_action(self, sim, q_damage_aa):
+        sim.do_action(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA))
         assert round(sim.timer, 3) == 0.215
-        assert round(sim.defender.damage_taken, 3) == 55.295
-        assert round(sim.defender.hp, 3) == 1246.965
+        assert round(list(sim.queue.keys())[0], 3) == 0.215
+        assert list(sim.queue.values())[0][0] == q_damage_aa
 
 
     @pytest.mark.parametrize("input, output", [
-        ([ActionType.AA], (55, 0.22, 1246.965)),
-        ([ActionType.AA, ActionType.AA], (111, 1.31, 1191.67)),
-        ([ActionType.AA, ActionType.Q], (115, 0.82, 1187.131)),
-        ([ActionType.Q, ActionType.AA], (115, 0.82, 1187.131)),
-        ([ActionType.AA, ActionType.Q, ActionType.AA], (170, 1.31, 1131.836)),
-        ([ActionType.Q, ActionType.AA, ActionType.AA], (170, 1.91, 1131.836)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (55, 0.22, 1246.965)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (111, 1.31, 1191.67)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q)], (115, 0.82, 1187.131)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (115, 0.82, 1187.131)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (170, 1.31, 1131.836)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (170, 1.91, 1131.836)),
     ])
     def test_do_combo(self, sim, input, output):
         result = sim.do_combo(input)
         assert result.damage == output[0]
         assert result.time == output[1]
-        assert round(sim.defender.hp, 3) == output[2]
+        assert round(sim.actors[Actor.RED].hp, 3) == output[2]

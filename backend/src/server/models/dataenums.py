@@ -94,9 +94,9 @@ class Map(str, MultiValueEnum):
     TFT="TFT", "22"
 
 
-class Target(Enum):
-    ATTACKER = "attacker"
-    DEFENDER = "defender"
+class Actor(Enum):
+    BLUE = "blue"
+    RED = "red"
 
 #Champions
 
@@ -428,6 +428,12 @@ class AbilityBaseStats():
 
 
 
+@dataclass
+class Action():
+    actor: Actor
+    target: Actor
+    action_type: ActionType
+
 ### Status Queue ###
 
 
@@ -437,8 +443,9 @@ class AbilityBaseStats():
 @dataclass 
 class QueueComponent():
     source: ActionType
+    actor: Actor
+    target: Actor
     type_: EffectType
-    target: Target
     props: EffectProperties = None
 
 
@@ -448,7 +455,7 @@ class QueueComponent():
 @dataclass
 class EffectComp():
     source: ActionType
-    target: Target
+    target: Actor
     type_: EffectType
     duration: float = 0.0
     interval: float = 0.0

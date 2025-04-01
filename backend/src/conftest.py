@@ -33,7 +33,7 @@ from src.server.models.dataenums import (
     QueueComponent,
     EffectType,
     StatusType,
-    Target
+    Actor
 )
 from src.server.models.item import Item
 from src.server.models.rune import Rune
@@ -352,7 +352,7 @@ def action_effect_aa():
         effect_comps=[
             EffectComp(
                 source=ActionType.AA,
-                target=Target.DEFENDER,
+                target=Actor.RED,
                 type_=EffectType.DAMAGE,
                 props=DamageProperties(
                     scaling="ad",
@@ -372,7 +372,7 @@ def action_effect_q():
         effect_comps=[
             EffectComp(
                 source=ActionType.Q,
-                target=Target.DEFENDER,
+                target=Actor.RED,
                 type_=EffectType.DAMAGE,
                 props=DamageProperties(
                     scaling="-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
@@ -389,7 +389,7 @@ def action_effect_q():
 def e_damage_aa():
     d = EffectComp(
         source=ActionType.AA,
-        target=Target.DEFENDER,
+        target=Actor.RED,
         type_=EffectType.DAMAGE,
         props=DamageProperties(
             scaling="ad",
@@ -404,7 +404,7 @@ def e_damage_aa():
 def e_damage_w():
     d = EffectComp(
         source=ActionType.W,
-        target=Target.DEFENDER,
+        target=Actor.RED,
         type_=EffectType.DAMAGE,
         duration=2,
         interval=0.5,
@@ -422,7 +422,7 @@ def e_damage_w():
 def e_damage_e():
     d = EffectComp(
         source=ActionType.E,
-        target=Target.DEFENDER,
+        target=Actor.RED,
         type_=EffectType.DAMAGE,
         duration=2,
         interval=0.5,
@@ -441,7 +441,7 @@ def e_damage_e():
 def e_damage_r():
     d = EffectComp(
         source=ActionType.R,
-        target=Target.DEFENDER,
+        target=Actor.RED,
         type_=EffectType.DAMAGE,
         duration=2,
         interval=0.5,
@@ -461,8 +461,9 @@ def e_damage_r():
 def q_processed_ad_flat():
     p = QueueComponent(
         source=ActionType.AA,
+        actor=Actor.BLUE,
+        target=Actor.RED,
         type_=EffectType.DAMAGE,
-        target=Target.DEFENDER,
         props=ProcessedDamageProperties(
             value=100,
             flat_pen=10,
@@ -478,8 +479,9 @@ def q_processed_ad_flat():
 def q_processed_ap_maxhp():
     p = QueueComponent(
         source=ActionType.AA,
+        actor=Actor.BLUE,
+        target=Actor.RED,
         type_=EffectType.DAMAGE,
-        target=Target.DEFENDER,
         props=ProcessedDamageProperties(
             value=0.1,
             flat_pen=18,
@@ -495,7 +497,8 @@ def q_processed_ap_maxhp():
 def q_processed_heal_flat():
     d = QueueComponent(
         source=ActionType.E,
-        target=Target.DEFENDER,
+        actor=Actor.BLUE,
+        target=Actor.RED,
         type_=EffectType.HEAL,
         props=ProcessedHealProperties(
             value="440.15" ,
@@ -508,7 +511,8 @@ def q_processed_heal_flat():
 def q_damage_aa():
     d = QueueComponent(
         source=ActionType.AA,
-        target=Target.DEFENDER,
+        actor=Actor.BLUE,
+        target=Actor.RED,
         type_=EffectType.DAMAGE,
         props=DamageProperties(
             scaling="ad",
@@ -523,7 +527,8 @@ def q_damage_aa():
 def q_damage_q():
     d = QueueComponent(
         source=ActionType.Q,
-        target=Target.DEFENDER,
+        actor=Actor.BLUE,
+        target=Actor.RED,
         type_=EffectType.DAMAGE,
         props=DamageProperties(
             scaling="-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
@@ -538,7 +543,8 @@ def q_damage_q():
 def q_damage_w():
     d = QueueComponent(
         source=ActionType.W,
-        target=Target.DEFENDER,
+        actor=Actor.BLUE,
+        target=Actor.RED,
         type_=EffectType.DAMAGE,
         props=DamageProperties(
             scaling="20 + 0.3 * ap" ,
@@ -553,7 +559,8 @@ def q_damage_w():
 def q_damage_w_shadow():
     d = QueueComponent(
         source=ActionType.W,
-        target=Target.DEFENDER,
+        actor=Actor.BLUE,
+        target=Actor.RED,
         type_=EffectType.SHADOW,
         props=None
     )
@@ -564,7 +571,8 @@ def q_damage_w_shadow():
 def q_heal_e():
     d = QueueComponent(
         source=ActionType.E,
-        target=Target.DEFENDER,
+        actor=Actor.BLUE,
+        target=Actor.RED,
         type_=EffectType.HEAL,
         props=HealProperties(
             scaling="400 + 0.3 * ad" ,

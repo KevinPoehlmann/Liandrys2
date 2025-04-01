@@ -1,6 +1,6 @@
 import pytest
 
-from src.server.models.dataenums import Stat, ActionType, DamageSubType, DamageType, HpScaling, StatusType
+from src.server.models.dataenums import Stat, Action, ActionType, Actor, DamageSubType, DamageType, HpScaling, StatusType
 
 
 
@@ -224,24 +224,24 @@ class TestCharacter():
 
 
     def test_basic_attack(self, aatrox_with_items, action_effect_aa, compare_objects):
-        result = aatrox_with_items._basic_attack(0)
+        result = aatrox_with_items._basic_attack(Actor.RED, 0)
         assert compare_objects(result, action_effect_aa)
         assert round(aatrox_with_items.cooldowns[ActionType.AA], 3) == 1.092
 
 
     def test_do_ability(self, aatrox_with_items, action_effect_q, compare_objects):
         aatrox_with_items.cooldowns[ActionType.Q] = 1
-        result = aatrox_with_items._do_ability(ActionType.Q, 1)
+        result = aatrox_with_items._do_ability(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), 1)
         assert compare_objects(result, action_effect_q)
         assert round(aatrox_with_items.cooldowns[ActionType.Q], 3) == 3.029
 
 
-    @pytest.mark.parametrize("action_type, timer, resolve_fixture", [
-        (ActionType.AA, 0, "action_effect_aa"),
-        (ActionType.Q, 1, "action_effect_q")
+    @pytest.mark.parametrize("action, timer, resolve_fixture", [
+        (Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), 0, "action_effect_aa"),
+        (Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), 1, "action_effect_q")
     ], indirect=["resolve_fixture"])
-    def test_do_action(self, aatrox_with_items, action_type, timer, resolve_fixture, compare_objects):
-        result = aatrox_with_items.do_action(action_type, timer)
+    def test_do_action(self, aatrox_with_items, action, timer, resolve_fixture, compare_objects):
+        result = aatrox_with_items.do_action(action, timer)
         assert compare_objects(result, resolve_fixture)
 
 
