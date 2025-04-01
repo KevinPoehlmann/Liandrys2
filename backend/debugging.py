@@ -3,8 +3,8 @@ from collections import defaultdict
 
 
 def main():
-    vals = []
-    print(sum(vals))
+    vals = [1]
+    print(bool(vals))
 
 
 if __name__ == "__main__":

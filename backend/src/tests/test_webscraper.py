@@ -8,7 +8,7 @@ from src.server.models.dataenums import (
     Table,
     TableTitle
 )
-from src.server.models.effect import Status, StatusType, Scaling
+from src.server.models.effect import EffectComponent, StatusType, Scaling
 from src.server.models.image import Image
 from src.server.loader.webscraper import (
     get_hotfix_list,
@@ -119,23 +119,23 @@ def test_create_summonerspell():
 @pytest.mark.parametrize("input, output", [
     (
         {'Magic Damage': '80 / 100 / 120 / 140 / 160 (+ 60% AP)', 'Heal': '20 / 25 / 30 / 35 / 40 (+ 35% AP)'},
-        [Status(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[80, 100, 120, 140, 160]), stat=Stat.FLAT),
+        [EffectComponent(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[80, 100, 120, 140, 160]), stat=Stat.FLAT),
                 Scaling(value=Table(top=[1], bot=[60], title=TableTitle.FLAT), stat=Stat.AP)],
             type_=StatusType.DAMAGE,
             comment="Magic Damage"),
-        Status(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[20, 25, 30, 35, 40]), stat=Stat.FLAT),
+        EffectComponent(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[20, 25, 30, 35, 40]), stat=Stat.FLAT),
                 Scaling(value=Table(top=[1], bot=[35], title=TableTitle.FLAT), stat=Stat.AP)],
             type_=StatusType.HEAL,
             comment="Heal")]
     ),
     (
         {'Minimum Magic Damage': '30 / 45 / 60 / 75 / 90 (+ 1.5% maximum health) (+ 35% AP)', 'Maximum Magic Damage': '60 / 90 / 120 / 150 / 180 (+ 6% maximum health) (+ 80% AP)'},
-        [Status(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[30, 45, 60, 75, 90]), stat=Stat.FLAT),
+        [EffectComponent(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[30, 45, 60, 75, 90]), stat=Stat.FLAT),
                 Scaling(value=Table(top=[1], bot=[1.5], title=TableTitle.FLAT), stat=Stat.MAX_HP),
                 Scaling(value=Table(top=[1], bot=[35], title=TableTitle.FLAT), stat=Stat.AP)],
             type_=StatusType.DAMAGE,
             comment="Minimum Magic Damage"),
-        Status(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[60, 90, 120, 150, 180]), stat=Stat.FLAT),
+        EffectComponent(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[60, 90, 120, 150, 180]), stat=Stat.FLAT),
                 Scaling(value=Table(top=[1], bot=[6], title=TableTitle.FLAT), stat=Stat.MAX_HP),
                 Scaling(value=Table(top=[1], bot=[80], title=TableTitle.FLAT), stat=Stat.AP)],
             type_=StatusType.DAMAGE,
@@ -143,23 +143,23 @@ def test_create_summonerspell():
     ),
     (
         {'Total Physical Damage': '8 / 11 / 14 / 17 / 20 (+ 100 / 105 / 110 / 115 / 120% AD)', 'Physical Damage per Hit': '1.14 / 1.57 / 2 / 2.43 / 2.86 (+ 14.29 / 15 / 15.71 / 16.43 / 17.14% AD)'},
-        [Status(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[8, 11, 14, 17, 20]), stat=Stat.FLAT),
+        [EffectComponent(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[8, 11, 14, 17, 20]), stat=Stat.FLAT),
                 Scaling(value=Table(top=[1,2,3,4,5], bot=[100, 105, 110, 115, 120]), stat=Stat.AD)],
             type_=StatusType.DAMAGE,
             comment="Total Physical Damage"),
-        Status(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[1.14, 1.57, 2, 2.43, 2.86]), stat=Stat.FLAT),
+        EffectComponent(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[1.14, 1.57, 2, 2.43, 2.86]), stat=Stat.FLAT),
                 Scaling(value=Table(top=[1,2,3,4,5], bot=[14.29, 15, 15.71, 16.43, 17.14]), stat=Stat.AD),],
             type_=StatusType.DAMAGE,
             comment="Physical Damage per Hit")]
     ),
     (
         {'Magic Damage': "35 / 50 / 65 / 80 / 95 (+ 4 / 5 / 6 / 7 / 8% (+ 4% per 100 AP) of target's maximum health)", 'Capped Non-Champion Damage': '235 / 250 / 265 / 280 / 295'},
-        [Status(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[35, 50, 65, 80, 95]), stat=Stat.FLAT),
+        [EffectComponent(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[35, 50, 65, 80, 95]), stat=Stat.FLAT),
                 Scaling(value=Table(top=[1,2,3,4,5], bot=[4, 5, 6, 7, 8]), stat=Stat.MAX_HP_TARGET),
                 Scaling(value=Scaling(value=Table(top=[1], bot=[4], title=TableTitle.FLAT), stat=Stat.AP), stat=Stat.MAX_HP_TARGET)],
             type_=StatusType.DAMAGE,
             comment="Magic Damage"),
-        Status(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[235, 250, 265, 280, 295]), stat=Stat.FLAT)],
+        EffectComponent(scalings=[Scaling(value=Table(top=[1,2,3,4,5], bot=[235, 250, 265, 280, 295]), stat=Stat.FLAT)],
             type_=StatusType.DAMAGE,
             comment="Capped Non-Champion Damage")]
     )

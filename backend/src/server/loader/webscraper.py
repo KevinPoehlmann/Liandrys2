@@ -9,7 +9,7 @@ from src.server.loader.helper import info_loader, RuneClass
 from src.server.loader.patchexceptions import ScrapeError
 from src.server.models.ability import Ability, ItemActive
 from src.server.models.champion import NewChampion
-from src.server.models.effect import Effect, Scaling, Status
+from src.server.models.effect import Effect, Scaling, EffectComponent
 from src.server.models.item import NewItem
 from src.server.models.passive import Passive, ItemPassive
 from src.server.models.rune import NewRune
@@ -243,7 +243,7 @@ def get_ability_paragraph(paragraph_content: Tag) -> Effect:
     return effect
 
 
-def get_paragraph_tables(paragraph_content: Tag) -> list[Status]:
+def get_paragraph_tables(paragraph_content: Tag) -> list[EffectComponent]:
     table_stats = []
     if paragraph_content.find("span", class_ = "pp-tooltip"):
         #looking for tables in paragraph
@@ -252,7 +252,7 @@ def get_paragraph_tables(paragraph_content: Tag) -> list[Status]:
         for value in tables:
             if not value.has_attr("data-bot_values"):
                 continue
-            effect_stat = Status()
+            effect_stat = EffectComponent()
             for sibling in value.next_siblings:
                 if sibling == " ": continue
                 effect_stat.comment += sibling.text
@@ -290,7 +290,7 @@ def get_ability_splitted_text(ability_content: Tag) -> list[Effect]:
         table_stats = get_paragraph_tables(paragraph)
         effect = Effect(
             text = normalize("NFKD", text_part).strip(),
-            stati=usified_stats+table_stats
+            effect_components=usified_stats+table_stats
         )
         effect_list.append(effect)
     return effect_list
@@ -647,7 +647,7 @@ def get_rune_passive(rune_wiki: BeautifulSoup) -> Passive:
                     if not title:
                         title.append("level")
                     flat_table = usify_tables(bot_str=bot_values, title=title[0])
-                    effect.stati.append(Status(scalings=[Scaling(value=flat_table)]))
+                    effect.effect_components.append(EffectComponent(scalings=[Scaling(value=flat_table)]))
             passive.effects.append(effect)
         else:
             stat = passive_section.find("div", class_="pi-data-value pi-font")
@@ -711,7 +711,7 @@ def create_summonerspell_ability(summonerspell_content: Tag) -> Ability:
                 bot_values = value["data-bot_values"]
                 title = re.findall(r"\(based on (.*)\)", value.text)
                 flat_table = usify_tables(bot_str=bot_values, title=title[0])
-                effect.stati.append(Status(scalings=[Scaling(value=flat_table)]))
+                effect.effect_components.append(EffectComponent(scalings=[Scaling(value=flat_table)]))
             ability.effects.append(effect)
         else:
             stat = ability_section.find("div", class_="pi-data-value pi-font")
@@ -757,7 +757,7 @@ def usify_scaling(value: str) -> list[Scaling]:
     return result
 
 
-def usify_stats(input_data: dict[str, str]) -> list[Status]:
+def usify_stats(input_data: dict[str, str]) -> list[EffectComponent]:
     result = []
     regex1 = r"(?P<flats>[\d/ \.]+)(?P<perc>%)?( ?\(\+ (?P<scalings>.*)\))*(?P<stat>[\w' ]*)"
     
@@ -768,7 +768,7 @@ def usify_stats(input_data: dict[str, str]) -> list[Status]:
         matches = re.fullmatch(regex1, value)
         if not matches:
             logger.warning(f"Stats do not match regex: {value}")
-            Status(type_=StatusType.ERROR, comment=key)
+            EffectComponent(type_=StatusType.ERROR, comment=key)
             continue
         if matches["flats"]:
             flat = matches["flats"].split(" / ")
@@ -799,7 +799,7 @@ def usify_stats(input_data: dict[str, str]) -> list[Status]:
         else:
             type_ = StatusType.REPLACE
 
-        status = Status(scalings=scalings, type_=type_, comment=key)
+        status = EffectComponent(scalings=scalings, type_=type_, comment=key)
         result.append(status)
 
     return result

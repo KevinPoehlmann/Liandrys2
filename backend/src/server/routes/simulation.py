@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 
 from src.server.database import fetch_champion_by_id, fetch_item_by_id
-from src.server.simulation.simulator import Simulation
-from src.server.simulation.unit import Character
+from backend.src.server.simulation.simulation import Simulation
+from backend.src.server.simulation.character import Character
 from src.server.models.request import ItemRequest, V1Request, V1Response
 
 

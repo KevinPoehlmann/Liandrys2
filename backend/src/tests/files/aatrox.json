@@ -24,8 +24,8 @@
     "mana_regen_per_lvl": 0,
     "ad_per_lvl": 5,
     "attackspeed_ratio": 0.651,
-    "attackspeed_per_lvl": 2.5,
-    "attack_windup": 19.737,
+    "attackspeed_per_lvl": 0.025,
+    "attack_windup": 0.19737,
     "windup_modifier": 1,
     "missile_speed": 0,
     "passive": {
@@ -81,14 +81,14 @@
       "effects": [
         {
           "text": "Very simple damage.",
-          "stati": [
+          "effect_components": [
             {
               "type_": "Damage",
               "props": {
                 "scaling": "-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
                 "dmg_type": "Area damage",
                 "damage_sub_type": "Physical",
-                "dmg_calc": "flat"
+                "hp_scaling": "flat"
               },
               "duration": 0.0,
               "interval": 0.0,

@@ -14,7 +14,7 @@
     "stats": {
       "attack damage": 45,
       "ability haste": 20,
-      "attack speed percent": 33,
+      "attack speed percent": 0.33,
       "health": 300
     },
     "active": null,

@@ -234,39 +234,42 @@ class ActiveType(str, Enum):
 
 #Effects
 
+class EffectType(str, Enum):
+    DAMAGE="Damage"
+    HEAL="Heal"
+    SHIELD="Shield"
+    SHADOW="Shadow"
+    STATUS="Status"
+
 class ConditionType(str, Enum):
     HIT="hit"
     RANGE="range"
     EFFECT="effect"
 
-class StatusType(str, Enum):
+class StatusType(str, MultiValueEnum):
     AIRBORNE="Airborne"
     BERSERK="Berserk"
     BLIND="Blind"
-    CHARM="Charm"
     CRIPPLE="Cripple"
-    DAMAGE="Damage"
     DISARM="Disarm"
     DROWSY="Drowsy"
-    ERROR="Error"
-    FLEE="Flee"
-    GROUND="Ground"
-    HEAL="Heal"
+    GROUND="Ground", "Root"
     KINEMATICS="Kinematics"
     NEARSIGHT="Nearsight"
-    POLYMOROPH="Polymorph"
     REPLACE="Replace"
-    ROOT="Root"
-    SHADOW="Shadow"
-    SHIELD="Shield"
     SILENCE="Silence"
     SLEEP="Sleep"
     SLOW="Slow"
     STASIS="Stasis"
-    STUN="Stun"
+    STUN="Stun", "Charm", "Flee", "Polymorph"
     SUPPRESSION="Suppression"
     SUSPENSION="Suspension"
     TAUNT="Taunt"
+    ERROR="Error"
+    """ CHARM="Charm"
+    FLEE="Flee"
+    POLYMOROPH="Polymorph"
+    ROOT="Root" """
     #TODO add status like poisoned
 
 class TableTitle(str, MultiValueEnum):
@@ -289,7 +292,7 @@ class TableTitle(str, MultiValueEnum):
     ERROR="Error"
 
 
-class DamageCalculation(str, Enum):
+class HpScaling(str, Enum):
     FLAT="flat"
     MAX_HP="max health"
     MISSING_HP="missing health"
@@ -334,48 +337,60 @@ class Combo(BaseModel):
 
 
 
-class StatusProperties(BaseModel):
+class EffectProperties(BaseModel):
     pass
 
 
-class DamageProperties(StatusProperties):
+class DamageProperties(EffectProperties):
     scaling: str
     dmg_type: DamageType
     dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
-    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+    hp_scaling: HpScaling = HpScaling.FLAT
 
 
-class HealProperties(StatusProperties):
+class HealProperties(EffectProperties):
     scaling: str
-    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+    hp_scaling: HpScaling = HpScaling.FLAT
 
 
-class ShieldProperties(StatusProperties):
+class ShieldProperties(EffectProperties):
     scaling: str
     duration: float
     dmg_sub_type: DamageSubType = DamageSubType.TRUE
-    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+    hp_scaling: HpScaling = HpScaling.FLAT
 
 
-class ProcessedDamageProperties(StatusProperties):
+class StatusProperties(EffectProperties):
+    type_: StatusType
+    duration: float
+    strength: float = 0.0
+
+
+class ProcessedDamageProperties(EffectProperties):
     value: float
     flat_pen: float
     percent_pen: float
     dmg_type: DamageType
     dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
-    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+    hp_scaling: HpScaling = HpScaling.FLAT
 
 
-class ProcessedHealProperties(StatusProperties):
+class ProcessedHealProperties(EffectProperties):
     value: float
-    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+    hp_scaling: HpScaling = HpScaling.FLAT
 
 
-class ProcessedShieldProperties(StatusProperties):
+class ProcessedShieldProperties(EffectProperties):
     value: float
     duration: float
     dmg_sub_type: DamageSubType = DamageSubType.TRUE
-    dmg_calc: DamageCalculation = DamageCalculation.FLAT
+    hp_scaling: HpScaling = HpScaling.FLAT
+
+
+class ProcessedStatusProperties(EffectProperties):
+    type_: StatusType
+    duration: float
+    strength: float = 0.0
 
 ############### Dataclasses ###############
 
@@ -420,53 +435,34 @@ class AbilityBaseStats():
 
 
 @dataclass 
-class QueueStatus():
+class QueueComponent():
     source: ActionType
-    type_: StatusType
+    type_: EffectType
     target: Target
-    props: StatusProperties = None
-
-
-@dataclass
-class QueueDamage(QueueStatus):
-    props: DamageProperties
-
-
-@dataclass
-class QueueHeal(QueueStatus):
-    props: HealProperties
-
-
-@dataclass
-class QueueShield(QueueStatus):
-    props: ShieldProperties
+    props: EffectProperties = None
 
 
 
 #Status
 
 @dataclass
-class EffectStatus():
+class EffectComp():
     source: ActionType
     target: Target
-    type_: StatusType
+    type_: EffectType
     duration: float = 0.0
     interval: float = 0.0
     delay: float = 0.0
     speed: int = 0
-    props: StatusProperties = None
+    props: EffectProperties = None
 
-
-@dataclass
-class EffectDamage(EffectStatus):
-    props: DamageProperties
 
 
 
 @dataclass
 class ActionEffect():
     time: float
-    stati: list[EffectStatus] = field(default_factory=list)
+    effect_comps: list[EffectComp] = field(default_factory=list)
 
 
 @dataclass
