@@ -29,38 +29,28 @@
     "windup_modifier": 1,
     "missile_speed": 0,
     "passive": {
-      "name": "Deathbringer Stance",
+      "name": "Simple Stacks",
       "description": "Periodically, Aatrox's next basic attack deals bonus <physicalDamage>physical damage</physicalDamage> and heals him, based on the target's max health. ",
       "effects": [
         {
-          "text": "Innate: Periodically, Aatrox empowers his next basic attack to gain  50 bonus range and deal bonus magic damage equal to 4% − 12% (based on level) of the target's maximum health, capped at 100 against  monsters. Aatrox  heals for 80% of the post-mitigation bonus damage dealt, reduced to 25% against  minions.",
-          "stati": [],
-          "conditions": []
+          "buff": "Cast",
+          "props": {
+            "trigger": ["q"],
+            "actions": [{
+              "type_": "Stack",
+              "props": {
+                "stack_key": "passive",
+                "amount": "1"
+              }
+            }]
+          }
         },
         {
-          "text": "Whenever Aatrox hits at least one enemy  champion or large  monster with a basic attack  on-hit or an ability, the  cooldown of Deathbringer Stance is reduced by 2 seconds, modified to 4 if he hits with the Sweetspot of  The Darkin Blade.",
-          "stati": [],
-          "conditions": []
-        }
-      ],
-      "ability_stats": [
-        {
-          "key": "STATIC COOLDOWN",
-          "values": "22 − 10 (based on level)"
-        }
-      ],
-      "damage_type": "Proc damage",
-      "damage_sub_type": [
-        "Magic"
-      ],
-      "counters": [
-        {
-          "type_": "Spell shield",
-          "effect": "Not Blocked"
-        },
-        {
-          "type_": "Parries",
-          "effect": "Blocked"
+          "buff": "Stats",
+          "props": {
+            "stat": "ad",
+            "scaling": "2 * passive"
+          }
         }
       ],
       "ready_to_use": false,

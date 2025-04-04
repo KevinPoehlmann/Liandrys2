@@ -1,4 +1,5 @@
 import pytest
+from collections import defaultdict
 
 from src.server.models.dataenums import Stat, Action, ActionType, Actor, DamageSubType, DamageType, HpScaling, StatusType
 
@@ -87,7 +88,7 @@ class TestCharacter():
         ({StatusType.STUN: [(2, 0), (3, 0)], StatusType.SILENCE: [(1, 0)], StatusType.BLIND: [(2.5, 0)]}, 2, {StatusType.STUN: [(3, 0)], StatusType.BLIND: [(2.5, 0)]}),
     ])
     def test_remove_expired_status_effects(self, aatrox_with_items, initial_stati, timer, expected_stati):
-        aatrox_with_items.status_effects = initial_stati
+        aatrox_with_items.status_effects = defaultdict(list, initial_stati)
         aatrox_with_items._remove_expired_status_effects(timer)
         assert aatrox_with_items.status_effects == expected_stati
 
@@ -154,53 +155,57 @@ class TestCharacter():
         assert round(result, 3) == output
 
 
-    @pytest.mark.parametrize("hp_subtraction, processed_heal_list, hp, healed", [
+    @pytest.mark.parametrize("hp_subtraction, queue_heal_list, hp, healed", [
         (100, {"values": [100]}, 1302.26, 100),
         (50, {"values": [20, 40]}, 1302.26, 50),
         (200, {"values": [50, 25, 25]}, 1202.26, 100),
         (100, {"values": []}, 1202.26, 0)
-    ], indirect=["processed_heal_list"])
-    def test_apply_heals(self, aatrox_with_items, hp_subtraction, processed_heal_list, hp, healed):
+    ], indirect=["queue_heal_list"])
+    def test_apply_heals(self, aatrox_with_items, hp_subtraction, queue_heal_list, hp, healed):
         aatrox_with_items.hp -= hp_subtraction
-        aatrox_with_items._apply_heals(processed_heal_list)
+        aatrox_with_items._apply_heals(queue_heal_list)
         assert aatrox_with_items.hp == hp
         assert aatrox_with_items.healed == healed
 
 
-    @pytest.mark.parametrize("initial_shields, processed_shield_list, expected_shields", [
+    @pytest.mark.parametrize("initial_shields, queue_shield_list, expected_shields", [
         ([], {"values":[(3, 50)]}, [(4, 50)]),
         ([(5, 100)], {"values":[(3, 50)]}, [(4, 50), (5, 100)]),
         ([(5, 100)], {"values":[(3, 50), (5, 20)]}, [(4, 50), (5, 100), (6, 20)]),
         ([(0.5, 50), (5, 100)], {"values":[(3, 50)]}, [(4, 50), (5, 100)]),
         ([(3, -10)], {"values":[]}, []),
-    ], indirect=["processed_shield_list"])
-    def test_apply_shields(self, aatrox_with_items, initial_shields, processed_shield_list, expected_shields):
+    ], indirect=["queue_shield_list"])
+    def test_apply_shields(self, aatrox_with_items, initial_shields, queue_shield_list, expected_shields):
         aatrox_with_items.shields = initial_shields
-        aatrox_with_items._apply_shields(processed_shield_list, 1)
+        aatrox_with_items._apply_shields(queue_shield_list, 1)
         assert aatrox_with_items.shields == expected_shields
 
-    @pytest.mark.parametrize("initial_shields, processed_damage_list, damage_taken, damage_shielded, hp, expected_shields", [
+    @pytest.mark.parametrize("initial_shields, queue_damage_list, damage_taken, damage_shielded, hp, expected_shields", [
         ([], {"values":[50, 50]}, 100, 0, 1202.26, []),
         ([(2, 50), (3, 100)], {"values":[200]}, 200, 150, 1252.26, [(2, 0), (3, 0)]),
         ([(2, 50), (3, 100)], {"values":[100]}, 100, 100, 1302.26, [(2, 0), (3, 50)]),
-    ], indirect=["processed_damage_list"])
-    def test_apply_damages(self, aatrox_with_items, initial_shields, processed_damage_list, damage_taken, damage_shielded, hp, expected_shields):
+    ], indirect=["queue_damage_list"])
+    def test_apply_damages(self, aatrox_with_items, initial_shields, queue_damage_list, damage_taken, damage_shielded, hp, expected_shields):
         aatrox_with_items.shields = initial_shields
-        aatrox_with_items._apply_damages(processed_damage_list)
+        result = aatrox_with_items._apply_damages(queue_damage_list)
         assert aatrox_with_items.damage_taken == damage_taken
         assert aatrox_with_items.damage_shielded == damage_shielded
         assert aatrox_with_items.hp == hp
         assert aatrox_with_items.shields == expected_shields
+        assert result == []
 
+    def test_apply_vamps(self, aatrox_with_items, q_processed_vamp, q_processed_vamp_heal, compare_objects):
+        result = aatrox_with_items._apply_damages([q_processed_vamp])
+        assert compare_objects(result[0], q_processed_vamp_heal)
 
-    @pytest.mark.parametrize("initial_stati, processed_status_list, expected_stati", [
+    @pytest.mark.parametrize("initial_stati, queue_status_list, expected_stati", [
         ({}, {"values":[(StatusType.STUN, 2)]}, {StatusType.STUN: [(3, 0)]}),
         ({StatusType.STUN: [(2, 0)]}, {"values":[(StatusType.STUN, 2)]}, {StatusType.STUN: [(2, 0), (3, 0)]}),
         ({StatusType.STUN: [(2, 0)]}, {"values":[(StatusType.SILENCE, 2)]}, {StatusType.STUN: [(2, 0)], StatusType.SILENCE: [(3, 0)]}),
-    ], ["processed_status_list"])
-    def test_apply_status_effects(self, aatrox_with_items, initial_stati, processed_status_list, expected_stati):
-        aatrox_with_items.status_effects = initial_stati
-        aatrox_with_items._apply_status_effects(processed_status_list, 1)
+    ], ["queue_status_list"])
+    def test_apply_status_effects(self, aatrox_with_items, initial_stati, queue_status_list, expected_stati):
+        aatrox_with_items.status_effects = defaultdict(list, initial_stati)
+        aatrox_with_items._apply_status_effects(queue_status_list, 1)
         assert aatrox_with_items.status_effects == expected_stati
 
 
@@ -217,7 +222,7 @@ class TestCharacter():
         (1, {StatusType.STUN: [(2, 0)], StatusType.DISARM: [(2.5, 0)]}, ActionType.Q, 2),
     ])
     def test_check_action_delay(self, aatrox_with_items, cooldown, status_effects, action, delay):
-        aatrox_with_items.status_effects = status_effects
+        aatrox_with_items.status_effects = defaultdict(list, status_effects)
         aatrox_with_items.cooldowns[action] = cooldown
         result = aatrox_with_items.check_action_delay(action, 1)
         assert result == delay

@@ -2,15 +2,16 @@ from pydantic import BaseModel, root_validator
 
 from src.server.models.dataenums import (
     ConditionType,
-    EffectType,
     DamageProperties,
+    EffectProperties,
+    EffectType,
     HealProperties,
     ShieldProperties,
-    EffectProperties,
+    StatusProperties
 )
 
-class Scaling(BaseModel):
-    pass
+
+
 
 class EffectComponent(BaseModel):
     type_: EffectType
@@ -28,12 +29,15 @@ class EffectComponent(BaseModel):
         type_ = values.get("type_")
 
         if isinstance(props_data, dict):  # If props is a dict, determine the subclass
-            if type_ == EffectType.DAMAGE:
-                values["props"] = DamageProperties(**props_data)
-            elif type_ == EffectType.HEAL:
-                values["props"] = HealProperties(**props_data)  # Example for healing
-            elif type_ == EffectType.SHIELD:
-                values["props"] = ShieldProperties(**props_data)  # Example for shields
+            match type_:
+                case EffectType.DAMAGE:
+                    values["props"] = DamageProperties(**props_data)
+                case EffectType.HEAL:
+                    values["props"] = HealProperties(**props_data)
+                case EffectType.SHIELD:
+                    values["props"] = ShieldProperties(**props_data)
+                case EffectType.STATUS:
+                    values["props"] = StatusProperties(**props_data)
 
         return values
 
@@ -47,3 +51,15 @@ class Effect(BaseModel):
     text: str
     effect_components: list[EffectComponent] = []
     conditions: list[Condition] = []
+
+
+
+
+
+
+
+
+
+
+class Scaling(BaseModel):
+    pass

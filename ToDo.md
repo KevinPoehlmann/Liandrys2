@@ -38,7 +38,7 @@
             - [ ] Tests for complex ability usage
     - [ ] Make passives work
         - [ ] Make simple passives work
-            - [ ] Implement simple passive usage
+            - [x] Implement simple passive usage
             - [ ] Create simple passive for testing
             - [ ] Tests for simple passive usage
         - [ ] Make harder passives work
@@ -85,6 +85,7 @@
     - cd backend
     - pytest
     - or pytest src/tests/*test_file.py*
+    - do **not** add an _ _init_ _.py file to backend, or it will crash pytest
 - **Installation on raspberrypi:**
     - probably just use "docker-compose -f docker-compose.yml -f docker-compose.rpi.yml up -d
 "

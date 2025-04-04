@@ -5,7 +5,7 @@ from src.server.models.dataenums import Action, ActionType, Actor
 
 
 
-class TestSimulator():
+class TestSimulation():
 
 
     @pytest.mark.parametrize(
@@ -20,7 +20,7 @@ class TestSimulator():
                                     resolve_fixture, distance, output):
         sim.distance = distance
         sim.timer = 1
-        result = sim.calculate_delay(resolve_fixture)
+        result = sim._calculate_delay(resolve_fixture)
         assert result == output
     
 
@@ -54,7 +54,7 @@ class TestSimulator():
         sim.queue = {k: [mapping[v] for v in values] for k, values in initial_queue.items()}
         remove_list, remove_target = remove_args
         remove_list_mapped = [(time, [mapping[item] for item in items]) for time, items in remove_list]
-        sim.remove_last_dots(e_damage_w, remove_list_mapped, mapping[remove_target])
+        sim._remove_last_dots(e_damage_w, remove_list_mapped, mapping[remove_target])
         expected_queue_mapped = {k: [mapping[v] for v in values] for k, values in expected_queue.items()}
         assert sim.queue == expected_queue_mapped
 
@@ -87,7 +87,7 @@ class TestSimulator():
             "q_damage_w_shadow": q_damage_w_shadow,
         }
         sim.queue = {k: [mapping[v] for v in values] for k, values in initial_queue.items()}
-        result = sim.calculate_offset(e_damage_w, Actor.BLUE)
+        result = sim._calculate_offset(e_damage_w, Actor.BLUE)
         assert result == offset
 
     
@@ -126,7 +126,7 @@ class TestSimulator():
             "q_damage_w_shadow": q_damage_w_shadow
         }
         sim.queue = {k: [mapping[v] for v in values] for k, values in initial_queue.items()}
-        sim.apply_dot(e_damage_w, Actor.BLUE)
+        sim._apply_dot(e_damage_w, Actor.BLUE)
         expected_queue_mapped = {k: [mapping[v] for v in values] for k, values in expected_queue.items()}
         assert sim.queue == expected_queue_mapped
 
@@ -186,7 +186,7 @@ class TestSimulator():
         }
         sim.queue = {k: [mapping[v] for v in values] for k, values in initial_queue.items()}
         args_mapped = [mapping[value] for value in queue_args]
-        sim.queue_status(args_mapped, Actor.BLUE)
+        sim._queue_status(args_mapped, Actor.BLUE)
         expected_queue_mapped = {k: [mapping[v] for v in values] for k, values in expected_queue.items()}
         assert sim.queue == expected_queue_mapped
 
@@ -224,13 +224,22 @@ class TestSimulator():
         }
         sim.queue = {k: [mapping[v] for v in values] for k, values in initial_queue.items()}
         sim.timer = timer
-        sim.process_queue()
+        sim._process_queue()
         expected_queue_mapped = {k: [mapping[v] for v in values] for k, values in expected_queue.items()}
         assert sim.queue == expected_queue_mapped
 
 
+    def test_process_queue_heal(self, sim, q_vamp_aa):
+        sim.queue = {0.5: [q_vamp_aa]}
+        sim.timer = 1
+        sim.actors[Actor.BLUE].hp = 900
+        sim._process_queue()
+        assert round(sim.actors[Actor.RED].hp, 3) == 1210.446
+        assert round(sim.actors[Actor.BLUE].hp, 3) == 918.363
+
+
     def test_do_action(self, sim, q_damage_aa):
-        sim.do_action(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA))
+        sim._do_action(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA))
         assert round(sim.timer, 3) == 0.215
         assert round(list(sim.queue.keys())[0], 3) == 0.215
         assert list(sim.queue.values())[0][0] == q_damage_aa

@@ -12,42 +12,44 @@ from pydantic import BaseModel, Field, validator
     
 class Stat(str, MultiValueEnum):
     ABILITY_HASTE="ability haste"
+    AD="ad", "attack damage", "AD", 'per 100 AD'
     AP="ap", "ability power", "AP", 'per 100 AP'
     ARMOR="armor", "total armor"
     ARMOR_PEN_P="armor penetration percent"
-    AD="ad", "attack damage", "AD", 'per 100 AD'
     ATTACKSPEED_P="attackspeed", "attack speed percent"
     CRIT_P="critical strike chance percent", 'critical strike chance'
     ENERGY="Energy", "energy"
     GOLD_P_10="gold per 10 seconds"
+    HEAL_N_SHIELD_P="heal and shield power percent"
     HP="hp", "health"
+    HP_P="health percent"
     HP_REG="hp_regen"
     HP_REG_P="base health regen percent", "base health regeneration percent"
-    HEAL_N_SHIELD_P="heal and shield power percent"
     LETHALITY="lethality", "Lethality"
     LIFE_STEAL_P="life steal percent"
     MAGIC_PEN="magic penetration"
     MAGIC_PEN_P="magic penetration percent"
-    MR="mr", "magic resist", "magic resistance", "total magic resistance"
     MANA="mana", "Mana", " Mana", " mana"
     MANA_REG="mana_regen"
     MANA_REG_P="base mana regen percent", "base mana regeneration percent" 
     MOVESPEED="movementspeed", "move speed", "movement speed"
     MOVESPEED_P="move speed percent", "movement speed percent", "bonus movement speed percent"
+    MR="mr", "magic resist", "magic resistance", "total magic resistance"
     OMNIVAMP_P="omnivamp percent"
     SLOW_RESIST_P="slow resist percent"
     SUMMONER_HASTE="summoner spell haste"
     TENACITY_P="tenacity percent"
 
     ARMOR_TARGET="target's armor", "of target's armor"
-    BONUS_AD="bonus AD", "bonus attack damage", 'per 100 bonus AD'
+    BONUS_AD="bonus ad", "bonus AD", "bonus attack damage", 'per 100 bonus AD'
+    BONUS_AP="bonus ap"
     BONUS_ARMOR="bonus armor"
-    BONUS_ATTACKSPEED_P="bonus attack speed percent", 'bonus attack speed'
-    BONUS_MR="bonus magic resistance", 'per 100 bonus magic resistance'
+    BONUS_ATTACKSPEED_P="bonus attackspeed", "bonus attack speed percent", 'bonus attack speed'
     BONUS_HP="bonus health", 'of his bonus health'
     BONUS_HP_P="bonus health percent"
     BONUS_MANA="bonus mana"
     BONUS_MOVESPEED="bonus movement speed"
+    BONUS_MR="bonus magic resistance", 'per 100 bonus magic resistance'
     CHARGE="Charge"
     CURENT_HP_TARGET="of target's current health", "of the target's current health"
     MAX_HP="maximum health", 'of her maximum health', 'of maximum health', 'of his maximum health'
@@ -84,6 +86,7 @@ class ActionType(str, Enum):
     W="w"
     E="e"
     R="r"
+    PASSIVE="passive"
 
 
 class Map(str, MultiValueEnum):
@@ -299,6 +302,22 @@ class HpScaling(str, Enum):
     CURRENT_HP="current health"
 
 
+class Buff(str, Enum):
+    CAST = "Cast"
+    HIT = "Hit"
+    GET_HIT = "Get Hit"
+    STATS = "Stats"  
+
+class BuffActionType(str, Enum):
+    STACK="Stack"
+    EFFECT="Effect"
+
+class Comparison(str, Enum):
+    GT="Greater than"
+    LT="Less than"
+    EQ="Equal"
+
+
 ############### BaseModels ###############
 
 class Table(BaseModel):
@@ -336,6 +355,13 @@ class Combo(BaseModel):
     pass
 
 
+class Condition(BaseModel):
+    key: Stat | ActionType
+    comparison: Comparison
+    value: float
+
+
+
 
 class EffectProperties(BaseModel):
     pass
@@ -346,6 +372,7 @@ class DamageProperties(EffectProperties):
     dmg_type: DamageType
     dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
     hp_scaling: HpScaling = HpScaling.FLAT
+    vamp: float = 0
 
 
 class HealProperties(EffectProperties):
@@ -373,6 +400,7 @@ class ProcessedDamageProperties(EffectProperties):
     dmg_type: DamageType
     dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
     hp_scaling: HpScaling = HpScaling.FLAT
+    vamp: float = 0
 
 
 class ProcessedHealProperties(EffectProperties):
@@ -391,6 +419,8 @@ class ProcessedStatusProperties(EffectProperties):
     type_: StatusType
     duration: float
     strength: float = 0.0
+
+
 
 ############### Dataclasses ###############
 

@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 
-from src.server.models.dataenums import Action, ActionType, EffectComp, QueueComponent, EffectType, Actor
+from src.server.models.dataenums import Action, EffectComp, QueueComponent, EffectType, Actor
 from src.server.models.request import V1Response
 from src.server.simulation.character import Character
 
@@ -25,23 +25,23 @@ class Simulation():
             delay = self.actors[action.actor].check_action_delay(action.action_type, self.timer)
             if delay:
                 self.timer = delay
-            self.process_queue()
-            self.do_action(action)
-        self.process_queue()
+            self._process_queue()
+            self._do_action(action)
+        self._process_queue()
         return V1Response(damage=round(self.actors[Actor.RED].damage_taken), time=round(self.timer, 2))
     
 
-    def do_action(self, action: Action) -> None:
+    def _do_action(self, action: Action) -> None:
         action_effect = self.actors[action.actor].do_action(action, self.timer)
         self.timer = action_effect.time
-        self.queue_status(action_effect.effect_comps, action.actor)
+        self._queue_status(action_effect.effect_comps, action.actor)
     
 
-    def queue_status(self, effect_comps: list[EffectComp], actor: Actor) -> None:
+    def _queue_status(self, effect_comps: list[EffectComp], actor: Actor) -> None:
         for effect_component in effect_comps:
             if effect_component.duration > 0:
-                self.apply_dot(effect_component, actor)
-            status_time = self.calculate_delay(effect_component) + effect_component.duration
+                self._apply_dot(effect_component, actor)
+            status_time = self._calculate_delay(effect_component) + effect_component.duration
             self.queue.setdefault(status_time, []).append(QueueComponent(
                 source=effect_component.source,
                 actor=actor,
@@ -51,7 +51,7 @@ class Simulation():
                 ))
 
 
-    def process_queue(self) -> None:
+    def _process_queue(self) -> None:
         timestamps = sorted(self.queue.keys())
         for timestamp in timestamps:
             if timestamp > self.timer:
@@ -66,16 +66,18 @@ class Simulation():
             evaluated_entries.extend(self.actors[Actor.BLUE].evaluate(evaluation_blue))
             evaluated_entries.extend(self.actors[Actor.RED].evaluate(evaluation_red))
 
-            blue_list = [entry for entry in evaluated_entries if entry.target == Actor.BLUE]
-            red_list = [entry for entry in evaluated_entries if entry.target == Actor.RED]
+            while evaluated_entries:
+                blue_list = [entry for entry in evaluated_entries if entry.target == Actor.BLUE]
+                red_list = [entry for entry in evaluated_entries if entry.target == Actor.RED]
 
-            self.actors[Actor.BLUE].take_effects(blue_list, timestamp)
-            self.actors[Actor.RED].take_effects(red_list, timestamp)
+                evaluated_entries = self.actors[Actor.BLUE].take_effects(blue_list, timestamp)
+                evaluated_entries.extend(self.actors[Actor.RED].take_effects(red_list, timestamp))
+            
 
 
-    def apply_dot(self, effect_comp: EffectComp, actor: Actor) -> None:
-        offset = self.calculate_offset(effect_comp, actor)
-        while offset < effect_comp.duration + self.calculate_delay(effect_comp):
+    def _apply_dot(self, effect_comp: EffectComp, actor: Actor) -> None:
+        offset = self._calculate_offset(effect_comp, actor)
+        while offset < effect_comp.duration + self._calculate_delay(effect_comp):
             self.queue.setdefault(offset, []).append(QueueComponent(
                 source=effect_comp.source,
                 actor=actor,
@@ -84,7 +86,7 @@ class Simulation():
                 props=effect_comp.props
                 ))
             offset += effect_comp.interval
-        if offset > effect_comp.duration + self.calculate_delay(effect_comp):
+        if offset > effect_comp.duration + self._calculate_delay(effect_comp):
             self.queue.setdefault(offset, []).append(QueueComponent(
                 source=effect_comp.source,
                 actor=actor,
@@ -94,8 +96,8 @@ class Simulation():
 
 
 
-    def calculate_offset(self, effect_comp: EffectComp, actor: Actor) -> float:
-        offset = self.calculate_delay(effect_comp) + effect_comp.interval
+    def _calculate_offset(self, effect_comp: EffectComp, actor: Actor) -> float:
+        offset = self._calculate_delay(effect_comp) + effect_comp.interval
         existing_dots: list[tuple[float, QueueComponent]] = [dot for dot in self.queue.items() for d in dot[1] if d.source == effect_comp.source and d.actor == actor]
         if existing_dots:
             existing_dots.sort(reverse=True)
@@ -105,16 +107,16 @@ class Simulation():
             else:
                 if len(existing_dots) > 1 and offset - effect_comp.interval < existing_dots[1][0]:
                     offset = existing_dots[0][0]
-                self.remove_last_dots(effect_comp, existing_dots, last_dot)
+                self._remove_last_dots(effect_comp, existing_dots, last_dot)
         return offset
 
 
-    def remove_last_dots(self, effect_comp: EffectComp, existing_dots: list[tuple[float, list[QueueComponent]]], last_dot: QueueComponent) -> None:
+    def _remove_last_dots(self, effect_comp: EffectComp, existing_dots: list[tuple[float, list[QueueComponent]]], last_dot: QueueComponent) -> None:
         self.queue[existing_dots[0][0]].remove(last_dot)
         if len(self.queue[existing_dots[0][0]]) == 0:
             self.queue.pop(existing_dots[0][0])
         if len(existing_dots) > 1 and existing_dots[0][0] - existing_dots[1][0] < effect_comp.interval:
-            if existing_dots[1][0] < self.calculate_delay(effect_comp):
+            if existing_dots[1][0] < self._calculate_delay(effect_comp):
                 return
             if existing_dots[0][0] - existing_dots[1][0] < effect_comp.interval:
                 # removing the last, irregularly ticking dot
@@ -123,6 +125,6 @@ class Simulation():
                     self.queue.pop(existing_dots[1][0])
 
 
-    def calculate_delay(self, effect_comp: EffectComp) -> float:
+    def _calculate_delay(self, effect_comp: EffectComp) -> float:
         travel_time = (self.distance / effect_comp.speed) if effect_comp.speed > 0 else 0
         return self.timer + effect_comp.delay + travel_time

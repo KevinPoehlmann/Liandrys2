@@ -20,34 +20,14 @@
       {
         "name": "Unique – Rock Solid",
         "description": "",
-        "effects": [
-          {
-            "text": "Unique – Rock Solid: Every first incoming instance of post-mitigation  basic damage per cast instance is reduced by 5 (+ 3.5 per 1000 maximum health), maximum 20% reduction each.",
-            "stati": [],
-            "conditions": []
-          }
-        ],
-        "ability_stats": [],
-        "damage_type": null,
-        "damage_sub_type": null,
-        "counters": [],
+        "effects": [],
         "ready_to_use": false,
         "changes": []
       },
       {
         "name": "Unique – Winter's Caress",
         "description": "",
-        "effects": [
-          {
-            "text": "Unique – Winter's Caress:  Cripples the attack speed of enemies within 700 units by 20%.",
-            "stati": [],
-            "conditions": []
-          }
-        ],
-        "ability_stats": [],
-        "damage_type": null,
-        "damage_sub_type": null,
-        "counters": [],
+        "effects": [],
         "ready_to_use": false,
         "changes": []
       }

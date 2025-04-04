@@ -1,24 +1,14 @@
 from pydantic import BaseModel
 
-from src.server.models.effect import Effect
 from src.server.models.image import Image
 
-from src.server.models.dataenums import (
-    AbilityStat,
-    DamageType,
-    DamageSubType,
-    Counter
-)
+from src.server.models.passive_effect import PassiveEffect
 
 
 class Passive(BaseModel):
     name: str
     description: str = ""
-    effects: list[Effect] = []
-    ability_stats: list[AbilityStat] = []
-    damage_type: DamageType = None
-    damage_sub_type: list[DamageSubType] = None
-    counters: list[Counter] = []
+    effects: list[PassiveEffect] = []
     ready_to_use: bool = False
     changes: list[str] = []
 

@@ -1,3 +1,4 @@
+import copy
 import json
 import pytest
 
@@ -297,7 +298,7 @@ def processed_damage_props(request):
 
 
 @pytest.fixture
-def processed_damage_list(request):
+def queue_damage_list(request):
     params = getattr(request, "param", {})
     values=params.get("values", [])
     props=[ProcessedDamageProperties(
@@ -307,31 +308,59 @@ def processed_damage_list(request):
         dmg_type=DamageType.BASIC,
         dmg_sub_type=DamageSubType.TRUE
     ) for value in values]
-    return props
+    queue_comps=[QueueComponent(
+        source=ActionType.AA,
+        actor=Actor.BLUE,
+        target=Actor.RED,
+        type_=EffectType.DAMAGE,
+        props=prop
+    ) for prop in props]
+    return queue_comps
 
 
 @pytest.fixture
-def processed_heal_list(request):
+def queue_heal_list(request):
     params = getattr(request, "param", {})
     values=params.get("values", [])
     props=[ProcessedHealProperties(value=value) for value in values]
-    return props
+    queue_comps=[QueueComponent(
+        source=ActionType.AA,
+        actor=Actor.BLUE,
+        target=Actor.RED,
+        type_=EffectType.DAMAGE,
+        props=prop
+    ) for prop in props]
+    return queue_comps
 
 
 @pytest.fixture
-def processed_shield_list(request):
+def queue_shield_list(request):
     params = getattr(request, "param", {})
     values=params.get("values", [])
     props=[ProcessedShieldProperties(value=value, duration=duration) for duration, value in values]
-    return props
+    queue_comps=[QueueComponent(
+        source=ActionType.AA,
+        actor=Actor.BLUE,
+        target=Actor.RED,
+        type_=EffectType.DAMAGE,
+        props=prop
+    ) for prop in props]
+    return queue_comps
 
 
 @pytest.fixture
-def processed_status_list(request):
+def queue_status_list(request):
     params = getattr(request, "param", {})
     values=params.get("values", [])
     props=[ProcessedStatusProperties(type_=type_, duration=duration) for type_, duration in values]
-    return props
+    queue_comps=[QueueComponent(
+        source=ActionType.AA,
+        actor=Actor.BLUE,
+        target=Actor.RED,
+        type_=EffectType.DAMAGE,
+        props=prop
+    ) for prop in props]
+    return queue_comps
 
 
 
@@ -501,9 +530,44 @@ def q_processed_heal_flat():
         target=Actor.RED,
         type_=EffectType.HEAL,
         props=ProcessedHealProperties(
-            value="440.15" ,
+            value=440.15 ,
             hp_scaling=HpScaling.FLAT
     ))
+    return d
+
+
+@pytest.fixture
+def q_processed_vamp():
+    d = QueueComponent(
+        source=ActionType.AA,
+        actor=Actor.BLUE,
+        target=Actor.RED,
+        type_=EffectType.DAMAGE,
+        props=ProcessedDamageProperties(
+            value=200,
+            flat_pen=0,
+            percent_pen=0.3,
+            dmg_type=DamageType.BASIC,
+            dmg_sub_type=DamageSubType.PHYSIC,
+            hp_scaling=HpScaling.FLAT,
+            vamp=0.2
+        )
+    )
+    return d
+
+
+@pytest.fixture
+def q_processed_vamp_heal():
+    d = QueueComponent(
+        source=ActionType.AA,
+        actor=Actor.BLUE,
+        target=Actor.BLUE,
+        type_=EffectType.HEAL,
+        props=ProcessedHealProperties(
+            value=21.920,
+            hp_scaling=HpScaling.FLAT
+        )
+    )
     return d
 
 
@@ -519,6 +583,23 @@ def q_damage_aa():
             dmg_type=DamageType.BASIC,
             dmg_sub_type=DamageSubType.PHYSIC,
             hp_scaling=HpScaling.FLAT
+    ))
+    return d
+
+
+@pytest.fixture
+def q_vamp_aa():
+    d = QueueComponent(
+        source=ActionType.AA,
+        actor=Actor.BLUE,
+        target=Actor.RED,
+        type_=EffectType.DAMAGE,
+        props=DamageProperties(
+            scaling="200",
+            dmg_type=DamageType.BASIC,
+            dmg_sub_type=DamageSubType.PHYSIC,
+            hp_scaling=HpScaling.FLAT,
+            vamp=0.2
     ))
     return d
 
@@ -607,5 +688,6 @@ def aatrox_with_items():
 
 @pytest.fixture
 def sim(aatrox_with_items):
-    sim = Simulation(aatrox_with_items, aatrox_with_items)
+    aatrox2 = copy.deepcopy(aatrox_with_items)
+    sim = Simulation(aatrox_with_items, aatrox2)
     return sim

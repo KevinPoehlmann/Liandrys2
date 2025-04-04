@@ -7,12 +7,16 @@ from src.server.models.dataenums import (
     Action,
     ActionEffect,
     ActionType,
-    HpScaling,
+    Buff,
+    BuffActionType,
+    Condition,
+    Comparison,
     DamageProperties,
     DamageSubType,
     DamageType,
     EffectComp,
     EffectType,
+    HpScaling,
     ProcessedDamageProperties,
     ProcessedHealProperties,
     ProcessedShieldProperties,
@@ -22,7 +26,9 @@ from src.server.models.dataenums import (
     StatusType,
     Actor
 )
+from src.server.models.effect import EffectComponent
 from src.server.models.item import Item
+from src.server.models.passive_effect import BuffProperties, BuffAction
 from src.server.models.request import Rank
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
@@ -36,9 +42,12 @@ class Character():
         self.champion: Champion = champion
         self.level: int = lvl
         self.items: list[Item] = items
-        self.hp: float = self._get_stat(Stat.HP)
         self.shields: list[tuple[float, float]] = []
         self.status_effects: dict[StatusType, list[tuple[float, float]]] = defaultdict(list)
+        self.buffs: dict[Buff, list[BuffProperties]] = self._initialize_buffs()
+        self.stacks: dict[ActionType, int] = defaultdict(int)
+
+        self.evaluating_stat: set = set()
 
         self.ability_dict: dict[ActionType, tuple[ChampionAbility, int]] = {
             ActionType.Q: (self.champion.q, rank.q),
@@ -53,10 +62,17 @@ class Character():
             ActionType.E: 0,
             ActionType.R: 0,
         }
+        self.hp: float = self._get_stat(Stat.HP)
         self.damage_taken: float = 0
         self.healed: float = 0
         self.damage_shielded: float = 0
 
+
+    def _initialize_buffs(self) -> dict[Buff, list[BuffProperties]]:
+        buffs = defaultdict(list)
+        for effect in self.champion.passive.effects:
+            buffs[effect.buff].append(effect.props)
+        return buffs
 
 
     def _get_base_stat(self, stat: Stat) -> float:
@@ -71,14 +87,35 @@ class Character():
     def _get_bonus_stat(self, stat: Stat) -> float:
         return sum([item.stats[stat] for item in self.items if stat in item.stats])
     
+    def _get_buff_stat(self, stat: Stat) -> float:
+        result = 0
+        if not self.buffs[Buff.STATS]:
+            return result
+        for stat_property in self.buffs[Buff.STATS]:
+            if self._evaluate_condition(stat_property.condition):
+                formula = stat_property.scaling
+                result += self._evaluate_formula(formula)
+        return result
+
+
     def _get_stat(self, stat: Stat) -> float:
+        if stat.value.startswith("bonus "):
+            return self._get_bonus_stat(Stat(stat.value.removeprefix("bonus ")))
+        
         if stat == Stat.ATTACKSPEED_P:
             return self._get_attackspeed()
         if stat == Stat.TENACITY_P:
             return self._get_tenacity()
+        
         base_stat = self._get_base_stat(stat)
         bonus_stat = self._get_bonus_stat(stat)
-        result = base_stat + bonus_stat
+        buff_stat = 0
+        if stat not in self.evaluating_stat:
+            self.evaluating_stat.add(stat)
+            buff_stat = self._get_buff_stat(stat)
+
+        result = base_stat + bonus_stat + buff_stat
+
         if stat == Stat.MOVESPEED:
             result *= self._get_slow_value()
         return result
@@ -139,6 +176,8 @@ class Character():
             stat.value: self._get_stat(stat) for stat in Stat
         } | {
             "level": self.level
+        } | {
+            stack_key: self.stacks[stack_key] for stack_key in ActionType
         } | additional_keywords
         return eval(formula, {}, variables)
     
@@ -164,44 +203,92 @@ class Character():
         return result
     
 
-    def _apply_heals(self, props: list[ProcessedHealProperties]) -> None:
-        heal = sum([self._calculate_hp_scaling(prop.value, prop.hp_scaling) for prop in props])
+    def _do_action_buff(self, action: BuffAction) -> EffectComponent | None:
+        match action.type_:
+            case BuffActionType.STACK:
+                self.stacks[action.props.stack_key] += self._evaluate_formula(action.props.amount)
+            case BuffActionType.EFFECT:
+                return action.props.effect
+
+    def _evaluate_condition(self, condition: Condition) -> bool:
+        if condition is None:
+            return True
+        match condition.comparison:
+            case Comparison.GT:
+                return self._evaluate_formula(condition.key) > condition.value
+            case Comparison.LT:
+                return self._evaluate_formula(condition.key) < condition.value
+            case Comparison.EQ:
+                return self._evaluate_formula(condition.key) == condition.value
+
+
+    def _check_buffs(self, action_type: ActionType, buff: Buff) -> list[EffectComponent]:
+        if not self.buffs[buff]:
+            return []
+        effect_components = []
+        for action_property in self.buffs[buff]:
+            if action_type in action_property.trigger and self._evaluate_condition(action_property.condition):
+                for buff_action in action_property.actions:
+                    comp = self._do_action_buff(buff_action)
+                    if comp:
+                        effect_components.append(comp)
+        return effect_components
+
+
+
+    def _apply_heals(self, components: list[QueueComponent]) -> None:
+        heal = sum([self._calculate_hp_scaling(component.props.value, component.props.hp_scaling) for component in components])
         max_hp = self._get_stat(Stat.HP)
         heal = min(heal, max_hp - self.hp)
         self.healed += heal
         self.hp += heal
     
 
-    def _apply_shields(self, props: list[ProcessedShieldProperties], timestamp: float) -> None:
+    def _apply_shields(self, components: list[QueueComponent], timestamp: float) -> None:
         self.shields = [(exp, val) for exp, val in self.shields if exp > timestamp and val > 0]
-        new_shields = [(prop.duration+timestamp, self._calculate_hp_scaling(prop.value, prop.hp_scaling)) for prop in props]
+        new_shields = [(component.props.duration+timestamp, self._calculate_hp_scaling(component.props.value, component.props.hp_scaling)) for component in components]
         self.shields.extend(new_shields)
         self.shields.sort()
     
 
-    def _apply_damages(self, props: list[ProcessedDamageProperties]) -> None:
-        damage = sum([self._calculate_damage(prop) for prop in props])
-        self.damage_taken += damage
+    def _apply_damages(self, components: list[QueueComponent]) -> list[QueueComponent]:
+        damages = 0
+        vamps = []
+        for component in components:
+            damage = self._calculate_damage(component.props)
+            damages += damage
+            if component.props.vamp > 0:
+                vamp = damage * component.props.vamp
+                vamps.append(QueueComponent(
+                    source=component.source,
+                    actor=component.actor,
+                    target=component.actor,
+                    type_=EffectType.HEAL,
+                    props=ProcessedHealProperties(value=vamp)
+                ))
+
+        self.damage_taken += damages
         for i, (exp, shield_val) in enumerate(self.shields):
-            absorbed = min(damage, shield_val)
+            absorbed = min(damages, shield_val)
             self.damage_shielded += absorbed
-            damage -= absorbed
+            damages -= absorbed
             self.shields[i] = (exp, shield_val-absorbed)
-            if damage <= 0:
+            if damages <= 0:
                 break
-        if damage > 0:
-            self.hp -= damage
+        if damages > 0:
+            self.hp -= damages
+        return vamps
 
 
-    def _apply_status_effects(self, props: list[ProcessedStatusProperties], timestamp: float) -> None:
+    def _apply_status_effects(self, components: list[QueueComponent], timestamp: float) -> None:
         tenacity_affected = {StatusType.BERSERK, StatusType.BLIND, StatusType.CRIPPLE, StatusType.DISARM,
                              StatusType.GROUND, StatusType.KINEMATICS, StatusType.SILENCE, StatusType.SLEEP,
                              StatusType.SLOW, StatusType.STUN, StatusType.SUSPENSION, StatusType.TAUNT}
-        for prop in props:
-            if prop.type_ in tenacity_affected:
-                prop.duration = max(0.3, self._get_tenacity() * prop.duration)
-            expiration = timestamp + prop.duration
-            self.status_effects.setdefault(prop.type_, []).append((expiration, prop.strength))
+        for component in components:
+            if component.props.type_ in tenacity_affected:
+                component.props.duration = max(0.3, self._get_tenacity() * component.props.duration)
+            expiration = timestamp + component.props.duration
+            self.status_effects[component.props.type_].append((expiration, component.props.strength))
 
 
 
@@ -260,7 +347,9 @@ class Character():
             speed=self.champion.missile_speed,
             props=aa_props
         )
-        return ActionEffect(time=timestamp, effect_comps=[dmg])
+        effect_components = self._check_buffs(ActionType.AA, Buff.CAST)
+        effect_components.append(dmg)
+        return ActionEffect(time=timestamp, effect_comps=effect_components)
     
 
     def _do_ability(self, action: Action, timestamp: float) -> ActionEffect:
@@ -282,6 +371,7 @@ class Character():
                     props=component.props
                 )
                 action_effect.effect_comps.append(effect_comp)
+                action_effect.effect_comps.extend(self._check_buffs(action.action_type, Buff.CAST))
         return action_effect
     
 
@@ -291,11 +381,13 @@ class Character():
         for component in queue_comps:
             if component.type_ == EffectType.SHADOW:
                 continue
+
             variables = {"rank": self.ability_dict[component.source][1]} if component.source in self.ability_dict else {}
             result = self._evaluate_formula(component.props.scaling, variables)
             
             match component.type_:
                 case EffectType.DAMAGE:
+                    self._check_buffs(component.source, Buff.HIT)
                     flat_pen, percent_pen = self._get_penetration(component.props.dmg_sub_type)
                     props=ProcessedDamageProperties(
                         value=result,
@@ -304,6 +396,7 @@ class Character():
                         dmg_type=component.props.dmg_type,
                         dmg_sub_type=component.props.dmg_sub_type,
                         hp_scaling=component.props.hp_scaling,
+                        vamp=component.props.vamp
                     )
                 case EffectType.HEAL:
                     props=ProcessedHealProperties(
@@ -327,13 +420,12 @@ class Character():
                 type_=component.type_,
                 props=props
         )
-            queue_component.props=props
             component_list.append(queue_component)
         return component_list
 
         
 
-    def take_effects(self, component_list: list[QueueComponent], timestamp: float) -> None:
+    def take_effects(self, component_list: list[QueueComponent], timestamp: float) -> list[QueueComponent]:
         damages = []
         heals = []
         shields = []
@@ -341,16 +433,17 @@ class Character():
         for component in component_list:
             match component.type_:
                 case EffectType.DAMAGE:
-                    damages.append(component.props)
+                    damages.append(component)
                 case EffectType.HEAL:
-                    heals.append(component.props)
+                    heals.append(component)
                 case EffectType.SHIELD:
-                    shields.append(component.props)
+                    shields.append(component)
                 case EffectType.STATUS:
-                    stati.append(component.props)
+                    stati.append(component)
                 case _:
                     pass
         self._apply_shields(shields, timestamp)
-        self._apply_damages(damages)
+        vamps = self._apply_damages(damages)
         self._apply_heals(heals)
         self._apply_status_effects(stati, timestamp)
+        return vamps
