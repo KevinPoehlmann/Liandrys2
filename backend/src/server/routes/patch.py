@@ -71,7 +71,7 @@ async def delete_patch(patch: str):
     return response
 
 
-@router.post("/")
+@admin.post("/")
 async def update_patches(background_tasks: BackgroundTasks) -> dict:
     try:
         pl = Patchloader()

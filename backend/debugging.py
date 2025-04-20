@@ -1,10 +1,9 @@
-from collections import defaultdict
-
 
 
 def main():
-    vals = [1]
-    print(bool(vals))
+    pass
+
+
 
 
 if __name__ == "__main__":

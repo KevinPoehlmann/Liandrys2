@@ -1,4 +1,6 @@
 from pydantic import BaseModel, Field, validator
+from datetime import datetime
+
 from src.server.models.ability import ChampionAbility
 from src.server.models.passive import ChampionPassive
 from src.server.models.image import Image
@@ -15,6 +17,7 @@ class NewChampion(BaseModel):
     name: str
     champion_id: str
     patch: str
+    hotfix: datetime = None
     last_changed: str
 
     range_type: RangeType
@@ -48,14 +51,10 @@ class NewChampion(BaseModel):
     e: ChampionAbility
     r: ChampionAbility
 
-    ready_to_use: bool = False
+    validated: bool = False
     changes: list[str] = []
 
     image: Image
-
-"""     @validator("ready_to_use", always=True)
-    def set_ready_to_use(cls, v, values):
-        return all((values["passive"].ready_to_use, values["q"].ready_to_use, values["w"].ready_to_use, values["e"].ready_to_use, values["r"].ready_to_use)) """
 
 
 
@@ -69,7 +68,7 @@ class ShortChampion(BaseModel):
     key: str
     name: str
     champion_id: str
-    ready_to_use: bool
+    validated: bool
     image: Image
 
 

@@ -230,6 +230,16 @@ class AbilityStatKey(str, MultiValueEnum):
     ERROR="Error"
 
 
+class AbilityStat(str, Enum):
+    COOLDOWN = "cooldown"
+    COST = "cost"
+    CAST_TIME = "cast_time"
+    SPEED = "speed"
+    RECHARGE = "recharge"
+    DURATION = "duration"
+
+
+
 class ActiveType(str, Enum):
     ACTIVE="Active"
     CONSUME="Consume"
@@ -369,7 +379,7 @@ class EffectProperties(BaseModel):
 
 class DamageProperties(EffectProperties):
     scaling: str
-    dmg_type: DamageType
+    dmg_type: DamageType = DamageType.DEFAULT
     dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
     hp_scaling: HpScaling = HpScaling.FLAT
     vamp: float = 0
@@ -454,6 +464,7 @@ class AbilityBaseStats():
     cooldown: Table = None
     costs: AbilityCosts = None
     ability_stats: list[AbilityStat] = field(default_factory=list)
+
 
 
 

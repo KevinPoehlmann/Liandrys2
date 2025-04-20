@@ -15,13 +15,14 @@ from src.server.models.dataenums import (
 class Ability(BaseModel):
     name: str
     description: str = ""
-    effects: list[Effect] = []
-    cast_time: float = 0
+    cost: str = "0"
     cooldown: str = "0"
-    costs: str = "0"
-    counters: list[Counter] = []
-    ready_to_use: bool = False
+    cast_time: str = "0"
+    recharge: str = "0"
+    effects: list[Effect] = []
+    raw_stats: dict[str, str] = {}
     changes: list[str] = []
+    validated: bool = False
 
     class Config:  
         use_enum_values = True

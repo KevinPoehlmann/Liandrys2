@@ -61,15 +61,16 @@
             - [ ] Tests for item actives
 - [ ] Add Rune choice in simulation
 - [ ] Add Summonerspell choice in simulation
-- [ ] Update the web scraper
-    - [ ] Update to new website
-        - [ ] Change link
-        - [ ] Check if anything else changed
-    - [ ] Update to new Structures
-        - [ ] Update to new Champion Structure
-        - [ ] Update to new Item Structure
-        - [ ] Update to new Rune Structure
-        - [ ] Update to new Summonerspell Structure
+- [x] Update the web scraper
+    - [x] Update to new website
+        - [x] Change link
+        - [x] Check if anything else changed
+    - [x] Update to new Structures
+        - [x] Update to new Champion Structure
+        - [x] Update to new Item Structure
+        - [x] Update to new Rune Structure
+        - [x] Update to new Summonerspell Structure
+- [ ] Add automatic stat patching
 ### Admin Functions ###
 - [ ] Make Dataset updateable
 - [ ] Make Abilities editable in the editor

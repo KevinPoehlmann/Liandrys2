@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, validator
+from datetime import datetime
 
 from src.server.models.ability import ItemActive
 from src.server.models.passive import Passive
@@ -14,12 +15,14 @@ class NewItem(BaseModel):
     item_id: str
     name: str
     patch: str
+    hotfix: datetime = None
     gold: int
     into: list[str]
     from_: list[str]
     class_: ItemClass = None
-    ready_to_use: bool = True
+    validated: bool = True
     stats: dict[Stat, float] = {}
+    masterwork: dict[Stat, float] = {}
 
     active: ItemActive = None
     passives: list[Passive] = []
@@ -31,14 +34,6 @@ class NewItem(BaseModel):
 
     image: Image
 
-    """ @validator("ready_to_use", always=True)
-    def set_ready_to_use(cls, v, values):
-        result = True
-        if "acttive" in values:
-            result = values["acitve"].ready_to_use
-        if "passives" in values:
-            result = all((result, *[passive.ready_to_use for passive in values["passives"]]))
-        return result """
     
     
 class Item(NewItem):
@@ -50,5 +45,5 @@ class ShortItem(BaseModel):
     item_id: str
     name: str
     gold: int
-    ready_to_use: bool
+    validated: bool
     image: Image

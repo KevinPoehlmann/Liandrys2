@@ -8,9 +8,11 @@ from src.server.models.passive_effect import PassiveEffect
 class Passive(BaseModel):
     name: str
     description: str = ""
+    static_cooldown: str = ""
     effects: list[PassiveEffect] = []
-    ready_to_use: bool = False
+    raw_stats: dict[str, str] = {}
     changes: list[str] = []
+    validated: bool = False
 
 
 class ChampionPassive(Passive):
@@ -18,4 +20,4 @@ class ChampionPassive(Passive):
 
 
 class ItemPassive(Passive):
-    unique: bool
+    unique: bool = False

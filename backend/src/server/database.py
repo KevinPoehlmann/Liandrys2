@@ -3,6 +3,7 @@ import logging
 import os
 
 from bson import ObjectId
+from datetime import datetime
 from motor.core import AgnosticCollection
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pymongo.errors import InvalidURI
@@ -47,15 +48,31 @@ debugger = logging.getLogger("debugger")
 
 
 
-async def clear_patch(patch: str) -> None:
-    del_patch = await patch_collection.delete_one({"patch": patch})
-    await asyncio.gather(
+async def clear_patch(patch: Patch) -> dict[str, int]:
+    #TODO add hotfix on delete_many
+    champion_result, item_result, rune_result, spell_result = await asyncio.gather(
         champion_collection.delete_many({"patch": patch}),
         item_collection.delete_many({"patch": patch}),
         rune_collection.delete_many({"patch": patch}),
-        summonerspell_collection.delete_many({"patch": patch})
+        summonerspell_collection.delete_many({"patch": patch}),
     )
-    return True
+    # Then: double check nothing is left
+    champion_left, item_left, rune_left, spell_left = await asyncio.gather(
+        champion_collection.count_documents({"patch": patch}),
+        item_collection.count_documents({"patch": patch}),
+        rune_collection.count_documents({"patch": patch}),
+        summonerspell_collection.count_documents({"patch": patch}),
+    )
+
+    cleanup_successful = all(x == 0 for x in [champion_left, item_left, rune_left, spell_left])
+
+    return {
+        "champions_deleted": champion_result.deleted_count,
+        "items_deleted": item_result.deleted_count,
+        "runes_deleted": rune_result.deleted_count,
+        "summonerspells_deleted": spell_result.deleted_count,
+        "cleanup_successful": cleanup_successful,
+    }
 
 
 #------------------Patch--------------------------------------------------
@@ -111,11 +128,11 @@ async def add_champion(champion: NewChampion) -> str:
     return result.inserted_id
 
 
-async def fetch_champions_by_patch(patch: str) -> list[ShortChampion]:
+async def fetch_champions_by_patch(patch: str, hotfix: datetime) -> list[NewChampion]:
     champions = []
     cursor = champion_collection.find({"patch":patch}, sort=[("name", 1)])
     async for document in cursor:
-        champion = ShortChampion(**document)
+        champion = NewChampion(**document)
         champions.append(champion)
     return champions
 
@@ -141,11 +158,11 @@ async def add_item(item: NewItem) -> str:
     return result.inserted_id
 
 
-async def fetch_items_by_patch(patch: str) -> list[ShortItem]:
+async def fetch_items_by_patch(patch: str, hotfix: datetime) -> list[NewItem]:
     items = []
     cursor = item_collection.find({"patch":patch}, sort=[("name", 1)])
     async for document in cursor:
-        item = ShortItem(**document)
+        item = NewItem(**document)
         items.append(item)
     return items
 
@@ -170,11 +187,11 @@ async def add_rune(rune: NewRune) -> str:
     return result.inserted_id
 
 
-async def fetch_runes_by_patch(patch: str) -> list[ShortRune]:
+async def fetch_runes_by_patch(patch: str, hotfix: datetime) -> list[NewRune]:
     runes = []
     cursor = rune_collection.find({"patch":patch}, sort=[("name", 1)])
     async for document in cursor:
-        rune = ShortRune(**document)
+        rune = NewRune(**document)
         runes.append(rune)
     return runes
 
@@ -199,11 +216,11 @@ async def add_summonerspell(summonerspell: NewSummonerspell) -> str:
     return result.inserted_id
 
 
-async def fetch_summonerspells_by_patch(patch: str) -> list[ShortSummonerspell]:
+async def fetch_summonerspells_by_patch(patch: str, hotfix: datetime) -> list[NewSummonerspell]:
     summonerspells = []
     cursor = summonerspell_collection.find({"patch":patch}, sort=[("name", 1)])
     async for document in cursor:
-        summonerspell = ShortSummonerspell(**document)
+        summonerspell = NewSummonerspell(**document)
         summonerspells.append(summonerspell)
     return summonerspells
 

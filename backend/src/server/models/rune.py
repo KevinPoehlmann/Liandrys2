@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, validator
+from datetime import datetime
 
 from src.server.models.passive import Passive
 from src.server.models.image import Image
@@ -9,16 +10,13 @@ class NewRune(BaseModel):
     rune_id: int
     name: str
     patch: str
+    hotfix: datetime = None
     tree: str
     tree_id: int
     row: int
     passive: Passive
-    ready_to_use: bool = False
+    validated: bool = False
     image: Image = None
-
-    """ @validator("ready_to_use", always=True)
-    def set_ready_to_use(cls, v, values):
-       return values["passive"].ready_to_use """
     
 
 class Rune(NewRune):
@@ -29,5 +27,5 @@ class ShortRune(BaseModel):
     id: PydanticObjectId = Field(..., alias="_id")
     rune_id: int
     name: str
-    ready_to_use: bool
+    validated: bool
     image: Image

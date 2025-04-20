@@ -6,8 +6,9 @@
     "urls": {
         "patches": "https://ddragon.leagueoflegends.com/api/versions.json",
         "dataLink": "http://ddragon.leagueoflegends.com/cdn/",
-        "wiki": "https://leagueoflegends.fandom.com/wiki/",
+        "wiki": "https://wiki.leagueoflegends.com/en-us/",
         "championList": "/data/en_GB/champion.json",
+        "championFull": "/data/en_GB/championFull.json",
         "championData": "/data/en_GB/champion/",
         "championWiki": "/LoL",
         "championImage": "/img/champion/",
@@ -60,9 +61,7 @@
         "Slightly Magical Footwear": "Slightly Magical Boots"
     },
     "runeWikiNames": {
-        "Grasp of the Undying": "Grasp of the Undying_(Rune)",
-        "Jack Of All Trades": "Jack of All Trades",
-        "Triple Tonic": "Triple Tonic_(Rune)"
+        "Jack Of All Trades": "Jack of All Trades"
     },
     "maps": {
         "11": "SR",
@@ -70,5 +69,16 @@
         "21": "NB",
         "22": "22",
         "30": "Arena"
+    },
+    "abilityStats": {
+        "cooldown": "cooldown",
+        "static cooldown": "cooldown",
+        "recharge": "recharge",
+        "cost": "cost",
+        "cast time": "cast_time",
+        "speed": "speed",
+        "duration": "duration",
+        "range": "range",
+        "target range": "target_range"
     }
 }

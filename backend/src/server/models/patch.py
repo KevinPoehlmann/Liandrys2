@@ -7,11 +7,11 @@ class NewPatch(BaseModel):
     patch: str                          #TODO unique?
     timestamp: datetime = datetime.now()
     hotfix: datetime | None = None
-    ready_to_use: bool = False
-    champion_count: int
-    item_count: int
-    rune_count: int
-    summonerspell_count: int
+    validated: bool = False
+    champion_count: int = 0
+    item_count: int = 0
+    rune_count: int = 0
+    summonerspell_count: int = 0
     document_count: int = 0
     loaded_documents: int = 0
 

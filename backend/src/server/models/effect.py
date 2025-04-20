@@ -1,6 +1,7 @@
 from pydantic import BaseModel, root_validator
 
 from src.server.models.dataenums import (
+    Condition,
     ConditionType,
     DamageProperties,
     EffectProperties,
@@ -42,9 +43,9 @@ class EffectComponent(BaseModel):
         return values
 
 
-class Condition(BaseModel):
+""" class Condition(BaseModel):
     modality: bool = True
-    condition: ConditionType
+    condition: ConditionType """
 
 
 class Effect(BaseModel):

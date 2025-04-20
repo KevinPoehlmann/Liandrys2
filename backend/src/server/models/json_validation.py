@@ -208,3 +208,5 @@ class InfoJson(BaseModel):
     itemStatDict: dict
     itemWikiNames: dict
     runeWikiNames: dict
+    maps: dict
+    abilityStats: dict
