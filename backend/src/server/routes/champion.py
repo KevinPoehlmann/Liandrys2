@@ -1,5 +1,6 @@
 import logging
 
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from pymongo.results import UpdateResult
 
@@ -20,8 +21,8 @@ debugger = logging.getLogger("debugger")
 
 
 @router.get("/all/{patch}")
-async def get_champions(patch: str) -> list[ShortChampion]:
-    response = await fetch_champions_by_patch(patch)
+async def get_champions(patch: str, hotfix: datetime = None) -> list[ShortChampion]:
+    response = await fetch_champions_by_patch(patch, hotfix)
     if not response:
         raise HTTPException(status_code=404, detail=f"No champions found for patch. {patch} !")
     return response

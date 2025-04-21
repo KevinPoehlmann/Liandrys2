@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 
 
@@ -15,8 +16,8 @@ router = APIRouter()
 
 
 @router.get("/all/{patch}")
-async def get_items(patch: str) -> list[ShortItem]:
-    items = await fetch_items_by_patch(patch)
+async def get_items(patch: str, hotfix: datetime = None) -> list[ShortItem]:
+    items = await fetch_items_by_patch(patch, hotfix)
     if not items:
         raise HTTPException(status_code=404, detail=f"No items found for patch: {patch} !")
     return items

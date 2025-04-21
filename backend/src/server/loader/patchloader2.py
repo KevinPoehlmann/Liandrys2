@@ -707,8 +707,8 @@ async def _add_changes_summonerspell(spell: NewSummonerspell, diff: list) -> Non
 
 
 async def _clean_up(patch: Patch) -> None:
-    result = await db.clear_patch(patch)
-    patch_logger.info(f"Cleaned up patch '{patch.patch}'. Summary:")
+    result = await db.clear_patch(patch.patch, patch.hotfix)
+    patch_logger.info(f"Cleaned up patch '{patch.patch}: {patch.hotfix}'. Summary:")
     for key, count in result.items():
         if key != "cleanup_successful":
             patch_logger.error(f" - {key}: {count} document(s)")

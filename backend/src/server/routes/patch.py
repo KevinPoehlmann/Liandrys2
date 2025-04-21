@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 
 
@@ -8,8 +9,7 @@ from src.server.database import (
     clear_patch 
 )
 
-from src.server.loader.patchloader import Patchloader
-from src.server.loader.patchexceptions import PatcherError, MuteException, EmptyTodoException
+from src.server.loader.patchloader2 import load_data, check_patch_available
 from src.server.models.patch import NewPatch, Patch
 
 
@@ -18,7 +18,7 @@ admin = APIRouter()
 
 
 @router.get("/")
-async def get_latest_patch():
+async def get_latest_patch() -> Patch:
     response = await fetch_patch_latest()
     if not response:
         return {"patch": "No patches loaded!"}
@@ -26,37 +26,27 @@ async def get_latest_patch():
 
 
 @router.get("/all")
-async def get_all_patches():
+async def get_all_patches() -> list[Patch]:
     patch_list = await fetch_patch_all()
     return patch_list
 
 
 @router.get("/status")
-async def get_patches_status():
-    try:
-        todos = await Patchloader.update_todo()
-    except MuteException as e:
-        response = {
-            "todo": Patchloader.todo,
-            "msg": "Already loading updates!"
-        }
-        return response
-    except PatcherError as e:
-        raise HTTPException(status_code=400, detail=f"{e.error}\n - {e.message}")
-    except Exception as e:
-        Patchloader.mute = False
-        raise HTTPException(status_code=400, detail=e)
-    
-    msg = "Updates available!" if todos else "Everything is up to date!"
-    response =  {
-        "todo": todos,
+async def get_status() -> dict:
+    patches = await check_patch_available()
+
+    if "_error" in patches:
+        raise HTTPException(status_code=500, detail=f"Patch check failed: {patches['_error']}")
+
+    msg = "Updates available!" if patches else "Everything is up to date!"
+    return {
+        "patches": patches,
         "msg": msg
     }
-    return response
 
 
 @admin.delete("/")
-async def delete_all_patches():
+async def delete_all_patches() -> bool:
     response = await clear_patches_collection()
     if not response:
         raise HTTPException(status_code=400, detail=f"Something went wrong")
@@ -64,24 +54,16 @@ async def delete_all_patches():
 
 
 @admin.delete("/{patch}")
-async def delete_patch(patch: str):
-    response = await clear_patch(patch)
+async def delete_patch(patch: str, hotfix: datetime = None):
+    response = await clear_patch(patch, hotfix)
     if not response:
         raise HTTPException(status_code=400, detail=f"Something went wrong")
     return response
 
 
 @admin.post("/")
-async def update_patches(background_tasks: BackgroundTasks) -> dict:
-    try:
-        pl = Patchloader()
-    except MuteException as e:
-        return {"msg": "Already loading updates!"}
-    except EmptyTodoException as e:
-        return {"msg": "Everything is up to date!"}
-    
-    #background_tasks.add_task(pl.work_todo)
-    await pl.work_todo()
-    return {"msg": "Updating...!"}
+async def load(background_tasks: BackgroundTasks) -> dict:
+    background_tasks.add_task(load_data)
+    return {"msg": "Update triggered in background!"}
 
 
