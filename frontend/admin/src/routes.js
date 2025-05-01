@@ -3,9 +3,9 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import Patchloader from "./views/patchloader/PatchLoader.vue";
 import Dataoverview from "./views/dataoverview/Dataoverview.vue";
 import Champion from "./views/editor/Champion.vue";
-import Item from "./views/editor/Item.vue";
-import Rune from "./views/editor/Rune.vue";
-import Summonerspell from "./views/editor/Summonerspell.vue";
+import Item from "./views/editor/ItemOld.vue";
+import Rune from "./views/editor/RuneOld.vue";
+import Summonerspell from "./views/editor/SummonerspellOld.vue";
 
 
 

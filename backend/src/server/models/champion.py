@@ -57,6 +57,16 @@ class NewChampion(BaseModel):
     image: Image
 
 
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "Champion":
+        if "passive" in obj:
+            obj["passive"] = ChampionPassive.parse_obj(obj["passive"])
+        for spell in ("q", "w", "e", "r"):
+            if spell in obj:
+                obj[spell] = ChampionAbility.parse_obj(obj[spell])
+        return super().parse_obj(obj)
+
+
 
 class Champion(NewChampion):
     id: PydanticObjectId = Field(..., alias="_id")

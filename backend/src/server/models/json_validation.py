@@ -187,6 +187,7 @@ class UrlJson(BaseModel):
     dataLink: str
     wiki: str
     championList: str
+    championFull: str
     championData: str
     championWiki: str
     championImage: str

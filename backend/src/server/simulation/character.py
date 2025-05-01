@@ -356,8 +356,9 @@ class Character():
         ability: ChampionAbility = self.ability_dict[action.action_type][0]
         cooldown = self._evaluate_formula(ability.cooldown, {"rank": self.ability_dict[action.action_type][1]})
         cooldown *= 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
-        self.cooldowns[action.action_type] = timestamp + ability.cast_time + cooldown
-        action_effect = ActionEffect(time=timestamp + ability.cast_time)
+        cast_time = self._evaluate_formula(ability.cast_time,  {"rank": self.ability_dict[action.action_type][1]})
+        self.cooldowns[action.action_type] = timestamp + cast_time + cooldown
+        action_effect = ActionEffect(time=timestamp + cast_time)
         for effect in ability.effects:
             for component in effect.effect_components:
                 effect_comp = EffectComp(

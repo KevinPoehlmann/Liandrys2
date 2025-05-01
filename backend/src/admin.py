@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 
 
 from src.server.routes.patch import router as patchesRouter, admin as patchesAdmin
+from src.server.routes.enums import router as enumsRouter
 from src.server.routes.champion import router as championsRouter
 from src.server.routes.item import router as itemsRouter
 from src.server.routes.rune import router as runesRouter
@@ -15,8 +16,7 @@ from src.server.routes.summonerspell import router as summonerspellsRouter
 def add_middleware(app: FastAPI) -> None:
     origins = ["http://localhost:5174",
             "http://127.0.0.1:5174",
-            "http://surfer:5174",
-            "http://172.19.0.4:5174"]
+            "http://surfer:5174"]
 
     app.add_middleware(
         CORSMiddleware,
@@ -37,6 +37,7 @@ def include_routers(app: FastAPI) -> None:
     app.include_router(runesRouter, tags=["Rune"], prefix="/rune")
     app.include_router(summonerspellsRouter, tags=["Summonerspell"], prefix="/summonerspell")
     app.include_router(adminRouter, tags=["Admin"], prefix="/admin")
+    app.include_router(enumsRouter, tags=["Enum"], prefix="/enum")
 
 
 def add_static_files(app: FastAPI) -> None:

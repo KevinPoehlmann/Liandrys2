@@ -67,7 +67,7 @@ def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str, hot
         patch_logger.error(f"ScrapeError: Champion '{champion_json.name}': {e.reason}")
         return None  # skip this champion
     except (AttributeError, ValueError, TypeError) as e:
-        patch_logger.error(f"Could not scrape data for Item '{champion_json.name}': {e}")
+        patch_logger.error(f"Could not scrape data for Champion '{champion_json.name}': {e}")
         return None
     except Exception as e:
         patch_logger.critical(f"Unexpected error while scraping {champion_json.name}: {e}")
@@ -386,6 +386,7 @@ def _create_effect_component(effect_type: EffectType, formula: str, hp_scaling: 
         case EffectType.SHIELD:
             effect_prop = ShieldProperties(
                 scaling=formula,
+                duration=0,
                 dmg_sub_type=damage_subtype,
                 hp_scaling=hp_scaling
             )

@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 
 
 
@@ -17,7 +18,7 @@ router = APIRouter()
 
 
 @router.get("/all/{patch}")
-async def get_runes(patch: str, hotfix: datetime = None) -> list[ShortRune]:
+async def get_runes(patch: str, hotfix: datetime | None = None) -> list[ShortRune]:
     runes = await fetch_runes_by_patch(patch, hotfix)
     if not runes:
         raise HTTPException(status_code=404, detail=f"No runes found for patch. {patch} !")
@@ -26,10 +27,10 @@ async def get_runes(patch: str, hotfix: datetime = None) -> list[ShortRune]:
 
 @router.get("/{rune_id}")
 async def get_rune(rune_id: str) -> Rune:
-    rune = await fetch_rune_by_id(rune_id)
-    if not rune:
+    response = await fetch_rune_by_id(rune_id)
+    if not response:
         raise HTTPException(status_code=404, detail=f"No rune found with id: {rune_id} !")
-    return rune
+    return JSONResponse(content=response.dict())
 
 
 @router.put("/")

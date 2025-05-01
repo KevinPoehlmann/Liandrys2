@@ -21,7 +21,7 @@ admin = APIRouter()
 async def get_latest_patch() -> Patch:
     response = await fetch_patch_latest()
     if not response:
-        return {"patch": "No patches loaded!"}
+        raise HTTPException(status_code=404, detail="No patches loaded.")
     return response
 
 
@@ -54,7 +54,7 @@ async def delete_all_patches() -> bool:
 
 
 @admin.delete("/{patch}")
-async def delete_patch(patch: str, hotfix: datetime = None):
+async def delete_patch(patch: str, hotfix: datetime | None = None):
     response = await clear_patch(patch, hotfix)
     if not response:
         raise HTTPException(status_code=400, detail=f"Something went wrong")

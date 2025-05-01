@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 
 
 
@@ -15,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/all/{patch}")
-async def get_summonerspells(patch: str, hotfix: datetime = None) -> list[ShortSummonerspell]:
+async def get_summonerspells(patch: str, hotfix: datetime | None = None) -> list[ShortSummonerspell]:
     summonerspells = await fetch_summonerspells_by_patch(patch, hotfix)
     if not summonerspells:
         raise HTTPException(status_code=404, detail=f"No summonerspells found for patch. {patch} !")
@@ -24,10 +25,10 @@ async def get_summonerspells(patch: str, hotfix: datetime = None) -> list[ShortS
 
 @router.get("/{summoner_id}")
 async def get_summonerspell(summoner_id: str) -> Summonerspell:
-    summoner = await fetch_summonerspell_by_id(summoner_id)
-    if not summoner:
+    response = await fetch_summonerspell_by_id(summoner_id)
+    if not response:
         raise HTTPException(status_code=404, detail=f"No summonerspell found with id: {summoner_id} !")
-    return summoner
+    return JSONResponse(content=response.dict())
 
 
 @router.put("/")

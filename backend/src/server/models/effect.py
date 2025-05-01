@@ -1,8 +1,7 @@
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel
 
 from src.server.models.dataenums import (
     Condition,
-    ConditionType,
     DamageProperties,
     EffectProperties,
     EffectType,
@@ -23,29 +22,29 @@ class EffectComponent(BaseModel):
     speed: int = 0
     comment: str = ""
 
-    @root_validator(pre=True)
-    def validate_props(cls, values):
-        """Ensure props is instantiated as the correct subclass."""
-        props_data = values.get("props")
-        type_ = values.get("type_")
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "EffectComponent":
+        type_ = obj.get("type_")
+        props = obj.get("props")
 
-        if isinstance(props_data, dict):  # If props is a dict, determine the subclass
-            match type_:
-                case EffectType.DAMAGE:
-                    values["props"] = DamageProperties(**props_data)
-                case EffectType.HEAL:
-                    values["props"] = HealProperties(**props_data)
-                case EffectType.SHIELD:
-                    values["props"] = ShieldProperties(**props_data)
-                case EffectType.STATUS:
-                    values["props"] = StatusProperties(**props_data)
+        # Fix enum from string if needed
+        if isinstance(type_, str):
+            type_ = EffectType(type_)
+            obj["type_"] = type_
 
-        return values
+        # Parse the correct props type
+        if isinstance(props, dict):
+            props_class = EFFECT_PROPERTIES_MAP.get(type_, EffectProperties)
+            obj["props"] = props_class(**props)
+
+        return super().parse_obj(obj)
 
 
-""" class Condition(BaseModel):
-    modality: bool = True
-    condition: ConditionType """
+    def dict(self, *args, **kwargs):
+        d = super().dict(*args, **kwargs)
+        d["props"] = self.props.dict() if self.props else None
+        return d
+
 
 
 class Effect(BaseModel):
@@ -54,13 +53,21 @@ class Effect(BaseModel):
     conditions: list[Condition] = []
 
 
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "Effect":
+        if "effect_components" in obj:
+            obj["effect_components"] = [
+                EffectComponent.parse_obj(ec)
+                for ec in obj["effect_components"]
+            ]
+        return super().parse_obj(obj)
 
 
 
 
-
-
-
-
-class Scaling(BaseModel):
-    pass
+EFFECT_PROPERTIES_MAP = {
+    EffectType.DAMAGE: DamageProperties,
+    EffectType.HEAL: HealProperties,
+    EffectType.SHIELD: ShieldProperties,
+    EffectType.STATUS: StatusProperties,
+}

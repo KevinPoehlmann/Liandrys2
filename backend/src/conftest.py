@@ -508,11 +508,11 @@ def q_heal_e():
 @pytest.fixture()
 def aatrox_with_items():
     with open("src/tests/static/json/aatrox.json", encoding='UTF-8') as champion:
-        aatrox = Champion(**json.load(champion))
-    with open("src/tests/static/json/triforce.json", encoding='UTF-8') as item:
-        tri = Item(**json.load(item))
-    with open("src/tests/static/json/frozen_heart.json", encoding='UTF-8') as item:
-        fheart = Item(**json.load(item))
+        aatrox = Champion.parse_obj(json.load(champion))
+    with open("src/tests/static/json/triforce.json", encoding='UTF-8') as tri_file:
+        tri = Item.parse_obj(json.load(tri_file))
+    with open("src/tests/static/json/frozen_heart.json", encoding='UTF-8') as fh_file:
+        fheart = Item.parse_obj(json.load(fh_file))
     ap = Rank(
         q=3,
         w=1,

@@ -49,6 +49,7 @@ def test_riot_to_wiki_patch_invalid_format(invalid_patch):
     "wiki_patch, expected_riot_patch", [
         ("V25.07", "15.7.1"),
         ("v14.10", "14.10.1"),
+        ("V25.S1.3", "15.3.1")
     ],
 )
 def test_wiki_to_riot_patch(wiki_patch, expected_riot_patch):

@@ -1,0 +1,21 @@
+23.04.2025  11:12:20 - INFO: --------------------------------------------------------------------------------------------
+23.04.2025  11:12:20 - INFO: Loading fresh database for patch 15.8.1, hotfix: None
+23.04.2025  11:12:22 - WARNING: ⚠ Could not load champion: Taric
+23.04.2025  11:12:23 - INFO: [CHAMPION] Loaded: Ahri ✔
+23.04.2025  11:12:23 - INFO: [CHAMPION] Loaded: Jhin ✔
+23.04.2025  11:12:23 - INFO: [CHAMPION] Loaded: Malzahar ✔
+23.04.2025  11:12:23 - INFO: [SUMMONERSPELL] Loaded: Smite ✔
+23.04.2025  11:12:24 - INFO: Finished loading fresh database for patch 15.8.1, hotfix: None
+23.04.2025  11:12:24 - INFO: --------------------------------------------------------------------------------------------
+23.04.2025  11:27:56 - INFO: --------------------------------------------------------------------------------------------
+23.04.2025  11:27:56 - INFO: Loading fresh database for patch 15.8.1, hotfix: None
+23.04.2025  11:27:59 - INFO: [CHAMPION] Loaded: Ahri ✔
+23.04.2025  11:27:59 - INFO: [CHAMPION] Loaded: Jhin ✔
+23.04.2025  11:27:59 - INFO: [CHAMPION] Loaded: Malzahar ✔
+23.04.2025  11:27:59 - INFO: [CHAMPION] Loaded: Taric ✔
+23.04.2025  11:27:59 - INFO: [ITEM] Loaded: Titanic Hydra ✔
+23.04.2025  11:27:59 - INFO: [ITEM] Loaded: Titanic Hydra ✔
+23.04.2025  11:27:59 - INFO: [RUNE] Loaded: Arcane Comet ✔
+23.04.2025  11:27:59 - INFO: [SUMMONERSPELL] Loaded: Smite ✔
+23.04.2025  11:27:59 - INFO: Finished loading fresh database for patch 15.8.1, hotfix: None
+23.04.2025  11:27:59 - INFO: --------------------------------------------------------------------------------------------

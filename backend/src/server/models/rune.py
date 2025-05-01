@@ -17,6 +17,12 @@ class NewRune(BaseModel):
     passive: Passive
     validated: bool = False
     image: Image = None
+
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "NewRune":
+        if obj.get("passive") is not None:
+            obj["passive"] = Passive.parse_obj(obj["passive"])
+        return super().parse_obj(obj)
     
 
 class Rune(NewRune):

@@ -11,7 +11,6 @@ from src.server.models.dataenums import (
 
 
 
-#TODO add aggro?
 class Ability(BaseModel):
     name: str
     description: str = ""
@@ -24,8 +23,14 @@ class Ability(BaseModel):
     changes: list[str] = []
     validated: bool = False
 
-    class Config:  
-        use_enum_values = True
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "Ability":
+        if "effects" in obj:
+            obj["effects"] = [
+                Effect.parse_obj(ec)
+                for ec in obj["effects"]
+            ]
+        return super().parse_obj(obj)
 
 
 

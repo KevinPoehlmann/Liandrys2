@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, validator
 from datetime import datetime
 
 from src.server.models.ability import ItemActive
-from src.server.models.passive import Passive
+from src.server.models.passive import ItemPassive
 from src.server.models.image import Image
 from src.server.models.pydanticid import PydanticObjectId
 
@@ -25,7 +25,7 @@ class NewItem(BaseModel):
     masterwork: dict[Stat, float] = {}
 
     active: ItemActive = None
-    passives: list[Passive] = []
+    passives: list[ItemPassive] = []
     limitations: str = ""
     requirements: str = ""
     maps: list[Map] = []
@@ -34,6 +34,16 @@ class NewItem(BaseModel):
 
     image: Image
 
+
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "NewItem":
+        if "passives" in obj:
+            obj["passives"] = [
+                ItemPassive.parse_obj(p) for p in obj["passives"]
+            ]
+        if obj.get("active") is not None:
+            obj["active"] = ItemActive.parse_obj(obj["active"])
+        return super().parse_obj(obj)
     
     
 class Item(NewItem):

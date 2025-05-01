@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 
 
 
@@ -16,7 +17,7 @@ router = APIRouter()
 
 
 @router.get("/all/{patch}")
-async def get_items(patch: str, hotfix: datetime = None) -> list[ShortItem]:
+async def get_items(patch: str, hotfix: datetime | None = None) -> list[ShortItem]:
     items = await fetch_items_by_patch(patch, hotfix)
     if not items:
         raise HTTPException(status_code=404, detail=f"No items found for patch: {patch} !")
@@ -25,10 +26,10 @@ async def get_items(patch: str, hotfix: datetime = None) -> list[ShortItem]:
 
 @router.get("/{item_id}")
 async def get_item(item_id: str) -> Item:
-    item = await fetch_item_by_id(item_id)
-    if not item:
+    response = await fetch_item_by_id(item_id)
+    if not response:
         raise HTTPException(status_code=404, detail=f"No item found with id: {item_id} !")
-    return item
+    return JSONResponse(content=response.dict())
 
 
 @router.put("/")

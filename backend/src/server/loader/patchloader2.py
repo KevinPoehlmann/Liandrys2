@@ -1,7 +1,7 @@
 import aiohttp
 import asyncio
 import logging
-import re
+import random
 import requests
 
 from datetime import datetime
@@ -58,7 +58,7 @@ def setup_loggers() -> tuple[logging.Logger, logging.Logger]:
     patch_logger = logging.getLogger("patch_logger")
     patch_logger.setLevel(logging.INFO)
 
-    patch_file_handler = logging.FileHandler(log_dir / "patch_loader.log", mode="w")
+    patch_file_handler = logging.FileHandler(log_dir / "patch_loader.log", mode="a")
     patch_file_handler.setFormatter(formatter)
     patch_logger.addHandler(patch_file_handler)
 
@@ -70,7 +70,7 @@ def setup_loggers() -> tuple[logging.Logger, logging.Logger]:
     load_logger = logging.getLogger("load_logger")
     load_logger.setLevel(logging.DEBUG)
 
-    load_file_handler = logging.FileHandler(log_dir / "load_details.log", mode="w")
+    load_file_handler = logging.FileHandler(log_dir / "load_details.log", mode="a")
     load_file_handler.setFormatter(formatter)
     load_logger.addHandler(load_file_handler)
 
@@ -201,9 +201,22 @@ async def _load_fresh_database(hotfixes_to_process: dict[str, list[datetime]]) -
     hotfix = hotfix_list[-1] if hotfix_list else None
     patch_logger.info("--------------------------------------------------------------------------------------------")
     patch_logger.info(f"Loading fresh database for patch {patch}, hotfix: {hotfix}")
+    load_logger.info("--------------------------------------------------------------------------------------------")
+    load_logger.info(f"Loading fresh database for patch {patch}, hotfix: {hotfix}")
 
+    HEADERS = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/122.0.0.0 Safari/537.36"
+        ),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1"
+    }
     timeout = aiohttp.ClientTimeout(total=600)
-    async with aiohttp.ClientSession(timeout=timeout) as aio_session:
+    async with aiohttp.ClientSession(timeout=timeout, headers=HEADERS) as aio_session:
         session = SafeSession(aio_session)
 
         champion_list, item_list, rune_list, summonerspell_list = await _list_data(patch, session)
@@ -242,6 +255,8 @@ async def _load_fresh_database(hotfixes_to_process: dict[str, list[datetime]]) -
             return
 
     patch_id = await db.add_patch(new_patch)
+    load_logger.info(f"Finished loading fresh database for patch {patch}, hotfix: {hotfix}")
+    load_logger.info("--------------------------------------------------------------------------------------------")
 
 
 
@@ -316,15 +331,22 @@ async def _load_all_summonerspells(summonerspell_list: list[SummonerspellJson], 
 
 async def _load_champion(champion_json: ChampionJson, session: SafeSession, patch: Patch) -> None:
 
-    champion_wiki = await _fetch_wiki_html(champion_json.name, "Champion", session)
+    try:
+        champion_wiki = load_local_html(champion_json.name)
+    except FileNotFoundError as e:
+        return
+    #champion_wiki = await _fetch_wiki_html(champion_json.name, "Champion", session)
+    #await asyncio.sleep(random.uniform(1.5, 3.0))
     try:
         # Use webscraper to create the Champion object
         champion = ws.scrape_champion(champion_json, champion_wiki, patch.patch, patch.hotfix)
         if not champion:
             patch_logger.error(f"Failed creating champion object for: {champion_json.name}")
+            load_logger.warning(f"⚠ Could not load champion: {champion_json.name}")
             return
     except Exception as e:
         patch_logger.critical(f"Failed creating champion object for: {champion_json.name}")
+        load_logger.warning(f"⚠ Could not load champion: {champion_json.name}")
         raise
 
     # Download associated images
@@ -338,32 +360,47 @@ async def _load_champion(champion_json: ChampionJson, session: SafeSession, patc
 
     # Save to database
     await db.add_champion(champion)
+    load_logger.info(f"[CHAMPION] Loaded: {champion.name } ✔")
 
 
 async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, patch: Patch) -> None:
 
-    item_wiki = await _fetch_wiki_html(item_json.name, "Item", session)
-    
+
+    try:
+        item_wiki = load_local_html(item_json.name)
+    except FileNotFoundError as e:
+        return
+    #item_wiki = await _fetch_wiki_html(item_json.name, "Item", session)
+    #await asyncio.sleep(random.uniform(1.5, 3.0))
+
     try:
         item = ws.scrape_item(item_id, item_json, item_wiki, patch.patch, patch.hotfix)
         if not item:
             patch_logger.error(f"Failed creating item object for: {item_json.name}")
+            load_logger.warning(f"⚠ Could not load item: {item_json.name}")
             return
 
     except Exception as e:
         patch_logger.critical(f"Failed creating item object for: {item_json.name}")
+        load_logger.warning(f"⚠ Could not load item: {item_json.name}")
         raise
     try:
-        await _load_image(item_json.image)
+        await _load_image(item_json.image, session, patch)
     except Exception as e:
         patch_logger.error(f"Failed to load image for item {item_json.name}: {e}")
 
     await db.add_item(item)
+    load_logger.info(f"[ITEM] Loaded: {item.name } ✔")
 
 
 async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: Patch) -> None:
 
-    rune_wiki = await _fetch_wiki_html(rune_class.rune.name, "Rune", session)
+    try:
+        rune_wiki = load_local_html(rune_class.rune.name)
+    except FileNotFoundError as e:
+        return
+    #rune_wiki = await _fetch_wiki_html(rune_class.rune.name, "Rune", session)
+    #await asyncio.sleep(random.uniform(1.5, 3.0))
     try:
         image = await _load_image_rune(rune_class.rune.icon, session)
     except Exception as e:
@@ -372,32 +409,43 @@ async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: Patch) 
     try:
         rune = ws.scrape_rune(rune_class, rune_wiki, image, patch.patch, patch.hotfix)
         if not rune:
+            load_logger.warning(f"⚠ Could not load rune: {rune_class.rune.name}")
             return
     except Exception as e:
         patch_logger.critical(f"Failed creating rune object for: {rune_class.rune.name}")
+        load_logger.warning(f"⚠ Could not load rune: {rune_class.rune.name}")
         raise
 
     await db.add_rune(rune)
+    load_logger.info(f"[RUNE] Loaded: {rune_class.rune.name } ✔")
 
 
 async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: SafeSession, patch: Patch) -> None:
 
-    summonerspell_wiki = await _fetch_wiki_html(summonerspell_json.name, "Summonerspell", session)
+    try:
+        summonerspell_wiki = load_local_html(summonerspell_json.name)
+    except FileNotFoundError as e:
+        return
+    #summonerspell_wiki = await _fetch_wiki_html(summonerspell_json.name, "Summonerspell", session)
+    #await asyncio.sleep(random.uniform(1.5, 3.0))
 
     try:
         summonerspell = ws.scrape_summonerspell(summonerspell_json, summonerspell_wiki, patch.patch, patch.hotfix)
         if not summonerspell:
+            load_logger.warning(f"⚠ Could not load rune: {summonerspell_json.name}")
             return
     except Exception as e:
         patch_logger.critical(f"Failed creating summonerspell object for: {summonerspell_json.name}")
+        load_logger.warning(f"⚠ Could not load rune: {summonerspell_json.name}")
         raise
     
     try:
-        await _load_image(summonerspell_json.image, session)
+        await _load_image(summonerspell_json.image, session, patch)
     except Exception as e:
         patch_logger.error(f"Failed to load image for summonerspell {summonerspell_json.name}: {e}")
 
     await db.add_summonerspell(summonerspell)
+    load_logger.info(f"[SUMMONERSPELL] Loaded: {summonerspell.name } ✔")
 
 
 
@@ -433,6 +481,7 @@ async def _load_image(image: Image, session: SafeSession, patch: Patch, force_re
         try:
             with open(img_path, "wb") as img_file:
                 img_file.write(await session.get_bytes(img_url))
+            await asyncio.sleep(random.uniform(1.5, 3.0))
         except HTTPError as e:
             raise LoadError(e.code, e.reason, e.url, image.group, image.full)
         except URLError as e:
@@ -447,6 +496,7 @@ async def _load_image(image: Image, session: SafeSession, patch: Patch, force_re
             try:
                 with open(sprite_path, "wb") as sprite_file:
                     sprite_file.write(await session.get_bytes(sprite_url))
+                await asyncio.sleep(random.uniform(1.5, 3.0))
             except HTTPError as e:
                 raise LoadError(e.code, e.reason, e.url, image.group, image.full)
             except URLError as e:
@@ -467,6 +517,7 @@ async def _load_image_rune(icon: str, session: SafeSession) -> Image:
         try:
             with open(img_path, "wb") as image_file:
                 image_file.write(await session.get_bytes(img_url))
+            await asyncio.sleep(random.uniform(1.5, 3.0))
         except (HTTPError, URLError) as e:
             patch_logger.warning(f"Failed to load image for rune '{icon}': {e}")
 
@@ -708,6 +759,8 @@ async def _add_changes_summonerspell(spell: NewSummonerspell, diff: list) -> Non
 
 async def _clean_up(patch: Patch) -> None:
     result = await db.clear_patch(patch.patch, patch.hotfix)
+    for handler in patch_logger.handlers:
+        handler.flush()
     patch_logger.info(f"Cleaned up patch '{patch.patch}: {patch.hotfix}'. Summary:")
     for key, count in result.items():
         if key != "cleanup_successful":
@@ -717,4 +770,17 @@ async def _clean_up(patch: Patch) -> None:
         patch_logger.info("❌ Cleanup verification failed! Some data may still remain.")
     else:
         patch_logger.info("✅ Cleanup verification passed. No remaining data.")
+
+
+
+
+
+
+
+def load_local_html(name: str) -> str:
+    filename = name.lower().replace(" ", "_") + ".html"
+    file_path = Path("src/tests/static/html") / filename
+    if not file_path.exists():
+        raise FileNotFoundError(f"Local HTML file not found: {file_path}")
+    return file_path.read_text(encoding="utf-8")
 

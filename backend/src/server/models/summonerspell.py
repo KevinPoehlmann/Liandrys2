@@ -18,6 +18,12 @@ class NewSummonerspell(BaseModel):
     changes: list[str] = []
     image: Image
 
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "NewSummonerspell":
+        if obj.get("ability") is not None:
+            obj["ability"] = Ability.parse_obj(obj["ability"])
+        return super().parse_obj(obj)
+
 
 class Summonerspell(NewSummonerspell):
     id: PydanticObjectId = Field(..., alias="_id")

@@ -21,26 +21,44 @@ class StackProps(BuffActionProps):
 class EffectProps(BuffActionProps):
     effect: EffectComponent
 
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "EffectProps":
+        if obj.get("effect") is not None:
+            obj["effect"] = EffectComponent.parse_obj(obj["effect"])
+        return super().parse_obj(obj)
+
+
+
+BUFF_ACTION_PROPERTIES_MAP = {
+    BuffActionType.STACK: StackProps,
+    BuffActionType.EFFECT: EffectProps,
+}
 
 
 class BuffAction(BaseModel):
     type_: BuffActionType
     props: BuffActionProps
 
-    @root_validator(pre=True)
-    def validate_props(cls, values):
-        """Ensure props is instantiated as the correct subclass."""
-        props_data = values.get("props")
-        type_ = values.get("type_")
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "BuffAction":
+        type_ = obj.get("type_")
+        props = obj.get("props")
 
-        if isinstance(props_data, dict):  # If props is a dict, determine the subclass
-            match type_:
-                case BuffActionType.STACK:
-                    values["props"] = StackProps(**props_data)
-                case BuffActionType.EFFECT:
-                    values["props"] = EffectProps(**props_data)
+        if isinstance(type_, str):
+            type_ = BuffActionType(type_)
+            obj["type_"] = type_
 
-        return values
+        if isinstance(props, dict):
+            props_class = BUFF_ACTION_PROPERTIES_MAP.get(type_, BuffActionProps)
+            obj["props"] = props_class.parse_obj(props)
+
+        return super().parse_obj(obj)
+    
+
+    def dict(self, *args, **kwargs):
+        d = super().dict(*args, **kwargs)
+        d["props"] = self.props.dict() if self.props else None
+        return d
 
 
 
@@ -55,6 +73,15 @@ class ActionProperties(BuffProperties):
     trigger: list[ActionType]
     actions: list[BuffAction]
 
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "ActionProperties":
+        if "actions" in obj:
+            obj["actions"] = [
+                BuffAction.parse_obj(ec)
+                for ec in obj["actions"]
+            ]
+        return super().parse_obj(obj)
+
 class HitProperties(BuffProperties):
     pass
 
@@ -63,26 +90,40 @@ class GetHitProperties(BuffProperties):
 
 
 
+PASSIVE_PROPERTIES_MAP = {
+    Buff.STATS: StatProperties,
+    Buff.CAST: ActionProperties,
+    Buff.HIT: HitProperties,
+    Buff.GET_HIT: GetHitProperties,
+}
+
+
+
 
 class PassiveEffect(BaseModel):
     buff: Buff
     props: BuffProperties
 
-    @root_validator(pre=True)
-    def validate_props(cls, values):
-        """Ensure props is instantiated as the correct subclass."""
-        props_data = values.get("props")
-        buff = values.get("buff")
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "PassiveEffect":
+        buff = obj.get("buff")
+        props = obj.get("props")
 
-        if isinstance(props_data, dict):  # If props is a dict, determine the subclass
-            match buff:
-                case Buff.STATS:
-                    values["props"] = StatProperties(**props_data)
-                case Buff.CAST:
-                    values["props"] = ActionProperties(**props_data)
-                case Buff.HIT:
-                    values["props"] = HitProperties(**props_data)
-                case Buff.GET_HIT:
-                    values["props"] = GetHitProperties(**props_data)
+        if isinstance(buff, str):
+            try:
+                buff = Buff(buff)
+                obj["buff"] = buff
+            except ValueError:
+                raise ValueError(f"Invalid Buff: {buff}")
 
-        return values
+        if isinstance(props, dict):
+            props_class = PASSIVE_PROPERTIES_MAP.get(buff, BuffProperties)
+            obj["props"] = props_class.parse_obj(props)
+
+        return super().parse_obj(obj)
+    
+
+    def dict(self, *args, **kwargs):
+        d = super().dict(*args, **kwargs)
+        d["props"] = self.props.dict() if self.props else None
+        return d

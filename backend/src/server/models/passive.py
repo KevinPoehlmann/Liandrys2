@@ -14,6 +14,15 @@ class Passive(BaseModel):
     changes: list[str] = []
     validated: bool = False
 
+    @classmethod
+    def parse_obj(cls, obj: dict) -> "Passive":
+        if "effects" in obj:
+            obj["effects"] = [
+                PassiveEffect.parse_obj(ec)
+                for ec in obj["effects"]
+            ]
+        return super().parse_obj(obj)
+
 
 class ChampionPassive(Passive):
     image: Image

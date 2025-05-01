@@ -5,6 +5,7 @@ import json
 import logging
 import math
 import re
+import requests
 
 
 from aiohttp import ClientResponseError
@@ -54,17 +55,24 @@ def wiki_to_riot_patch(wiki_patch: str) -> str:
     if not isinstance(wiki_patch, str) or not wiki_patch.lower().startswith("v"):
         raise PatcherError(f"Invalid wiki patch format: {wiki_patch}", f"Can't convert patch {wiki_patch} to Riot format.")
 
-    match = re.fullmatch(r"[vV](\d+)\.(\d+)", wiki_patch)
-    if not match:
-        raise PatcherError(f"Invalid wiki patch format: {wiki_patch}", f"Can't convert patch {wiki_patch} to Riot format.")
+    match_normal = re.fullmatch(r"[vV](\d+)\.(\d+)", wiki_patch)
+    if match_normal:
+        season = int(match_normal.group(1))
+        patch = str(int(match_normal.group(2)))  # remove leading zero
+        if season >= 20:
+            season -= 10
+        return f"{season}.{patch}.1"
 
-    season = int(match.group(1))
-    patch = str(int(match.group(2)))  # remove leading zeros
+    # V25.S1.3
+    match_special = re.fullmatch(r"[vV](\d+)\.S(\d+)\.(\d+)", wiki_patch)
+    if match_special:
+        season = int(match_special.group(1))
+        patch = str(int(match_special.group(3)))  # the last number becomes the patch
+        if season >= 20:
+            season -= 10
+        return f"{season}.{patch}.1"
 
-    if season >= 20:
-        season -= 10
-
-    return f"{season}.{patch}.1"
+    raise PatcherError(f"Invalid wiki patch format: {wiki_patch}", f"Can't convert patch {wiki_patch} to Riot format.")
 
 
 
@@ -315,37 +323,38 @@ class SafeSession:
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
 
-    def _retry(retries=3, delay=1):
+    def _retry(retries=3, base_delay=1.5):
         def decorator(func):
             @functools.wraps(func)
             async def wrapper(*args, **kwargs):
                 for attempt in range(1, retries + 1):
                     try:
                         return await func(*args, **kwargs)
-                    except Exception as e:
-                        if attempt == retries:
-                            patch_logger.error(f"[{func.__name__}] Failed after {retries} attempts: {e}")
-                            raise
-                        else:
-                            patch_logger.warning(f"[{func.__name__}] Attempt {attempt} failed: {e} — retrying...")
+                    except (aiohttp.ClientResponseError, requests.RequestException) as e:
+                        if getattr(e, 'status', None) == 429:
+                            delay = base_delay * 2 ** (attempt - 1)
+                            patch_logger.warning(f"Rate limited (429). Retrying in {delay:.2f}s... [{attempt}/{retries}]")
                             await asyncio.sleep(delay)
+                            continue
+                        raise
+                raise RuntimeError("Max retry attempts exceeded.")
             return wrapper
         return decorator
 
     @_retry()
-    async def get_json(self, url: str, type_: str, name: str) -> dict:
+    async def get_json(self, url: str) -> dict:
         async with self.session.get(url) as response:
             response.raise_for_status()
             return await response.json()
 
     @_retry()
-    async def get_html(self, url: str, type_: str, name: str) -> str:
+    async def get_html(self, url: str) -> str:
         async with self.session.get(url) as response:
             response.raise_for_status()
             return await response.text()
 
     @_retry()
-    async def get_bytes(self, url: str, type_: str, name: str) -> bytes:
+    async def get_bytes(self, url: str) -> bytes:
         async with self.session.get(url) as response:
             response.raise_for_status()
             return await response.read()

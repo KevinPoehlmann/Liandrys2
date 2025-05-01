@@ -73,8 +73,8 @@
 - [ ] Add automatic stat patching
 ### Admin Functions ###
 - [ ] Make Dataset updateable
-- [ ] Make Abilities editable in the editor
-- [ ] Make Passives editable in the editor
+- [x] Make Abilities editable in the editor
+- [x] Make Passives editable in the editor
 ### Production ###
 - [ ] Making the project ready for production
     - [ ] Add a disclaimer stating that your project isn’t affiliated with Riot Games.
