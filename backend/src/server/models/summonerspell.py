@@ -28,6 +28,9 @@ class NewSummonerspell(BaseModel):
 class Summonerspell(NewSummonerspell):
     id: PydanticObjectId = Field(..., alias="_id")
 
+    class Config:
+        allow_population_by_field_name = True
+
 
 class ShortSummonerspell(BaseModel):
     id: PydanticObjectId = Field(..., alias="_id")

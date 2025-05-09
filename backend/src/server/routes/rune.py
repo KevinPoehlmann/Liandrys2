@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 
@@ -11,6 +11,7 @@ from src.server.database import (
 )
 from src.server.models.rune import ShortRune, Rune
 
+from src.server.utils.request_parsing import parse_from_request
 
 
 router = APIRouter()
@@ -34,7 +35,8 @@ async def get_rune(rune_id: str) -> Rune:
 
 
 @router.put("/")
-async def put_rune(rune: Rune) -> int:
+async def put_rune(request: Request) -> int:
+    rune = await parse_from_request(request, Rune)
     response = await update_rune(rune)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Rune with ID: {rune.id} !")

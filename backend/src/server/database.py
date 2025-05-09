@@ -142,7 +142,6 @@ async def fetch_champion_by_id(id_: str) -> Champion:
     document = await champion_collection.find_one({"_id":ObjectId(id_)})
     if document:
         champion = Champion.parse_obj(document)
-        print(champion.q.effects[0].effect_components[0])
         return champion
 
 

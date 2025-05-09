@@ -12,7 +12,7 @@
         <label class="block text-sm font-medium mb-1">{{ field.label }}</label>
         <input
           type="number"
-          v-model.number="localStats[field.key]"
+          v-model.number="champion[field.key]"
           class="w-full px-2 py-1 border rounded"
         />
       </div>
@@ -29,31 +29,12 @@
 </template>
 
 <script setup>
-import { ref, watch, toRefs } from 'vue'
+import { toRefs } from 'vue'
 const props = defineProps({ champion: Object })
 const emit = defineEmits(['update'])
 
 const { champion } = toRefs(props)
-const localStats = ref({})
 
-// Initialize local editable values
-watch(champion, () => {
-  localStats.value = { ...champion.value }
-}, { immediate: true })
-
-watch(localStats, () => {
-  const diff = {}
-
-  for (const key in localStats.value) {
-    if (localStats.value[key] !== champion.value[key]) {
-      diff[key] = localStats.value[key]
-    }
-  }
-
-  if (Object.keys(diff).length) {
-    emit('update', diff)
-  }
-}, { deep: true })
 
 const editableFields = [
   { key: 'hp', label: 'HP' },

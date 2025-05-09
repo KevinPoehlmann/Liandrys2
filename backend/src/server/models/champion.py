@@ -71,6 +71,9 @@ class NewChampion(BaseModel):
 class Champion(NewChampion):
     id: PydanticObjectId = Field(..., alias="_id")
 
+    class Config:
+        allow_population_by_field_name = True
+
 
 
 class ShortChampion(BaseModel):

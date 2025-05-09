@@ -75,6 +75,10 @@
 - [ ] Make Dataset updateable
 - [x] Make Abilities editable in the editor
 - [x] Make Passives editable in the editor
+- [x] Make Items editable in the editor
+- [x] Make Runes editable in the editor
+- [x] Make Summonerspells editable in the editor
+### User Functions ###
 ### Production ###
 - [ ] Making the project ready for production
     - [ ] Add a disclaimer stating that your project isn’t affiliated with Riot Games.

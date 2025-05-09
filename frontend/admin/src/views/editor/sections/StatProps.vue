@@ -33,12 +33,7 @@ onMounted(async () => {
 })
 
 watch(() => props.modelValue, (val) => {
-  if (!val) return
-
-  const current = JSON.stringify(local.value)
-  const incoming = JSON.stringify(val)
-
-  if (current !== incoming) {
+  if (val) {
     local.value = { ...val }
   }
 }, { immediate: true })

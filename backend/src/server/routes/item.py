@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 
@@ -11,6 +11,9 @@ from src.server.database import (
 )
 from src.server.models.item import ShortItem, Item
 from src.server.models.dataenums import ItemClass, Map
+
+from src.server.utils.request_parsing import parse_from_request
+
 
 router = APIRouter()
 
@@ -33,7 +36,8 @@ async def get_item(item_id: str) -> Item:
 
 
 @router.put("/")
-async def put_item(item: Item) -> int:
+async def put_item(request: Request) -> int:
+    item = await parse_from_request(request, Item)
     response = await update_item(item)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Item with ID: {item.id} !")

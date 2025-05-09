@@ -49,6 +49,9 @@ class NewItem(BaseModel):
 class Item(NewItem):
     id: PydanticObjectId = Field(..., alias="_id")
 
+    class Config:
+        allow_population_by_field_name = True
+
 
 class ShortItem(BaseModel):
     id: PydanticObjectId = Field(..., alias="_id")

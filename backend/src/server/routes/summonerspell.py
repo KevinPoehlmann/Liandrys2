@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 
@@ -10,6 +10,8 @@ from src.server.database import (
     update_summonerspell
 )
 from src.server.models.summonerspell import ShortSummonerspell, Summonerspell
+
+from src.server.utils.request_parsing import parse_from_request
 
 router = APIRouter()
 
@@ -32,7 +34,8 @@ async def get_summonerspell(summoner_id: str) -> Summonerspell:
 
 
 @router.put("/")
-async def put_summonerspell(summonerspell: Summonerspell) -> int:
+async def put_summonerspell(request: Request) -> int:
+    summonerspell = await parse_from_request(request, Summonerspell)
     response = await update_summonerspell(summonerspell)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Summonerspell with ID: {summonerspell.id} !")

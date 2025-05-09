@@ -19,17 +19,17 @@
     <!-- Collapsible Sections -->
     <details open>
       <summary class="text-lg font-semibold cursor-pointer">Base Stats</summary>
-      <ChampionStats :champion="champion" @update="onSectionUpdate('stats', $event)" />
+      <ChampionStats :champion="champion" />
     </details>
 
     <details>
       <summary class="text-lg font-semibold cursor-pointer">Passive</summary>
-      <ChampionPassive :passive="champion?.passive" @update="onSectionUpdate('passive', $event)" />
+      <Passive :passive="champion?.passive" show-image />
     </details>
 
     <details v-for="abilityKey in ['q', 'w', 'e', 'r']" :key="abilityKey">
       <summary class="text-lg font-semibold cursor-pointer uppercase">{{ abilityKey }} Ability</summary>
-      <ChampionAbility :ability="champion?.[abilityKey]" :label="abilityKey.toUpperCase()" @update="onSectionUpdate(abilityKey, $event)" />
+      <Ability :ability="champion?.[abilityKey]" show-image show-maxrank />
     </details>
 
     <!-- Validation and Save -->
@@ -46,9 +46,10 @@
     <!-- Confirmation Modal -->
     <ModalConfirm
       v-if="showConfirm"
+      :current="champion"
+      :original="originalChampion"
       @confirm="saveChampion"
       @cancel="showConfirm = false"
-      :changes="changesToConfirm"
     />
   </div>
 </template>
@@ -58,46 +59,31 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
+import Ability from './sections/Ability.vue'
 import ChampionStats from './sections/ChampionStats.vue'
-import ChampionPassive from './sections/ChampionPassive.vue'
-import ChampionAbility from './sections/ChampionAbility.vue'
 import ModalConfirm from './sections/ModalConfirm.vue'
+import Passive from './sections/Passive.vue'
 
 const route = useRoute()
 const champion = ref(null)
+const originalChampion = ref(null)
 const showConfirm = ref(false)
 const changesToConfirm = ref([])
 
 onMounted(async () => {
   const { id } = route.params
   const { data } = await axios.get(`/champion/${id}`)
-  champion.value = data
+  champion.value = JSON.parse(JSON.stringify(data))
+  originalChampion.value = JSON.parse(JSON.stringify(data))
 })
 
 function imageUrl(image) {
   return `/images/${image?.group}/${image?.full}`
 }
 
-function onSectionUpdate(section, changes) {
-  if (!champion.value) return
-
-  if (section === 'stats') {
-    Object.assign(champion.value, changes)
-  } else {
-    Object.assign(champion.value[section], changes)
-  }
-
-  // Find existing entry
-  const existing = changesToConfirm.value.find(c => c.section === section)
-  if (existing) {
-    Object.assign(existing.changes, changes)
-  } else {
-    changesToConfirm.value.push({ section, changes: { ...changes } })
-  }
-}
 
 async function saveChampion() {
-  await axios.put(`/champion/${champion.value.id}`, champion.value)
+  await axios.put(`/champion/`, champion.value)
   showConfirm.value = false
   changesToConfirm.value = []
 }

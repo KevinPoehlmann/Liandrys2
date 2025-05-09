@@ -2,7 +2,7 @@
   <div class="space-y-4">
     <h3 class="text-lg font-semibold">Effects</h3>
 
-    <div v-for="(effect, index) in localEffects" :key="index" class="border rounded p-4 space-y-2">
+    <div v-for="(effect, index) in props.effects" :key="index" class="border rounded p-4 space-y-2">
       <div class="flex items-center gap-4">
         <label class="text-sm font-medium">Buff Type:</label>
         <select v-model="effect.buff" class="px-2 py-1 border rounded">
@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { formatEnumLabel } from '@/utils/formatters'
 import StatProps from './StatProps.vue'
@@ -39,9 +39,7 @@ import ActionProps from './ActionProps.vue'
 const props = defineProps({
   effects: Array
 })
-const emit = defineEmits(['update'])
 
-const localEffects = ref([])
 const enums = ref({ buffs: [] })
 
 onMounted(async () => {
@@ -49,24 +47,12 @@ onMounted(async () => {
   enums.value.buffs = data.Buff
 })
 
-watch(localEffects, () => {
-  const original = props.effects || []
-  const current = localEffects.value
-
-  if (JSON.stringify(original) !== JSON.stringify(current)) {
-    emit('update', JSON.parse(JSON.stringify(current)))
-  }
-}, { deep: true })
-
-watch(localEffects, () => {
-  emit('update', JSON.parse(JSON.stringify(localEffects.value)))
-}, { deep: true })
 
 function addEffect() {
-  localEffects.value.push({ buff: enums.value.buffs[0], props: {} })
+  props.effects.value.push({ buff: enums.value.buffs[0], props: {} })
 }
 
 function removeEffect(index) {
-  localEffects.value.splice(index, 1)
+  props.effects.value.splice(index, 1)
 }
 </script>
