@@ -73,6 +73,7 @@
 - [ ] Add automatic stat patching
 ### Admin Functions ###
 - [ ] Make Dataset updateable
+- [ ] Build Contract Tests before pushing a changed object into the database
 - [x] Make Abilities editable in the editor
 - [x] Make Passives editable in the editor
 - [x] Make Items editable in the editor
