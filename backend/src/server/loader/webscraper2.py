@@ -503,7 +503,7 @@ def _scrape_item_stat_block(block: Tag) -> dict[Stat, str]:
             parsed_stats[Stat.GOLD_P_10] = int(pair[1].split()[0])
             continue
         try:
-            parsed_stats[Stat(pair[1])] = float(pair[0])
+            parsed_stats[Stat.from_str(pair[1])] = float(pair[0])
         except ValueError as e:
             patch_logger.warning(e)
             parsed_stats[Stat.ERROR] = float(pair[0])
@@ -608,7 +608,7 @@ def _scrape_rune_summoner_stats(rune_content: Tag) -> dict[str, str]:
 
 
 
-def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, patch: str, hotfix: datetime = None) -> SummonerspellJson:
+def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewSummonerspell:
     soup = BeautifulSoup(wiki_html, "lxml")
     try:
         active = _scrape_summonerspell_active(soup)

@@ -331,12 +331,12 @@ async def _load_all_summonerspells(summonerspell_list: list[SummonerspellJson], 
 
 async def _load_champion(champion_json: ChampionJson, session: SafeSession, patch: Patch) -> None:
 
-    try:
+    """ try:
         champion_wiki = load_local_html(champion_json.name)
     except FileNotFoundError as e:
-        return
-    #champion_wiki = await _fetch_wiki_html(champion_json.name, "Champion", session)
-    #await asyncio.sleep(random.uniform(1.5, 3.0))
+        return """
+    champion_wiki = await _fetch_wiki_html(champion_json.name, "Champion", session)
+    await asyncio.sleep(random.uniform(1.5, 3.0))
     try:
         # Use webscraper to create the Champion object
         champion = ws.scrape_champion(champion_json, champion_wiki, patch.patch, patch.hotfix)
@@ -366,12 +366,12 @@ async def _load_champion(champion_json: ChampionJson, session: SafeSession, patc
 async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, patch: Patch) -> None:
 
 
-    try:
+    """ try:
         item_wiki = load_local_html(item_json.name)
     except FileNotFoundError as e:
-        return
-    #item_wiki = await _fetch_wiki_html(item_json.name, "Item", session)
-    #await asyncio.sleep(random.uniform(1.5, 3.0))
+        return """
+    item_wiki = await _fetch_wiki_html(item_json.name, "Item", session)
+    await asyncio.sleep(random.uniform(1.5, 3.0))
 
     try:
         item = ws.scrape_item(item_id, item_json, item_wiki, patch.patch, patch.hotfix)
@@ -395,12 +395,12 @@ async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, pa
 
 async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: Patch) -> None:
 
-    try:
+    """ try:
         rune_wiki = load_local_html(rune_class.rune.name)
     except FileNotFoundError as e:
-        return
-    #rune_wiki = await _fetch_wiki_html(rune_class.rune.name, "Rune", session)
-    #await asyncio.sleep(random.uniform(1.5, 3.0))
+        return """
+    rune_wiki = await _fetch_wiki_html(rune_class.rune.name, "Rune", session)
+    await asyncio.sleep(random.uniform(1.5, 3.0))
     try:
         image = await _load_image_rune(rune_class.rune.icon, session)
     except Exception as e:
@@ -422,12 +422,12 @@ async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: Patch) 
 
 async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: SafeSession, patch: Patch) -> None:
 
-    try:
+    """ try:
         summonerspell_wiki = load_local_html(summonerspell_json.name)
     except FileNotFoundError as e:
-        return
-    #summonerspell_wiki = await _fetch_wiki_html(summonerspell_json.name, "Summonerspell", session)
-    #await asyncio.sleep(random.uniform(1.5, 3.0))
+        return """
+    summonerspell_wiki = await _fetch_wiki_html(summonerspell_json.name, "Summonerspell", session)
+    await asyncio.sleep(random.uniform(1.5, 3.0))
 
     try:
         summonerspell = ws.scrape_summonerspell(summonerspell_json, summonerspell_wiki, patch.patch, patch.hotfix)

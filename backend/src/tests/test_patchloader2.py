@@ -323,7 +323,7 @@ async def test_load_all_summonerspells_calls_each(mocker, patch_with_hotfix):
 
 
 @pytest.mark.asyncio
-async def test_load_champion_success(mocker, patch_with_hotfix):
+async def test_load_champion_success(mocker, patch_with_hotfix, aatrox):
     champion_id = "Ahri"
     session = AsyncMock()
     
@@ -340,7 +340,7 @@ async def test_load_champion_success(mocker, patch_with_hotfix):
     mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>ahri</html>")
 
     # Patch create_champion and dependencies
-    mocker.patch("src.server.loader.patchloader2.ws.scrape_champion", return_value="champ_obj")
+    mocker.patch("src.server.loader.patchloader2.ws.scrape_champion", return_value=aatrox)
     mocker.patch("src.server.loader.patchloader2._load_image", new=AsyncMock())
     mock_add = mocker.patch("src.server.loader.patchloader2.db.add_champion", new=AsyncMock())
 
@@ -375,7 +375,6 @@ async def test_load_item_success(mocker, patch_with_hotfix):
 
     # Mock image + DB
     mocker.patch("src.server.loader.patchloader2._load_image", new=AsyncMock())
-    mocker.patch("src.server.loader.patchloader2.db.increment_item_count", new=AsyncMock())
     mock_add = mocker.patch("src.server.loader.patchloader2.db.add_item", new=AsyncMock())
 
     await _load_item(item_id, item_json, session, patch_with_hotfix)
@@ -405,7 +404,7 @@ async def test_load_rune_success(mocker, patch_with_hotfix):
 
 
 @pytest.mark.asyncio
-async def test_load_summonerspell_success(mocker, patch_with_hotfix):
+async def test_load_summonerspell_success(mocker, patch_with_hotfix, smite):
     spell_json = mocker.Mock()
     spell_json.name = "Flash"
     spell_json.image = mocker.Mock(full="flash.png")
@@ -413,7 +412,7 @@ async def test_load_summonerspell_success(mocker, patch_with_hotfix):
     session = AsyncMock()
 
     mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>flash</html>")
-    mocker.patch("src.server.loader.patchloader2.ws.scrape_summonerspell", return_value="spell_obj")
+    mocker.patch("src.server.loader.patchloader2.ws.scrape_summonerspell", return_value=smite)
     mocker.patch("src.server.loader.patchloader2._load_image", new=AsyncMock())
     mock_add = mocker.patch("src.server.loader.patchloader2.db.add_summonerspell", new=AsyncMock())
 

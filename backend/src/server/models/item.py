@@ -15,16 +15,16 @@ class NewItem(BaseModel):
     item_id: str
     name: str
     patch: str
-    hotfix: datetime = None
+    hotfix: datetime | None = None
     gold: int
     into: list[str]
     from_: list[str]
-    class_: ItemClass = None
+    class_: ItemClass | None = None
     validated: bool = True
     stats: dict[Stat, float] = {}
     masterwork: dict[Stat, float] = {}
 
-    active: ItemActive = None
+    active: ItemActive | None = None
     passives: list[ItemPassive] = []
     limitations: str = ""
     requirements: str = ""
@@ -43,6 +43,15 @@ class NewItem(BaseModel):
             ]
         if obj.get("active") is not None:
             obj["active"] = ItemActive.parse_obj(obj["active"])
+
+        if "stats" in obj:
+            obj["stats"] = {
+                Stat.from_str(k): v for k, v in obj["stats"].items()
+            }
+        if "masterwork" in obj:
+            obj["masterwork"] = {
+                Stat.from_str(k): v for k, v in obj["masterwork"].items()
+            }
         return super().parse_obj(obj)
     
     

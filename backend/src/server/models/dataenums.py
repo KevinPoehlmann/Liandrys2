@@ -182,11 +182,11 @@ class ResourceType(str, MultiValueEnum):
     SHIELD="Shield"
     NONE="None", ""
 
-class Skill(str, Enum):
+""" class Skill(str, Enum):
     Q="skill skill_q"
     W="skill skill_w"
     E="skill skill_e"
-    R="skill skill_r"
+    R="skill skill_r" """
 
 
 
@@ -228,20 +228,20 @@ class DamageSubType(str, MultiValueEnum):
     TRUE="True", "True damage", " True", " True damage"
     ADAPTIVE="Adaptive"
 
-class MinionAggro(str, Enum):
+""" class MinionAggro(str, Enum):
     DRAWN="Drawn"
     NOT="Not Drawn"
-    NOTES="See Notes"
+    NOTES="See Notes" """
 
-class CounterType(str, Enum):
+""" class CounterType(str, Enum):
     DISRUPTION="Disruption"
     GROUNDED="Grounded"
     KNOCKDOWN="Knockdown"
     PARRIES="Parries"
     PROJECTILE="Projectile"
-    SPELL_SHIELD="Spell shield"
+    SPELL_SHIELD="Spell shield" """
 
-class CounterEffect(str, MultiValueEnum):
+""" class CounterEffect(str, MultiValueEnum):
     BLOCKED ="Blocked"
     BYPASS="Bypass"
     DISABLED="Disabled"
@@ -250,12 +250,12 @@ class CounterEffect(str, MultiValueEnum):
     NOT_BLOCKED="Not Blocked"
     NOT_DISABLED="Not Disabled"
     NOT_INTERRUPTED="Not Interrupted"
-    SEE_NOTES="See Notes"
+    SEE_NOTES="See Notes" """
 
 
 #Abilities
 
-class AbilityStatKey(str, MultiValueEnum):
+""" class AbilityStatKey(str, MultiValueEnum):
     ANGLE="ANGLE"
     BARRAGE_COOLDOWN="Barrage Cooldown"
     CAST_TIME="CAST TIME"
@@ -287,7 +287,7 @@ class AbilityStatKey(str, MultiValueEnum):
     TARGET_RANGE="TARGET RANGE"
     TETHER_RADIS="TETHER RADIUS"
     WIDTH="WIDTH"
-    ERROR="Error"
+    ERROR="Error" """
 
 
 class AbilityStat(str, Enum):
@@ -361,7 +361,7 @@ class StatusType(str, Enum):
     POLYMOROPH="Polymorph"
     ROOT="Root" """
 
-class TableTitle(str, MultiValueEnum):
+""" class TableTitle(str, MultiValueEnum):
     CHANNEL_TIME="channel time"
     CHARGE_TIME="CHARGE TIME", 'seconds charged', 'charge time'
     CHIMES="number of Chimes"
@@ -378,7 +378,7 @@ class TableTitle(str, MultiValueEnum):
     RANK="Rank"
     SECONDS="seconds"
     STACKS="Stacks", "stacks"
-    ERROR="Error"
+    ERROR="Error" """
 
 
 class HpScaling(str, Enum):
@@ -406,25 +406,25 @@ class Comparison(str, Enum):
 
 ############### BaseModels ###############
 
-class Table(BaseModel):
+""" class Table(BaseModel):
     top: list[float] = [1]
     bot: list[float]
-    title: TableTitle = cast(TableTitle, TableTitle.RANK)
+    title: TableTitle = cast(TableTitle, TableTitle.RANK) """
 
 
-class Counter(BaseModel):
+""" class Counter(BaseModel):
     type_: CounterType
-    effect: CounterEffect
+    effect: CounterEffect """
 
 
-class AbilityCosts(BaseModel):
+""" class AbilityCosts(BaseModel):
     values: Table | None = None
-    unit: Stat | None = None
+    unit: Stat | None = None """
 
 
-class AbilityStat(BaseModel):
+""" class AbilityStat(BaseModel):
     key: AbilityStatKey
-    values: str
+    values: str """
 
 
 class ItemStat(BaseModel):
@@ -510,10 +510,10 @@ class ProcessedStatusProperties(EffectProperties):
 
 ############### Dataclasses ###############
 
-@dataclass
+""" @dataclass
 class ChampionSideBox():
     last_changed: str
-    range_type: RangeType
+    range_type: RangeType """
 
 
 
@@ -526,20 +526,20 @@ class AttackspeedStats():
 
 
 
-@dataclass
+""" @dataclass
 class AbilityDetails():
     damage_type: DamageType | None = None
     damage_sub_type: list[DamageSubType] = field(default_factory=list)
     minion_aggro: MinionAggro | None = None
-    counters: list[Counter] = field(default_factory=list)
+    counters: list[Counter] = field(default_factory=list) """
 
     
-@dataclass
+""" @dataclass
 class AbilityBaseStats():
     cast_time: float = 0
     cooldown: Table | None = None
     costs: AbilityCosts | None = None
-    ability_stats: list[AbilityStat] = field(default_factory=list)
+    ability_stats: list[AbilityStat] = field(default_factory=list) """
 
 
 
@@ -581,6 +581,6 @@ class ActionEffect():
     effect_comps: list[EffectComp] = field(default_factory=list)
 
 
-@dataclass
+""" @dataclass
 class Damage():
-    pass
+    pass """

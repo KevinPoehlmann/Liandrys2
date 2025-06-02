@@ -4,8 +4,7 @@ from src.server.models.effect import Effect
 from src.server.models.image import Image
 
 from src.server.models.dataenums import (
-    ActiveType,
-    Counter
+    ActiveType
 )
 
 

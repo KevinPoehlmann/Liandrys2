@@ -17,7 +17,7 @@ class NewChampion(BaseModel):
     name: str
     champion_id: str
     patch: str
-    hotfix: datetime = None
+    hotfix: datetime | None = None
     last_changed: str
 
     range_type: RangeType
@@ -58,7 +58,7 @@ class NewChampion(BaseModel):
 
 
     @classmethod
-    def parse_obj(cls, obj: dict) -> "Champion":
+    def parse_obj(cls, obj: dict) -> "NewChampion":
         if "passive" in obj:
             obj["passive"] = ChampionPassive.parse_obj(obj["passive"])
         for spell in ("q", "w", "e", "r"):

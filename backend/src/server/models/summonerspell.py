@@ -10,7 +10,7 @@ class NewSummonerspell(BaseModel):
     key: str
     name: str
     patch: str
-    hotfix: datetime = None
+    hotfix: datetime | None = None
 
     ability: Ability
 

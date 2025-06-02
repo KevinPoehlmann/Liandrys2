@@ -1,0 +1,35 @@
+{
+  "key": "SummonerSmite",
+  "name": "Smite",
+  "patch": "15.8.1",
+  "hotfix": null,
+  "ability": {
+    "name": "Smite",
+    "description": "Deals  600 true damage to the target medium / large monster or enemy minion. Against pets, deals 40 true damage instead.Transforms into  Unleashed Smite once a jungle pet is fed 20 treats.",
+    "cost": "0",
+    "cooldown": "15",
+    "cast_time": "0",
+    "recharge": "90",
+    "effects": [],
+    "raw_stats": {
+      "charges": "2",
+      "range": " 500",
+      "breaks stealth": "Yes",
+      "summoner level": "3"
+    },
+    "changes": [],
+    "validated": false
+  },
+  "validated": false,
+  "changes": [],
+  "image": {
+    "full": "SummonerSmite.png",
+    "group": "spell",
+    "sprite": "spell0.png",
+    "x": 96,
+    "y": 48,
+    "h": 48,
+    "w": 48
+  },
+  "id": "6808cebf7e895f129b6f14e7"
+}

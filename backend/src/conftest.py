@@ -506,6 +506,28 @@ def q_heal_e():
 
 
 @pytest.fixture()
+def aatrox() -> Champion:
+    with open("src/tests/static/json/aatrox.json", encoding='UTF-8') as f:
+        data = json.load(f)
+    return Champion.parse_obj(data)
+
+
+@pytest.fixture()
+def triforce() -> Item:
+    with open("src/tests/static/json/triforce.json", encoding='UTF-8') as f:
+        data = json.load(f)
+    return Item.parse_obj(data)
+
+
+@pytest.fixture()
+def smite() -> Summonerspell:
+    with open("src/tests/static/json/smite.json", encoding='UTF-8') as f:
+        data = json.load(f)
+    return Summonerspell.parse_obj(data)
+
+
+
+@pytest.fixture()
 def aatrox_with_items():
     with open("src/tests/static/json/aatrox.json", encoding='UTF-8') as champion:
         aatrox = Champion.parse_obj(json.load(champion))
