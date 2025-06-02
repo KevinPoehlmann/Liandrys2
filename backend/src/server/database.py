@@ -130,7 +130,31 @@ async def fetch_champions_by_patch(patch: str, hotfix: datetime) -> list[ShortCh
     champions = []
     cursor = champion_collection.find(
         {"patch":patch, "hotfix":hotfix},
-        {"_id": 1, "name": 1, "key": 1, "champion_id": 1, "validated": 1, "image": 1},
+        {
+            "_id": 1,
+            "name": 1,
+            "key": 1,
+            "champion_id": 1,
+            "validated": 1,
+            "image": 1,
+            "q.name": 1,
+            "q.maxrank": 1,
+            "q.image": 1,
+            "q.validated": 1,
+            "w.name": 1,
+            "w.maxrank": 1,
+            "w.image": 1,
+            "w.validated": 1,
+            "e.name": 1,
+            "e.maxrank": 1,
+            "e.image": 1,
+            "e.validated": 1,
+            "r.name": 1,
+            "r.maxrank": 1,
+            "r.image": 1,
+            "r.validated": 1
+        }
+,
         sort=[("name", 1)])
     async for document in cursor:
         champion = ShortChampion(**document)

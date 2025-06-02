@@ -1,6 +1,6 @@
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+  <div class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50" @click="handleBackdropClick">
+    <div ref="modalContent" class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto">
 
       <!-- Search Bar -->
       <input
@@ -18,7 +18,7 @@
           class="cursor-pointer hover:scale-105 transition text-center"
         >
           <img
-            :src="champ.imageUrl"
+            :src="`images/${champ.image.group}/${champ.image.full}`"
             alt="Champion"
             class="rounded mx-auto w-16 h-16 object-cover"
           />
@@ -38,6 +38,7 @@ const props = defineProps({
 const emit = defineEmits(['select'])
 
 const filter = ref('')
+const modalContent = ref(null)
 
 const filteredChampions = computed(() => {
   if (!filter.value.trim()) return props.allChampions
@@ -48,6 +49,15 @@ const filteredChampions = computed(() => {
 
 const selectChampion = (champ) => {
   emit('select', champ)
+}
+
+const handleBackdropClick = (event) => {
+  setTimeout(() => {
+    if (!modalContent.value) return
+    if (!modalContent.value.contains(event.target)) {
+      emit('select', null)
+    }
+  })
 }
 </script>
 

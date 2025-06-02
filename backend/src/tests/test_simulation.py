@@ -1,7 +1,8 @@
 import pytest
 
 
-from src.server.models.dataenums import Action, ActionType, Actor
+from src.server.models.dataenums import ActionType, Actor
+from src.server.models.request import Action
 
 
 

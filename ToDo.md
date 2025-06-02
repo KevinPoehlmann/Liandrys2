@@ -4,6 +4,9 @@
 ### General Tasks ###
 - [x] Make a better readme file with chatgpt
 - [x] Make type hints work in database
+### Clean Code ###
+- [ ] Remove unecessary Enums, dataclasses and BaseModels
+- [ ] Convert MultiValueEnums to normal Enums and make sure the use from_str if needed
 ### Functionality ###
 - [x] Inject combo into simulation
 - [ ] Make damage calculation handle most things
@@ -71,6 +74,7 @@
         - [x] Update to new Rune Structure
         - [x] Update to new Summonerspell Structure
 - [ ] Add automatic stat patching
+- [ ] Fix weird code issues in character.py
 ### Admin Functions ###
 - [ ] Make Dataset updateable
 - [ ] Build Contract Tests before pushing a changed object into the database
@@ -104,6 +108,9 @@
         - get some key from github to download it via ssh from the raspberry
         - donwload it
     - swap back lines and put it back on github
+- **Dbuggin:**
+    - uncomment 3 lines in the docker-compose file
+    - choose "Attach to FastAPI (Docker)" in the vs code debugger
 - **Common Issues:**
     - login data for the mongo express admin and pass (default)
 

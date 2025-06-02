@@ -6,7 +6,7 @@
     <!-- Champion Selector -->
     <ChampionSelector
       :champion="config.champion"
-      @select="config.champion = $event"
+      @select="selectChampion"
       :team="team"
     />
 
@@ -24,14 +24,16 @@
     </div>
 
     <!-- Summoner Spells Placeholder -->
-    <div class="p-3 border rounded bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100">
-      <span class="text-sm">Summoner Spells Placeholder</span>
-    </div>
+    <SummonerspellSelector
+      :spells="config.summonerspells"
+      @update="updateSummonerspells"
+    />
 
     <!-- Items Placeholder -->
-    <div class="p-3 border rounded bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100">
-      <span class="text-sm">Items Placeholder</span>
-    </div>
+    <ItemSelector
+      :items="config.items"
+      @update="updateItems"
+    />
 
     <!-- Stack Configuration Placeholder -->
     <div class="p-3 border rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100">
@@ -39,16 +41,23 @@
     </div>
 
     <!-- Action Buttons Placeholder -->
-    <div class="p-3 border rounded bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100">
-      <span class="text-sm">Actions Placeholder (Abilities, Auto, Summoner Spells, Active Items)</span>
-    </div>
+     <ActionPanel
+      :team="team"
+      :champion="config.champion"
+      :summonerspells="config.summonerspells"
+      :items="config.items"
+      @add="(action) => emit('add', action)"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 
+import ActionPanel from './ActionPanel.vue'
 import ChampionSelector from './ChampionSelector.vue'
+import SummonerspellSelector from './SummonerspellSelector.vue'
+import ItemSelector from './ItemSelector.vue'
 
 const props = defineProps({
   team: {
@@ -65,6 +74,9 @@ const props = defineProps({
 const level = ref(1)
 const selectedChampionName = ref('')
 
+
+const emit = defineEmits(['add'])
+
 const increaseLevel = () => {
   if (props.config.level < 18) props.config.level++
 }
@@ -72,8 +84,14 @@ const decreaseLevel = () => {
   if (props.config.level > 1) props.config.level--
 }
 
-const selectChampion = () => {
-  // Placeholder for future modal logic
+const selectChampion = (value) => {
+  props.config.champion = value
+}
+const updateSummonerspells = (value) => {
+  props.config.summonerspells = value
+}
+const updateItems = (value) => {
+  props.config.items = value
 }
 </script>
 

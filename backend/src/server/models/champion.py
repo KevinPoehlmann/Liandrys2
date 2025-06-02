@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
 
-from src.server.models.ability import ChampionAbility
+from src.server.models.ability import ChampionAbility, ShortChampionAbility
 from src.server.models.passive import ChampionPassive
 from src.server.models.image import Image
 
@@ -81,6 +81,10 @@ class ShortChampion(BaseModel):
     key: str
     name: str
     champion_id: str
+    q: ShortChampionAbility
+    w: ShortChampionAbility
+    e: ShortChampionAbility
+    r: ShortChampionAbility
     validated: bool
     image: Image
 

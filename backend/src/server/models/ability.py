@@ -42,3 +42,11 @@ class ChampionAbility(Ability):
 class ItemActive(Ability):
     type_: ActiveType
     unique: bool = False
+
+
+
+class ShortChampionAbility(BaseModel):
+    name: str
+    maxrank: int
+    image: Image
+    validated: bool

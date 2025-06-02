@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from src.server.models.dataenums import ActionType
+from src.server.models.dataenums import ActionType, Actor
 
 
 class Rank(BaseModel):
@@ -7,6 +7,13 @@ class Rank(BaseModel):
     w: int
     e: int
     r: int
+
+
+class Action(BaseModel):
+    actor: Actor
+    target: Actor
+    action_type: ActionType
+
 
 
 class V1Request(BaseModel):
@@ -18,7 +25,7 @@ class V1Request(BaseModel):
     lvl_defender: int
     ability_points_defender: Rank
     items_defender: list[str]
-    combo: list[ActionType]
+    combo: list[Action]
 
 
 class V1Response(BaseModel):

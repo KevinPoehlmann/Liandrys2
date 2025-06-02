@@ -63,7 +63,7 @@ class BuffAction(BaseModel):
 
 
 class BuffProperties(BaseModel):
-    condition: Condition = None
+    condition: Condition | None = None
 
 class StatProperties(BuffProperties):
     stat: Stat

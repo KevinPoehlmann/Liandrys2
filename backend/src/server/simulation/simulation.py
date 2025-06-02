@@ -1,9 +1,10 @@
 from collections import defaultdict
 
 
-from src.server.models.dataenums import Action, EffectComp, QueueComponent, EffectType, Actor
-from src.server.models.request import V1Response
+from src.server.models.dataenums import EffectComp, QueueComponent, EffectType, Actor
+from src.server.models.request import V1Response, Action
 from src.server.simulation.character import Character
+from src.server.simulation.exceptions import SimulationError
 
 
 
@@ -21,12 +22,21 @@ class Simulation():
 
 
     def do_combo(self, combo: list[Action]) -> V1Response:
-        for action in combo:
+        for i, action in enumerate(combo):
             delay = self.actors[action.actor].check_action_delay(action.action_type, self.timer)
             if delay:
                 self.timer = delay
             self._process_queue()
-            self._do_action(action)
+            try:
+                self._do_action(action)
+            except Exception as e:
+                raise SimulationError(
+                    message=str(e),
+                    action_index=i,
+                    action_type=action.action_type,
+                    actor=action.actor,
+                    phase="cast"
+                ) from e
         self._process_queue()
         return V1Response(damage=round(self.actors[Actor.RED].damage_taken), time=round(self.timer, 2))
     

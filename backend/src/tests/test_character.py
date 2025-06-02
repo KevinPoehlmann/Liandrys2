@@ -1,7 +1,8 @@
 import pytest
 from collections import defaultdict
 
-from src.server.models.dataenums import Stat, Action, ActionType, Actor, DamageSubType, DamageType, HpScaling, StatusType
+from src.server.models.dataenums import Stat, ActionType, Actor, DamageSubType, DamageType, HpScaling, StatusType
+from src.server.models.request import Action
 
 
 
@@ -202,7 +203,7 @@ class TestCharacter():
         ({}, {"values":[(StatusType.STUN, 2)]}, {StatusType.STUN: [(3, 0)]}),
         ({StatusType.STUN: [(2, 0)]}, {"values":[(StatusType.STUN, 2)]}, {StatusType.STUN: [(2, 0), (3, 0)]}),
         ({StatusType.STUN: [(2, 0)]}, {"values":[(StatusType.SILENCE, 2)]}, {StatusType.STUN: [(2, 0)], StatusType.SILENCE: [(3, 0)]}),
-    ], ["queue_status_list"])
+    ], indirect=["queue_status_list"])
     def test_apply_status_effects(self, aatrox_with_items, initial_stati, queue_status_list, expected_stati):
         aatrox_with_items.status_effects = defaultdict(list, initial_stati)
         aatrox_with_items._apply_status_effects(queue_status_list, 1)
