@@ -40,7 +40,7 @@ from src.server.loader.webscraper2 import (
     _scrape_hotfix_champion,    
     _scrape_hotfix_object,      
 )
-from src.server.models.ability import ChampionAbility, Ability
+from src.server.models.ability import ChampionAbility, Ability, ItemActive
 from src.server.models.champion import NewChampion, Champion
 from src.server.models.dataenums import RangeType, Stat, ItemClass, EffectType, DamageSubType, DamageProperties, HpScaling
 from src.server.models.effect import Effect
@@ -304,6 +304,7 @@ def test_scrape_item_titanic(load_html):
     assert isinstance(item, NewItem)
     assert item.name == "Titanic Hydra"
     assert item.class_ == ItemClass.LEGENDARY
+    assert isinstance(item.active, ItemActive)
     assert item.active.name == "Titanic Crescent"
     assert item.passives[0].name == "Cleave"
 

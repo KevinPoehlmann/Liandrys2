@@ -32,7 +32,7 @@ from src.server.models.dataenums import (
 )
 from src.server.models.effect import EffectComponent
 from src.server.models.item import Item
-from src.server.models.passive_effect import BuffProperties, BuffAction
+from src.server.models.passive_effect import BuffProperties, BuffAction, StatProperties, StackProps, EffectProps
 from src.server.models.request import Rank, Action
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
@@ -97,6 +97,7 @@ class Character():
         if not self.buffs[Buff.STATS]:
             return result
         for stat_property in self.buffs[Buff.STATS]:
+            assert isinstance(stat_property, StatProperties)
             if self._evaluate_condition(stat_property.condition):
                 formula = stat_property.scaling
                 result += self._evaluate_formula(formula)
@@ -211,11 +212,13 @@ class Character():
     def _do_action_buff(self, action: BuffAction) -> EffectComponent | None:
         match action.type_:
             case BuffActionType.STACK:
-                self.stacks[action.props.stack_key] += self._evaluate_formula(action.props.amount)
+                assert isinstance(action.props, StackProps)
+                self.stacks[action.props.stack_key] += int(self._evaluate_formula(action.props.amount))
             case BuffActionType.EFFECT:
+                assert isinstance(action.props, EffectProps)
                 return action.props.effect
 
-    def _evaluate_condition(self, condition: Condition) -> bool:
+    def _evaluate_condition(self, condition: Condition | None) -> bool:
         if condition is None:
             return True
         match condition.comparison:
@@ -227,7 +230,7 @@ class Character():
                 return self._evaluate_formula(condition.key) == condition.value
 
 
-    def _check_buffs(self, action_type: ActionType, buff: Buff) -> list[EffectComponent]:
+    """ def _check_buffs(self, action_type: ActionType, buff: Buff) -> list[EffectComponent]: #TODO
         if not self.buffs[buff]:
             return []
         effect_components = []
@@ -237,7 +240,7 @@ class Character():
                     comp = self._do_action_buff(buff_action)
                     if comp:
                         effect_components.append(comp)
-        return effect_components
+        return effect_components """
 
 
 
@@ -343,7 +346,7 @@ class Character():
         self._remove_expired_status_effects(timestamp)
 
         if StatusType.STASIS in self.status_effects:
-            timestamp = self.status_effects[StatusType.STASIS]
+            timestamp = self.status_effects[StatusType.STASIS][0][0]
 
         if StatusType.SUPPRESSION in self.status_effects:
             supression_delay = max(supression[0] for supression in self.status_effects[StatusType.SUPPRESSION])
@@ -395,8 +398,8 @@ class Character():
             speed=self.champion.missile_speed,
             props=aa_props
         )
-        effect_components = self._check_buffs(ActionType.AA, Buff.CAST)
-        effect_components.append(dmg)
+        effect_components = [dmg]
+        """ effect_components.extend(self._check_buffs(ActionType.AA, Buff.CAST)) """
         return ActionEffect(time=timestamp, effect_comps=effect_components)
     
 
@@ -420,7 +423,7 @@ class Character():
                     props=component.props
                 )
                 action_effect.effect_comps.append(effect_comp)
-                action_effect.effect_comps.extend(self._check_buffs(action.action_type, Buff.CAST))
+                """ action_effect.effect_comps.extend(self._check_buffs(action.action_type, Buff.CAST)) """
         return action_effect
     
 
@@ -438,7 +441,7 @@ class Character():
             
             match component.type_:
                 case EffectType.DAMAGE:
-                    self._check_buffs(component.source, Buff.HIT)
+                    """ self._check_buffs(component.source, Buff.HIT) """
                     assert isinstance(component.props, DamageProperties), "Damage component must have DamageProperties"
                     flat_pen, percent_pen = self._get_penetration(component.props.dmg_sub_type)
                     props=ProcessedDamageProperties(

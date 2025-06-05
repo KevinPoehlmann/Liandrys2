@@ -33,10 +33,10 @@ async def get_all_patches() -> list[Patch]:
 
 @router.get("/status")
 async def get_status() -> dict:
-    patches = await check_patch_available()
-
-    if "_error" in patches:
-        raise HTTPException(status_code=500, detail=f"Patch check failed: {patches['_error']}")
+    try:
+        patches = await check_patch_available()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Patch check failed: {e}")
 
     msg = "Updates available!" if patches else "Everything is up to date!"
     return {

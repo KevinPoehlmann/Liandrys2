@@ -82,26 +82,8 @@ def load_soup(load_html):
     return _loader
 
 
-
-
-
 @pytest.fixture()
-def db_fake_patch_with_id():
-    patch = Patch(
-        _id=ObjectId(),
-        patch="13.21.1",
-        hotfix=datetime(datetime.now().year, 10, 27),
-        champion_count=165,
-        item_count=435,
-        rune_count=63,
-        summonerspell_count=18,
-        document_count=681
-    )
-    return patch
-
-
-@pytest.fixture()
-def patch_with_hotfix():
+def patch_with_hotfix() -> NewPatch:
     patch = NewPatch(
         patch="15.7.1",
         hotfix=datetime(2024, 4, 6, 12, 0),
@@ -114,7 +96,7 @@ def patch_with_hotfix():
 
 
 @pytest.fixture()
-def patch_without_hotfix():
+def patch_without_hotfix() -> NewPatch:
     patch = NewPatch(
         patch="15.7.1",
         hotfix=None,
@@ -128,7 +110,7 @@ def patch_without_hotfix():
 
 
 @pytest.fixture
-def processed_damage_props(request):
+def processed_damage_props(request) -> ProcessedDamageProperties:
     params = getattr(request, "param", {})
     return ProcessedDamageProperties(
         value=params.get("val", 50),
@@ -141,7 +123,7 @@ def processed_damage_props(request):
 
 
 @pytest.fixture
-def queue_damage_list(request):
+def queue_damage_list(request) -> list[QueueComponent]:
     params = getattr(request, "param", {})
     values=params.get("values", [])
     props=[ProcessedDamageProperties(
@@ -162,7 +144,7 @@ def queue_damage_list(request):
 
 
 @pytest.fixture
-def queue_heal_list(request):
+def queue_heal_list(request) -> list[QueueComponent]:
     params = getattr(request, "param", {})
     values=params.get("values", [])
     props=[ProcessedHealProperties(value=value) for value in values]
@@ -177,7 +159,7 @@ def queue_heal_list(request):
 
 
 @pytest.fixture
-def queue_shield_list(request):
+def queue_shield_list(request) -> list[QueueComponent]:
     params = getattr(request, "param", {})
     values=params.get("values", [])
     props=[ProcessedShieldProperties(value=value, duration=duration) for duration, value in values]
@@ -192,7 +174,7 @@ def queue_shield_list(request):
 
 
 @pytest.fixture
-def queue_status_list(request):
+def queue_status_list(request) -> list[QueueComponent]:
     params = getattr(request, "param", {})
     values=params.get("values", [])
     props=[ProcessedStatusProperties(type_=type_, duration=duration) for type_, duration in values]
@@ -208,7 +190,7 @@ def queue_status_list(request):
 
 
 @pytest.fixture
-def processed_status_props(request):
+def processed_status_props(request) -> ProcessedStatusProperties:
     params = getattr(request, "param", {})
     return ProcessedStatusProperties(
         type_=params.get("type", StatusType.STUN),
@@ -218,7 +200,7 @@ def processed_status_props(request):
 
 
 @pytest.fixture
-def action_effect_aa():
+def action_effect_aa() -> ActionEffect:
     return ActionEffect(
         time=0.215,
         effect_comps=[
@@ -238,7 +220,7 @@ def action_effect_aa():
 
 
 @pytest.fixture
-def action_effect_q():
+def action_effect_q() -> ActionEffect:
     return ActionEffect(
         time=1.6,
         effect_comps=[
@@ -258,7 +240,7 @@ def action_effect_q():
 
 
 @pytest.fixture()
-def e_damage_aa():
+def e_damage_aa() -> EffectComp:
     d = EffectComp(
         source=ActionType.AA,
         target=Actor.RED,
@@ -273,7 +255,7 @@ def e_damage_aa():
 
 
 @pytest.fixture()
-def e_damage_w():
+def e_damage_w() -> EffectComp:
     d = EffectComp(
         source=ActionType.W,
         target=Actor.RED,
@@ -291,7 +273,7 @@ def e_damage_w():
 
 
 @pytest.fixture()
-def e_damage_e():
+def e_damage_e() -> EffectComp:
     d = EffectComp(
         source=ActionType.E,
         target=Actor.RED,
@@ -310,7 +292,7 @@ def e_damage_e():
 
 
 @pytest.fixture()
-def e_damage_r():
+def e_damage_r() -> EffectComp:
     d = EffectComp(
         source=ActionType.R,
         target=Actor.RED,
@@ -330,7 +312,7 @@ def e_damage_r():
 
 
 @pytest.fixture
-def q_processed_ad_flat():
+def q_processed_ad_flat() -> QueueComponent:
     p = QueueComponent(
         source=ActionType.AA,
         actor=Actor.BLUE,
@@ -366,7 +348,7 @@ def q_processed_ap_maxhp():
 
 
 @pytest.fixture
-def q_processed_heal_flat():
+def q_processed_heal_flat() -> QueueComponent:
     d = QueueComponent(
         source=ActionType.E,
         actor=Actor.BLUE,
@@ -380,7 +362,7 @@ def q_processed_heal_flat():
 
 
 @pytest.fixture
-def q_processed_vamp():
+def q_processed_vamp() -> QueueComponent:
     d = QueueComponent(
         source=ActionType.AA,
         actor=Actor.BLUE,
@@ -400,7 +382,7 @@ def q_processed_vamp():
 
 
 @pytest.fixture
-def q_processed_vamp_heal():
+def q_processed_vamp_heal() -> QueueComponent:
     d = QueueComponent(
         source=ActionType.AA,
         actor=Actor.BLUE,
@@ -415,7 +397,7 @@ def q_processed_vamp_heal():
 
 
 @pytest.fixture
-def q_damage_aa():
+def q_damage_aa() -> QueueComponent:
     d = QueueComponent(
         source=ActionType.AA,
         actor=Actor.BLUE,
@@ -431,7 +413,7 @@ def q_damage_aa():
 
 
 @pytest.fixture
-def q_vamp_aa():
+def q_vamp_aa() -> QueueComponent:
     d = QueueComponent(
         source=ActionType.AA,
         actor=Actor.BLUE,
@@ -448,7 +430,7 @@ def q_vamp_aa():
 
 
 @pytest.fixture
-def q_damage_q():
+def q_damage_q() -> QueueComponent:
     d = QueueComponent(
         source=ActionType.Q,
         actor=Actor.BLUE,
@@ -464,7 +446,7 @@ def q_damage_q():
 
 
 @pytest.fixture
-def q_damage_w():
+def q_damage_w() -> QueueComponent:
     d = QueueComponent(
         source=ActionType.W,
         actor=Actor.BLUE,
@@ -480,7 +462,7 @@ def q_damage_w():
 
 
 @pytest.fixture
-def q_damage_w_shadow():
+def q_damage_w_shadow() -> QueueComponent:
     d = QueueComponent(
         source=ActionType.W,
         actor=Actor.BLUE,
@@ -492,7 +474,7 @@ def q_damage_w_shadow():
 
 
 @pytest.fixture
-def q_heal_e():
+def q_heal_e() -> QueueComponent:
     d = QueueComponent(
         source=ActionType.E,
         actor=Actor.BLUE,
@@ -510,13 +492,6 @@ def aatrox() -> Champion:
     with open("src/tests/static/json/aatrox.json", encoding='UTF-8') as f:
         data = json.load(f)
     return Champion.parse_obj(data)
-
-
-@pytest.fixture()
-def triforce() -> Item:
-    with open("src/tests/static/json/triforce.json", encoding='UTF-8') as f:
-        data = json.load(f)
-    return Item.parse_obj(data)
 
 
 @pytest.fixture()
@@ -552,7 +527,7 @@ def aatrox_with_items():
 
 
 @pytest.fixture
-def sim(aatrox_with_items):
+def sim(aatrox_with_items) -> Simulation:
     aatrox2 = copy.deepcopy(aatrox_with_items)
     sim = Simulation(aatrox_with_items, aatrox2)
     return sim

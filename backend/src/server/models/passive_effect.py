@@ -48,7 +48,7 @@ class BuffAction(BaseModel):
             type_ = BuffActionType(type_)
             obj["type_"] = type_
 
-        if isinstance(props, dict):
+        if isinstance(props, dict) and isinstance(type_, BuffActionType):
             props_class = BUFF_ACTION_PROPERTIES_MAP.get(type_, BuffActionProps)
             obj["props"] = props_class.parse_obj(props)
 
@@ -116,7 +116,7 @@ class PassiveEffect(BaseModel):
             except ValueError:
                 raise ValueError(f"Invalid Buff: {buff}")
 
-        if isinstance(props, dict):
+        if isinstance(props, dict) and isinstance(buff, Buff):
             props_class = PASSIVE_PROPERTIES_MAP.get(buff, BuffProperties)
             obj["props"] = props_class.parse_obj(props)
 

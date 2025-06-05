@@ -5,14 +5,14 @@ from fastapi.responses import JSONResponse
 
 
 from src.server.database import (
-    fetch_items_by_patch,
+    fetch_short_items_by_patch,
     fetch_item_by_id,
     update_item
 )
 from src.server.models.item import ShortItem, Item
 from src.server.models.dataenums import ItemClass, Map
 
-from src.server.utils.request_parsing import parse_from_request
+from src.server.routes.helpers import parse_from_request, get_required_item
 
 
 router = APIRouter()
@@ -21,18 +21,16 @@ router = APIRouter()
 
 @router.get("/all/{patch}")
 async def get_items(patch: str, hotfix: datetime | None = None) -> list[ShortItem]:
-    items = await fetch_items_by_patch(patch, hotfix)
+    items = await fetch_short_items_by_patch(patch, hotfix)
     if not items:
         raise HTTPException(status_code=404, detail=f"No items found for patch: {patch} !")
     return items
 
 
 @router.get("/{item_id}")
-async def get_item(item_id: str) -> Item:
-    response = await fetch_item_by_id(item_id)
-    if not response:
-        raise HTTPException(status_code=404, detail=f"No item found with id: {item_id} !")
-    return JSONResponse(content=response.dict())
+async def get_item(item_id: str) -> JSONResponse:
+    item = await get_required_item(item_id)
+    return JSONResponse(content=item.dict())
 
 
 @router.put("/")
@@ -51,7 +49,7 @@ async def put_item(request: Request) -> int:
 #------------------Enums--------------------------------------------------
 
 @router.get("/itemclass/")
-async def get_item_class() -> list[ItemClass]:
+async def get_item_class() -> list[str]:
     response = [e.value for e in ItemClass]
     if not response:
         raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
@@ -59,7 +57,7 @@ async def get_item_class() -> list[ItemClass]:
 
 
 @router.get("/map/")
-async def get_map() -> list[Map]:
+async def get_map() -> list[str]:
     response = [e.value for e in Map]
     if not response:
         raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")

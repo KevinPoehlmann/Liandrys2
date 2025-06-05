@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
+from typing import Self
 
 from src.server.models.ability import ChampionAbility, ShortChampionAbility
 from src.server.models.passive import ChampionPassive
@@ -58,7 +59,7 @@ class NewChampion(BaseModel):
 
 
     @classmethod
-    def parse_obj(cls, obj: dict) -> "NewChampion":
+    def parse_obj(cls, obj: dict) -> Self:
         if "passive" in obj:
             obj["passive"] = ChampionPassive.parse_obj(obj["passive"])
         for spell in ("q", "w", "e", "r"):

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
+from typing import Self
 
 from src.server.models.ability import Ability
 from src.server.models.image import Image
@@ -19,7 +20,7 @@ class NewSummonerspell(BaseModel):
     image: Image
 
     @classmethod
-    def parse_obj(cls, obj: dict) -> "NewSummonerspell":
+    def parse_obj(cls, obj: dict) -> Self:
         if obj.get("ability") is not None:
             obj["ability"] = Ability.parse_obj(obj["ability"])
         return super().parse_obj(obj)

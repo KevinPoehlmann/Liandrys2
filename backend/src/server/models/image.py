@@ -6,8 +6,8 @@ from pydantic import BaseModel
 class Image(BaseModel):
     full: str
     group: str
-    sprite: str = None
-    x: int = None
-    y: int = None
-    h: int = None
-    w: int = None
+    sprite: str | None = None
+    x: int | None = None
+    y: int | None = None
+    h: int | None = None
+    w: int | None = None

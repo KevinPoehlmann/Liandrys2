@@ -80,10 +80,10 @@ def wiki_to_riot_patch(wiki_patch: str) -> str:
 
 
 
-def parse_formula_from_table(bot_values: str, top_values: str = "", scale: str = "level") -> str:
-    bot_values = [float(v.strip()) for v in bot_values.split(";")]
-    if top_values:
-        top_values = [float(v.strip()) for v in top_values.split(";")]
+def parse_formula_from_table(bot_str: str, top_str: str = "", scale: str = "level") -> str:
+    bot_values = [float(v.strip()) for v in bot_str.split(";")]
+    if top_str:
+        top_values = [float(v.strip()) for v in top_str.split(";")]
     else:
         top_values = list(range(1, len(bot_values) + 1))
 
@@ -290,20 +290,6 @@ def datetime_to_wiki(date: datetime) -> str:
 
 
 
-class TodoType(str, Enum):
-    LOAD="Load"
-    HOTFIX="Hotfix"
-    PATCH="Patch"
-
-
-
-@dataclass
-class Todo():
-    todo_type: TodoType
-    patch: str
-    hotfix: datetime = None
-
-
 
 @dataclass
 class RuneClass():
@@ -323,6 +309,7 @@ class SafeSession:
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
 
+    @staticmethod
     def _retry(retries=3, base_delay=1.5):
         def decorator(func):
             @functools.wraps(func)

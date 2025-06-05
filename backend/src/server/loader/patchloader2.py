@@ -115,16 +115,13 @@ async def load_data() -> None:
 
 
 async def check_patch_available() -> dict[str, list[datetime]]:
-    try:
-        all_patches = _fetch_riot_patch_list()   
-        db_patch = await db.fetch_patch_latest()
-        patch_list = _get_newer_patches(db_patch, all_patches)
-        hotfixes = await _check_wiki_for_hotfixes(patch_list)
-        result = _get_newer_hotfixes(db_patch, hotfixes)
-        return result
-    except Exception as e:
-        patch_logger.critical(f"Error while checking for new patches: {e}")
-        return {"_error": str(e)}
+    all_patches = _fetch_riot_patch_list()   
+    db_patch = await db.fetch_patch_latest()
+    patch_list = _get_newer_patches(db_patch, all_patches)
+    hotfixes = await _check_wiki_for_hotfixes(patch_list)
+    result = _get_newer_hotfixes(db_patch, hotfixes)
+    return result
+
 
 
 # --- Internal functions (to be expanded later) ---
@@ -148,7 +145,7 @@ def _fetch_riot_patch_list() -> list[str]:
     return patches
 
 
-def _get_newer_patches(db_patch: Patch, patches: list[str]) -> list[str]:
+def _get_newer_patches(db_patch: Patch | None, patches: list[str]) -> list[str]:
     if not db_patch:
         return [patches[0]]
     try:
@@ -296,7 +293,7 @@ async def _list_data(patch_ver: str, session: SafeSession) -> tuple[list[Champio
     return champion_list, item_list, rune_list, summoner_list
 
 
-async def _load_all_champions(champion_list: list[ChampionJson], session: SafeSession, patch: Patch) -> None:
+async def _load_all_champions(champion_list: list[ChampionJson], session: SafeSession, patch: NewPatch) -> None:
     tasks = [
         _load_champion(champion_json, session, patch)
         for champion_json in champion_list
@@ -304,7 +301,7 @@ async def _load_all_champions(champion_list: list[ChampionJson], session: SafeSe
     await asyncio.gather(*tasks)
 
 
-async def _load_all_items(item_list: list[tuple[str, ItemJson]], session: SafeSession, patch: Patch) -> None:
+async def _load_all_items(item_list: list[tuple[str, ItemJson]], session: SafeSession, patch: NewPatch) -> None:
     tasks = [
         _load_item(item_id, item_data, session, patch)
         for item_id, item_data in item_list
@@ -312,7 +309,7 @@ async def _load_all_items(item_list: list[tuple[str, ItemJson]], session: SafeSe
     await asyncio.gather(*tasks)
 
 
-async def _load_all_runes(rune_list: list[RuneClass], session: SafeSession, patch: Patch) -> None:
+async def _load_all_runes(rune_list: list[RuneClass], session: SafeSession, patch: NewPatch) -> None:
     rune_tasks = [
         _load_rune(rune, session, patch)
         for rune in rune_list
@@ -320,7 +317,7 @@ async def _load_all_runes(rune_list: list[RuneClass], session: SafeSession, patc
     await asyncio.gather(*rune_tasks)
 
 
-async def _load_all_summonerspells(summonerspell_list: list[SummonerspellJson], session: SafeSession, patch: Patch) -> None:
+async def _load_all_summonerspells(summonerspell_list: list[SummonerspellJson], session: SafeSession, patch: NewPatch) -> None:
     summonerspell_tasks = [
         _load_summonerspell(stats, session, patch)
         for stats in summonerspell_list
@@ -329,7 +326,7 @@ async def _load_all_summonerspells(summonerspell_list: list[SummonerspellJson], 
 
 
 
-async def _load_champion(champion_json: ChampionJson, session: SafeSession, patch: Patch) -> None:
+async def _load_champion(champion_json: ChampionJson, session: SafeSession, patch: NewPatch) -> None:
 
     """ try:
         champion_wiki = load_local_html(champion_json.name)
@@ -363,7 +360,7 @@ async def _load_champion(champion_json: ChampionJson, session: SafeSession, patc
     load_logger.info(f"[CHAMPION] Loaded: {champion.name } ✔")
 
 
-async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, patch: Patch) -> None:
+async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, patch: NewPatch) -> None:
 
 
     """ try:
@@ -393,7 +390,7 @@ async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, pa
     load_logger.info(f"[ITEM] Loaded: {item.name } ✔")
 
 
-async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: Patch) -> None:
+async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: NewPatch) -> None:
 
     """ try:
         rune_wiki = load_local_html(rune_class.rune.name)
@@ -420,7 +417,7 @@ async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: Patch) 
     load_logger.info(f"[RUNE] Loaded: {rune_class.rune.name } ✔")
 
 
-async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: SafeSession, patch: Patch) -> None:
+async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: SafeSession, patch: NewPatch) -> None:
 
     """ try:
         summonerspell_wiki = load_local_html(summonerspell_json.name)
@@ -464,14 +461,19 @@ async def _fetch_wiki_html(name: str, type_: str, session: SafeSession) -> str:
     except HTTPError as e:
         raise LoadError(e.code, e.reason, e.url, type_, name)
     except URLError as e:
-        raise LoadError(e.errno, e.reason, e.filename, type_, name)
+        raise LoadError(
+            code=getattr(e, "errno", -1),
+            reason=str(getattr(e, "reason", "Unknown error")),
+            url=e.filename,
+            type=type_,
+            name=name)
     except ValidationError as e:
         raise LoadError(9, str(e), "", type_, name)
 
 
 
 
-async def _load_image(image: Image, session: SafeSession, patch: Patch, force_reload: bool = False) -> None:
+async def _load_image(image: Image, session: SafeSession, patch: NewPatch, force_reload: bool = False) -> None:
     paths = info_loader().paths
     img_path = Path(paths.image) / image.group / image.full
 
@@ -485,7 +487,12 @@ async def _load_image(image: Image, session: SafeSession, patch: Patch, force_re
         except HTTPError as e:
             raise LoadError(e.code, e.reason, e.url, image.group, image.full)
         except URLError as e:
-            raise LoadError(e.errno, e.reason, e.filename, image.group, image.full)
+            raise LoadError(
+                code=getattr(e, "errno", -1),
+                reason=str(getattr(e, "reason", "Unknown error")),
+                url=e.filename,
+                type=image.group,
+                name=image.full)
 
     # Download the sprite only if present and x/y are 0 (as Riot does it)
     if image.sprite and (image.x == image.y == 0):
@@ -500,7 +507,12 @@ async def _load_image(image: Image, session: SafeSession, patch: Patch, force_re
             except HTTPError as e:
                 raise LoadError(e.code, e.reason, e.url, image.group, image.full)
             except URLError as e:
-                raise LoadError(e.errno, e.reason, e.filename, image.group, image.full)
+                raise LoadError(
+                    code=getattr(e, "errno", -1),
+                    reason=str(getattr(e, "reason", "Unknown error")),
+                    url=e.filename,
+                    type=image.group,
+                    name=image.full)
 
 
 async def _load_image_rune(icon: str, session: SafeSession) -> Image:
@@ -546,7 +558,7 @@ async def _load_all_patches(hotfixes_to_process: dict[str, list[datetime]], old_
                 return
 
 
-async def _load_patch(patch_str: str, hotfix: datetime, old_patch: Patch) -> None:
+async def _load_patch(patch_str: str, hotfix: datetime | None, old_patch: Patch) -> None:
     patch_logger.info("--------------------------------------------------------------------------------------------")
     patch_logger.info(f"Loading patch {patch_str}, hotfix {hotfix}")
 
@@ -555,7 +567,7 @@ async def _load_patch(patch_str: str, hotfix: datetime, old_patch: Patch) -> Non
     async with aiohttp.ClientSession(timeout=timeout) as aio_session:
         session = SafeSession(aio_session)
         patch_wiki = await _fetch_wiki_html(patch, "Patch", session)
-        changes = await ws.scrape_patch(patch_wiki, hotfix)
+        changes = ws.scrape_patch(patch_wiki, hotfix)
 
         new_patch = NewPatch(
             patch=patch_str,
@@ -575,14 +587,14 @@ async def _load_patch(patch_str: str, hotfix: datetime, old_patch: Patch) -> Non
 
 
 
-async def _patch_champions(changes: dict, new_patch: Patch, old_patch: Patch, session: SafeSession) -> None:
+async def _patch_champions(changes: dict, new_patch: NewPatch, old_patch: Patch, session: SafeSession) -> None:
     all_champions = await db.fetch_champions_by_patch(old_patch.patch, old_patch.hotfix)  # or old_patch.patch
 
     for name in changes.get("new", []):
         try:
             json_data = await session.get_json(URLS.dataLink + new_patch.patch + URLS.championData + name)
             champion_json = ChampionJson(**json_data)
-            await _load_champion(champion_json.id_, champion_json, session, new_patch)
+            await _load_champion(champion_json, session, new_patch)
         except Exception as e:
             patch_logger.error(f"Failed to patch NEW champion '{name}': {e}")
 
@@ -622,7 +634,7 @@ async def _add_changes_champion(champion: NewChampion, diff: dict[str, list[str]
 
 
 
-async def _patch_items(changes: dict, new_patch: Patch, old_patch: Patch, session: SafeSession) -> None:
+async def _patch_items(changes: dict, new_patch: NewPatch, old_patch: Patch, session: SafeSession) -> None:
     all_items = await db.fetch_items_by_patch(old_patch.patch, old_patch.hotfix)
 
     try:
@@ -663,7 +675,7 @@ async def _add_changes_item(item: NewItem, diff: list) -> None:
 
 
 
-async def _patch_runes(changes: dict, new_patch: Patch, old_patch: Patch, session: SafeSession) -> None:
+async def _patch_runes(changes: dict, new_patch: NewPatch, old_patch: Patch, session: SafeSession) -> None:
     all_runes = await db.fetch_runes_by_patch(old_patch.patch, old_patch.hotfix)
 
     try:
@@ -698,7 +710,7 @@ async def _patch_runes(changes: dict, new_patch: Patch, old_patch: Patch, sessio
         await db.add_rune(rune)
 
 
-def _find_rune(rune_name: str, runes_data: dict) -> RuneClass:
+def _find_rune(rune_name: str, runes_data: dict) -> RuneClass | None:
     for tree in runes_data:
         rune_tree = RuneTreeJson(**tree)
         for i, row in enumerate(rune_tree.slots):
@@ -714,7 +726,7 @@ async def _add_changes_rune(rune: NewRune, diff: list) -> None:
     rune.validated = False
 
 
-async def _patch_summonerspells(changes: dict, new_patch: Patch, old_patch: Patch, session: SafeSession) -> None:
+async def _patch_summonerspells(changes: dict, new_patch: NewPatch, old_patch: Patch, session: SafeSession) -> None:
     all_spells = await db.fetch_summonerspells_by_patch(old_patch.patch, old_patch.hotfix)
 
     try:
@@ -757,7 +769,7 @@ async def _add_changes_summonerspell(spell: NewSummonerspell, diff: list) -> Non
 
 
 
-async def _clean_up(patch: Patch) -> None:
+async def _clean_up(patch: NewPatch) -> None:
     result = await db.clear_patch(patch.patch, patch.hotfix)
     for handler in patch_logger.handlers:
         handler.flush()

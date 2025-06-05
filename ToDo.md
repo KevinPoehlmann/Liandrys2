@@ -5,8 +5,12 @@
 - [x] Make a better readme file with chatgpt
 - [x] Make type hints work in database
 ### Clean Code ###
-- [ ] Remove unecessary Enums, dataclasses and BaseModels
+- [x] Remove unecessary Enums, dataclasses and BaseModels
 - [ ] Convert MultiValueEnums to normal Enums and make sure the use from_str if needed
+- [x] Clean up loader
+- [x] Clean up simulation
+- [x] Clean up models
+- [ ] Clean up tests
 ### Functionality ###
 - [x] Inject combo into simulation
 - [ ] Make damage calculation handle most things

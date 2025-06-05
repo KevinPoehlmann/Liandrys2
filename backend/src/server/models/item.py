@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
+from typing import Self
 
 from src.server.models.ability import ItemActive
 from src.server.models.passive import ItemPassive
@@ -36,7 +37,7 @@ class NewItem(BaseModel):
 
 
     @classmethod
-    def parse_obj(cls, obj: dict) -> "NewItem":
+    def parse_obj(cls, obj: dict) -> Self:
         if "passives" in obj:
             obj["passives"] = [
                 ItemPassive.parse_obj(p) for p in obj["passives"]

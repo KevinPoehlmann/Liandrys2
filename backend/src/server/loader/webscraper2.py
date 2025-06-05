@@ -49,7 +49,7 @@ patch_logger = logging.getLogger("patch_logger")
 
 
 
-def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str, hotfix: datetime = None) -> NewChampion:
+def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewChampion | None:
     soup = BeautifulSoup(wiki_html, "lxml")
 
     # Wiki-only data
@@ -273,7 +273,7 @@ def _scrape_ability_stats(block: Tag) -> dict[str, str]:
             try:
                 top_values = span["data-top_values"]
                 bot_values = span["data-bot_values"]
-                formula = parse_formula_from_table(bot_values=bot_values, top_values=top_values, scale=scale)
+                formula = parse_formula_from_table(bot_str=bot_values, top_str=top_values, scale=scale)
             except Exception as e:
                 formula = value
         else:
@@ -339,7 +339,7 @@ def _scrape_effect_components(block: Tag) -> list[EffectComponent]:
             if span.has_attr("data-bot_values"):
                 top_values = span.get("data-top_values")
                 bot_values = span.get("data-bot_values")
-                formula += f" + {parse_formula_from_table(bot_values=bot_values, top_values=top_values)}"
+                formula += f" + {parse_formula_from_table(bot_str=bot_values, top_str=top_values)}"
             else:
                 span_text = _get_clean_text(span)
                 span_formula, span_hp_scaling = parse_effect_formula(span_text)
@@ -370,7 +370,7 @@ def _scrape_effect_components(block: Tag) -> list[EffectComponent]:
     return components
 
 
-def _create_effect_component(effect_type: EffectType, formula: str, hp_scaling: HpScaling, damage_subtype: DamageSubType) -> EffectComponent:
+def _create_effect_component(effect_type: EffectType, formula: str, hp_scaling: HpScaling, damage_subtype: DamageSubType) -> EffectComponent | None:
     match effect_type:
         case EffectType.DAMAGE:
             effect_prop = DamageProperties(
@@ -405,7 +405,7 @@ def _create_effect_component(effect_type: EffectType, formula: str, hp_scaling: 
 
 
 
-def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, hotfix: datetime = None) -> NewItem:
+def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewItem:
     
     item = NewItem(
         item_id=item_id,
@@ -445,17 +445,17 @@ def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, h
             case "Active": item.active = _scrape_item_active(content)
             case "Passive": item.passives = _scrape_item_passives(content)
             case "Limitations": item.limitations = _scrape_item_element_text(content)
-            case "Consume": item.active = _scrape_item_element_text(content)
+            case "Consume": item.active = _scrape_item_element_text(content)    #TODO: give a real active
             case "Requirements": item.requirements = _scrape_item_element_text(content)
 
     return item
 
 
-def _scrape_item_class(soup: BeautifulSoup) -> ItemClass:
+def _scrape_item_class(soup: BeautifulSoup) -> ItemClass | None:
     wiki_item = soup.find("div", class_="mw-parser-output")
     if not wiki_item:
         return None
-    wiki_class = wiki_item.find("a", attrs={"title": re.compile("Category")})
+    wiki_class = wiki_item.find("a", attrs={"title": re.compile("Category")}) # type: ignore[arg-type]
     if not wiki_class:
         return None
     try:
@@ -468,7 +468,7 @@ def _scrape_item_class(soup: BeautifulSoup) -> ItemClass:
 
 def _scrape_item_elements(soup: BeautifulSoup) -> dict[str, Tag]:
     item_content = soup.find("div", class_="mw-parser-output")
-    item_info = item_content.find("div", class_="infobox")
+    item_info = item_content.find("div", class_="infobox") # type: ignore[arg-type]
     headers = item_info.find_all("div", class_="infobox-header")
     info_dict = {header.text: header.next_sibling for header in headers}
     return info_dict
@@ -488,7 +488,7 @@ def _scrape_item_stats(content: Tag) -> tuple[dict[Stat, float], dict[Stat, floa
     return item_stats, masterwork_stats
 
 
-def _scrape_item_stat_block(block: Tag) -> dict[Stat, str]:
+def _scrape_item_stat_block(block: Tag) -> dict[Stat, float]:
     parsed_stats = {}
     for stat in block.find_all("div", class_="infobox-data-value"):
         value = stat.text
@@ -551,7 +551,7 @@ def _scrape_item_element_text(content: Tag) -> str:
 
 
 
-def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str, hotfix: datetime = None) -> NewRune:
+def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str, hotfix: datetime | None = None) -> NewRune:
     soup = BeautifulSoup(wiki_html, "lxml")
     try:
         passive = _scrape_rune_passive(soup)
@@ -578,7 +578,7 @@ def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str,
 
 def _scrape_rune_passive(soup: BeautifulSoup) -> Passive:
     rune_content = soup.find("div", class_="mw-parser-output")
-    rune_info = rune_content.find("div", class_="infobox-section")
+    rune_info = rune_content.find("div", class_="infobox-section") # type: ignore[arg-type]
     passive_text = _get_clean_text(rune_info, remove="Passive:")
     passive_stats = _scrape_rune_summoner_stats(rune_content)
     passive = Passive(
@@ -631,7 +631,7 @@ def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, 
 
 def _scrape_summonerspell_active(soup: BeautifulSoup) -> Ability:
     summonerspell_content = soup.find("div", class_="mw-parser-output")
-    summonerspell_info = summonerspell_content.find("div", class_="infobox-section")
+    summonerspell_info = summonerspell_content.find("div", class_="infobox-section") # type: ignore[arg-type]
     passive_text = summonerspell_info.text
     passive_stats = _scrape_rune_summoner_stats(summonerspell_content)
     active = Ability(
@@ -672,7 +672,7 @@ def scrape_hotfix_list(wiki_html: str) -> list[datetime]:
 
 
 
-def scrape_patch(wiki_html: str, hotfix: datetime = None) -> dict[str, list]:
+def scrape_patch(wiki_html: str, hotfix: datetime | None = None) -> dict[str, dict]:
     soup = BeautifulSoup(wiki_html, "lxml")
     content = soup.find("div", class_="mw-parser-output")
     if hotfix is None:
@@ -714,7 +714,7 @@ def _scrape_patch_champions(content: Tag) -> dict:
                 
 
 
-def _scrape_patch_champion(content: Tag) -> tuple[str, dict]:
+def _scrape_patch_champion(content: Tag) -> tuple[str, dict | None]:
     if " - New Champion" in content.text:
         champion_name = _get_clean_text(content, remove=" - New Champion")
         return champion_name, None
@@ -757,7 +757,7 @@ def _scrape_patch_rest(content: Tag, object_type: str) -> dict:
 
 
 
-def _scrape_patch_object(content: Tag) -> tuple[str, list[str]]:
+def _scrape_patch_object(content: Tag) -> tuple[str, list[str] | None]:
     if " - New " in content.text or " - Re-added" in content.text:
         object_name = content.text.split(" - ")[0].strip()
         return object_name, None
@@ -777,7 +777,7 @@ def _scrape_patch_object(content: Tag) -> tuple[str, list[str]]:
 
     
 
-def _scrape_hotfix(content: Tag, hotfix: datetime) -> dict[str, list]:
+def _scrape_hotfix(content: Tag, hotfix: datetime) -> dict[str, dict]:
     patch_changes = {
         "champions": {"changed": {}},
         "items": {"changed": {}},

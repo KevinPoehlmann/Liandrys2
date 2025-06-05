@@ -176,3 +176,48 @@ duration
 02.06.2025  14:34:00 - WARNING: Error finding label: <b>Voidling Duration:</b>
 02.06.2025  14:34:02 - WARNING: '11.1' is not a valid Map
 02.06.2025  14:34:04 - ERROR: ScrapeError: Object type not found '{content.text}'
+02.06.2025  19:45:54 - INFO: --------------------------------------------------------------------------------------------
+02.06.2025  19:45:54 - INFO: Loading fresh database for patch 15.7.1, hotfix: 2024-04-08 00:00:00
+02.06.2025  19:45:54 - INFO: --------------------------------------------------------------------------------------------
+02.06.2025  19:45:54 - INFO: Loading fresh database for patch 15.7.1, hotfix: 2024-04-08 00:00:00
+02.06.2025  19:45:54 - ERROR: Error 500 for Champion 'Ahri'!
+02.06.2025  19:45:54 - ERROR: fail
+02.06.2025  19:45:54 - ERROR: Could not load information from 'url'
+02.06.2025  19:45:54 - ERROR: (500, 'fail', 'url', 'Champion', 'Ahri')
+02.06.2025  19:46:07 - INFO: --------------------------------------------------------------------------------------------
+02.06.2025  19:46:07 - INFO: Loading patch 15.8.1, hotfix 2025-04-10 00:00:00
+02.06.2025  19:46:07 - ERROR: Failed to apply changes to rune 'Cheap Shot': 'NewRune' object has no attribute 'changes'
+02.06.2025  19:46:08 - WARNING: Error finding label: <b>Silence Duration:</b>
+02.06.2025  19:46:08 - WARNING: Error finding label: <b>Voidling Duration:</b>
+02.06.2025  19:46:10 - WARNING: '11.1' is not a valid Map
+02.06.2025  19:46:12 - ERROR: ScrapeError: Object type not found '{content.text}'
+02.06.2025  20:21:15 - INFO: --------------------------------------------------------------------------------------------
+02.06.2025  20:21:15 - INFO: Loading patch 15.8.1, hotfix 2025-04-10 00:00:00
+03.06.2025  15:39:53 - INFO: --------------------------------------------------------------------------------------------
+03.06.2025  15:39:53 - INFO: Loading fresh database for patch 15.7.1, hotfix: 2024-04-08 00:00:00
+03.06.2025  15:39:53 - INFO: --------------------------------------------------------------------------------------------
+03.06.2025  15:39:53 - INFO: Loading fresh database for patch 15.7.1, hotfix: 2024-04-08 00:00:00
+03.06.2025  15:39:53 - ERROR: Error 500 for Champion 'Ahri'!
+03.06.2025  15:39:53 - ERROR: fail
+03.06.2025  15:39:53 - ERROR: Could not load information from 'url'
+03.06.2025  15:39:53 - ERROR: (500, 'fail', 'url', 'Champion', 'Ahri')
+03.06.2025  15:40:06 - INFO: --------------------------------------------------------------------------------------------
+03.06.2025  15:40:06 - INFO: Loading patch 15.8.1, hotfix 2025-04-10 00:00:00
+03.06.2025  15:40:07 - WARNING: Error finding label: <b>Silence Duration:</b>
+03.06.2025  15:40:07 - WARNING: Error finding label: <b>Voidling Duration:</b>
+03.06.2025  15:40:09 - WARNING: '11.1' is not a valid Map
+03.06.2025  15:40:11 - ERROR: ScrapeError: Object type not found '{content.text}'
+05.06.2025  17:17:00 - INFO: --------------------------------------------------------------------------------------------
+05.06.2025  17:17:00 - INFO: Loading fresh database for patch 15.7.1, hotfix: 2024-04-08 00:00:00
+05.06.2025  17:17:00 - INFO: --------------------------------------------------------------------------------------------
+05.06.2025  17:17:00 - INFO: Loading fresh database for patch 15.7.1, hotfix: 2024-04-08 00:00:00
+05.06.2025  17:17:00 - ERROR: Error 500 for Champion 'Ahri'!
+05.06.2025  17:17:00 - ERROR: fail
+05.06.2025  17:17:00 - ERROR: Could not load information from 'url'
+05.06.2025  17:17:00 - ERROR: (500, 'fail', 'url', 'Champion', 'Ahri')
+05.06.2025  17:17:14 - INFO: --------------------------------------------------------------------------------------------
+05.06.2025  17:17:14 - INFO: Loading patch 15.8.1, hotfix 2025-04-10 00:00:00
+05.06.2025  17:17:15 - WARNING: Error finding label: <b>Silence Duration:</b>
+05.06.2025  17:17:15 - WARNING: Error finding label: <b>Voidling Duration:</b>
+05.06.2025  17:17:17 - WARNING: '11.1' is not a valid Map
+05.06.2025  17:17:19 - ERROR: ScrapeError: Object type not found '{content.text}'

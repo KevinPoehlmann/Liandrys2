@@ -33,7 +33,7 @@ class EffectComponent(BaseModel):
             obj["type_"] = type_
 
         # Parse the correct props type
-        if isinstance(props, dict):
+        if isinstance(type_, EffectType) and isinstance(props, dict):
             props_class = EFFECT_PROPERTIES_MAP.get(type_, EffectProperties)
             obj["props"] = props_class(**props)
 

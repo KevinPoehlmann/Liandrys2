@@ -4,7 +4,7 @@ import os
 
 from bson import ObjectId
 from datetime import datetime
-from motor.core import AgnosticCollection
+from motor.core import AgnosticCollection, AgnosticDatabase
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pymongo.errors import InvalidURI
 from pymongo.results import UpdateResult
@@ -21,7 +21,7 @@ from src.server.models.summonerspell import NewSummonerspell, Summonerspell, Sho
 patch_logger = logging.getLogger("patch_logger")
 
 
-def connect_database() -> AgnosticCollection:
+def connect_database() -> AgnosticDatabase:
     host = os.getenv("MONGODB_HOST", "")
     user = os.getenv("MONGODB_USER", "")
     password = os.getenv("MONGODB_PASSWORD", "")
@@ -49,7 +49,7 @@ summonerspell_collection: AgnosticCollection = database.summonerspells
 
 
 
-async def clear_patch(patch: str, hotfix: datetime) -> dict[str, int]:
+async def clear_patch(patch: str, hotfix: datetime | None) -> dict[str, int]:
     #TODO add hotfix on delete_many
     champion_result, item_result, rune_result, spell_result, patch_result = await asyncio.gather(
         champion_collection.delete_many({"patch": patch, "hotfix": hotfix}),
@@ -87,14 +87,14 @@ async def add_patch(patch: NewPatch) -> str:
     return result.inserted_id
 
 
-async def fetch_patch_latest() -> Patch:
+async def fetch_patch_latest() -> Patch | None:
     patch = await patch_collection.find_one(sort=[("patch", -1), ("hotfix", -1)])
     if patch:
         return Patch(**patch)
     return None
 
 
-async def fetch_patch_by_id(id_) -> Patch:
+async def fetch_patch_by_id(id_) -> Patch | None:
     patch = await patch_collection.find_one({"_id": ObjectId(id_)})
     if patch:
         return Patch(**patch)
@@ -126,7 +126,18 @@ async def add_champion(champion: NewChampion) -> str:
     return result.inserted_id
 
 
-async def fetch_champions_by_patch(patch: str, hotfix: datetime) -> list[ShortChampion]:
+async def fetch_champions_by_patch(patch: str, hotfix: datetime | None) -> list[Champion]:
+    champions = []
+    cursor = champion_collection.find(
+        {"patch":patch, "hotfix":hotfix},
+        sort=[("name", 1)])
+    async for document in cursor:
+        champion = Champion.parse_obj(document)
+        champions.append(champion)
+    return champions
+
+
+async def fetch_short_champions_by_patch(patch: str, hotfix: datetime | None) -> list[ShortChampion]:
     champions = []
     cursor = champion_collection.find(
         {"patch":patch, "hotfix":hotfix},
@@ -162,11 +173,12 @@ async def fetch_champions_by_patch(patch: str, hotfix: datetime) -> list[ShortCh
     return champions
 
 
-async def fetch_champion_by_id(id_: str) -> Champion:
+async def fetch_champion_by_id(id_: str) -> Champion | None:
     document = await champion_collection.find_one({"_id":ObjectId(id_)})
     if document:
         champion = Champion.parse_obj(document)
         return champion
+    return None
 
 
 async def update_champion(champion: Champion) -> UpdateResult:
@@ -184,7 +196,18 @@ async def add_item(item: NewItem) -> str:
     return result.inserted_id
 
 
-async def fetch_items_by_patch(patch: str, hotfix: datetime) -> list[ShortItem]:
+async def fetch_items_by_patch(patch: str, hotfix: datetime | None) -> list[Item]:
+    items = []
+    cursor = item_collection.find(
+        {"patch":patch, "hotfix":hotfix},
+        sort=[("name", 1)])
+    async for document in cursor:
+        item = Item.parse_obj(document)
+        items.append(item)
+    return items
+
+
+async def fetch_short_items_by_patch(patch: str, hotfix: datetime | None) -> list[ShortItem]:
     items = []
     cursor = item_collection.find(
         {"patch":patch, "hotfix":hotfix},
@@ -196,10 +219,11 @@ async def fetch_items_by_patch(patch: str, hotfix: datetime) -> list[ShortItem]:
     return items
 
 
-async def fetch_item_by_id(id_: str) -> Item:
+async def fetch_item_by_id(id_: str) -> Item | None:
     document = await item_collection.find_one({"_id":ObjectId(id_)})
     if document:
         return Item.parse_obj(document)
+    return None
 
 
 async def update_item(item: Item):
@@ -216,7 +240,18 @@ async def add_rune(rune: NewRune) -> str:
     return result.inserted_id
 
 
-async def fetch_runes_by_patch(patch: str, hotfix: datetime) -> list[ShortRune]:
+async def fetch_runes_by_patch(patch: str, hotfix: datetime | None) -> list[Rune]:
+    runes = []
+    cursor = rune_collection.find(
+        {"patch":patch, "hotfix":hotfix},
+        sort=[("name", 1)])
+    async for document in cursor:
+        rune = Rune.parse_obj(document)
+        runes.append(rune)
+    return runes
+
+
+async def fetch_short_runes_by_patch(patch: str, hotfix: datetime | None) -> list[ShortRune]:
     runes = []
     cursor = rune_collection.find(
         {"patch":patch, "hotfix":hotfix},
@@ -228,10 +263,11 @@ async def fetch_runes_by_patch(patch: str, hotfix: datetime) -> list[ShortRune]:
     return runes
 
 
-async def fetch_rune_by_id(id_: str) -> Rune:
+async def fetch_rune_by_id(id_: str) -> Rune | None:
     document = await rune_collection.find_one({"_id":ObjectId(id_)})
     if document:
         return Rune.parse_obj(document)
+    return None
 
 
 async def update_rune(rune: Rune):
@@ -248,7 +284,18 @@ async def add_summonerspell(summonerspell: NewSummonerspell) -> str:
     return result.inserted_id
 
 
-async def fetch_summonerspells_by_patch(patch: str, hotfix: datetime) -> list[ShortSummonerspell]:
+async def fetch_summonerspells_by_patch(patch: str, hotfix: datetime | None) -> list[Summonerspell]:
+    summonerspells = []
+    cursor = summonerspell_collection.find(
+        {"patch":patch, "hotfix":hotfix},
+        sort=[("name", 1)])
+    async for document in cursor:
+        summonerspell = Summonerspell.parse_obj(document)
+        summonerspells.append(summonerspell)
+    return summonerspells
+
+
+async def fetch_short_summonerspells_by_patch(patch: str, hotfix: datetime | None) -> list[ShortSummonerspell]:
     summonerspells = []
     cursor = summonerspell_collection.find(
         {"patch":patch, "hotfix":hotfix},
@@ -260,10 +307,11 @@ async def fetch_summonerspells_by_patch(patch: str, hotfix: datetime) -> list[Sh
     return summonerspells
 
 
-async def fetch_summonerspell_by_id(id_: str) -> Summonerspell:
+async def fetch_summonerspell_by_id(id_: str) -> Summonerspell | None:
     document = await summonerspell_collection.find_one({"_id":ObjectId(id_)})
     if document:
         return Summonerspell.parse_obj(document)
+    return None
     
 
 async def update_summonerspell(summonerspell: Summonerspell):

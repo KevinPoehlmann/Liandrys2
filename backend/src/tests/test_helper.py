@@ -90,7 +90,7 @@ def test_wiki_to_riot_patch_invalid_format(invalid_patch):
     ]
 )
 def test_parse_formula_from_table(bot_values, top_values, scale, expected):
-    result = parse_formula_from_table(bot_values=bot_values, top_values=top_values, scale=scale)
+    result = parse_formula_from_table(bot_str=bot_values, top_str=top_values, scale=scale)
     assert result == expected
 
 

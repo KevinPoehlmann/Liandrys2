@@ -108,11 +108,11 @@ class Simulation():
 
     def _calculate_offset(self, effect_comp: EffectComp, actor: Actor) -> float:
         offset = self._calculate_delay(effect_comp) + effect_comp.interval
-        existing_dots: list[tuple[float, QueueComponent]] = [dot for dot in self.queue.items() for d in dot[1] if d.source == effect_comp.source and d.actor == actor]
+        existing_dots: list[tuple[float, list[QueueComponent]]] = [dot for dot in self.queue.items() for d in dot[1] if d.source == effect_comp.source and d.actor == actor]
         if existing_dots:
             existing_dots.sort(reverse=True)
-            last_dot = next((d for d in existing_dots[0][1] if d.source == effect_comp.source and d.actor == actor), None)
-            if last_dot.type_ != EffectType.SHADOW:
+            last_dot = next((d for d in existing_dots[0][1] if d.source == effect_comp.source and d.actor == actor))
+            if last_dot and last_dot.type_ != EffectType.SHADOW:
                 offset = max(offset, existing_dots[0][0] + effect_comp.interval)
             else:
                 if len(existing_dots) > 1 and offset - effect_comp.interval < existing_dots[1][0]:

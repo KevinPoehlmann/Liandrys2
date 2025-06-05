@@ -545,7 +545,6 @@ async def test_load_patch(mocker):
     mock_fetch_html = mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value=mock_wiki_html)
     mock_scrape_patch = mocker.patch(
         "src.server.loader.patchloader2.ws.scrape_patch",
-        new_callable=AsyncMock,
         return_value={
             "champions": {},
             "items": {},

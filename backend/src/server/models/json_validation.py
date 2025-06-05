@@ -116,6 +116,9 @@ class ItemJson(BaseModel):
     maps: dict
     stats: dict
 
+    class Config:
+        allow_population_by_field_name = True
+
 
 
 class RuneJson(BaseModel):
