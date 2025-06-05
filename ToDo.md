@@ -6,7 +6,7 @@
 - [x] Make type hints work in database
 ### Clean Code ###
 - [x] Remove unecessary Enums, dataclasses and BaseModels
-- [ ] Convert MultiValueEnums to normal Enums and make sure the use from_str if needed
+- [x] Convert MultiValueEnums to normal Enums and make sure the use from_str if needed
 - [x] Clean up loader
 - [x] Clean up simulation
 - [x] Clean up models
@@ -88,6 +88,28 @@
 - [x] Make Runes editable in the editor
 - [x] Make Summonerspells editable in the editor
 ### User Functions ###
+- [x] Champion Selection
+    - [x] Make Champions selectable
+    - [ ] Filter Champions by role
+- [x] Level selection
+- [ ] Rune Selection
+    - [ ] Make Runes selectable
+    - [ ] Auto fill most used runes for chosen champion
+- [x] Summonerspell Selection
+    - [x] Make Summonerspells selectable
+    - [ ] Auto fill most picked summonerspells for chosen champion
+- [x] Item Selection
+    - [x] Make Items selectable
+    - [ ] Order Items by item class
+    - [ ] Add filter to the "shop"
+- [ ] Stack Selection
+- [x] Action Selection
+    - [ ] Add Ability points
+- [x] Output
+    - [x] Show damage dealt
+    - [x] Show time needed
+    - [ ] Show damage split
+    - [ ] Add time-damage graph
 ### Production ###
 - [ ] Making the project ready for production
     - [ ] Add a disclaimer stating that your project isn’t affiliated with Riot Games.

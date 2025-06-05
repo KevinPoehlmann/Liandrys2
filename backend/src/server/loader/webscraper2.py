@@ -103,7 +103,7 @@ def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str, hot
         mana_regen_per_lvl=champion_json.stats.mpregenperlevel,
         attackspeed=champion_json.stats.attackspeed,
         attackspeed_ratio=attackspeed.attackspeed_ratio,
-        attackspeed_per_lvl=champion_json.stats.attackspeedperlevel,
+        attackspeed_per_lvl=champion_json.stats.attackspeedperlevel / 100,
         attack_windup=attackspeed.attack_windup,
         windup_modifier=attackspeed.windup_modifier / 100,
         missile_speed=attackspeed.missile_speed,
