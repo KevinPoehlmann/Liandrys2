@@ -19,7 +19,7 @@ async def download_html_pages():
         for champ in CHAMPIONS:
             url = f"{BASE_URL}{champ}"
             try:
-                html = await session.get_html(url, "champion", champ)
+                html = await session.get_html(url)
                 filepath = DEST_DIR / f"{champ.lower()}.html"
                 filepath.write_text(html, encoding="utf-8")
                 print(f"Saved: {filepath}")
