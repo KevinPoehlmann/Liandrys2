@@ -46,7 +46,10 @@
       :champion="config.champion"
       :summonerspells="config.summonerspells"
       :items="config.items"
+      :abilityPoints="config.ability_points"
       @add="(action) => emit('add', action)"
+      @addPoint="increaseAbilityPoint"
+      @removePoint="decreaseAbilityPoint"
     />
   </div>
 </template>
@@ -71,9 +74,6 @@ const props = defineProps({
   }
 })
 
-const level = ref(1)
-const selectedChampionName = ref('')
-
 
 const emit = defineEmits(['add'])
 
@@ -92,6 +92,36 @@ const updateSummonerspells = (value) => {
 }
 const updateItems = (value) => {
   props.config.items = value
+}
+const increaseAbilityPoint = (slot) => {
+  const points = props.config.ability_points
+  const champion = props.config.champion
+  const level = props.config.level
+
+  if (!champion) return
+
+  const maxRank = champion[slot]?.maxrank ?? 5
+  const current = points[slot]
+  const total = Object.values(points).reduce((acc, v) => acc + v, 0)
+
+  if (current >= maxRank || total >= level) return
+
+  if (slot === 'r') {
+    const allowedR = Math.floor((level - 1) / 5) // R at 6,11,16
+    if (current >= allowedR) return
+  }
+  else {
+    const allowedQWE = Math.floor((level - 1) / 2) 
+    if (current > allowedQWE) return
+  }
+
+  points[slot]++
+}
+const decreaseAbilityPoint = (slot) => {
+  const points = props.config.ability_points
+  if (points[slot] > 0) {
+    points[slot]--
+  }
 }
 </script>
 

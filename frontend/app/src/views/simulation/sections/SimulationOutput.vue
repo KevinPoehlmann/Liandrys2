@@ -11,7 +11,7 @@
         @click="remove(index)"
       >
         <img :src="getIcon(action)" class="w-full h-full object-cover" />
-        <span class="absolute bottom-0 right-0 text-[10px] bg-black bg-opacity-70 text-white px-1 rounded-tl">
+        <span class="absolute top-0 left-0 text-[10px] bg-black bg-opacity-70 text-white px-1 rounded-tl">
           {{ action.action_type.toUpperCase() }}
         </span>
       </div>

@@ -221,3 +221,17 @@ duration
 05.06.2025  17:17:15 - WARNING: Error finding label: <b>Voidling Duration:</b>
 05.06.2025  17:17:17 - WARNING: '11.1' is not a valid Map
 05.06.2025  17:17:19 - ERROR: ScrapeError: Object type not found '{content.text}'
+06.06.2025  14:37:02 - INFO: --------------------------------------------------------------------------------------------
+06.06.2025  14:37:02 - INFO: Loading fresh database for patch 15.7.1, hotfix: 2024-04-08 00:00:00
+06.06.2025  14:37:02 - INFO: --------------------------------------------------------------------------------------------
+06.06.2025  14:37:02 - INFO: Loading fresh database for patch 15.7.1, hotfix: 2024-04-08 00:00:00
+06.06.2025  14:37:02 - ERROR: Error 500 for Champion 'Ahri'!
+06.06.2025  14:37:02 - ERROR: fail
+06.06.2025  14:37:02 - ERROR: Could not load information from 'url'
+06.06.2025  14:37:02 - ERROR: (500, 'fail', 'url', 'Champion', 'Ahri')
+06.06.2025  14:37:15 - INFO: --------------------------------------------------------------------------------------------
+06.06.2025  14:37:15 - INFO: Loading patch 15.8.1, hotfix 2025-04-10 00:00:00
+06.06.2025  14:37:16 - WARNING: Error finding label: <b>Silence Duration:</b>
+06.06.2025  14:37:16 - WARNING: Error finding label: <b>Voidling Duration:</b>
+06.06.2025  14:37:18 - WARNING: '11.1' is not a valid Map
+06.06.2025  14:37:21 - ERROR: ScrapeError: Object type not found '{content.text}'

@@ -15,6 +15,7 @@
 - [x] Inject combo into simulation
 - [ ] Make damage calculation handle most things
     - [x] Implement distance
+    - [ ] Implement life regeneration
     - [ ] Make abilities work
         - [x] Implement delay on ability damage
         - [x] Make cooldowns matter
@@ -102,9 +103,11 @@
     - [x] Make Items selectable
     - [ ] Order Items by item class
     - [ ] Add filter to the "shop"
+    - [ ] Only show items for chosen map
 - [ ] Stack Selection
 - [x] Action Selection
-    - [ ] Add Ability points
+    - [x] Add Ability points
+    - [ ] Make Abilities and Actives, that are not validated not selectable
 - [x] Output
     - [x] Show damage dealt
     - [x] Show time needed

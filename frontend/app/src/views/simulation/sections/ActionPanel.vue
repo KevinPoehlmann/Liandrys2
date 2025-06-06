@@ -1,37 +1,48 @@
 <template>
-  <div class="p-4 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition w-full">
+  <div class="p-4 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition w-full">
     <div class="flex gap-2 flex-wrap items-center">
       <!-- Auto Attack -->
-      <button @click="addAction('aa')" class="action-tile">
+      <button @click="addAction('aa')" class="action-tile cursor-pointer">
         <img :src="autoAttack" class="tile-image" alt="AA" />
       </button>
-      
-      <!-- Abilities -->
-      <button
-      v-for="slot in ['q', 'w', 'e', 'r']"
-      :key="slot"
-      @click="addAction(slot)"
-      class="action-tile"
+
+      <!-- Abilities with + / - buttons -->
+      <div
+        v-for="slot in ['q', 'w', 'e', 'r']"
+        :key="slot"
+        class="flex flex-col items-center"
       >
-        <img :src="abilityIcons[slot]" class="tile-image" :alt="slot.toUpperCase()" />
-      </button>
-      
+        <button @click="increase(slot)" class="text-xs text-gray-700 dark:text-gray-300 cursor-pointer">▲</button>
+        <button @click="addAction(slot)" class="action-tile relative cursor-pointer">
+          <img :src="abilityIcons[slot]" class="tile-image" :alt="slot.toUpperCase()" />
+          <span class="absolute top-0 left-0 text-[10px] bg-black bg-opacity-70 text-white px-1 rounded-br">
+            {{ slot.toUpperCase() }}
+          </span>
+          <span
+            class="absolute top-0 right-0 text-[10px] bg-black bg-opacity-70 text-white px-1 rounded-tl"
+          >
+            {{ props.abilityPoints[slot] || 0 }}
+          </span>
+        </button>
+        <button @click="decrease(slot)" class="text-xs text-gray-700 dark:text-gray-300 cursor-pointer">▼</button>
+      </div>
+
       <!-- Summoner Spells -->
       <button
-      v-for="entry in activeSummonerSpells"
-      :key="'s' + (entry.index + 1)"
-      @click="addAction(`s${entry.index + 1}`)"
-      class="action-tile"
+        v-for="entry in activeSummonerSpells"
+        :key="'s' + (entry.index + 1)"
+        @click="addAction(`s${entry.index + 1}`)"
+        class="action-tile cursor-pointer"
       >
         <img :src="getImageUrl(entry.spell)" class="tile-image" :alt="entry.spell.name" />
       </button>
-      
+
       <!-- Active Items -->
       <button
-      v-for="entry in activeItems"
-      :key="'i' + (entry.index + 1)"
-      @click="addAction(`i${entry.index + 1}`)"
-      class="action-tile"
+        v-for="entry in activeItems"
+        :key="'i' + (entry.index + 1)"
+        @click="addAction(`i${entry.index + 1}`)"
+        class="action-tile cursor-pointer"
       >
         <img :src="getImageUrl(entry.item)" class="tile-image" :alt="entry.item.name" />
       </button>
@@ -47,10 +58,11 @@ const props = defineProps({
   team: String,
   champion: Object,
   summonerspells: Array,
-  items: Array
+  items: Array,
+  abilityPoints: Object
 })
 
-const emit = defineEmits(['add'])
+const emit = defineEmits(['add', 'addPoint', 'removePoint'])
 
 const addAction = (action_type) => {
   emit('add', {
@@ -58,6 +70,13 @@ const addAction = (action_type) => {
     actor: props.team,
     target: props.team === 'blue' ? 'red' : 'blue'
   })
+}
+
+const increase = (slot) => {
+  emit('addPoint', slot)
+}
+const decrease = (slot) => {
+  emit('removePoint', slot)
 }
 
 const activeSummonerSpells = computed(() => {

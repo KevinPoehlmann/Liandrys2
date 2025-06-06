@@ -108,6 +108,7 @@ const formatDateLabel = (timestamp) => {
   return `${date.getDate()} ${date.toLocaleString('en-US', { month: 'short' })}`
 }
 
+
 onMounted(async () => {
   const [latestRes, allRes] = await Promise.all([
     fetch('/patch/'),
@@ -147,7 +148,7 @@ onMounted(async () => {
 
 
 watch(
-  () => [blueConfig.champion, redConfig.champion, combo.value],
+  () => [blueConfig.champion, redConfig.champion, blueConfig.level, redConfig.level, combo.value],
   async () => {
     // Reset output
     damage.value = 0
@@ -165,8 +166,8 @@ watch(
         lvl_defender: redConfig.level,
         ability_points_attacker: blueConfig.ability_points,
         ability_points_defender: redConfig.ability_points,
-        items_attacker: blueConfig.items.filter(Boolean).map(i => i.key),
-        items_defender: redConfig.items.filter(Boolean).map(i => i.key),
+        items_attacker: blueConfig.items.filter(Boolean).map(i => i._id),
+        items_defender: redConfig.items.filter(Boolean).map(i => i._id),
         combo: combo.value
       }
 

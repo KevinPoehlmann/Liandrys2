@@ -156,7 +156,6 @@ const increaseAbility = (ability) => {
   if(levelRef < ability.maxRank && sum < levelAttacker.value){
     if(ability.id == "r") {
       if(((levelRef+1)*5) < levelAttacker.value) {
-      console.log("Ulti")
       levelRef += 1
       }
     } else if((levelRef*2) < levelAttacker.value) {

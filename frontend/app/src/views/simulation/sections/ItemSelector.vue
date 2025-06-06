@@ -90,17 +90,19 @@ const handleSelect = (payload) => {
     isOpen.value = false
     return
   }
-
+  console.log('ItemSelector: handleSelect', payload)
   const updated = [...props.items]
 
   if (payload.action === 'add') {
     const emptyIndex = updated.findIndex(i => i === null || i === undefined)
+    console.log('ItemSelector: emptyIndex', emptyIndex)
     if (emptyIndex !== -1) {
       updated[emptyIndex] = payload.item
     }
   } else if (payload.action === 'remove') {
     updated[payload.index] = null
   }
+  console.log('ItemSelector: updated', updated)
 
   emit('update', updated)
 }
