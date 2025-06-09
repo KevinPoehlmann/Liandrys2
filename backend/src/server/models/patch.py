@@ -8,12 +8,14 @@ class NewPatch(BaseModel):
     timestamp: datetime = datetime.now()
     hotfix: datetime | None = None
     validated: bool = False
+
     champion_count: int = 0
     item_count: int = 0
     rune_count: int = 0
     summonerspell_count: int = 0
+
     document_count: int = 0
-    loaded_documents: int = 0
+    cached_documents: int = 0
 
     @validator("document_count", pre=True, always=True)
     def set_document_count(cls, v, values):

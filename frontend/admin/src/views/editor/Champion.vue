@@ -83,7 +83,7 @@ function imageUrl(image) {
 
 
 async function saveChampion() {
-  await axios.put(`/champion/`, champion.value)
+  await axios.put(`/admin/champion/`, champion.value)
   showConfirm.value = false
   changesToConfirm.value = []
 }

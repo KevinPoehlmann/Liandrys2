@@ -82,6 +82,9 @@ patch_logger, load_logger = setup_loggers()
 
 
 URLS = info_loader().urls
+PATHS = info_loader().paths
+ITEM_WIKI_NAMES = info_loader().itemWikiNames
+RUNE_WIKI_NAMES = info_loader().runeWikiNames
 
 
 _patch_load_lock = asyncio.Lock()
@@ -98,6 +101,7 @@ async def load_data() -> None:
 
     async with _patch_load_lock:
         try:
+            _reload_info_loader()
             patches = await check_patch_available()
             if not patches:
                 patch_logger.info("Patch is up to date, no new data to load.")
@@ -332,8 +336,12 @@ async def _load_champion(champion_json: ChampionJson, session: SafeSession, patc
         champion_wiki = load_local_html(champion_json.name)
     except FileNotFoundError as e:
         return """
-    champion_wiki = await _fetch_wiki_html(champion_json.name, "Champion", session)
-    await asyncio.sleep(random.uniform(1.5, 3.0))
+    if await db.exists_champion_by_name(champion_json.name, patch.patch, patch.hotfix):
+        return
+    
+    champion_wiki = await _fetch_wiki_html(champion_json.name, "Champion", patch, session)
+    if not champion_wiki:
+        return
     try:
         # Use webscraper to create the Champion object
         champion = ws.scrape_champion(champion_json, champion_wiki, patch.patch, patch.hotfix)
@@ -342,6 +350,7 @@ async def _load_champion(champion_json: ChampionJson, session: SafeSession, patc
             load_logger.warning(f"⚠ Could not load champion: {champion_json.name}")
             return
     except Exception as e:
+        _save_cached_html("champion", champion_json.name, patch, champion_wiki)
         patch_logger.critical(f"Failed creating champion object for: {champion_json.name}")
         load_logger.warning(f"⚠ Could not load champion: {champion_json.name}")
         raise
@@ -367,9 +376,12 @@ async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, pa
         item_wiki = load_local_html(item_json.name)
     except FileNotFoundError as e:
         return """
-    item_wiki = await _fetch_wiki_html(item_json.name, "Item", session)
-    await asyncio.sleep(random.uniform(1.5, 3.0))
-
+    if await db.exists_item_by_name(item_json.name, patch.patch, patch.hotfix):
+        return
+    
+    item_wiki = await _fetch_wiki_html(item_json.name, "Item", patch, session)
+    if not item_wiki:
+        return
     try:
         item = ws.scrape_item(item_id, item_json, item_wiki, patch.patch, patch.hotfix)
         if not item:
@@ -396,13 +408,16 @@ async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: NewPatc
         rune_wiki = load_local_html(rune_class.rune.name)
     except FileNotFoundError as e:
         return """
-    rune_wiki = await _fetch_wiki_html(rune_class.rune.name, "Rune", session)
-    await asyncio.sleep(random.uniform(1.5, 3.0))
+    if await db.exists_rune_by_name(rune_class.rune.name, patch.patch, patch.hotfix):
+        return
+    
+    rune_wiki = await _fetch_wiki_html(rune_class.rune.name, "Rune", patch, session)
+    if not rune_wiki:
+        return
     try:
         image = await _load_image_rune(rune_class.rune.icon, session)
     except Exception as e:
         patch_logger.error(f"Failed to load image for rune {rune_class.rune.name}: {e}")
-
     try:
         rune = ws.scrape_rune(rune_class, rune_wiki, image, patch.patch, patch.hotfix)
         if not rune:
@@ -423,9 +438,12 @@ async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: Sa
         summonerspell_wiki = load_local_html(summonerspell_json.name)
     except FileNotFoundError as e:
         return """
-    summonerspell_wiki = await _fetch_wiki_html(summonerspell_json.name, "Summonerspell", session)
-    await asyncio.sleep(random.uniform(1.5, 3.0))
-
+    if await db.exists_summonerspell_by_name(summonerspell_json.name, patch.patch, patch.hotfix):
+        return
+    
+    summonerspell_wiki = await _fetch_wiki_html(summonerspell_json.name, "Summonerspell", patch, session)
+    if not summonerspell_wiki:
+        return
     try:
         summonerspell = ws.scrape_summonerspell(summonerspell_json, summonerspell_wiki, patch.patch, patch.hotfix)
         if not summonerspell:
@@ -446,15 +464,21 @@ async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: Sa
 
 
 
-async def _fetch_wiki_html(name: str, type_: str, session: SafeSession) -> str:
+async def _fetch_wiki_html(name: str, type_: str, patch: NewPatch, session: SafeSession) -> str:
     wiki_names_map = {
-        "Item": info_loader().itemWikiNames,
-        "Rune": info_loader().runeWikiNames,
-        # Champion & Summonerspell use Riot's name directly
+        "Item": ITEM_WIKI_NAMES,
+        "Rune": RUNE_WIKI_NAMES,
     }
 
     resolved_name = wiki_names_map.get(type_, {}).get(name, name)
     wiki_url = URLS.wiki + resolved_name
+
+    try:
+        html = _load_cached_html(type_, resolved_name, patch)
+        _delete_cached_html(type_, resolved_name, patch)
+        return html
+    except FileNotFoundError:
+        pass
 
     try:
         return await session.get_html(wiki_url)
@@ -474,8 +498,7 @@ async def _fetch_wiki_html(name: str, type_: str, session: SafeSession) -> str:
 
 
 async def _load_image(image: Image, session: SafeSession, patch: NewPatch, force_reload: bool = False) -> None:
-    paths = info_loader().paths
-    img_path = Path(paths.image) / image.group / image.full
+    img_path = Path(PATHS.image) / image.group / image.full
 
     if not img_path.exists() or force_reload:
         img_path.parent.mkdir(parents=True, exist_ok=True)
@@ -483,7 +506,6 @@ async def _load_image(image: Image, session: SafeSession, patch: NewPatch, force
         try:
             with open(img_path, "wb") as img_file:
                 img_file.write(await session.get_bytes(img_url))
-            await asyncio.sleep(random.uniform(1.5, 3.0))
         except HTTPError as e:
             raise LoadError(e.code, e.reason, e.url, image.group, image.full)
         except URLError as e:
@@ -496,14 +518,13 @@ async def _load_image(image: Image, session: SafeSession, patch: NewPatch, force
 
     # Download the sprite only if present and x/y are 0 (as Riot does it)
     if image.sprite and (image.x == image.y == 0):
-        sprite_path = Path(paths.sprite) / image.sprite
+        sprite_path = Path(PATHS.sprite) / image.sprite
         if not sprite_path.exists() or force_reload:
             sprite_path.parent.mkdir(parents=True, exist_ok=True)
             sprite_url = f"{URLS.dataLink}{patch.patch}{URLS.sprite}{image.sprite}"
             try:
                 with open(sprite_path, "wb") as sprite_file:
                     sprite_file.write(await session.get_bytes(sprite_url))
-                await asyncio.sleep(random.uniform(1.5, 3.0))
             except HTTPError as e:
                 raise LoadError(e.code, e.reason, e.url, image.group, image.full)
             except URLError as e:
@@ -520,8 +541,7 @@ async def _load_image_rune(icon: str, session: SafeSession) -> Image:
         full=icon.rsplit("/", 1)[-1],
         group="rune"
     )
-    paths = info_loader().paths
-    img_path = Path(paths.image) / image.group / image.full
+    img_path = Path(PATHS.image) / image.group / image.full
 
     if not img_path.exists():
         img_path.parent.mkdir(parents=True, exist_ok=True)
@@ -529,7 +549,6 @@ async def _load_image_rune(icon: str, session: SafeSession) -> Image:
         try:
             with open(img_path, "wb") as image_file:
                 image_file.write(await session.get_bytes(img_url))
-            await asyncio.sleep(random.uniform(1.5, 3.0))
         except (HTTPError, URLError) as e:
             patch_logger.warning(f"Failed to load image for rune '{icon}': {e}")
 
@@ -566,7 +585,7 @@ async def _load_patch(patch_str: str, hotfix: datetime | None, old_patch: Patch)
     timeout = aiohttp.ClientTimeout(total=600)
     async with aiohttp.ClientSession(timeout=timeout) as aio_session:
         session = SafeSession(aio_session)
-        patch_wiki = await _fetch_wiki_html(patch, "Patch", session)
+        patch_wiki = await _fetch_wiki_html(patch, "Patch", old_patch, session) #TODO
         changes = ws.scrape_patch(patch_wiki, hotfix)
 
         new_patch = NewPatch(
@@ -785,7 +804,40 @@ async def _clean_up(patch: NewPatch) -> None:
 
 
 
+def _reload_info_loader() -> None:
+    """Reloads the info_loader module to refresh URLs and paths."""
+    global URLS, PATHS, ITEM_WIKI_NAMES, RUNE_WIKI_NAMES
+    info = info_loader()
+    URLS = info.urls
+    PATHS = info.paths
+    ITEM_WIKI_NAMES = info.itemWikiNames
+    RUNE_WIKI_NAMES = info.runeWikiNames
+    patch_logger.info("Info loader reloaded successfully.")
 
+
+
+def _cache_filename(type_: str, name: str, patch: NewPatch) -> Path:
+    safe_name = name.replace(" ", "_").replace("'", "")
+    hotfix_str = patch.hotfix.isoformat().replace(":", "-") if patch.hotfix else "none"
+    filename = f"{safe_name}__{patch.patch}__{hotfix_str}.html"
+    return Path(PATHS.cache) / type_ / filename
+
+
+def _load_cached_html(type_: str, name: str, patch: NewPatch) -> str:
+    path = _cache_filename(name, type_, patch)
+    if path.exists():
+        return path.read_text(encoding="utf-8")
+    raise FileNotFoundError
+
+def _save_cached_html(type_: str, name: str, patch: NewPatch, html: str) -> None:
+    path = _cache_filename(name, type_, patch)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(html, encoding="utf-8")
+
+def _delete_cached_html(type_: str, name: str, patch: NewPatch) -> None:
+    path = _cache_filename(name, type_, patch)
+    if path.exists():
+        path.unlink()
 
 
 

@@ -136,7 +136,7 @@ function imageUrl(image) {
 }
 
 async function saveItem() {
-  await axios.put('/item', item.value)
+  await axios.put('/admin/item', item.value)
   showConfirm.value = false
 }
 

@@ -14,6 +14,7 @@ from src.server.models.rune import ShortRune, Rune
 from src.server.routes.helpers import get_required_rune, parse_from_request
 
 router = APIRouter()
+admin = APIRouter()
 
 
 
@@ -31,7 +32,7 @@ async def get_rune(rune_id: str) -> JSONResponse:
     return JSONResponse(content=rune.dict())
 
 
-@router.put("/")
+@admin.put("/")
 async def put_rune(request: Request) -> int:
     rune = await parse_from_request(request, Rune)
     response = await update_rune(rune)

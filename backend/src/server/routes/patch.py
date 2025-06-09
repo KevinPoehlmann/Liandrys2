@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, BackgroundTasks
+from pydantic import ValidationError
 
 
 from src.server.database import (
@@ -19,7 +20,10 @@ admin = APIRouter()
 
 @router.get("/")
 async def get_latest_patch() -> Patch:
-    response = await fetch_patch_latest()
+    try:
+        response = await fetch_patch_latest()
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail="PATCH_SCHEMA_INVALID")
     if not response:
         raise HTTPException(status_code=404, detail="No patches loaded.")
     return response

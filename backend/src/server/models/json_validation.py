@@ -182,6 +182,7 @@ class SummonerspellJson(BaseModel):
 class PathJson(BaseModel):
     image: str
     sprite: str
+    cache: str
 
 
 

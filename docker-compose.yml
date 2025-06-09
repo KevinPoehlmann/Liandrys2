@@ -43,9 +43,12 @@ services:
   fastapi-admin:
     build: ./backend
     entrypoint: uvicorn src.admin:app --host 0.0.0.0 --port 5001 --reload
+    #entrypoint: >
+    #  python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m uvicorn src.admin:app --host 0.0.0.0 --port 5001 --reload
     container_name: liandrys-fastapi-admin
     ports:
       - 5001:5001
+    #  - 5678:5678  # Debug port
     volumes:
       - ./backend/src:/app/src
     environment:

@@ -16,23 +16,12 @@ class ScrapeError(Exception):
         self.name: str = name
 
 
-class NameError(Exception):
-    def __init__(self, type: str, name: str) -> None:
-        self.type: str = type
-        self.name: str = name
-
-
 class PatcherError(Exception):
     def __init__(self, message: str, error: str) -> None:
         self.message: str = message
         self.error: str = error
 
 
-class MuteException(Exception):
-    def __init__(self, message: str) -> None:
-        self.message: str = message
-
-
-class EmptyTodoException(Exception):
+class AbortPatchError(Exception):
     def __init__(self, message: str) -> None:
         self.message: str = message

@@ -63,7 +63,7 @@ onMounted(async () => {
 })
 
 async function saveSummoner() {
-  await axios.put('/summonerspell', summoner.value)
+  await axios.put('/admin/summonerspell', summoner.value)
   showConfirm.value = false
 }
 

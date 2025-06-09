@@ -80,7 +80,7 @@ onMounted(async () => {
 })
 
 async function saveRune() {
-  await axios.put('/rune', rune.value)
+  await axios.put('/admin/rune', rune.value)
   showConfirm.value = false
 }
 

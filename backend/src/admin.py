@@ -5,10 +5,11 @@ from fastapi.staticfiles import StaticFiles
 
 from src.server.routes.patch import router as patchesRouter, admin as patchesAdmin
 from src.server.routes.enums import router as enumsRouter
-from src.server.routes.champion import router as championsRouter
-from src.server.routes.item import router as itemsRouter
-from src.server.routes.rune import router as runesRouter
-from src.server.routes.summonerspell import router as summonerspellsRouter
+from src.server.routes.champion import router as championsRouter, admin as championsAdmin
+from src.server.routes.item import router as itemsRouter, admin as itemsAdmin
+from src.server.routes.rune import router as runesRouter, admin as runesAdmin
+from src.server.routes.summonerspell import router as summonerspellsRouter, admin as summonerspellsAdmin
+from src.server.routes.migration import admin as migrationAdmin
 
 
 
@@ -31,6 +32,11 @@ def add_middleware(app: FastAPI) -> None:
 def include_routers(app: FastAPI) -> None:
     adminRouter = APIRouter()
     adminRouter.include_router(patchesAdmin, tags=["Patch"], prefix="/patch")
+    adminRouter.include_router(migrationAdmin, tags=["Migration"], prefix="/migration")
+    adminRouter.include_router(championsAdmin, tags=["Champion"], prefix="/champion")
+    adminRouter.include_router(itemsAdmin, tags=["Item"], prefix="/item")
+    adminRouter.include_router(runesAdmin, tags=["Rune"], prefix="/rune")
+    adminRouter.include_router(summonerspellsAdmin, tags=["Summonerspell"], prefix="/summonerspell")
     app.include_router(patchesRouter, tags=["Patch"], prefix="/patch")
     app.include_router(championsRouter, tags=["Champion"], prefix="/champion")
     app.include_router(itemsRouter, tags=["Item"], prefix="/item")

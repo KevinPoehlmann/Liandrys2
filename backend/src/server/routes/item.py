@@ -16,6 +16,7 @@ from src.server.routes.helpers import parse_from_request, get_required_item
 
 
 router = APIRouter()
+admin = APIRouter()
 
 
 
@@ -33,7 +34,7 @@ async def get_item(item_id: str) -> JSONResponse:
     return JSONResponse(content=item.dict())
 
 
-@router.put("/")
+@admin.put("/")
 async def put_item(request: Request) -> int:
     item = await parse_from_request(request, Item)
     response = await update_item(item)

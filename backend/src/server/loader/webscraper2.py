@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup, Tag
 from datetime import datetime
 from src.server.loader.helper import (
     wiki_to_riot_patch,
-    info_loader,
     RuneClass,
     parse_formula_from_table,
     parse_formula_from_string,

@@ -81,7 +81,7 @@
 - [ ] Add automatic stat patching
 - [ ] Fix weird code issues in character.py
 ### Admin Functions ###
-- [ ] Make Dataset updateable
+- [x] Make Schemas updateable
 - [ ] Build Contract Tests before pushing a changed object into the database
 - [x] Make Abilities editable in the editor
 - [x] Make Passives editable in the editor

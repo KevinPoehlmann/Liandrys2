@@ -14,6 +14,7 @@ from src.server.models.summonerspell import ShortSummonerspell, Summonerspell
 from src.server.routes.helpers import get_required_summonerspell, parse_from_request
 
 router = APIRouter()
+admin = APIRouter()
 
 
 
@@ -31,7 +32,7 @@ async def get_summonerspell(summoner_id: str) -> JSONResponse:
     return JSONResponse(content=summonerspell.dict())
 
 
-@router.put("/")
+@admin.put("/")
 async def put_summonerspell(request: Request) -> int:
     summonerspell = await parse_from_request(request, Summonerspell)
     response = await update_summonerspell(summonerspell)

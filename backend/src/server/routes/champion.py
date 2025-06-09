@@ -17,9 +17,10 @@ from src.server.models.dataenums import RangeType, ResourceType
 
 from src.server.routes.helpers import get_required_champion, parse_from_request
 
-router = APIRouter()
 debugger = logging.getLogger("debugger")
 
+router = APIRouter()
+admin = APIRouter()
 
 
 @router.get("/all/{patch}")
@@ -36,7 +37,7 @@ async def get_champion_by_id(id_: str) -> JSONResponse:
     return JSONResponse(content=champion.dict())
 
 
-@router.put("/")
+@admin.put("/")
 async def put_champion(request: Request) -> Champion:
     champion = await parse_from_request(request, Champion)
     response = await update_champion(champion)

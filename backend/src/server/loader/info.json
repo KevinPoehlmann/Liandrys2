@@ -1,7 +1,8 @@
 {
     "paths": {
         "image": "src/images/",
-        "sprite": "src/images/sprites/"
+        "sprite": "src/images/sprites/",
+        "cache": "src/cache/"
     },
     "urls": {
         "patches": "https://ddragon.leagueoflegends.com/api/versions.json",

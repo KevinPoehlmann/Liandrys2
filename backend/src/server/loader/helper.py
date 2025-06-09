@@ -6,6 +6,7 @@ import logging
 import math
 import re
 import requests
+import socket
 
 
 from aiohttp import ClientResponseError
@@ -303,11 +304,29 @@ class RuneClass():
         return self.rune.name
 
 
+
+
+RETRYABLE_EXCEPTIONS = (
+    aiohttp.ClientResponseError,
+    aiohttp.ClientConnectorError,
+    aiohttp.ServerDisconnectedError,
+    requests.RequestException,
+    asyncio.TimeoutError,
+    socket.gaierror,  # DNS failure
+    OSError  # very low-level failures
+)
+
+
 class SafeSession:
-    def __init__(self, session: aiohttp.ClientSession, max_retries: int = 3, backoff_factor: float = 1.5):
+    def __init__(self, session: aiohttp.ClientSession, semaphore: asyncio.Semaphore | None = None, max_retries: int = 3, backoff_factor: float = 1.5, backoff_event: asyncio.Event | None = None):
         self.session = session
+        self.semaphore = semaphore or asyncio.Semaphore(5)
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
+        self.backoff_event = backoff_event or asyncio.Event()
+        self.backoff_event.set()
+        self.abort_event = asyncio.Event()
+        self.abort_event.set()
 
     @staticmethod
     def _retry(retries=3, base_delay=1.5):
@@ -317,31 +336,54 @@ class SafeSession:
                 for attempt in range(1, retries + 1):
                     try:
                         return await func(*args, **kwargs)
-                    except (aiohttp.ClientResponseError, requests.RequestException) as e:
-                        if getattr(e, 'status', None) == 429:
-                            delay = base_delay * 2 ** (attempt - 1)
-                            patch_logger.warning(f"Rate limited (429). Retrying in {delay:.2f}s... [{attempt}/{retries}]")
-                            await asyncio.sleep(delay)
-                            continue
-                        raise
+                    except Exception as e:
+                        if isinstance(e, aiohttp.ClientResponseError):
+                            if e.status == 429:
+                                delay = base_delay * 2 ** (attempt - 1)
+                                if hasattr(args[0], '_global_backoff'):
+                                    await args[0]._global_backoff(delay)
+                                patch_logger.warning(f"Rate limited (429). Retrying in {delay:.2f}s... [{attempt}/{retries}]")
+                                await asyncio.sleep(delay)
+                                continue
+                            elif e.status in (403, 401):
+                                if hasattr(args[0], "abort_event"):
+                                    args[0].abort_event.clear()
+                                patch_logger.critical(f"❌ Access denied (HTTP {e.status}) at {getattr(e, 'request_info', {}).get('real_url', '')}")
+                                raise RuntimeError(f"Access forbidden: HTTP {e.status}") from e
+                            elif e.status >= 500:
+                                patch_logger.warning(f"⚠ Server error (HTTP {e.status}). Retrying...")
+                                await asyncio.sleep(delay)
+                                continue
                 raise RuntimeError("Max retry attempts exceeded.")
             return wrapper
         return decorator
 
     @_retry()
     async def get_json(self, url: str) -> dict:
-        async with self.session.get(url) as response:
+        async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as response:
             response.raise_for_status()
             return await response.json()
 
     @_retry()
     async def get_html(self, url: str) -> str:
-        async with self.session.get(url) as response:
-            response.raise_for_status()
-            return await response.text()
+        if self.abort_event.is_set():
+            return ""
+        await self.backoff_event.wait()
+        async with self.semaphore:
+            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as response:
+                response.raise_for_status()
+                return await response.text()
 
     @_retry()
     async def get_bytes(self, url: str) -> bytes:
-        async with self.session.get(url) as response:
+        async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as response:
             response.raise_for_status()
             return await response.read()
+        
+
+    async def _global_backoff(self, delay: float):
+        if self.backoff_event.is_set():
+            self.backoff_event.clear()  # block other tasks
+            patch_logger.warning(f"🔁 Global backoff for {delay:.2f}s due to 429")
+            await asyncio.sleep(delay)
+            self.backoff_event.set()

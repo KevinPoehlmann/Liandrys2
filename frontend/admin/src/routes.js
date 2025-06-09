@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from "vue-router";
 
 import Patchloader from "./views/patchloader/PatchLoader.vue";
 import Dataoverview from "./views/dataoverview/Dataoverview.vue";
+import Migration from "./views/migration/Migration.vue";
 import Champion from "./views/editor/Champion.vue";
 import Item from "./views/editor/Item.vue";
 import Rune from "./views/editor/Rune.vue";
@@ -21,6 +22,11 @@ const router = createRouter({
             path: "/data",
             name: "data",
             component: Dataoverview
+        },
+        {
+            path: "/migration",
+            name: "migration",
+            component: Migration
         },
         {
             path: "/champion/:id",

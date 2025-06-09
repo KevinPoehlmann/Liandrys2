@@ -6,6 +6,7 @@
       <nav class="space-y-2">
         <router-link to="/" class="block px-2 py-1 rounded hover:bg-gray-100">Patch Loader</router-link>
         <router-link to="/data" class="block px-2 py-1 rounded hover:bg-gray-100">Data Overview</router-link>
+        <router-link to="/migration" class="block px-2 py-1 rounded hover:bg-gray-100">Database Migration</router-link>
       </nav>
     </aside>
 

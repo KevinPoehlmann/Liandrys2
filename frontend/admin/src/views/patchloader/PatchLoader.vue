@@ -7,6 +7,17 @@
       <h2 class="font-semibold text-lg">Current Patch</h2>
       <p>Patch: {{ currentPatch?.patch || "—" }}</p>
       <p>Hotfix: {{ currentPatch?.hotfix || "—" }}</p>
+      <div v-if="patchLoadStatus === 'no-patch'" class="rounded-md bg-blue-100 p-4 text-blue-800 border border-blue-300">
+        No patch loaded yet. Run the patch loader to begin.
+      </div>
+
+      <div v-if="patchLoadStatus === 'schema-error'" class="rounded-md bg-yellow-100 p-4 text-yellow-800 border border-yellow-300">
+        Patch structure is outdated. Run the migration tool.
+      </div>
+
+      <div v-if="patchLoadStatus === 'unknown-error'" class="rounded-md bg-red-100 p-4 text-red-800 border border-red-300">
+        Could not connect to the backend. Please check your setup.
+      </div>
     </div>
 
     <!-- Available Updates -->
@@ -60,6 +71,7 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import axios from 'axios'
 
 const currentPatch = ref(null)
+const patchLoadStatus = ref("")
 const available = ref(null)
 const loading = ref(false)
 const checking = ref(false)
@@ -73,11 +85,21 @@ onMounted(() => {
 
 async function fetchCurrentPatch() {
   try {
-    const { data } = await axios.get("/patch/")
-    currentPatch.value = data
+    const { data } = await axios.get("/patch/");
+    currentPatch.value = data;
   } catch (err) {
-    console.warn("No patch loaded:", err.response?.data?.detail || err.message)
-    currentPatch.value = null
+    const status = err.response?.data?.status_code || err.message;
+
+    if (status === 404) {
+      patchLoadStatus.value = "no-patch";
+    } else if (status === 422) {
+      patchLoadStatus.value = "schema-error";
+    } else {
+      patchLoadStatus.value = "unknown-error";
+    }
+
+    console.warn("Patch load failed:", status);
+    currentPatch.value = null;
   }
 }
 
