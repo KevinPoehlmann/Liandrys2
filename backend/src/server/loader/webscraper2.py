@@ -44,7 +44,7 @@ from src.server.models.summonerspell import NewSummonerspell
 
 
 
-patch_logger = logging.getLogger("patch_logger")
+patch_logger = logging.getLogger("liandrys.patch")
 
 
 
@@ -63,13 +63,12 @@ def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str, hot
         e = _scrape_ability("E", soup, champion_json.spells[2], champion_json.name)
         r = _scrape_ability("R", soup, champion_json.spells[3], champion_json.name)
     except ScrapeError as e:
-        patch_logger.error(f"ScrapeError: Champion '{champion_json.name}': {e.reason}")
+        patch_logger.error(f"[CHAMPION] [SCRAPE] [{champion_json.name}] : {e.reason}")
         return None  # skip this champion
     except (AttributeError, ValueError, TypeError) as e:
-        patch_logger.error(f"Could not scrape data for Champion '{champion_json.name}': {e}")
+        patch_logger.error(f"[CHAMPION] [SCRAPE] [{champion_json.name}] : {e}")
         return None
     except Exception as e:
-        patch_logger.critical(f"Unexpected error while scraping {champion_json.name}: {e}")
         raise
 
     # Construct Champion
@@ -328,7 +327,7 @@ def _scrape_effect_components(block: Tag) -> list[EffectComponent]:
         try:
             effect_type, damage_subtype = find_label(_get_clean_text(label))
         except ScrapeError as e:
-            patch_logger.warning(f"Error finding label: {label}")
+            patch_logger.warning(f"[CHAMPION] [SCRAPE] [?] Could not find label {label}: {e.reason}")
             continue
 
         formula, hp_scaling = parse_effect_formula(text)
@@ -421,7 +420,7 @@ def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, h
         maps = [Map(m) for m, v in item_json.maps.items() if v == True]
         item.maps = maps
     except ValueError as e:
-        patch_logger.warning(e)
+        patch_logger.warning(f"[ITEM] [SCRAPE] [{item.name}] Could not find Map: {e}")
 
     if item_id.startswith("15"):
         item.class_ = ItemClass.TOWER_MINION
@@ -430,6 +429,7 @@ def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, h
     soup = BeautifulSoup(wiki_html, "lxml")
     item_class = _scrape_item_class(soup)
     if not item_class:
+        patch_logger.warning(f"[ITEM] [SCRAPE] [{item.name}] Could not find ItemClass, setting to ERROR")
         return item
     item.class_ = item_class
 
@@ -460,7 +460,7 @@ def _scrape_item_class(soup: BeautifulSoup) -> ItemClass | None:
     try:
         item_class = ItemClass(_get_clean_text(wiki_class))
     except ValueError as e:
-        patch_logger.warning(e)
+        patch_logger.warning(f"[ITEM] [SCRAPE] [?] Could not find ItemClass: {e}")
         item_class = ItemClass.ERROR
     return item_class
     
@@ -493,7 +493,7 @@ def _scrape_item_stat_block(block: Tag) -> dict[Stat, float]:
         value = stat.text
         pair = value.split(maxsplit=1)
         if len(pair) < 2:
-            patch_logger.warning(f"Weird Item stat: {value}")
+            patch_logger.warning(f"[ITEM] [SCRAPE] [?] Could not parse Item stat: {value}")
             continue
         if "%" in pair[0]:
             pair[0] = pair[0].strip(" %+")
@@ -504,7 +504,7 @@ def _scrape_item_stat_block(block: Tag) -> dict[Stat, float]:
         try:
             parsed_stats[Stat.from_str(pair[1])] = float(pair[0])
         except ValueError as e:
-            patch_logger.warning(e)
+            patch_logger.warning(f"[ITEM] [SCRAPE] [?] Could not parse Item stat: {pair[1]} with value {pair[0]}")
             parsed_stats[Stat.ERROR] = float(pair[0])
     return parsed_stats
     
@@ -787,7 +787,7 @@ def _scrape_hotfix(content: Tag, hotfix: datetime) -> dict[str, dict]:
     span = content.find("span", id=wiki_hotfix.replace(" ", "_"))
     hotfix_start = span.find_parent("h3") if span else None
     if not hotfix_start:
-        patch_logger.error(f"Hotfix {hotfix} not found in wiki content")
+        patch_logger.error(f"[HOTFIX] [SCRAPE] [{hotfix}] Hotfix not found in wiki content")
         return patch_changes
     for sibling in hotfix_start.find_next_siblings():
         if sibling.name == "dl":
@@ -795,7 +795,7 @@ def _scrape_hotfix(content: Tag, hotfix: datetime) -> dict[str, dict]:
                 object_type, name, object = _scrape_hotfix_all(sibling)
                 patch_changes[object_type]["changed"][name] = object
             except ScrapeError as e:
-                patch_logger.error(f"ScrapeError: {e.reason}")
+                patch_logger.error(f"[HOTFIX] [SCRAPE] [{hotfix}] {e.reason}")
                 continue
         elif sibling.name == "ul":
             continue

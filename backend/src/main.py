@@ -1,8 +1,10 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 
+from src.server.database import setup_indexes
 from src.server.routes.patch import router as patchesRouter
 from src.server.routes.champion import router as championsRouter
 from src.server.routes.item import router as itemsRouter
@@ -37,14 +39,22 @@ def include_routers(app: FastAPI) -> None:
 
 def add_static_files(app: FastAPI) -> None:
     app.mount("/images", StaticFiles(directory="src/images"), name="images")
-    app.mount("/logs", StaticFiles(directory="src/logs"), name="logs")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await setup_indexes()
+    # This is where you can add any startup actions if needed
+    yield
+    # Cleanup actions can be added here if needed
 
 
 def start_application() -> FastAPI:
-    app = FastAPI()
+    app = FastAPI(lifespan=lifespan)
     add_middleware(app)
     include_routers(app)
     add_static_files(app)
+
     return app
 
 app = start_application()

@@ -10,7 +10,7 @@ from src.server.database import (
     clear_patch 
 )
 
-from src.server.loader.patchloader2 import load_data, check_patch_available
+from src.server.loader.patchloader2 import load_data, check_patch_available, patch_load_lock
 from src.server.models.patch import NewPatch, Patch
 
 
@@ -35,7 +35,7 @@ async def get_all_patches() -> list[Patch]:
     return patch_list
 
 
-@router.get("/status")
+@admin.get("/status")
 async def get_status() -> dict:
     try:
         patches = await check_patch_available()
@@ -47,6 +47,11 @@ async def get_status() -> dict:
         "patches": patches,
         "msg": msg
     }
+
+
+@admin.get("/load/status")
+async def get_load_status() -> dict:
+    return {"loading": patch_load_lock.locked()}
 
 
 @admin.delete("/")

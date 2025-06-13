@@ -7,13 +7,12 @@ import math
 import re
 import requests
 import socket
+import time
 
 
 from aiohttp import ClientResponseError
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
-from typing import Callable
 
 from src.server.loader.patchexceptions import PatcherError, ScrapeError
 from src.server.models.dataenums import HpScaling, Stat, DamageSubType
@@ -23,9 +22,8 @@ from src.server.models.json_validation import (
     RuneJson
 )
 
-
-patch_logger = logging.getLogger("patch_loader")
-debugger = logging.getLogger("debugger")
+patch_logger = logging.getLogger("liandrys.patch")
+load_logger = logging.getLogger("liandrys.load")
 
 
 
@@ -209,7 +207,7 @@ def find_stat(stat: str) -> tuple[Stat, HpScaling, bool]:
             stat_enum = Stat(stat)
         except ValueError as e:
             stat_enum = Stat.ERROR
-            patch_logger.warning(f"Unknown stat: {stat}. Error: {e}")
+            patch_logger.warning(f"[CHAMPION] [SCRAPE] [?] Unknown stat: {stat}. Error: {e}")
 
     return stat_enum, hp_scale, percent
 
@@ -327,31 +325,38 @@ class SafeSession:
         self.backoff_event.set()
         self.abort_event = asyncio.Event()
         self.abort_event.set()
+        self.recent_429s: list[float] = []
 
     @staticmethod
-    def _retry(retries=3, base_delay=1.5):
+    def _retry():
         def decorator(func):
             @functools.wraps(func)
             async def wrapper(*args, **kwargs):
+                self = args[0]
+                retries = getattr(self, "max_retries", 3)
+                base_delay = getattr(self, "backoff_factor", 1.5)
                 for attempt in range(1, retries + 1):
                     try:
                         return await func(*args, **kwargs)
                     except Exception as e:
                         if isinstance(e, aiohttp.ClientResponseError):
+                            delay = base_delay * 2 ** (attempt - 1)
                             if e.status == 429:
-                                delay = base_delay * 2 ** (attempt - 1)
-                                if hasattr(args[0], '_global_backoff'):
-                                    await args[0]._global_backoff(delay)
-                                patch_logger.warning(f"Rate limited (429). Retrying in {delay:.2f}s... [{attempt}/{retries}]")
-                                await asyncio.sleep(delay)
+                                if hasattr(self, "http_429_abortion"):
+                                    await self.http_429_abortion()
+                                if hasattr(self, '_global_backoff'):
+                                    await self._global_backoff(delay)
+                                patch_logger.info(f"[NETWORK] [RETRY] [429] Rate limited. Retrying in {delay:.2f}s... [{attempt}/{retries}]")
+                                if attempt == 1 or attempt == retries:
+                                    load_logger.warning(f"[NETWORK] [RETRY] [429] Rate limited. Retrying in {delay:.2f}s... [{attempt}/{retries}]")
                                 continue
                             elif e.status in (403, 401):
-                                if hasattr(args[0], "abort_event"):
-                                    args[0].abort_event.clear()
-                                patch_logger.critical(f"❌ Access denied (HTTP {e.status}) at {getattr(e, 'request_info', {}).get('real_url', '')}")
+                                if hasattr(self, "abort_event"):
+                                    self.abort_event.clear()
+                                    patch_logger.critical(f"[NETWORK] [RETRY] [{e.status}] Access denied at {getattr(e, 'request_info', {}).get('real_url', '')}. Aborting further requests.")
                                 raise RuntimeError(f"Access forbidden: HTTP {e.status}") from e
                             elif e.status >= 500:
-                                patch_logger.warning(f"⚠ Server error (HTTP {e.status}). Retrying...")
+                                patch_logger.warning(f"[NETWORK] [RETRY] [{e.status}] Server error. Retrying in {base_delay * 2 ** (attempt - 1):.2f}s... [{attempt}/{retries}]")
                                 await asyncio.sleep(delay)
                                 continue
                 raise RuntimeError("Max retry attempts exceeded.")
@@ -381,9 +386,21 @@ class SafeSession:
             return await response.read()
         
 
-    async def _global_backoff(self, delay: float):
+    async def _global_backoff(self, delay: float) -> None:
         if self.backoff_event.is_set():
             self.backoff_event.clear()  # block other tasks
-            patch_logger.warning(f"🔁 Global backoff for {delay:.2f}s due to 429")
             await asyncio.sleep(delay)
             self.backoff_event.set()
+
+
+    async def http_429_abortion(self) -> None:
+        now = time.monotonic()
+        self.recent_429s.append(now)
+        self.recent_429s = [t for t in self.recent_429s if now - t < 60]
+        if len(self.recent_429s) >= 10:
+            patch_logger.critical("[NETWORK] [RETRY] [429] Too many 429 responses in the last minute. Aborting further requests.")
+            self.abort_event.clear()
+            self.backoff_event.clear()
+            raise RuntimeError("Too many 429 responses, aborting further requests.")
+        else:
+            patch_logger.info(f"[NETWORK] [RETRY] [429] Recent 429 count: {len(self.recent_429s)}")

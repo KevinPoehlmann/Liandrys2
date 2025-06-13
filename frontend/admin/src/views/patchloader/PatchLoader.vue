@@ -38,26 +38,35 @@
 
     <!-- Load Button -->
     <div>
-      <button @click="loadPatch" class="bg-green-600 text-white py-2 px-4 rounded" :disabled="loading || !available || Object.keys(available).length === 0">
-        {{ loading ? "Loading Patch..." : "Load New Patch" }}
+      <button @click="loadPatch" class="bg-green-600 text-white py-2 px-4 rounded" :disabled="isLoading || !available || Object.keys(available).length === 0">
+        {{ isLoading ? "Loading Patch..." : "Load New Patch" }}
       </button>
     </div>
 
     <!-- Load Log -->
     <div class="bg-gray-100 p-4 rounded shadow text-sm whitespace-pre-wrap">
+      <h2 class="font-semibold text-lg">Loader Log</h2>
       <div class="flex items-center justify-between mb-2">
-        <h2 class="font-semibold">Loader Log</h2>
         <button
           @click="fetchLog"
           class="bg-gray-800 text-white text-xs px-2 py-1 rounded hover:bg-gray-700"
         >
           Refresh
         </button>
+        <label class="flex items-center cursor-pointer text-xs text-gray-700">
+          <div class="relative">
+            <input type="checkbox" v-model="autoScroll" class="sr-only peer" />
+            <div class="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors"></div>
+            <div
+            class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"
+            ></div>
+          </div>
+          <span class="ml-2">Autoscroll</span>
+        </label>
       </div>
-
       <pre v-if="log"
         ref="logBox"
-        class="bg-black text-green-400 p-2 rounded overflow-y-auto max-h-96"
+        class="bg-black text-green-400 p-2 rounded overflow-y-auto max-h-96 min-h-40"
       >
         {{ log }}
       </pre>
@@ -67,20 +76,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import axios from 'axios'
 
 const currentPatch = ref(null)
 const patchLoadStatus = ref("")
 const available = ref(null)
-const loading = ref(false)
 const checking = ref(false)
 const log = ref("")
 const logBox = ref(null)
+const autoScroll = ref(true)
+const isLoading = ref(false)
+let logInterval = null
 
 onMounted(() => {
   fetchCurrentPatch()
   fetchLog()
+})
+
+
+onUnmounted(() => {
+  stopPollingLog()
 })
 
 async function fetchCurrentPatch() {
@@ -105,37 +121,61 @@ async function fetchCurrentPatch() {
 
 async function fetchAvailable() {
   checking.value = true
-  const { data } = await axios.get("/patch/status")
+  const { data } = await axios.get("/admin/patch/status")
   available.value = data.patches
   checking.value = false
 }
 
 async function loadPatch() {
-  loading.value = true
   await axios.post("/admin/patch/")
   await fetchCurrentPatch()
+  fetchLog()
+}
+
+async function pollLoadStatus() {
   try {
-    const logRes = await axios.get("/logs/patch_loader.log") // optional
-    log.value = logRes.data
-  } catch {
-    log.value = "✅ Patch update triggered. Log file not available."
+    const res = await axios.get("/admin/patch/load/status")
+    isLoading.value = res.data.loading
+
+    if (res.data.loading && logInterval === null) {
+      startPollingLog()
+    }
+
+    if (!res.data.loading && logInterval !== null) {
+      stopPollingLog()
+    }
+  } catch (err) {
+    log.value = "❌ Could not check patch load status."
+    stopPollingLog()
   }
-  loading.value = false
+}
+
+function startPollingLog() {
+  logInterval = setInterval(fetchLog, 3000)
+}
+
+function stopPollingLog() {
+  if (logInterval !== null) {
+    clearInterval(logInterval)
+    logInterval = null
+  }
+  isLoading.value = false
 }
 
 async function fetchLog() {
   try {
-    const res = await axios.get("/logs/patch_loader.log")
+    const res = await axios.get("/logs/load_current.log")
     log.value = res.data
   } catch (err) {
     log.value = "❌ Couldn't load log file."
   }
+  pollLoadStatus()
 }
 
 watch(log, () => {
   // Wait for DOM update
   nextTick(() => {
-    if (logBox.value) {
+    if (logBox.value && autoScroll.value) {
       logBox.value.scrollTop = logBox.value.scrollHeight
     }
   })

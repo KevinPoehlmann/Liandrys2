@@ -68,14 +68,3 @@ async def root():
 
 
 
-
-
-
-
-
-
-
-def something(a):
-    return a
-
-

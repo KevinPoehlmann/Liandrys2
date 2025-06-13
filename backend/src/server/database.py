@@ -37,6 +37,16 @@ def connect_database() -> AgnosticDatabase:
     database = client.liandrys
     return database
 
+
+async def setup_indexes() -> None:
+    await patch_collection.create_index([("patch", 1), ("hotfix", 1)], unique=True, name="patch_index")
+    await champion_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="champion_index")
+    await item_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="item_index")
+    await rune_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="rune_index")
+    await summonerspell_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="summonerspell_index")
+
+
+
 database = connect_database()
 
 patch_collection: AgnosticCollection = database.patches
@@ -85,6 +95,22 @@ async def add_patch(patch: NewPatch) -> str:
     document = patch.dict()
     result = await patch_collection.insert_one(document)
     return result.inserted_id
+
+
+async def upsert_patch(patch: NewPatch) -> str:
+    result = await patch_collection.update_one(
+        {"patch": patch.patch, "hotfix": patch.hotfix},
+        {"$set": patch.dict(exclude={"id"})},
+        upsert=True
+    )
+
+    if result.upserted_id:
+        return result.upserted_id
+    else:
+        # Find the existing document to get its _id
+        doc = await patch_collection.find_one({"patch": patch.patch, "hotfix": patch.hotfix})
+        assert doc is not None
+        return doc["_id"]
 
 
 async def fetch_patch_latest() -> Patch | None:

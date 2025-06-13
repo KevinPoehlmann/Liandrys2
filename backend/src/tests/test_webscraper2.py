@@ -141,7 +141,7 @@ def test_scrape_attackspeed_stats(champion, base_as, expected, load_soup):
 @pytest.mark.parametrize(
     "champion, expected",
     [
-        ("ahri", ("15.4.1", RangeType.RANGED)),
+        ("ahri", ("15.8.1", RangeType.RANGED)),
         ("taric", ("14.21.1", RangeType.MELEE)),
     ]
 )

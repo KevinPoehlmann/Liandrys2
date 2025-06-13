@@ -82,6 +82,11 @@
 - [ ] Fix weird code issues in character.py
 ### Admin Functions ###
 - [x] Make Schemas updateable
+- [ ] Add Logs
+    - [x] Add live logs of the patching proceess
+    - [ ] Make all log files accesible
+    - [ ] Add color coding to log files
+    - [ ] Make logs filterable
 - [ ] Build Contract Tests before pushing a changed object into the database
 - [x] Make Abilities editable in the editor
 - [x] Make Passives editable in the editor
@@ -126,8 +131,8 @@
     - or pytest src/tests/*test_file.py*
     - do **not** add an _ _init_ _.py file to backend, or it will crash pytest
 - **Installation on raspberrypi:**
-    - probably just use "docker-compose -f docker-compose.yml -f docker-compose.rpi.yml up -d
-"
+    - probably just use "docker-compose -f docker-compose.yml -f docker-compose.rpi.yml up -d"
+
     - swap outcommented lines:
         - docker-compose: mongo image
         - database.py: client?
@@ -137,7 +142,7 @@
         - get some key from github to download it via ssh from the raspberry
         - donwload it
     - swap back lines and put it back on github
-- **Dbuggin:**
+- **Debugging:**
     - uncomment 3 lines in the docker-compose file
     - choose "Attach to FastAPI (Docker)" in the vs code debugger
 - **Common Issues:**
