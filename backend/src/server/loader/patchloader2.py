@@ -831,19 +831,19 @@ def _cache_filename(type_: str, name: str, patch: NewPatch) -> Path:
 
 
 def _load_cached_html(type_: str, name: str, patch: NewPatch) -> str:
-    path = _cache_filename(name, type_, patch)
+    path = _cache_filename(type_, name, patch)
     if path.exists():
         return path.read_text(encoding="utf-8")
     raise FileNotFoundError
 
 def _save_cached_html(type_: str, name: str, patch: NewPatch, html: str) -> None:
-    path = _cache_filename(name, type_, patch)
+    path = _cache_filename(type_, name, patch)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(html, encoding="utf-8")
     patch.cached_documents += 1
 
 def _delete_cached_html(type_: str, name: str, patch: NewPatch) -> None:
-    path = _cache_filename(name, type_, patch)
+    path = _cache_filename(type_, name, patch)
     if path.exists():
         patch.cached_documents -= 1
         path.unlink()

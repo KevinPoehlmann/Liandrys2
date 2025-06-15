@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 
@@ -31,7 +32,7 @@ async def get_items(patch: str, hotfix: datetime | None = None) -> list[ShortIte
 @router.get("/{item_id}")
 async def get_item(item_id: str) -> JSONResponse:
     item = await get_required_item(item_id)
-    return JSONResponse(content=item.dict())
+    return JSONResponse(content=jsonable_encoder(item))
 
 
 @admin.put("/")

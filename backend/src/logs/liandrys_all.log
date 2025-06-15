@@ -8114,3 +8114,169 @@ NoneType: None
 15.06.2025  23:32:14 - ERROR - liandrys.load: [LOAD] [Patch] Loaded 414 / 868 objects.
 15.06.2025  23:32:14 - ERROR - liandrys.load: [LOAD] [Patch] Duration: 37.96 seconds
 15.06.2025  23:32:14 - INFO - liandrys.load: [ITEM] Kraken Slayer ✔ Loaded successfully
+16.06.2025  00:02:06 - INFO - liandrys.patch: ------------------------------------------------------------
+16.06.2025  00:02:06 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+16.06.2025  00:02:06 - INFO - liandrys.load: ------------------------------------------------------------
+16.06.2025  00:02:06 - INFO - liandrys.load: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+16.06.2025  00:02:08 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Aurora] : could not convert string to float: ''
+16.06.2025  00:02:08 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Aurora] ❌ Failed to create object
+16.06.2025  00:02:08 - ERROR - liandrys.load: [CHAMPION] Aurora ❌ Failed to load
+16.06.2025  00:02:09 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Slow Duration:</b>: Can't find effect type for slow duration:.
+16.06.2025  00:02:09 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Bonus Health:</b>: Can't find effect type for bonus health:.
+16.06.2025  00:02:09 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Bonus Movement Speed:</b>: Can't find effect type for bonus movement speed:.
+16.06.2025  00:02:09 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Increased Total Attack Speed:</b>: Can't find effect type for increased total attack speed:.
+16.06.2025  00:02:09 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Bel'Veth] ❌ Failed to create object: '' is not a valid ResourceType
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader2.py", line 311, in _load_champion
+    champion = ws.scrape_champion(champion_json, champion_wiki, patch.patch, patch.hotfix)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper2.py", line 83, in scrape_champion
+    resource_type=ResourceType(champion_json.partype),
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/enum.py", line 712, in __call__
+    return cls.__new__(cls, value)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/enum.py", line 1135, in __new__
+    raise ve_exc
+ValueError: '' is not a valid ResourceType
+16.06.2025  00:02:09 - ERROR - liandrys.load: [CHAMPION] Bel'Veth ❌ Failed to load
+16.06.2025  00:02:09 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Slow:</b>: Can't find effect type for slow:.
+16.06.2025  00:02:09 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Ekko] : could not convert string to float: ''
+16.06.2025  00:02:09 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Ekko] ❌ Failed to create object
+16.06.2025  00:02:09 - ERROR - liandrys.load: [CHAMPION] Ekko ❌ Failed to load
+16.06.2025  00:02:09 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Kayn] : could not convert string to float: ''
+16.06.2025  00:02:09 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Kayn] ❌ Failed to create object
+16.06.2025  00:02:09 - ERROR - liandrys.load: [CHAMPION] Kayn ❌ Failed to load
+16.06.2025  00:02:10 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [K'Sante] : could not convert string to float: ''
+16.06.2025  00:02:10 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [K'Sante] ❌ Failed to create object
+16.06.2025  00:02:10 - ERROR - liandrys.load: [CHAMPION] K'Sante ❌ Failed to load
+16.06.2025  00:02:10 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [LeBlanc] : could not convert string to float: ''
+16.06.2025  00:02:10 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [LeBlanc] ❌ Failed to create object
+16.06.2025  00:02:10 - ERROR - liandrys.load: [CHAMPION] LeBlanc ❌ Failed to load
+16.06.2025  00:02:10 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Slow:</b>: Can't find effect type for slow:.
+16.06.2025  00:02:10 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Root Duration:</b>: Can't find effect type for root duration:.
+16.06.2025  00:02:10 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Lissandra] : could not convert string to float: ''
+16.06.2025  00:02:10 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Lissandra] ❌ Failed to create object
+16.06.2025  00:02:10 - ERROR - liandrys.load: [CHAMPION] Lissandra ❌ Failed to load
+16.06.2025  00:02:11 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Bonus Movement Speed per Stack:</b>: Can't find effect type for bonus movement speed per stack:.
+16.06.2025  00:02:11 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Lillia] : could not convert string to float: ''
+16.06.2025  00:02:11 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Lillia] ❌ Failed to create object
+16.06.2025  00:02:11 - ERROR - liandrys.load: [CHAMPION] Lillia ❌ Failed to load
+16.06.2025  00:02:11 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Lulu] : could not convert string to float: ''
+16.06.2025  00:02:11 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Lulu] ❌ Failed to create object
+16.06.2025  00:02:11 - ERROR - liandrys.load: [CHAMPION] Lulu ❌ Failed to load
+16.06.2025  00:02:11 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Hwei] : Q block not found
+16.06.2025  00:02:11 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Hwei] ❌ Failed to create object
+16.06.2025  00:02:11 - ERROR - liandrys.load: [CHAMPION] Hwei ❌ Failed to load
+16.06.2025  00:02:11 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Slow:</b>: Can't find effect type for slow:.
+16.06.2025  00:02:11 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Swain] : could not convert string to float: ''
+16.06.2025  00:02:11 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Swain] ❌ Failed to create object
+16.06.2025  00:02:11 - ERROR - liandrys.load: [CHAMPION] Swain ❌ Failed to load
+16.06.2025  00:02:12 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Rengar] : could not convert string to float: ''
+16.06.2025  00:02:12 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Rengar] ❌ Failed to create object
+16.06.2025  00:02:12 - ERROR - liandrys.load: [CHAMPION] Rengar ❌ Failed to load
+16.06.2025  00:02:12 - WARNING - liandrys.patch: [CHAMPION] [SCRAPE] [?] Could not find label <b>Slow:</b>: Can't find effect type for slow:.
+16.06.2025  00:02:12 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Vex] : could not convert string to float: ''
+16.06.2025  00:02:12 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Vex] ❌ Failed to create object
+16.06.2025  00:02:12 - ERROR - liandrys.load: [CHAMPION] Vex ❌ Failed to load
+16.06.2025  00:02:12 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Zed] : could not convert string to float: ''
+16.06.2025  00:02:12 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Zed] ❌ Failed to create object
+16.06.2025  00:02:12 - ERROR - liandrys.load: [CHAMPION] Zed ❌ Failed to load
+16.06.2025  00:02:13 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Zoe] : could not convert string to float: ''
+16.06.2025  00:02:13 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Zoe] ❌ Failed to create object
+16.06.2025  00:02:13 - ERROR - liandrys.load: [CHAMPION] Zoe ❌ Failed to load
+16.06.2025  00:02:13 - ERROR - liandrys.patch: [CHAMPION] [SCRAPE] [Skarner] : could not convert string to float: ''
+16.06.2025  00:02:13 - ERROR - liandrys.patch: [CHAMPION] [LOAD] [Skarner] ❌ Failed to create object
+16.06.2025  00:02:13 - ERROR - liandrys.load: [CHAMPION] Skarner ❌ Failed to load
+16.06.2025  00:02:13 - ERROR - liandrys.patch: [SUMMONERSPELL] [LOAD] [Flee] ❌ Failed to create object: (AttributeError("'NoneType' object has no attribute 'text'"), 'Summonerspell', 'Flee')
+Traceback (most recent call last):
+  File "/app/src/server/loader/webscraper2.py", line 632, in scrape_summonerspell
+    active = _scrape_summonerspell_active(soup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper2.py", line 653, in _scrape_summonerspell_active
+    passive_text = summonerspell_info.text
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'text'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader2.py", line 405, in _load_summonerspell
+    summonerspell = ws.scrape_summonerspell(summonerspell_json, summonerspell_wiki, patch.patch, patch.hotfix)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper2.py", line 634, in scrape_summonerspell
+    raise ScrapeError(e, "Summonerspell", summonerspell_json.name)
+src.server.loader.patchexceptions.ScrapeError: (AttributeError("'NoneType' object has no attribute 'text'"), 'Summonerspell', 'Flee')
+16.06.2025  00:02:14 - ERROR - liandrys.load: [SUMMONERSPELL] Flee ❌ Failed to load
+16.06.2025  00:02:14 - ERROR - liandrys.patch: [SUMMONERSPELL] [LOAD] [Poro Toss] ❌ Failed to create object: (AttributeError("'NoneType' object has no attribute 'text'"), 'Summonerspell', 'Poro Toss')
+Traceback (most recent call last):
+  File "/app/src/server/loader/webscraper2.py", line 632, in scrape_summonerspell
+    active = _scrape_summonerspell_active(soup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper2.py", line 653, in _scrape_summonerspell_active
+    passive_text = summonerspell_info.text
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'text'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader2.py", line 405, in _load_summonerspell
+    summonerspell = ws.scrape_summonerspell(summonerspell_json, summonerspell_wiki, patch.patch, patch.hotfix)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper2.py", line 634, in scrape_summonerspell
+    raise ScrapeError(e, "Summonerspell", summonerspell_json.name)
+src.server.loader.patchexceptions.ScrapeError: (AttributeError("'NoneType' object has no attribute 'text'"), 'Summonerspell', 'Poro Toss')
+16.06.2025  00:02:14 - ERROR - liandrys.load: [SUMMONERSPELL] Poro Toss ❌ Failed to load
+16.06.2025  00:02:14 - ERROR - liandrys.patch: [SUMMONERSPELL] [LOAD] [To the King!] ❌ Failed to create object: (AttributeError("'NoneType' object has no attribute 'text'"), 'Summonerspell', 'To the King!')
+Traceback (most recent call last):
+  File "/app/src/server/loader/webscraper2.py", line 632, in scrape_summonerspell
+    active = _scrape_summonerspell_active(soup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper2.py", line 653, in _scrape_summonerspell_active
+    passive_text = summonerspell_info.text
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'text'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader2.py", line 405, in _load_summonerspell
+    summonerspell = ws.scrape_summonerspell(summonerspell_json, summonerspell_wiki, patch.patch, patch.hotfix)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper2.py", line 634, in scrape_summonerspell
+    raise ScrapeError(e, "Summonerspell", summonerspell_json.name)
+src.server.loader.patchexceptions.ScrapeError: (AttributeError("'NoneType' object has no attribute 'text'"), 'Summonerspell', 'To the King!')
+16.06.2025  00:02:14 - ERROR - liandrys.load: [SUMMONERSPELL] To the King! ❌ Failed to load
+16.06.2025  00:02:14 - WARNING - liandrys.patch: [NETWORK] [RETRY] [404] Not found: https://wiki.leagueoflegends.com/en-us/OvererchargedHA
+16.06.2025  00:02:14 - WARNING - liandrys.patch: [NETWORK] [RETRY] [404] Not found: https://wiki.leagueoflegends.com/en-us/Structure%20Bounty
+16.06.2025  00:02:14 - WARNING - liandrys.patch: [NETWORK] [RETRY] [404] Not found: https://wiki.leagueoflegends.com/en-us/Structure%20Bounty
+16.06.2025  00:02:14 - WARNING - liandrys.patch: [NETWORK] [RETRY] [404] Not found: https://wiki.leagueoflegends.com/en-us/Structure%20Bounty
+16.06.2025  00:02:14 - WARNING - liandrys.patch: [NETWORK] [RETRY] [404] Not found: https://wiki.leagueoflegends.com/en-us/Penetrating%20Bullets
+16.06.2025  00:02:14 - WARNING - liandrys.patch: [NETWORK] [RETRY] [404] Not found: https://wiki.leagueoflegends.com/en-us/Structure%20Bounty
+16.06.2025  00:02:14 - WARNING - liandrys.patch: [ITEM] [SCRAPE] [Corrupting Potion] Could not find Map: '11' is not a valid Map
+16.06.2025  00:02:14 - ERROR - liandrys.patch: [ITEM] [LOAD] [Corrupting Potion] ❌ Failed to create object: 'NoneType' object has no attribute 'text'
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader2.py", line 346, in _load_item
+    item = ws.scrape_item(item_id, item_json, item_wiki, patch.patch, patch.hotfix)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper2.py", line 448, in scrape_item
+    item.passives = _scrape_item_passives(content)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/server/loader/webscraper2.py", line 543, in _scrape_item_passives
+    title = passive_wiki.find("b").text
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'text'
+16.06.2025  00:02:14 - ERROR - liandrys.load: [ITEM] Corrupting Potion ❌ Failed to load
+16.06.2025  00:02:14 - WARNING - liandrys.patch: [NETWORK] [RETRY] [404] Not found: https://wiki.leagueoflegends.com/en-us/Bandle%20Juice%20of%20Power
+16.06.2025  00:02:14 - WARNING - liandrys.patch: [NETWORK] [RETRY] [404] Not found: https://wiki.leagueoflegends.com/en-us/Tower%20Power-Up
+16.06.2025  00:02:14 - ERROR - liandrys.patch: [PATCH] [UNEXPECTED] ❌ ValueError: '' is not a valid ResourceType
+NoneType: None
+16.06.2025  00:02:14 - ERROR - liandrys.patch: [PATCH] [UNEXPECTED] ❌ AttributeError: 'NoneType' object has no attribute 'text'
+NoneType: None
+16.06.2025  00:02:14 - ERROR - liandrys.patch: [PATCH] [UNEXPECTED] ❌ ScrapeError: (AttributeError("'NoneType' object has no attribute 'text'"), 'Summonerspell', 'Flee')
+NoneType: None
+16.06.2025  00:02:14 - ERROR - liandrys.load: [LOAD] [Patch] Failed to load  patch 15.12.1 with hotfix 2025-06-12 00:00:00.
+16.06.2025  00:02:14 - ERROR - liandrys.load: [LOAD] [Patch] Loaded 414 / 868 objects.
+16.06.2025  00:02:14 - ERROR - liandrys.load: [LOAD] [Patch] Duration: 7.67 seconds
+16.06.2025  00:27:19 - DEBUG - liandrys.debug: Returning champion: 684f356bd29183aeefe34d5a - Aatrox and 2025-06-12 00:00:00

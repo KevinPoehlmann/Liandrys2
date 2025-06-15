@@ -41,9 +41,9 @@ def connect_database() -> AgnosticDatabase:
 async def setup_indexes() -> None:
     await patch_collection.create_index([("patch", 1), ("hotfix", 1)], unique=True, name="patch_index")
     await champion_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="champion_index")
-    await item_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="item_index")
+    await item_collection.create_index([("item_id", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="item_index")
     await rune_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="rune_index")
-    await summonerspell_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="summonerspell_index")
+    await summonerspell_collection.create_index([("key", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="summonerspell_index")
 
 
 

@@ -336,6 +336,7 @@ class SafeSession:
                 retries = getattr(self, "max_retries", 3)
                 base_delay = getattr(self, "backoff_factor", 1.5)
                 for attempt in range(1, retries + 1):
+                    await self.backoff_event.wait()
                     try:
                         return await func(*args, **kwargs)
                     except Exception as e:
@@ -374,7 +375,7 @@ class SafeSession:
 
     @_retry()
     async def get_html(self, url: str) -> str:
-        await self.backoff_event.wait()
+        #await self.backoff_event.wait()
         async with self.semaphore:
             if self.abort_event.is_set():
                 return ""
@@ -391,9 +392,11 @@ class SafeSession:
 
     async def _global_backoff(self, delay: float) -> None:
         if self.backoff_event.is_set():
+            patch_logger.info(f"[NETWORK] [BACKOFF] [429] Global backoff for {delay:.2f}s")
             self.backoff_event.clear()  # block other tasks
             await asyncio.sleep(delay)
             self.backoff_event.set()
+            patch_logger.info(f"[NETWORK] [BACKOFF] [429] Global backoff ended")
 
 
     async def http_429_abortion(self) -> None:

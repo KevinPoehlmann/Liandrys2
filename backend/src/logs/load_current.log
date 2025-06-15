@@ -486,3 +486,28 @@
 15.06.2025  23:32:14 - ERROR - liandrys.load: [LOAD] [Patch] Loaded 414 / 868 objects.
 15.06.2025  23:32:14 - ERROR - liandrys.load: [LOAD] [Patch] Duration: 37.96 seconds
 15.06.2025  23:32:14 - INFO - liandrys.load: [ITEM] Kraken Slayer ✔ Loaded successfully
+16.06.2025  00:02:06 - INFO - liandrys.load: ------------------------------------------------------------
+16.06.2025  00:02:06 - INFO - liandrys.load: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+16.06.2025  00:02:08 - ERROR - liandrys.load: [CHAMPION] Aurora ❌ Failed to load
+16.06.2025  00:02:09 - ERROR - liandrys.load: [CHAMPION] Bel'Veth ❌ Failed to load
+16.06.2025  00:02:09 - ERROR - liandrys.load: [CHAMPION] Ekko ❌ Failed to load
+16.06.2025  00:02:09 - ERROR - liandrys.load: [CHAMPION] Kayn ❌ Failed to load
+16.06.2025  00:02:10 - ERROR - liandrys.load: [CHAMPION] K'Sante ❌ Failed to load
+16.06.2025  00:02:10 - ERROR - liandrys.load: [CHAMPION] LeBlanc ❌ Failed to load
+16.06.2025  00:02:10 - ERROR - liandrys.load: [CHAMPION] Lissandra ❌ Failed to load
+16.06.2025  00:02:11 - ERROR - liandrys.load: [CHAMPION] Lillia ❌ Failed to load
+16.06.2025  00:02:11 - ERROR - liandrys.load: [CHAMPION] Lulu ❌ Failed to load
+16.06.2025  00:02:11 - ERROR - liandrys.load: [CHAMPION] Hwei ❌ Failed to load
+16.06.2025  00:02:11 - ERROR - liandrys.load: [CHAMPION] Swain ❌ Failed to load
+16.06.2025  00:02:12 - ERROR - liandrys.load: [CHAMPION] Rengar ❌ Failed to load
+16.06.2025  00:02:12 - ERROR - liandrys.load: [CHAMPION] Vex ❌ Failed to load
+16.06.2025  00:02:12 - ERROR - liandrys.load: [CHAMPION] Zed ❌ Failed to load
+16.06.2025  00:02:13 - ERROR - liandrys.load: [CHAMPION] Zoe ❌ Failed to load
+16.06.2025  00:02:13 - ERROR - liandrys.load: [CHAMPION] Skarner ❌ Failed to load
+16.06.2025  00:02:14 - ERROR - liandrys.load: [SUMMONERSPELL] Flee ❌ Failed to load
+16.06.2025  00:02:14 - ERROR - liandrys.load: [SUMMONERSPELL] Poro Toss ❌ Failed to load
+16.06.2025  00:02:14 - ERROR - liandrys.load: [SUMMONERSPELL] To the King! ❌ Failed to load
+16.06.2025  00:02:14 - ERROR - liandrys.load: [ITEM] Corrupting Potion ❌ Failed to load
+16.06.2025  00:02:14 - ERROR - liandrys.load: [LOAD] [Patch] Failed to load  patch 15.12.1 with hotfix 2025-06-12 00:00:00.
+16.06.2025  00:02:14 - ERROR - liandrys.load: [LOAD] [Patch] Loaded 414 / 868 objects.
+16.06.2025  00:02:14 - ERROR - liandrys.load: [LOAD] [Patch] Duration: 7.67 seconds

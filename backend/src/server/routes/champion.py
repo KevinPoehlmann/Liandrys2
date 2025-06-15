@@ -2,6 +2,7 @@ import logging
 
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 
@@ -17,7 +18,7 @@ from src.server.models.dataenums import RangeType, ResourceType
 
 from src.server.routes.helpers import get_required_champion, parse_from_request
 
-debugger = logging.getLogger("debugger")
+debug_logger = logging.getLogger("liandrys.debug")
 
 router = APIRouter()
 admin = APIRouter()
@@ -34,7 +35,7 @@ async def get_champions(patch: str, hotfix: datetime | None = None) -> list[Shor
 @router.get("/{id_}")
 async def get_champion_by_id(id_: str) -> JSONResponse:
     champion = await get_required_champion(id_)
-    return JSONResponse(content=champion.dict())
+    return JSONResponse(content=jsonable_encoder(champion))
 
 
 @admin.put("/")
