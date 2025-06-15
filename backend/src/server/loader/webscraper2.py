@@ -441,14 +441,23 @@ def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, h
                 item.stats = stats
                 if masterwork_stats:
                     item.masterwork = masterwork_stats
-            case "Active": item.active = _scrape_item_active(content)
-            case "Passive": item.passives = _scrape_item_passives(content)
-            case "Limitations": item.limitations = _scrape_item_element_text(content)
-            case "Consume": item.active = _scrape_item_element_text(content)    #TODO: give a real active
-            case "Requirements": item.requirements = _scrape_item_element_text(content)
+            case "Active":
+                item.active = _scrape_item_active(content)
+                item.validated = False
+            case "Passive":
+                item.passives = _scrape_item_passives(content)
+                item.validated = False
+            case "Limitations":
+                item.limitations = _scrape_item_element_text(content)
+                item.validated = False
+            case "Consume":
+                item.active = _create_consume_active(item.name, content)
+                item.validated = False
+            case "Requirements":
+                item.requirements = _scrape_item_element_text(content)
+                item.validated = False
 
     return item
-
 
 def _scrape_item_class(soup: BeautifulSoup) -> ItemClass | None:
     wiki_item = soup.find("div", class_="mw-parser-output")
@@ -539,6 +548,16 @@ def _scrape_item_passives(content: Tag) -> list[ItemPassive]:
         passive.name = title.strip(":")
         passives.append(passive)
     return passives
+
+
+def _create_consume_active(name: str, content: Tag) -> ItemActive:
+    active = ItemActive(
+        name=name,
+        type_=ActiveType.CONSUME
+    )
+    description = _scrape_item_element_text(content)
+    active.description = description
+    return active
 
 
 def _scrape_item_element_text(content: Tag) -> str:

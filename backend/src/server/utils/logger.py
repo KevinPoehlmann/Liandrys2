@@ -1,4 +1,5 @@
 import logging
+import time
 
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
@@ -12,6 +13,7 @@ formatter = logging.Formatter(
     fmt="%(asctime)s - %(levelname)s - %(name)s: %(message)s",
     datefmt="%d.%m.%Y  %H:%M:%S"
 )
+formatter.converter = time.localtime  # Use local time for log timestamps
 
 
 
@@ -97,8 +99,6 @@ def _create_console_handler(level=logging.WARNING) -> logging.Handler:
 
 
 
-
-
 # --- Setup Loggers ---
 def setup_loggers() -> dict[str, logging.Logger]:
     formatter = logging.Formatter(
@@ -138,12 +138,20 @@ def setup_loggers() -> dict[str, logging.Logger]:
     sim_logger.setLevel(logging.INFO)
     sim_logger.addHandler(_create_file_handler("simulation.log"))
 
+    debug_logger = logging.getLogger("liandrys.debug")
+    debug_logger.setLevel(logging.DEBUG)
+    file = LOG_DIR / "debug.log"
+    handler = logging.FileHandler(file, mode="a", encoding="utf-8")
+    handler.setFormatter(formatter)
+    debug_logger.addHandler(handler)
+
     return {
         "core": core_logger,
         "patch": patch_logger,
         "load": load_logger,
         "alert": alert_logger,
-        "sim": sim_logger
+        "sim": sim_logger,
+        "debug": debug_logger
     }
 
 
@@ -154,3 +162,7 @@ patch_logger = loggers["patch"]
 load_logger = loggers["load"]
 alert_logger = loggers["alert"]
 sim_logger = loggers["sim"]
+debug_logger = loggers["debug"]
+
+
+attach_fallback_logfile()

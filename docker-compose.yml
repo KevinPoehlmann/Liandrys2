@@ -1,7 +1,6 @@
 services:
   mongo:
     image: mongo
-    #image: mongodb-raspberrypi4-unofficial-r7.0.4    #can probably be deleted
     container_name: liandrys-database
     restart: always
     ports:
@@ -33,12 +32,15 @@ services:
     #  - 5678:5678  # Debug port
     volumes:
       - ./backend/src:/app/src
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     environment:
       MONGODB_HOST: mongo
       MONGODB_PORT: 27017
       MONGODB_USER: root
       MONGODB_PASSWORD: example
       PYTHONPATH: /app
+      TZ: Europe/Berlin
 
   fastapi-admin:
     build: ./backend
@@ -51,12 +53,15 @@ services:
     #  - 5678:5678  # Debug port
     volumes:
       - ./backend/src:/app/src
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     environment:
       MONGODB_HOST: mongo
       MONGODB_PORT: 27017
       MONGODB_USER: root
       MONGODB_PASSWORD: example
       PYTHONPATH: /app
+      TZ: Europe/Berlin
 
   vue:
     build: ./frontend/app

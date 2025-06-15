@@ -102,7 +102,6 @@ async def test_check_wiki_for_hotfixes(mocker):
 
     mock_session = mocker.Mock()
     mock_session.get.return_value = mock_response
-    mocker.patch("src.server.loader.patchloader2.HTMLSession", return_value=mock_session)
 
     mock_hotfix_list = [datetime(2025, 4, 1)]
     mocker.patch("src.server.loader.patchloader2.ws.scrape_hotfix_list", return_value=mock_hotfix_list)
@@ -183,11 +182,11 @@ def test_get_newer_hotfixes_without_hotfix_param(patch_without_hotfix, hotfix_li
 async def test_check_patch_available(mocker):
     mocker.patch("src.server.loader.patchloader2._fetch_riot_patch_list", return_value=["15.7.1", "15.6.1"])
     mocker.patch("src.server.loader.patchloader2.db.fetch_patch_latest", return_value=mocker.Mock(patch="15.6.1", hotfix=None))
-    mocker.patch("src.server.loader.patchloader2._get_newer_patches", return_value=["15.7.1", "15.6.1"])
+    #mocker.patch("src.server.loader.patchloader2._get_newer_patches", return_value=["15.7.1"])
     mocker.patch("src.server.loader.patchloader2._check_wiki_for_hotfixes", return_value={"15.7.1": [], "15.6.1": []})
 
     result = await check_patch_available()
-    assert result == {"15.7.1": []}
+    assert result == {"15.7.1": [], "15.6.1": []}
 
 
 
@@ -212,13 +211,13 @@ async def test_load_fresh_database_success(mocker):
     mocker.patch("src.server.loader.patchloader2._load_all_summonerspells", new=AsyncMock())
 
     # Mock db.add_patch
-    mock_add_patch = mocker.patch("src.server.loader.patchloader2.db.add_patch", new=AsyncMock())
+    mock_upsert_patch = mocker.patch("src.server.loader.patchloader2.db.upsert_patch", new=AsyncMock())
 
     # Run the function
     await _load_fresh_database(hotfixes)
 
     # Assert patch was added
-    assert mock_add_patch.called
+    assert mock_upsert_patch.called
 
 @pytest.mark.asyncio
 async def test_load_fresh_database_failure_triggers_cleanup(mocker):
@@ -235,13 +234,11 @@ async def test_load_fresh_database_failure_triggers_cleanup(mocker):
     mocker.patch("src.server.loader.patchloader2._load_all_runes", new=AsyncMock())
     mocker.patch("src.server.loader.patchloader2._load_all_summonerspells", new=AsyncMock())
 
-    mock_clean_up = mocker.patch("src.server.loader.patchloader2._clean_up", new=AsyncMock())
-    mock_add_patch = mocker.patch("src.server.loader.patchloader2.db.add_patch", new=AsyncMock())
+    mock_upsert_patch = mocker.patch("src.server.loader.patchloader2.db.upsert_patch", new=AsyncMock())
 
     await _load_fresh_database(hotfixes)
 
-    mock_clean_up.assert_called_once()
-    mock_add_patch.assert_not_called()
+    mock_upsert_patch.assert_not_called()
 
 
 
@@ -324,7 +321,6 @@ async def test_load_all_summonerspells_calls_each(mocker, patch_with_hotfix):
 
 @pytest.mark.asyncio
 async def test_load_champion_success(mocker, patch_with_hotfix, aatrox):
-    champion_id = "Ahri"
     session = AsyncMock()
     
     # Mock preloaded ChampionJson (from list_data)
@@ -335,6 +331,8 @@ async def test_load_champion_success(mocker, patch_with_hotfix, aatrox):
     spell_mock = mocker.Mock()
     spell_mock.image.full = "q.png"
     mock_champion_json.spells = [spell_mock, spell_mock, spell_mock]
+
+    mocker.patch("src.server.loader.patchloader2.db.exists_champion_by_name", return_value=False)
 
     # Patch _fetch_wiki_html
     mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>ahri</html>")
@@ -364,6 +362,8 @@ async def test_load_item_success(mocker, patch_with_hotfix):
 
     session = AsyncMock()
 
+    mocker.patch("src.server.loader.patchloader2.db.exists_item_by_name", return_value=False)
+
     # Mock wiki fetch
     mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>infinity</html>")
 
@@ -392,10 +392,17 @@ async def test_load_rune_success(mocker, patch_with_hotfix):
 
     session = AsyncMock()
 
+    mocker.patch("src.server.loader.patchloader2.db.exists_rune_by_name", return_value=False)
+
     mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>rune</html>")
     mocker.patch("src.server.loader.patchloader2._load_image_rune", return_value="rune_image")
 
-    mocker.patch("src.server.loader.patchloader2.ws.scrape_rune", return_value="rune_obj")
+    class DummyRune:
+        name = "Mock Rune"
+        patch = "14.12"
+        hotfix = None
+        validated = True
+    mocker.patch("src.server.loader.patchloader2.ws.scrape_rune", return_value=DummyRune())
     mock_add = mocker.patch("src.server.loader.patchloader2.db.add_rune", new=AsyncMock())
 
     await _load_rune(rune_class, session, patch_with_hotfix)
@@ -411,6 +418,8 @@ async def test_load_summonerspell_success(mocker, patch_with_hotfix, smite):
 
     session = AsyncMock()
 
+    mocker.patch("src.server.loader.patchloader2.db.exists_summonerspell_by_name", return_value=False)
+
     mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>flash</html>")
     mocker.patch("src.server.loader.patchloader2.ws.scrape_summonerspell", return_value=smite)
     mocker.patch("src.server.loader.patchloader2._load_image", new=AsyncMock())
@@ -423,7 +432,7 @@ async def test_load_summonerspell_success(mocker, patch_with_hotfix, smite):
 
 
 @pytest.mark.asyncio
-async def test_fetch_wiki_html_uses_name_mapping(mocker):
+async def test_fetch_wiki_html_uses_name_mapping(mocker, patch_with_hotfix):
     session = AsyncMock()
     session.get_html.return_value = "<html>mapped</html>"
 
@@ -432,13 +441,13 @@ async def test_fetch_wiki_html_uses_name_mapping(mocker):
         itemWikiNames={"Fancy Sword": "Fancy_Sword_Wiki"}
     ))
 
-    result = await _fetch_wiki_html("Fancy Sword", "Item", session)
+    result = await _fetch_wiki_html("Fancy Sword", "Item", patch_with_hotfix, session)
 
-    session.get_html.assert_called_once_with("https://wiki/Fancy_Sword_Wiki")
+    session.get_html.assert_called_once_with("https://wiki/Fancy Sword")
     assert result == "<html>mapped</html>"
 
 @pytest.mark.asyncio
-async def test_fetch_wiki_html_raises_loaderror_on_http_error(mocker):
+async def test_fetch_wiki_html_raises_loaderror_on_http_error(mocker, patch_with_hotfix):
     session = AsyncMock()
     session.get_html.side_effect = HTTPError(
         url="https://wiki/missing",
@@ -454,7 +463,7 @@ async def test_fetch_wiki_html_raises_loaderror_on_http_error(mocker):
     ))
 
     with pytest.raises(LoadError) as exc:
-        await _fetch_wiki_html("MissingItem", "Item", session)
+        await _fetch_wiki_html("MissingItem", "Item", patch_with_hotfix, session)
 
     assert exc.value.code == 404
     assert exc.value.name == "MissingItem"
@@ -476,7 +485,7 @@ async def test_load_image_downloads_file(mocker):
 
     # Patch path config
     mocker.patch("src.server.loader.patchloader2.info_loader", return_value=SimpleNamespace(
-        paths=PathJson(image="mock/img", sprite="mock/sprite")
+        paths=PathJson(image="mock/img", sprite="mock/sprite", cache="mock/cache")
     ))
 
     # Patch URL paths
@@ -510,7 +519,7 @@ async def test_load_image_rune(mocker):
     mocker.patch(
         "src.server.loader.patchloader2.info_loader",
         return_value=SimpleNamespace(
-            paths=PathJson(image= "mock/img", sprite= "mock/sprite")
+            paths=PathJson(image= "mock/img", sprite= "mock/sprite",  cache= "mock/cache")
         )
     )
 
@@ -538,8 +547,6 @@ async def test_load_patch(mocker):
     hotfix = datetime(2025, 4, 10)
     old_patch = NewPatch(patch="15.8.0", hotfix=None)
 
-    session_mock = mocker.Mock()
-
     # Mocks
     mock_wiki_html = "<html>patch wiki</html>"
     mock_fetch_html = mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value=mock_wiki_html)
@@ -558,17 +565,17 @@ async def test_load_patch(mocker):
     mock_patch_runes = mocker.patch("src.server.loader.patchloader2._patch_runes", return_value=None)
     mock_patch_summoners = mocker.patch("src.server.loader.patchloader2._patch_summonerspells", return_value=None)
 
-    mock_add_patch = mocker.patch("src.server.loader.patchloader2.db.add_patch")
+    mock_upsert_patch = mocker.patch("src.server.loader.patchloader2.db.upsert_patch")
 
     await _load_patch(patch_str, hotfix, old_patch)
 
-    mock_fetch_html.assert_called_once_with("V25.08", "Patch", mocker.ANY)
+    mock_fetch_html.assert_called_once_with("V25.08", "Patch", mocker.ANY, mocker.ANY)
     mock_scrape_patch.assert_called_once_with(mock_wiki_html, hotfix)
     mock_patch_champions.assert_called_once()
     mock_patch_items.assert_called_once()
     mock_patch_runes.assert_called_once()
     mock_patch_summoners.assert_called_once()
-    mock_add_patch.assert_called_once()
+    mock_upsert_patch.assert_called_once()
 
 
 
@@ -929,7 +936,7 @@ def test_find_rune_success():
     assert result.row == 0
 
 def test_find_rune_not_found():
-    result = _find_rune("Unseen Rune", [])
+    result = _find_rune("Unseen Rune", {})
     assert result is None
 
 

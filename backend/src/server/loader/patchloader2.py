@@ -41,12 +41,13 @@ from src.server.models.patch import NewPatch, Patch
 from src.server.models.rune import NewRune
 from src.server.models.summonerspell import NewSummonerspell
 
-from src.server.utils.logger import attach_logfile, finalize_load_logfile
+from src.server.utils.logger import finalize_load_logfile, attach_fallback_logfile
 
 
 
 patch_logger = logging.getLogger("liandrys.patch")
 load_logger = logging.getLogger("liandrys.load")
+debug_logger = logging.getLogger("liandrys.debug")
 
 
 URLS = info_loader().urls
@@ -75,7 +76,7 @@ async def load_data() -> None:
                 load_logger.info("[LOAD] Patch is up to date, no new data to load.")
                 return
             latest_patch = await db.fetch_patch_latest()
-            if latest_patch and latest_patch.cached_documents == 0:
+            if latest_patch and latest_patch.total_count == latest_patch.loaded_total_count:
                 await _load_all_patches(patches, latest_patch)
             else:
                 await _load_fresh_database(patches)
@@ -155,8 +156,8 @@ def _get_newer_hotfixes(db_patch: Patch | None, hotfixes: dict[str, list[datetim
         return hotfixes
 
     if db_patch.hotfix:
-        hotfixes[db_patch.patch] = [hotfix for hotfix in hotfixes[db_patch.patch] if hotfix > db_patch.hotfix or (hotfix == db_patch.hotfix and db_patch.cached_documents > 0)]
-    if not hotfixes[db_patch.patch] and db_patch.cached_documents == 0:
+        hotfixes[db_patch.patch] = [hotfix for hotfix in hotfixes[db_patch.patch] if hotfix > db_patch.hotfix or (hotfix == db_patch.hotfix and db_patch.total_count > db_patch.loaded_total_count)]
+    if not hotfixes[db_patch.patch] and db_patch.loaded_total_count == db_patch.total_count:
         del hotfixes[db_patch.patch]
     return hotfixes
 
@@ -167,38 +168,32 @@ def _get_newer_hotfixes(db_patch: Patch | None, hotfixes: dict[str, list[datetim
 async def _load_fresh_database(hotfixes_to_process: dict[str, list[datetime]]) -> None:
     patch, hotfix_list = next(iter(hotfixes_to_process.items()))
     hotfix = hotfix_list[-1] if hotfix_list else None
-    attach_logfile(patch, hotfix)
+    attach_fallback_logfile()
     patch_logger.info("-" * 60)
     patch_logger.info(f"Loading fresh database for patch {patch}, hotfix: {hotfix}")
     load_logger.info("-" * 60)
     load_logger.info(f"Loading fresh database for patch {patch}, hotfix: {hotfix}")
     start_time = time.monotonic()
 
-    HEADERS = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/122.0.0.0 Safari/537.36"
-        ),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1"
-    }
     timeout = aiohttp.ClientTimeout(total=600)
-    async with aiohttp.ClientSession(timeout=timeout, headers=HEADERS) as aio_session:
+    async with aiohttp.ClientSession(timeout=timeout) as aio_session:
         session = SafeSession(aio_session)
 
         champion_list, item_list, rune_list, summonerspell_list = await _list_data(patch, session)
-    
-        new_patch = NewPatch(
-            patch=patch,
-            hotfix=hotfix,
-            champion_count=len(champion_list),
-            item_count=len(item_list),
-            rune_count=len(rune_list),
-            summonerspell_count=len(summonerspell_list),
-        )
+        
+        latest_patch = await db.fetch_patch_latest()
+        if latest_patch and latest_patch.patch == patch and latest_patch.hotfix == hotfix:
+            new_patch = latest_patch
+        else:
+        
+            new_patch = NewPatch(
+                patch=patch,
+                hotfix=hotfix,
+                champion_count=len(champion_list),
+                item_count=len(item_list),
+                rune_count=len(rune_list),
+                summonerspell_count=len(summonerspell_list),
+            )
 
         tasks = [
             _load_all_champions(champion_list, session, new_patch),
@@ -207,9 +202,13 @@ async def _load_fresh_database(hotfixes_to_process: dict[str, list[datetime]]) -
             _load_all_summonerspells(summonerspell_list, session, new_patch)
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         load_errors = [r for r in results if isinstance(r, LoadError)]
         unexpected_errors = [r for r in results if isinstance(r, Exception) and not isinstance(r, LoadError)]
+
+        new_patch.update_totals()
+        patch_id = await db.upsert_patch(new_patch)
+        duration = time.monotonic() - start_time
 
         if load_errors or unexpected_errors:
             for e in load_errors:
@@ -221,10 +220,11 @@ async def _load_fresh_database(hotfixes_to_process: dict[str, list[datetime]]) -
             for e in unexpected_errors:
                 patch_logger.exception(f"[PATCH] [UNEXPECTED] ❌ {type(e).__name__}: {e}")
 
+            load_logger.error(f"[LOAD] [Patch] Failed to load  patch {patch} with hotfix {hotfix}.")
+            load_logger.error(f"[LOAD] [Patch] Loaded {new_patch.loaded_total_count} / {new_patch.total_count} objects.")
+            load_logger.error(f"[LOAD] [Patch] Duration: {duration:.2f} seconds")
             return
 
-    patch_id = await db.upsert_patch(new_patch)
-    duration = time.monotonic() - start_time
     load_logger.info(f"Finished loading fresh database for patch {patch}, hotfix: {hotfix}")
     load_logger.info(f"Total duration: {duration:.2f} seconds")
     load_logger.info("-" * 60)
@@ -303,7 +303,6 @@ async def _load_all_summonerspells(summonerspell_list: list[SummonerspellJson], 
 async def _load_champion(champion_json: ChampionJson, session: SafeSession, patch: NewPatch) -> None:
     if await db.exists_champion_by_name(champion_json.name, patch.patch, patch.hotfix):
         return
-    
     champion_wiki = await _fetch_wiki_html(champion_json.name, "Champion", patch, session)
     if not champion_wiki:
         return
@@ -332,6 +331,7 @@ async def _load_champion(champion_json: ChampionJson, session: SafeSession, patc
 
     # Save to database
     await db.add_champion(champion)
+    patch.loaded_champion_count += 1
     load_logger.info(f"[CHAMPION] {champion.name} ✔ Loaded successfully")
 
 
@@ -361,6 +361,7 @@ async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, pa
         patch_logger.warning(f"[ITEM] [IMAGE] [{item_json.name}] ❌ Failed loading image: {e}")
 
     await db.add_item(item)
+    patch.loaded_item_count += 1
     load_logger.info(f"[ITEM] {item.name} ✔ Loaded successfully")
 
 
@@ -389,6 +390,7 @@ async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: NewPatc
         raise
 
     await db.add_rune(rune)
+    patch.loaded_rune_count += 1
     load_logger.info(f"[RUNE] {rune.name} ✔ Loaded successfully")
 
 
@@ -418,6 +420,7 @@ async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: Sa
         patch_logger.exception(f"[SUMMONERSPELL] [IMAGE] [{summonerspell_json.name}] ❌ Failed to load image: {e}")
 
     await db.add_summonerspell(summonerspell)
+    patch.loaded_summonerspell_count += 1
     load_logger.info(f"[SUMMONERSPELL] {summonerspell.name} ✔ Loaded successfully")
 
 
@@ -520,7 +523,7 @@ async def _load_rune_tree_images(icon_list: list[str], session: SafeSession) -> 
 
 
 
-async def _load_all_patches(hotfixes_to_process: dict[str, list[datetime]], old_patch: Patch) -> None:
+async def _load_all_patches(hotfixes_to_process: dict[str, list[datetime]], old_patch: NewPatch) -> None:
     for patch_str in sorted(hotfixes_to_process.keys()):
         hotfix_list = sorted(hotfixes_to_process[patch_str])
         hotfix_list = hotfix_list or [None]
@@ -540,28 +543,17 @@ async def _load_all_patches(hotfixes_to_process: dict[str, list[datetime]], old_
                 raise
 
 
-async def _load_patch(patch_str: str, hotfix: datetime | None, old_patch: Patch) -> None:
-    attach_logfile(patch_str, hotfix)
+async def _load_patch(patch_str: str, hotfix: datetime | None, old_patch: NewPatch) -> None:
+    attach_fallback_logfile()
     patch_logger.info("-" * 60)
     patch_logger.info(f"Loading patch {patch_str}, hotfix: {hotfix}")
     load_logger.info("-" * 60)
     load_logger.info(f"Loading patch {patch_str}, hotfix {hotfix}")
     start_time = time.monotonic()
 
-    HEADERS = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/122.0.0.0 Safari/537.36"
-        ),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1"
-    }
     patch = riot_to_wiki_patch(patch_str)
     timeout = aiohttp.ClientTimeout(total=600)
-    async with aiohttp.ClientSession(timeout=timeout, headers=HEADERS) as aio_session:
+    async with aiohttp.ClientSession(timeout=timeout) as aio_session:
         session = SafeSession(aio_session)
         patch_wiki = await _fetch_wiki_html(patch, "Patch", old_patch, session)
         changes = ws.scrape_patch(patch_wiki, hotfix)
@@ -580,6 +572,7 @@ async def _load_patch(patch_str: str, hotfix: datetime | None, old_patch: Patch)
         await _patch_runes(changes.get("runes", {}), new_patch, old_patch, session)
         await _patch_summonerspells(changes.get("summonerspells", {}), new_patch, old_patch, session)
 
+    new_patch.update_totals()
     patch_id = await db.upsert_patch(new_patch)
     duration = time.monotonic() - start_time
     load_logger.info(f"Finished loading patch {patch}, hotfix: {hotfix}")
@@ -588,7 +581,7 @@ async def _load_patch(patch_str: str, hotfix: datetime | None, old_patch: Patch)
 
 
 
-async def _patch_champions(changes: dict, new_patch: NewPatch, old_patch: Patch, session: SafeSession) -> None:
+async def _patch_champions(changes: dict, new_patch: NewPatch, old_patch: NewPatch, session: SafeSession) -> None:
     all_champions = await db.fetch_champions_by_patch(old_patch.patch, old_patch.hotfix)  # or old_patch.patch
 
     for name in changes.get("new", []):
@@ -606,7 +599,7 @@ async def _patch_champions(changes: dict, new_patch: NewPatch, old_patch: Patch,
         champion.hotfix = new_patch.hotfix
 
         if champion.name in changes.get("changed", {}):
-            new_patch.change_count_champions += 1
+            new_patch.changed_champion_count += 1
             diff = changes["changed"][champion.name]
             try:
                 await _add_changes_champion(champion, diff)
@@ -616,6 +609,7 @@ async def _patch_champions(changes: dict, new_patch: NewPatch, old_patch: Patch,
                 load_logger.error(f"[CHAMPION] {champion.name} ❌ Failed to patch")
 
         await db.add_champion(champion)
+        new_patch.loaded_champion_count += 1
 
 
 async def _add_changes_champion(champion: NewChampion, diff: dict[str, list[str]]) -> None:
@@ -640,7 +634,7 @@ async def _add_changes_champion(champion: NewChampion, diff: dict[str, list[str]
 
 
 
-async def _patch_items(changes: dict, new_patch: NewPatch, old_patch: Patch, session: SafeSession) -> None:
+async def _patch_items(changes: dict, new_patch: NewPatch, old_patch: NewPatch, session: SafeSession) -> None:
     all_items = await db.fetch_items_by_patch(old_patch.patch, old_patch.hotfix)
 
     try:
@@ -672,7 +666,7 @@ async def _patch_items(changes: dict, new_patch: NewPatch, old_patch: Patch, ses
         item.patch = new_patch.patch
         item.hotfix = new_patch.hotfix
         if item.name in changes.get("changed", {}):
-            new_patch.change_count_items += 1
+            new_patch.changed_item_count += 1
             diff = changes["changed"][item.name]
             try:
                 await _add_changes_item(item, diff)
@@ -682,6 +676,7 @@ async def _patch_items(changes: dict, new_patch: NewPatch, old_patch: Patch, ses
                 load_logger.error(f"[ITEM] {item.name} ❌ Failed to patch")
 
         await db.add_item(item)
+        new_patch.loaded_item_count += 1
 
 
 async def _add_changes_item(item: NewItem, diff: list) -> None:
@@ -690,7 +685,7 @@ async def _add_changes_item(item: NewItem, diff: list) -> None:
 
 
 
-async def _patch_runes(changes: dict, new_patch: NewPatch, old_patch: Patch, session: SafeSession) -> None:
+async def _patch_runes(changes: dict, new_patch: NewPatch, old_patch: NewPatch, session: SafeSession) -> None:
     all_runes = await db.fetch_runes_by_patch(old_patch.patch, old_patch.hotfix)
 
     try:
@@ -720,7 +715,7 @@ async def _patch_runes(changes: dict, new_patch: NewPatch, old_patch: Patch, ses
         rune.patch = new_patch.patch
         rune.hotfix = new_patch.hotfix
         if rune.name in changes.get("changed", {}):
-            new_patch.change_count_runes += 1
+            new_patch.changed_rune_count += 1
             try:
                 diff = changes["changed"][rune.name]
                 await _add_changes_rune(rune, diff)
@@ -730,6 +725,7 @@ async def _patch_runes(changes: dict, new_patch: NewPatch, old_patch: Patch, ses
                 load_logger.error(f"[RUNE] {rune.name} ❌ Failed to patch")
 
         await db.add_rune(rune)
+        new_patch.loaded_rune_count += 1
 
 
 def _find_rune(rune_name: str, runes_data: dict) -> RuneClass | None:
@@ -748,7 +744,7 @@ async def _add_changes_rune(rune: NewRune, diff: list) -> None:
     rune.validated = False
 
 
-async def _patch_summonerspells(changes: dict, new_patch: NewPatch, old_patch: Patch, session: SafeSession) -> None:
+async def _patch_summonerspells(changes: dict, new_patch: NewPatch, old_patch: NewPatch, session: SafeSession) -> None:
     all_spells = await db.fetch_summonerspells_by_patch(old_patch.patch, old_patch.hotfix)
 
     try:
@@ -781,7 +777,7 @@ async def _patch_summonerspells(changes: dict, new_patch: NewPatch, old_patch: P
         spell.patch = new_patch.patch
         spell.hotfix = new_patch.hotfix
         if spell.name in changes.get("changed", {}):
-            new_patch.change_count_summonerspells += 1
+            new_patch.changed_summonerspell_count += 1
             diff = changes["changed"][spell.name]
             try:
                 await _add_changes_summonerspell(spell, diff)
@@ -791,6 +787,7 @@ async def _patch_summonerspells(changes: dict, new_patch: NewPatch, old_patch: P
                 load_logger.error(f"[SUMMONERSPELL] {spell.name} ❌ Failed to patch")
 
         await db.add_summonerspell(spell)
+        new_patch.loaded_summonerspell_count += 1
 
 
 async def _add_changes_summonerspell(spell: NewSummonerspell, diff: list) -> None:

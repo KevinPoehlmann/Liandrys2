@@ -1,0 +1,488 @@
+15.06.2025  21:11:37 - INFO - liandrys.load: ------------------------------------------------------------
+15.06.2025  21:11:37 - INFO - liandrys.load: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  21:11:39 - ERROR - liandrys.load: [LOAD] [Patch] Failed to load  patch 15.12.1 with hotfix 2025-06-12 00:00:00.
+15.06.2025  21:11:39 - ERROR - liandrys.load: [LOAD] [Patch] Loaded 0 / 868 objects.
+15.06.2025  21:11:39 - ERROR - liandrys.load: [LOAD] [Patch] Duration: 2.51 seconds
+15.06.2025  22:53:36 - INFO - liandrys.load: ------------------------------------------------------------
+15.06.2025  22:53:36 - INFO - liandrys.load: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  23:04:42 - INFO - liandrys.load: ------------------------------------------------------------
+15.06.2025  23:04:42 - INFO - liandrys.load: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  23:04:49 - ERROR - liandrys.load: [CHAMPION] Bel'Veth ❌ Failed to load
+15.06.2025  23:04:53 - ERROR - liandrys.load: [CHAMPION] Ekko ❌ Failed to load
+15.06.2025  23:04:59 - ERROR - liandrys.load: [CHAMPION] Hwei ❌ Failed to load
+15.06.2025  23:05:05 - ERROR - liandrys.load: [CHAMPION] Aurora ❌ Failed to load
+15.06.2025  23:05:06 - ERROR - liandrys.load: [CHAMPION] Kayn ❌ Failed to load
+15.06.2025  23:05:08 - ERROR - liandrys.load: [CHAMPION] K'Sante ❌ Failed to load
+15.06.2025  23:05:09 - ERROR - liandrys.load: [CHAMPION] LeBlanc ❌ Failed to load
+15.06.2025  23:05:09 - ERROR - liandrys.load: [CHAMPION] Lillia ❌ Failed to load
+15.06.2025  23:05:24 - ERROR - liandrys.load: [CHAMPION] Rengar ❌ Failed to load
+15.06.2025  23:05:28 - ERROR - liandrys.load: [CHAMPION] Lulu ❌ Failed to load
+15.06.2025  23:05:31 - ERROR - liandrys.load: [CHAMPION] Swain ❌ Failed to load
+15.06.2025  23:05:43 - ERROR - liandrys.load: [CHAMPION] Vex ❌ Failed to load
+15.06.2025  23:05:44 - ERROR - liandrys.load: [CHAMPION] Skarner ❌ Failed to load
+15.06.2025  23:05:48 - ERROR - liandrys.load: [CHAMPION] Zed ❌ Failed to load
+15.06.2025  23:05:53 - ERROR - liandrys.load: [CHAMPION] Lissandra ❌ Failed to load
+15.06.2025  23:05:57 - ERROR - liandrys.load: [CHAMPION] Zoe ❌ Failed to load
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Ahri ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Aatrox ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Alistar ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Ashe ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Annie ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Akali ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Akshan ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Azir ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Aphelios ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Amumu ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Bard ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Braum ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Brand ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Cassiopeia ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Caitlyn ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Corki ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Diana ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Ambessa ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Camille ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Draven ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Ezreal ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Aurelion Sol ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Fiddlesticks ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Evelynn ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Fiora ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Darius ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Blitzcrank ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Dr. Mundo ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Gnar ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Garen ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Elise ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Gangplank ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Hecarim ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Graves ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Cho'Gath ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Anivia ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Gwen ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Galio ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Illaoi ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Heimerdinger ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Janna ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Kalista ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Ivern ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Jarvan IV ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Jhin ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Katarina ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Karma ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Kha'Zix ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Karthus ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Jayce ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Jinx ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Kai'Sa ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Lucian ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Malphite ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Kindred ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Malzahar ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Maokai ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Kayle ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Milio ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Lee Sin ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Wukong ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Miss Fortune ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Fizz ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Morgana ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Mordekaiser ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Irelia ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Nasus ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Naafiri ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Neeko ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Nami ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Ornn ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Kled ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Nocturne ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Nunu & Willump ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Nilah ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Briar ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Olaf ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Kennen ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Rammus ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Quinn ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Pyke ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Gragas ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Pantheon ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Orianna ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Ryze ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Rakan ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Kassadin ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Poppy ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Rek'Sai ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Leona ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Sejuani ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Riven ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Master Yi ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Seraphine ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Sion ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Samira ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Sona ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Smolder ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Sett ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Shen ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Kog'Maw ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Taric ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Soraka ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Jax ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Singed ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Shaco ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Thresh ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Twisted Fate ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Syndra ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Sivir ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Tristana ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Trundle ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Lux ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Veigar ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Udyr ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Nautilus ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Vel'Koz ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Tahm Kench ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Viego ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Urgot ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Shyvana ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Qiyana ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Teemo ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Vayne ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Viktor ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Taliyah ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Vi ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Tryndamere ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Vladimir ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Talon ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Volibear ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Yone ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Xin Zhao ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Warwick ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Yasuo ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Xerath ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Zac ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Zilean ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Yorick ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Zeri ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Varus ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Twitch ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Yuumi ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Xayah ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Renata Glasc ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Nidalee ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Blasting Wand ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Ziggs ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Chain Vest ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Rejuvenation Bead ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Emberknife ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Mel ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Boots ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Faerie Charm ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] B. F. Sword ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Long Sword ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Cloth Armor ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Recurve Bow ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Giant's Belt ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Cloak of Agility ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Vampiric Scepter ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Zyra ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Dagger ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Amplifying Tome ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Mosstomper Seedling ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Gustwalker Hatchling ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Negatron Cloak ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Hubris ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Reinforced Armor ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Doran's Ring ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Needlessly Large Rod ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Cull ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Scorchclaw Pup ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Warden's Eye ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Overcharged ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Obsidian Edge ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [CHAMPION] Renekton ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Eye of the Herald ✔ Loaded successfully
+15.06.2025  23:06:06 - INFO - liandrys.load: [ITEM] Null-Magic Mantle ✔ Loaded successfully
+15.06.2025  23:06:06 - ERROR - liandrys.load: [LOAD] [Patch] Failed to load  patch 15.12.1 with hotfix 2025-06-12 00:00:00.
+15.06.2025  23:06:06 - ERROR - liandrys.load: [LOAD] [Patch] Loaded 179 / 868 objects.
+15.06.2025  23:06:06 - ERROR - liandrys.load: [LOAD] [Patch] Duration: 84.50 seconds
+15.06.2025  23:31:36 - INFO - liandrys.load: ------------------------------------------------------------
+15.06.2025  23:31:36 - INFO - liandrys.load: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  23:31:37 - ERROR - liandrys.load: [CHAMPION] Aurora ❌ Failed to load
+15.06.2025  23:31:38 - ERROR - liandrys.load: [CHAMPION] Hwei ❌ Failed to load
+15.06.2025  23:31:39 - ERROR - liandrys.load: [CHAMPION] Bel'Veth ❌ Failed to load
+15.06.2025  23:31:39 - ERROR - liandrys.load: [CHAMPION] Kayn ❌ Failed to load
+15.06.2025  23:31:39 - ERROR - liandrys.load: [CHAMPION] Ekko ❌ Failed to load
+15.06.2025  23:31:40 - ERROR - liandrys.load: [CHAMPION] Lissandra ❌ Failed to load
+15.06.2025  23:31:40 - ERROR - liandrys.load: [CHAMPION] Lulu ❌ Failed to load
+15.06.2025  23:31:40 - ERROR - liandrys.load: [CHAMPION] Lillia ❌ Failed to load
+15.06.2025  23:31:41 - ERROR - liandrys.load: [CHAMPION] LeBlanc ❌ Failed to load
+15.06.2025  23:31:41 - ERROR - liandrys.load: [CHAMPION] K'Sante ❌ Failed to load
+15.06.2025  23:31:41 - ERROR - liandrys.load: [CHAMPION] Swain ❌ Failed to load
+15.06.2025  23:31:42 - ERROR - liandrys.load: [CHAMPION] Rengar ❌ Failed to load
+15.06.2025  23:31:42 - ERROR - liandrys.load: [CHAMPION] Skarner ❌ Failed to load
+15.06.2025  23:31:42 - ERROR - liandrys.load: [CHAMPION] Vex ❌ Failed to load
+15.06.2025  23:31:43 - ERROR - liandrys.load: [CHAMPION] Zoe ❌ Failed to load
+15.06.2025  23:31:43 - ERROR - liandrys.load: [CHAMPION] Zed ❌ Failed to load
+15.06.2025  23:31:44 - INFO - liandrys.load: [ITEM] Ruby Crystal ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [CHAMPION] Rell ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [CHAMPION] Sylas ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [CHAMPION] Rumble ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [CHAMPION] Senna ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Doran's Shield ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Sapphire Crystal ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Pickaxe ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Fortification ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Dark Seal ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Hailblade ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Vanguard ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Gusto ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Guardian's Amulet ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Super Mech Armor ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Super Mech Power Field ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Anti-tower Socks ✔ Loaded successfully
+15.06.2025  23:31:45 - INFO - liandrys.load: [ITEM] Kircheis Shard ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Doran's Blade ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Health Potion ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Glowing Mote ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Turret Plating ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Guardian's Shroud ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Poro-Snax ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Elixir of Sorcery ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Elixir of Iron ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Steel Sigil ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] The Brutalizer ✔ Loaded successfully
+15.06.2025  23:31:46 - ERROR - liandrys.load: [ITEM] Corrupting Potion ❌ Failed to load
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Guardian's Horn ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Tunneler ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Stealth Ward ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Control Ward ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Phreakish Gusto ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Elixir of Wrath ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Juice of Power ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Cappa Juice ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Legendary Assassin Item ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Shurelya's Battlesong ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Legendary Mage Item ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Elixir of Avarice ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Juice of Vitality ✔ Loaded successfully
+15.06.2025  23:31:46 - INFO - liandrys.load: [ITEM] Prismatic Item ✔ Loaded successfully
+15.06.2025  23:31:47 - ERROR - liandrys.load: [ITEM] Enhanced Lucky Dice ❌ Failed to load
+15.06.2025  23:31:47 - INFO - liandrys.load: [ITEM] Refillable Potion ✔ Loaded successfully
+15.06.2025  23:31:47 - INFO - liandrys.load: [ITEM] Legendary Fighter Item ✔ Loaded successfully
+15.06.2025  23:31:47 - INFO - liandrys.load: [ITEM] Legendary Marksman Item ✔ Loaded successfully
+15.06.2025  23:31:47 - INFO - liandrys.load: [ITEM] Elixir of Skill ✔ Loaded successfully
+15.06.2025  23:31:47 - INFO - liandrys.load: [ITEM] Elixir of Force ✔ Loaded successfully
+15.06.2025  23:31:47 - ERROR - liandrys.load: [ITEM] Bravery Voucher ❌ Failed to load
+15.06.2025  23:31:48 - INFO - liandrys.load: [ITEM] Stat Bonus ✔ Loaded successfully
+15.06.2025  23:31:48 - ERROR - liandrys.load: [ITEM] Lucky Dice ❌ Failed to load
+15.06.2025  23:31:48 - INFO - liandrys.load: [ITEM] Archangel's Staff ✔ Loaded successfully
+15.06.2025  23:31:49 - ERROR - liandrys.load: [ITEM] Prismatic Stat Voucher ❌ Failed to load
+15.06.2025  23:31:49 - INFO - liandrys.load: [ITEM] Total Biscuit of Everlasting Will ✔ Loaded successfully
+15.06.2025  23:31:49 - INFO - liandrys.load: [ITEM] Blackfire Torch ✔ Loaded successfully
+15.06.2025  23:31:49 - INFO - liandrys.load: [ITEM] Legendary Tank Item ✔ Loaded successfully
+15.06.2025  23:31:49 - INFO - liandrys.load: [ITEM] Trailblazer ✔ Loaded successfully
+15.06.2025  23:31:50 - ERROR - liandrys.load: [ITEM] Gold Stat Anvil Voucher ❌ Failed to load
+15.06.2025  23:31:51 - ERROR - liandrys.load: [ITEM] Anvil Voucher ❌ Failed to load
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Juice of Haste ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Ghostcrawlers ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Mortal Reminder ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Evenshroud ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Legendary Support Item ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Unending Despair ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Berserker's Greaves ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Boots of Swiftness ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Chemtech Putrifier ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Infinity Edge ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Yun Tal Wildarrows ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Kaenic Rookern ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Seraph's Embrace ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Guardian Angel ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Muramana ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Kindlegem ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Statikk Shiv ✔ Loaded successfully
+15.06.2025  23:31:51 - INFO - liandrys.load: [ITEM] Sorcerer's Shoes ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Plated Steelcaps ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Sheen ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Heartsteel ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Frozen Heart ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Redemption ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Lord Dominik's Regards ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Knight's Vow ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Sunfire Aegis ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Atma's Reckoning ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Phantom Dancer ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Bloodthirster ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Ravenous Hydra ✔ Loaded successfully
+15.06.2025  23:31:52 - INFO - liandrys.load: [ITEM] Zeke's Convergence ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Experimental Hexplate ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Thornmail ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Lich Bane ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Manamune ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Banshee's Veil ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Spirit Visage ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Black Cleaver ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Trinity Force ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Rapid Firecannon ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Sterak's Gage ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Stormrazor ✔ Loaded successfully
+15.06.2025  23:31:53 - INFO - liandrys.load: [ITEM] Randuin's Omen ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Aegis of the Legion ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Rylai's Crystal Scepter ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Hextech Rocketbelt ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Malignance ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Fimbulwinter ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Zephyr ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Hextech Gunblade ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Cryptbloom ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Youmuu's Ghostblade ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Runaan's Hurricane ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Guardian's Orb ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Rabadon's Deathcap ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Wit's End ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Spear of Shojin ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Morellonomicon ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Guinsoo's Rageblade ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Nashor's Tooth ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Mercury's Treads ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Winter's Approach ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Guardian's Dirk ✔ Loaded successfully
+15.06.2025  23:31:54 - INFO - liandrys.load: [ITEM] Blade of The Ruined King ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Ionian Boots of Lucidity ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Void Staff ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Hullbreaker ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Mercurial Scimitar ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Terminus ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Zhonya's Hourglass ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Horizon Focus ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Mikael's Blessing ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Guardian's Blade ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Crown of the Shattered Queen ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Guardian's Hammer ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Demonic Embrace ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Riftmaker ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Force of Nature ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Titanic Hydra ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Gargoyle Stoneplate ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Jak'Sho, The Protean ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Imperial Mandate ✔ Loaded successfully
+15.06.2025  23:31:55 - INFO - liandrys.load: [ITEM] Spectral Cutlass ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Maw of Malmortius ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] The Golden Spatula ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Moonstone Renewer ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Cosmic Drive ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Ardent Censer ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Essence Reaver ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Dead Man's Plate ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Locket of the Iron Solari ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Stormsurge ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Death's Dance ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Chempunk Chainsword ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Sundered Sky ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Edge of Night ✔ Loaded successfully
+15.06.2025  23:31:56 - WARNING - liandrys.load: [NETWORK] [RETRY] [429] Rate limited. Retrying in 1.50s... [1/3]
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Night Harvester ✔ Loaded successfully
+15.06.2025  23:31:56 - INFO - liandrys.load: [ITEM] Staff of Flowing Water ✔ Loaded successfully
+15.06.2025  23:31:56 - WARNING - liandrys.load: [NETWORK] [RETRY] [429] Rate limited. Retrying in 1.50s... [1/3]
+15.06.2025  23:31:56 - WARNING - liandrys.load: [NETWORK] [RETRY] [429] Rate limited. Retrying in 1.50s... [1/3]
+15.06.2025  23:31:57 - WARNING - liandrys.load: [NETWORK] [RETRY] [429] Rate limited. Retrying in 1.50s... [1/3]
+15.06.2025  23:31:57 - WARNING - liandrys.load: [NETWORK] [RETRY] [429] Rate limited. Retrying in 1.50s... [1/3]
+15.06.2025  23:31:57 - WARNING - liandrys.load: [NETWORK] [RETRY] [429] Rate limited. Retrying in 1.50s... [1/3]
+15.06.2025  23:31:57 - WARNING - liandrys.load: [NETWORK] [RETRY] [429] Rate limited. Retrying in 1.50s... [1/3]
+15.06.2025  23:31:57 - WARNING - liandrys.load: [NETWORK] [RETRY] [429] Rate limited. Retrying in 1.50s... [1/3]
+15.06.2025  23:31:58 - WARNING - liandrys.load: [NETWORK] [RETRY] [429] Rate limited. Retrying in 1.50s... [1/3]
+15.06.2025  23:32:06 - ERROR - liandrys.load: [ITEM] Scouting Ahead ❌ Failed to load
+15.06.2025  23:32:06 - INFO - liandrys.load: [ITEM] Shield of the Rakkor ✔ Loaded successfully
+15.06.2025  23:32:06 - INFO - liandrys.load: [ITEM] Prowler's Claw ✔ Loaded successfully
+15.06.2025  23:32:06 - INFO - liandrys.load: [ITEM] Profane Hydra ✔ Loaded successfully
+15.06.2025  23:32:06 - INFO - liandrys.load: [ITEM] Serylda's Grudge ✔ Loaded successfully
+15.06.2025  23:32:06 - INFO - liandrys.load: [ITEM] Serpent's Fang ✔ Loaded successfully
+15.06.2025  23:32:06 - INFO - liandrys.load: [ITEM] Abyssal Mask ✔ Loaded successfully
+15.06.2025  23:32:06 - INFO - liandrys.load: [ITEM] Bloodletter's Curse ✔ Loaded successfully
+15.06.2025  23:32:06 - INFO - liandrys.load: [ITEM] Voltaic Cyclosword ✔ Loaded successfully
+15.06.2025  23:32:06 - INFO - liandrys.load: [ITEM] Anathema's Chains ✔ Loaded successfully
+15.06.2025  23:32:07 - INFO - liandrys.load: [ITEM] Steel Tempest ✔ Loaded successfully
+15.06.2025  23:32:07 - INFO - liandrys.load: [RUNE] Taste of Blood ✔ Loaded successfully
+15.06.2025  23:32:08 - INFO - liandrys.load: [RUNE] Triple Tonic ✔ Loaded successfully
+15.06.2025  23:32:08 - INFO - liandrys.load: [RUNE] Treasure Hunter ✔ Loaded successfully
+15.06.2025  23:32:08 - INFO - liandrys.load: [RUNE] Hail of Blades ✔ Loaded successfully
+15.06.2025  23:32:08 - INFO - liandrys.load: [RUNE] Cheap Shot ✔ Loaded successfully
+15.06.2025  23:32:08 - INFO - liandrys.load: [RUNE] Deep Ward ✔ Loaded successfully
+15.06.2025  23:32:08 - INFO - liandrys.load: [RUNE] Cash Back ✔ Loaded successfully
+15.06.2025  23:32:08 - INFO - liandrys.load: [RUNE] Triumph ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Coup de Grace ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Dark Harvest ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Cosmic Insight ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Biscuit Delivery ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Jack Of All Trades ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Press the Attack ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Ultimate Hunter ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Glacial Augment ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Sudden Impact ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Conqueror ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Unsealed Spellbook ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Sixth Sense ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] First Strike ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Magical Footwear ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Electrocute ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Relentless Hunter ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Time Warp Tonic ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Lethal Tempo ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Fleet Footwork ✔ Loaded successfully
+15.06.2025  23:32:09 - INFO - liandrys.load: [RUNE] Hextech Flashtraption ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Legend: Alacrity ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Presence of Mind ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Approach Velocity ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Guardian ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Aftershock ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Revitalize ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Cut Down ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Font of Life ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Overgrowth ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Bone Plating ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Grisly Mementos ✔ Loaded successfully
+15.06.2025  23:32:10 - INFO - liandrys.load: [RUNE] Unflinching ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Grasp of the Undying ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Demolish ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Arcane Comet ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Second Wind ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Legend: Bloodline ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Shield Bash ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Conditioning ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Summon Aery ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Absorb Life ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Legend: Haste ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Celerity ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Waterwalking ✔ Loaded successfully
+15.06.2025  23:32:11 - INFO - liandrys.load: [RUNE] Last Stand ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [RUNE] Absolute Focus ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [RUNE] Axiom Arcanist ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [SUMMONERSPELL] Clarity ✔ Loaded successfully
+15.06.2025  23:32:12 - ERROR - liandrys.load: [SUMMONERSPELL] Flee ❌ Failed to load
+15.06.2025  23:32:12 - INFO - liandrys.load: [SUMMONERSPELL] Barrier ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [RUNE] Nimbus Cloak ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [SUMMONERSPELL] Ignite ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [RUNE] Scorch ✔ Loaded successfully
+15.06.2025  23:32:12 - ERROR - liandrys.load: [SUMMONERSPELL] Poro Toss ❌ Failed to load
+15.06.2025  23:32:12 - INFO - liandrys.load: [SUMMONERSPELL] Exhaust ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [SUMMONERSPELL] Heal ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [SUMMONERSPELL] Flash ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [RUNE] Transcendence ✔ Loaded successfully
+15.06.2025  23:32:12 - INFO - liandrys.load: [RUNE] Phase Rush ✔ Loaded successfully
+15.06.2025  23:32:13 - ERROR - liandrys.load: [SUMMONERSPELL] To the King! ❌ Failed to load
+15.06.2025  23:32:13 - INFO - liandrys.load: [SUMMONERSPELL] Ghost ✔ Loaded successfully
+15.06.2025  23:32:13 - INFO - liandrys.load: [SUMMONERSPELL] Cleanse ✔ Loaded successfully
+15.06.2025  23:32:13 - INFO - liandrys.load: [RUNE] Manaflow Band ✔ Loaded successfully
+15.06.2025  23:32:13 - INFO - liandrys.load: [SUMMONERSPELL] Smite ✔ Loaded successfully
+15.06.2025  23:32:14 - INFO - liandrys.load: [SUMMONERSPELL] Mark ✔ Loaded successfully
+15.06.2025  23:32:14 - INFO - liandrys.load: [RUNE] Gathering Storm ✔ Loaded successfully
+15.06.2025  23:32:14 - INFO - liandrys.load: [SUMMONERSPELL] Teleport ✔ Loaded successfully
+15.06.2025  23:32:14 - INFO - liandrys.load: [ITEM] Rod of Ages ✔ Loaded successfully
+15.06.2025  23:32:14 - INFO - liandrys.load: [ITEM] Shadowflame ✔ Loaded successfully
+15.06.2025  23:32:14 - INFO - liandrys.load: [ITEM] Hollow Radiance ✔ Loaded successfully
+15.06.2025  23:32:14 - INFO - liandrys.load: [ITEM] Dawncore ✔ Loaded successfully
+15.06.2025  23:32:14 - INFO - liandrys.load: [ITEM] Divine Sunderer ✔ Loaded successfully
+15.06.2025  23:32:14 - INFO - liandrys.load: [ITEM] Goredrinker ✔ Loaded successfully
+15.06.2025  23:32:14 - ERROR - liandrys.load: [LOAD] [Patch] Failed to load  patch 15.12.1 with hotfix 2025-06-12 00:00:00.
+15.06.2025  23:32:14 - ERROR - liandrys.load: [LOAD] [Patch] Loaded 414 / 868 objects.
+15.06.2025  23:32:14 - ERROR - liandrys.load: [LOAD] [Patch] Duration: 37.96 seconds
+15.06.2025  23:32:14 - INFO - liandrys.load: [ITEM] Kraken Slayer ✔ Loaded successfully

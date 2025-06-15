@@ -1,0 +1,46 @@
+15.06.2025  11:27:36 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  11:27:36 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  11:28:10 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  11:28:10 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  11:52:11 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  11:52:11 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  14:31:30 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  14:31:30 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  14:54:51 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  14:54:51 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  14:54:51 - ERROR - liandrys.patch: [PATCH] [UNEXPECTED] ❌ UnboundLocalError: cannot access local variable 'champion_list' where it is not associated with a value
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader2.py", line 82, in load_data
+    await _load_fresh_database(patches)
+  File "/app/src/server/loader/patchloader2.py", line 211, in _load_fresh_database
+    _load_all_champions(champion_list, session, new_patch),
+                        ^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'champion_list' where it is not associated with a value
+15.06.2025  15:00:23 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  15:00:23 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  15:00:23 - ERROR - liandrys.patch: [PATCH] [UNEXPECTED] ❌ UnboundLocalError: cannot access local variable 'champion_list' where it is not associated with a value
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader2.py", line 82, in load_data
+    await _load_fresh_database(patches)
+  File "/app/src/server/loader/patchloader2.py", line 211, in _load_fresh_database
+    _load_all_champions(champion_list, session, new_patch),
+                        ^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'champion_list' where it is not associated with a value
+15.06.2025  15:10:34 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  15:10:34 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  15:10:34 - ERROR - liandrys.patch: [PATCH] [UNEXPECTED] ❌ UnboundLocalError: cannot access local variable 'champion_list' where it is not associated with a value
+Traceback (most recent call last):
+  File "/app/src/server/loader/patchloader2.py", line 82, in load_data
+    await _load_fresh_database(patches)
+  File "/app/src/server/loader/patchloader2.py", line 211, in _load_fresh_database
+    _load_all_champions(champion_list, session, new_patch),
+                        ^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'champion_list' where it is not associated with a value
+15.06.2025  15:24:13 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  15:24:13 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  15:45:10 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  15:45:10 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  15:49:55 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  15:49:55 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00
+15.06.2025  16:02:14 - INFO - liandrys.patch: ------------------------------------------------------------
+15.06.2025  16:02:14 - INFO - liandrys.patch: Loading fresh database for patch 15.12.1, hotfix: 2025-06-12 00:00:00

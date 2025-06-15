@@ -24,6 +24,7 @@ from src.server.models.json_validation import (
 
 patch_logger = logging.getLogger("liandrys.patch")
 load_logger = logging.getLogger("liandrys.load")
+debug_logger = logging.getLogger("liandrys.debug")
 
 
 
@@ -324,7 +325,6 @@ class SafeSession:
         self.backoff_event = backoff_event or asyncio.Event()
         self.backoff_event.set()
         self.abort_event = asyncio.Event()
-        self.abort_event.set()
         self.recent_429s: list[float] = []
 
     @staticmethod
@@ -350,10 +350,13 @@ class SafeSession:
                                 if attempt == 1 or attempt == retries:
                                     load_logger.warning(f"[NETWORK] [RETRY] [429] Rate limited. Retrying in {delay:.2f}s... [{attempt}/{retries}]")
                                 continue
+                            elif e.status == 404:
+                                patch_logger.warning(f"[NETWORK] [RETRY] [404] Not found: {str(getattr(getattr(e, 'request_info', None), 'real_url', ''))}")
+                                return ""
                             elif e.status in (403, 401):
                                 if hasattr(self, "abort_event"):
-                                    self.abort_event.clear()
-                                    patch_logger.critical(f"[NETWORK] [RETRY] [{e.status}] Access denied at {getattr(e, 'request_info', {}).get('real_url', '')}. Aborting further requests.")
+                                    self.abort_event.set()
+                                    patch_logger.critical(f"[NETWORK] [RETRY] [{e.status}] Access denied at {str(getattr(getattr(e, 'request_info', None), 'real_url', ''))}. Aborting further requests.")
                                 raise RuntimeError(f"Access forbidden: HTTP {e.status}") from e
                             elif e.status >= 500:
                                 patch_logger.warning(f"[NETWORK] [RETRY] [{e.status}] Server error. Retrying in {base_delay * 2 ** (attempt - 1):.2f}s... [{attempt}/{retries}]")
@@ -371,10 +374,10 @@ class SafeSession:
 
     @_retry()
     async def get_html(self, url: str) -> str:
-        if self.abort_event.is_set():
-            return ""
         await self.backoff_event.wait()
         async with self.semaphore:
+            if self.abort_event.is_set():
+                return ""
             async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as response:
                 response.raise_for_status()
                 return await response.text()

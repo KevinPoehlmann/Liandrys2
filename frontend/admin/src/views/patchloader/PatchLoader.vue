@@ -104,8 +104,7 @@ async function fetchCurrentPatch() {
     const { data } = await axios.get("/patch/");
     currentPatch.value = data;
   } catch (err) {
-    const status = err.response?.data?.status_code || err.message;
-
+    const status = err.response?.status || 500;
     if (status === 404) {
       patchLoadStatus.value = "no-patch";
     } else if (status === 422) {
