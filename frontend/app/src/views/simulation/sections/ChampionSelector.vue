@@ -25,7 +25,7 @@
 
 <script setup>
 import { ref, computed, watch, inject } from 'vue'
-import ChampionSelectModal from './Something.vue'
+import ChampionSelectModal from './ChampionSelectModal.vue'
 import NoChampion from '@/assets/NoChampion.png'
 
 const props = defineProps({
