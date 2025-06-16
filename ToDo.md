@@ -79,7 +79,7 @@
         - [x] Update to new Rune Structure
         - [x] Update to new Summonerspell Structure
 - [ ] Add automatic stat patching
-- [ ] Fix weird code issues in character.py
+- [x] Fix weird code issues in character.py
 ### Admin Functions ###
 - [x] Make Schemas updateable
 - [ ] Add Logs
