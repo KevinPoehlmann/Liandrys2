@@ -341,6 +341,8 @@ async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, pa
     
     item_wiki = await _fetch_wiki_html(item_json.name, "Item", patch, session)
     if not item_wiki:
+        if "false" == item_json.maps.get("11", "false"):
+            patch.item_count -= 1
         return
     try:
         item = ws.scrape_item(item_id, item_json, item_wiki, patch.patch, patch.hotfix)

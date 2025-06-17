@@ -80,7 +80,7 @@ def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str, hot
         hotfix=hotfix,
         last_changed=last_changed,
         range_type=range_type,
-        resource_type=ResourceType(champion_json.partype),
+        resource_type=ResourceType.from_str(champion_json.partype),
 
         # From Riot API
         hp=champion_json.stats.hp,
@@ -216,6 +216,8 @@ def _scrape_passive_description(block: Tag) -> str:
 
 
 def _scrape_ability(letter: str, soup: BeautifulSoup, spell_json: SpellJson, champion_name: str) -> ChampionAbility:
+    if champion_name.lower() == "hwei":
+        return _get_hwei_ability(spell_json)
     ability_block = soup.find("div", class_="skill skill_" + letter.lower())
     if not ability_block:
         raise ScrapeError(f"{letter} block not found", type="champion", name=champion_name)
@@ -238,7 +240,7 @@ def _scrape_ability(letter: str, soup: BeautifulSoup, spell_json: SpellJson, cha
         raw_stats=stats,
         image=spell_json.image,
         maxrank=spell_json.maxrank,
-        effects=effects,  # placeholder
+        effects=effects,
         validated=False,
         changes=[]
     )
@@ -246,6 +248,20 @@ def _scrape_ability(letter: str, soup: BeautifulSoup, spell_json: SpellJson, cha
     return ability
 
 
+def _get_hwei_ability(spell_json: SpellJson) -> ChampionAbility:
+    ability = ChampionAbility(
+        name=spell_json.name,
+        description=spell_json.description,
+        image=spell_json.image,
+        maxrank=spell_json.maxrank,
+
+        validated=False,
+        changes=[]
+    )
+
+    return ability
+
+    
 
 def _scrape_ability_stats(block: Tag) -> dict[str, str]:
     stats: dict[str, str] = {}
@@ -337,7 +353,11 @@ def _scrape_effect_components(block: Tag) -> list[EffectComponent]:
             if span.has_attr("data-bot_values"):
                 top_values = span.get("data-top_values")
                 bot_values = span.get("data-bot_values")
-                formula += f" + {parse_formula_from_table(bot_str=bot_values, top_str=top_values)}"
+                try:
+                    formula += f" + {parse_formula_from_table(bot_str=bot_values, top_str=top_values)}"
+                except Exception as e:
+                    patch_logger.warning(f"[CHAMPION] [SCRAPE] [?] Could not parse formula from table: {span.get_text(strip=True)}")
+                    formula += f" + {span.get_text(strip=True)}"
             else:
                 span_text = _get_clean_text(span)
                 span_formula, span_hp_scaling = parse_effect_formula(span_text)
@@ -417,7 +437,7 @@ def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, h
     )
 
     try:
-        maps = [Map(m) for m, v in item_json.maps.items() if v == True]
+        maps = [Map.from_str(m) for m, v in item_json.maps.items() if v == True]
         item.maps = maps
     except ValueError as e:
         patch_logger.warning(f"[ITEM] [SCRAPE] [{item.name}] Could not find Map: {e}")
@@ -428,7 +448,7 @@ def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, h
     
     soup = BeautifulSoup(wiki_html, "lxml")
     item_class = _scrape_item_class(soup)
-    if not item_class:
+    if not item_class or item_class == ItemClass.OUTDATED:
         patch_logger.warning(f"[ITEM] [SCRAPE] [{item.name}] Could not find ItemClass, setting to ERROR")
         return item
     item.class_ = item_class
@@ -467,7 +487,7 @@ def _scrape_item_class(soup: BeautifulSoup) -> ItemClass | None:
     if not wiki_class:
         return None
     try:
-        item_class = ItemClass(_get_clean_text(wiki_class))
+        item_class = ItemClass.from_str((_get_clean_text(wiki_class)))
     except ValueError as e:
         patch_logger.warning(f"[ITEM] [SCRAPE] [?] Could not find ItemClass: {e}")
         item_class = ItemClass.ERROR
@@ -628,9 +648,19 @@ def _scrape_rune_summoner_stats(rune_content: Tag) -> dict[str, str]:
 
 def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewSummonerspell:
     soup = BeautifulSoup(wiki_html, "lxml")
+    maps = []
+    for mode in summonerspell_json.modes:
+        try:
+            maps.append(Map.from_str(mode))
+        except ValueError as e:
+            continue
     try:
         active = _scrape_summonerspell_active(soup)
-    except (AttributeError, ValueError) as e:
+    except AttributeError as e:
+        if Map.SR in maps:
+            raise ScrapeError(e, "Summonerspell", summonerspell_json.name)
+        active = Ability(name=summonerspell_json.name)
+    except ValueError as e:
         raise ScrapeError(e, "Summonerspell", summonerspell_json.name)
     
     active.name = summonerspell_json.name
@@ -641,8 +671,10 @@ def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, 
         patch=patch,
         hotfix=hotfix,
         ability=active,
+        maps=maps,
         image=summonerspell_json.image
     )
+
 
     return summonerspell
 

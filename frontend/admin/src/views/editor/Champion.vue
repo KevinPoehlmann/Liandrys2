@@ -8,7 +8,7 @@
       <div>
         <p><strong>Name:</strong> {{ champion?.name }}</p>
         <p><strong>Key:</strong> {{ champion?.key }}</p>
-        <p><strong>ID:</strong> {{ champion?.id }}</p>
+        <p><strong>ID:</strong> {{ champion?._id }}</p>
         <p><strong>Champion ID:</strong> {{ champion?.champion_id }}</p>
         <p><strong>Patch:</strong> {{ champion?.patch }}</p>
         <p><strong>Hotfix:</strong> {{ champion?.hotfix || '—' }}</p>

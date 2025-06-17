@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Self
 
@@ -7,7 +7,7 @@ from src.server.models.passive import ItemPassive
 from src.server.models.image import Image
 from src.server.models.pydanticid import PydanticObjectId
 
-from src.server.models.dataenums import ItemClass, ItemStat, Map, Stat
+from src.server.models.dataenums import ItemClass, Map, Stat
 
 
 
@@ -20,7 +20,7 @@ class NewItem(BaseModel):
     gold: int
     into: list[str]
     from_: list[str]
-    class_: ItemClass | None = None
+    class_: ItemClass = ItemClass.ERROR
     validated: bool = True
     stats: dict[Stat, float] = {}
     masterwork: dict[Stat, float] = {}

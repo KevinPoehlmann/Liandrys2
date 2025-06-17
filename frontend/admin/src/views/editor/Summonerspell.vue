@@ -8,7 +8,7 @@
       <div>
         <p><strong>Name:</strong> {{ summoner?.name }}</p>
         <p><strong>Key:</strong> {{ summoner?.key }}</p>
-        <p><strong>ID:</strong> {{ summoner?.id }}</p>
+        <p><strong>ID:</strong> {{ summoner?._id }}</p>
         <p><strong>Patch:</strong> {{ summoner?.patch }}</p>
         <p><strong>Hotfix:</strong> {{ summoner?.hotfix || '—' }}</p>
       </div>

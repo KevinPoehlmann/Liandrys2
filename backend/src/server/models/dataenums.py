@@ -154,16 +154,20 @@ class Map(str, Enum):
     NB="NB"
     AR="Arena"
     TFT="TFT"
+    BR="Brawl"
+    SW="Swarm"
 
     @classmethod
     def from_str(cls, value: str) -> "Map":
         alias_map = {
             # All alias values mapping to enum members
-            "11": cls.SR,
-            "12": cls.HA,
+            "11": cls.SR, "CLASSIC": cls.SR,
+            "12": cls.HA, "ARAM": cls.HA,
             "21": cls.NB,
-            "30": cls.AR,
             "22": cls.TFT,
+            "30": cls.AR, "CHERRY": cls.AR,
+            "33": cls.SW,
+            "35": cls.BR, "BRAWL": cls.BR,
         }
         try:
             return cls(value)
@@ -229,6 +233,7 @@ class ItemClass(str, Enum):
     LEGENDARY="legendary item"
     MASTERWORK="masterwork item"
     NONE="None"
+    OUTDATED="outdated"
     STARTER="starter item"
     TRINKET="trinket item"
     TOWER_MINION="tower and minion item"

@@ -8,7 +8,7 @@
       <div>
         <p><strong>Name:</strong> {{ rune?.name }}</p>
         <p><strong>Rune ID:</strong> {{ rune?.rune_id }}</p>
-        <p><strong>ID:</strong> {{ rune?.id }}</p>
+        <p><strong>ID:</strong> {{ rune?._id }}</p>
         <p><strong>Patch:</strong> {{ rune?.patch }}</p>
         <p><strong>Hotfix:</strong> {{ rune?.hotfix || '—' }}</p>
       </div>

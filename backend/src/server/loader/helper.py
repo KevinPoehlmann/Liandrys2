@@ -102,8 +102,12 @@ def parse_formula_from_string(string: str, scale: str = "rank") -> str:
     match = re.fullmatch(regex, string)
     if not match:
         return string
+    try:
+        values = [float(v.strip()) for v in match.group("values").split("/")]
+    except ValueError:
+        patch_logger.warning(f"[CHAMPION] [SCRAPE] [?] Invalid values in formula: {string}")
+        return string
     
-    values = [float(v.strip()) for v in match.group("values").split("/")]
     if len(values) == 1:
         return f"{values[0]}"
     elif len(values) > 1:
