@@ -45,6 +45,7 @@ from src.server.models.summonerspell import NewSummonerspell
 
 
 patch_logger = logging.getLogger("liandrys.patch")
+debug_logger = logging.getLogger("liandrys.debug")
 
 
 
@@ -497,6 +498,8 @@ def _scrape_item_class(soup: BeautifulSoup) -> ItemClass | None:
 def _scrape_item_elements(soup: BeautifulSoup) -> dict[str, Tag]:
     item_content = soup.find("div", class_="mw-parser-output")
     item_info = item_content.find("div", class_="infobox") # type: ignore[arg-type]
+    if not item_info:
+        return {}
     headers = item_info.find_all("div", class_="infobox-header")
     info_dict = {header.text: header.next_sibling for header in headers}
     return info_dict
@@ -541,10 +544,13 @@ def _scrape_item_stat_block(block: Tag) -> dict[Stat, float]:
 
 def _scrape_item_active(content: Tag) -> ItemActive:
     active = ItemActive(
-        name="",
+        name="Replace",
         type_=ActiveType.ACTIVE
     )
-    title = content.find("b").text
+    title = content.find("b")
+    if not title:
+        return active
+    title = title.text
     active.description = _get_clean_text(content, remove=title)
     if "Unique" in title:
         active.unique = True
@@ -558,9 +564,13 @@ def _scrape_item_passives(content: Tag) -> list[ItemPassive]:
     passives_wiki = content.find_all("div", class_="infobox-data-value")
     for passive_wiki in passives_wiki:
         passive = ItemPassive(
-            name="",
+            name="Replace",
         )
-        title = passive_wiki.find("b").text
+        title = passive_wiki.find("b")
+        if not title:
+            passives.append(passive)
+            continue
+        title = title.text
         passive.description = _get_clean_text(passive_wiki, remove=title)
         if "Unique" in title:
             passive.unique = True
@@ -659,6 +669,7 @@ def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, 
     except AttributeError as e:
         if Map.SR in maps:
             raise ScrapeError(e, "Summonerspell", summonerspell_json.name)
+        patch_logger.info(f"[SUMMONERSPELL] [SCRAPE] [{summonerspell_json.name}] No active found")
         active = Ability(name=summonerspell_json.name)
     except ValueError as e:
         raise ScrapeError(e, "Summonerspell", summonerspell_json.name)

@@ -227,8 +227,8 @@ async def add_item(item: NewItem) -> str:
     return result.inserted_id
 
 
-async def exists_item_by_name(name: str, patch: str, hotfix: datetime | None) -> bool:
-    count = await item_collection.count_documents({"name": name, "patch": patch, "hotfix": hotfix}, limit=1)
+async def exists_item_by_item_id(item_id: str, patch: str, hotfix: datetime | None) -> bool:
+    count = await item_collection.count_documents({"item_id": item_id, "patch": patch, "hotfix": hotfix}, limit=1)
     return count > 0
 
 
@@ -325,8 +325,8 @@ async def add_summonerspell(summonerspell: NewSummonerspell) -> str:
     return result.inserted_id
 
 
-async def exists_summonerspell_by_name(name: str, patch: str, hotfix: datetime | None) -> bool:
-    count = await summonerspell_collection.count_documents({"name": name, "patch": patch, "hotfix": hotfix}, limit=1)
+async def exists_summonerspell_by_key(key: str, patch: str, hotfix: datetime | None) -> bool:
+    count = await summonerspell_collection.count_documents({"key": key, "patch": patch, "hotfix": hotfix}, limit=1)
     return count > 0
 
 

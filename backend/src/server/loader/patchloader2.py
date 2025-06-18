@@ -336,13 +336,15 @@ async def _load_champion(champion_json: ChampionJson, session: SafeSession, patc
 
 
 async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, patch: NewPatch) -> None:
-    if await db.exists_item_by_name(item_json.name, patch.patch, patch.hotfix):
+    if await db.exists_item_by_item_id(item_id, patch.patch, patch.hotfix):
         return
     
     item_wiki = await _fetch_wiki_html(item_json.name, "Item", patch, session)
     if not item_wiki:
-        if "false" == item_json.maps.get("11", "false"):
+        if not item_json.maps.get("11", False) or item_id.startswith("15"):
             patch.item_count -= 1
+        else:
+            patch_logger.error(f"[ITEM] [LOAD] [{item_json.name}] -> maps: {item_json.maps.get('11', 'None')} | item_id: {item_id} -> {item_id.startswith('15')}")
         return
     try:
         item = ws.scrape_item(item_id, item_json, item_wiki, patch.patch, patch.hotfix)
@@ -397,11 +399,13 @@ async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: NewPatc
 
 
 async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: SafeSession, patch: NewPatch) -> None:
-    if await db.exists_summonerspell_by_name(summonerspell_json.name, patch.patch, patch.hotfix):
+    if await db.exists_summonerspell_by_key(summonerspell_json.key, patch.patch, patch.hotfix):
         return
     
     summonerspell_wiki = await _fetch_wiki_html(summonerspell_json.name, "Summonerspell", patch, session)
     if not summonerspell_wiki:
+        if "CLASSIC" not in summonerspell_json.modes:
+            patch.summonerspell_count -= 1
         return
     try:
         summonerspell = ws.scrape_summonerspell(summonerspell_json, summonerspell_wiki, patch.patch, patch.hotfix)

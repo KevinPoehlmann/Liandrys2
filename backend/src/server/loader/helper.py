@@ -321,7 +321,7 @@ RETRYABLE_EXCEPTIONS = (
 
 
 class SafeSession:
-    def __init__(self, session: aiohttp.ClientSession, semaphore: asyncio.Semaphore | None = None, max_retries: int = 3, backoff_factor: float = 10, backoff_event: asyncio.Event | None = None):
+    def __init__(self, session: aiohttp.ClientSession, semaphore: asyncio.Semaphore | None = None, max_retries: int = 3, backoff_factor: float = 25, backoff_event: asyncio.Event | None = None):
         self.session = session
         self.semaphore = semaphore or asyncio.Semaphore(5)
         self.max_retries = max_retries
@@ -405,11 +405,12 @@ class SafeSession:
     async def http_429_abortion(self) -> None:
         now = time.monotonic()
         self.recent_429s.append(now)
-        self.recent_429s = [t for t in self.recent_429s if now - t < 60]
-        if len(self.recent_429s) >= 11:
+        self.recent_429s = [t for t in self.recent_429s if now - t < 80]
+        if len(self.recent_429s) >= 16:
             patch_logger.critical("[NETWORK] [RETRY] [429] Too many 429 responses in the last minute. Aborting further requests.")
             self.abort_event.clear()
-            self.backoff_event.clear()
+            if not self.backoff_event.is_set():
+                self.backoff_event.set()
             raise RuntimeError("Too many 429 responses, aborting further requests.")
         else:
             patch_logger.info(f"[NETWORK] [RETRY] [429] Recent 429 count: {len(self.recent_429s)}")
