@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, inject } from 'vue'
+import { ref, computed, inject } from 'vue'
 import SummonerspellSelectModal from './SummonerspellSelectModal.vue'
 import NoSpell from '@/assets/NoChampion.png' // temp placeholder
 
@@ -44,10 +44,8 @@ const emit = defineEmits(['update'])
 
 const isOpen = ref(false)
 const selectedIndex = ref(null)
-const allSpells = ref([])
+const allSpells = inject("summonerspells", ref([]))
 
-const patch = ref('')
-const hotfix = ref('')
 
 const normalizedSpells = computed(() => {
   const copy = [...props.spells]
@@ -86,23 +84,7 @@ const getImageUrl = (spell) => {
     : NoSpell
 }
 
-const injectPatchContext = inject('patchContext', null)
 
-const fetchSummonerSpells = async () => {
-  if (!patch.value) return
-  let url = `/summonerspell/all/${patch.value}`
-  if (hotfix.value) url += `?hotfix=${encodeURIComponent(hotfix.value)}`
-  const res = await fetch(url)
-  allSpells.value = await res.json()
-}
-
-watch(injectPatchContext, (ctx) => {
-  if (ctx) {
-    patch.value = ctx.patch
-    hotfix.value = ctx.hotfix
-    fetchSummonerSpells()
-  }
-}, { immediate: true })
 </script>
 
 <style scoped>

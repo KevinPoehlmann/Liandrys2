@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, inject } from 'vue'
+import { ref, computed, inject } from 'vue'
 import ChampionSelectModal from './ChampionSelectModal.vue'
 import NoChampion from '@/assets/NoChampion.png'
 
@@ -40,18 +40,8 @@ const props = defineProps({
 const emit = defineEmits(['select'])
 
 const isOpen = ref(false)
-const allChampions = ref([])
+const allChampions = inject('champions', ref([]))
 
-const patch = ref('')
-const hotfix = ref('')
-
-const fetchChampions = async () => {
-  if (!patch.value) return
-  let url = `/champion/all/${patch.value}`
-  if (hotfix.value) url += `?hotfix=${encodeURIComponent(hotfix.value)}`
-  const res = await fetch(url)
-  allChampions.value = await res.json()
-}
 
 const handleSelect = (champ) => {
   emit('select', champ)
@@ -62,16 +52,6 @@ const championImage = computed(() => {
   return props.champion?.image?.full ? `images/${props.champion.image.group}/${props.champion.image.full}` : NoChampion
 })
 
-// Inject patch and hotfix from the parent simulation view
-const injectPatchContext = inject('patchContext', null)
-
-watch(injectPatchContext, (ctx) => {
-  if (ctx) {
-    patch.value = ctx.patch
-    hotfix.value = ctx.hotfix
-    fetchChampions()
-  }
-}, { immediate: true })
 </script>
 
 <style scoped>

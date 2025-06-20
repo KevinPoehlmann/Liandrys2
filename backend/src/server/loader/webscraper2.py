@@ -439,6 +439,9 @@ def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, h
 
     try:
         maps = [Map.from_str(m) for m, v in item_json.maps.items() if v == True]
+        if len(item_id) == 6 and item_id.startswith("32"):
+            maps.remove(Map.SR) if Map.SR in maps else None
+            maps.append(Map.SP)
         item.maps = maps
     except ValueError as e:
         patch_logger.warning(f"[ITEM] [SCRAPE] [{item.name}] Could not find Map: {e}")

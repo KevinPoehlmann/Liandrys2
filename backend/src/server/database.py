@@ -14,6 +14,7 @@ from src.server.models.champion import NewChampion, Champion, ShortChampion
 from src.server.models.item import NewItem, Item, ShortItem
 from src.server.models.rune import NewRune, Rune, ShortRune
 from src.server.models.summonerspell import NewSummonerspell, Summonerspell, ShortSummonerspell
+from src.server.models.dataenums import Map
 
 
 
@@ -243,15 +244,16 @@ async def fetch_items_by_patch(patch: str, hotfix: datetime | None) -> list[Item
     return items
 
 
-async def fetch_short_items_by_patch(patch: str, hotfix: datetime | None) -> list[ShortItem]:
-    items = []
+async def fetch_short_items_by_patch(patch: str, hotfix: datetime | None, map: Map | None = None) -> list[ShortItem]:
+    query = {"patch": patch, "hotfix": hotfix}
+    if map:
+        query["maps"] = map.value
+
     cursor = item_collection.find(
-        {"patch":patch, "hotfix":hotfix},
-        {"_id": 1, "item_id": 1, "name": 1, "gold": 1, "validated": 1, "image": 1},
+        query,
+        {"_id": 1, "item_id": 1, "name": 1, "gold": 1, "active": 1, "validated": 1, "maps": 1, "image": 1},
         sort=[("name", 1)])
-    async for document in cursor:
-        item = ShortItem(**document)
-        items.append(item)
+    items = [ShortItem(**doc) async for doc in cursor]
     return items
 
 
@@ -341,15 +343,16 @@ async def fetch_summonerspells_by_patch(patch: str, hotfix: datetime | None) -> 
     return summonerspells
 
 
-async def fetch_short_summonerspells_by_patch(patch: str, hotfix: datetime | None) -> list[ShortSummonerspell]:
-    summonerspells = []
+async def fetch_short_summonerspells_by_patch(patch: str, hotfix: datetime | None, map: Map | None = None) -> list[ShortSummonerspell]:
+    query = {"patch": patch, "hotfix": hotfix}
+    if map:
+        query["maps"] = map.value
+
     cursor = summonerspell_collection.find(
-        {"patch":patch, "hotfix":hotfix},
-        {"_id": 1, "key": 1, "name": 1, "validated": 1, "image": 1},
+        query,
+        {"_id": 1, "key": 1, "name": 1, "validated": 1, "maps": 1, "image": 1},
         sort=[("name", 1)])
-    async for document in cursor:
-        summonerspell = ShortSummonerspell(**document)
-        summonerspells.append(summonerspell)
+    summonerspells = [ShortSummonerspell(**doc) async for doc in cursor]
     return summonerspells
 
 

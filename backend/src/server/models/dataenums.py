@@ -156,6 +156,7 @@ class Map(str, Enum):
     TFT="TFT"
     BR="Brawl"
     SW="Swarm"
+    SP="Swiftplay"
 
     @classmethod
     def from_str(cls, value: str) -> "Map":

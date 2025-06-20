@@ -44,6 +44,9 @@
               />
             </div>
           </div>
+          <div class="text-xs text-right text-gray-700 dark:text-gray-200">
+            {{ totalCost }} gold
+          </div>
         </div>
       </div>
 
@@ -76,6 +79,10 @@ const filteredItems = computed(() => {
   return props.availableItems.filter(item =>
     item.name.toLowerCase().includes(filter.value.toLowerCase())
   )
+})
+
+const totalCost = computed(() => {
+  return props.selectedItems.reduce((sum, item) => sum + (item?.gold || 0), 0)
 })
 
 const getImageUrl = (item) => {

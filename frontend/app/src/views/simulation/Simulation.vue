@@ -14,6 +14,16 @@
               {{ entry.label }}
             </option>
           </select>
+          <!-- <label class="text-sm font-semibold">Map:</label>
+          <select v-model="selectedMapOption" class="p-1 rounded bg-white dark:bg-gray-700">
+            <option
+              v-for="entry in mapOptions"
+              :key="entry"
+              :value="entry"
+            >
+              {{ entry }}
+            </option>
+          </select> -->
         </div>
         <div class="flex flex-col lg:flex-row gap-6">
           <!-- Blue Side -->
@@ -65,12 +75,25 @@
 import { ref, onMounted, computed, provide, reactive, watch } from 'vue'
 import ChampionConfig from './sections/ChampionConfig.vue'
 import SimulationOutput from './sections/SimulationOutput.vue'
+import { buildUrl } from '@/utils/fetch'
 
 
 provide('patchContext', computed(() => (selectedPatchOption.value)))
+provide('mapContext', computed(() => (selectedMapOption.value)))
+provide("champions", computed(() => (champions.value)))
+provide("items", computed(() => (items.value)))
+provide("runes", computed(() => (runes.value)))
+provide("summonerspells", computed(() => (summonerspells.value)))
 
 const patchOptions = ref([])
 const selectedPatchOption = ref(null)
+const mapOptions = ref([])
+const selectedMapOption = ref(null)
+
+const champions = ref([])
+const items = ref([])
+const runes = ref([])
+const summonerspells = ref([])
 
 const blueConfig = reactive({
   champion: null,
@@ -110,20 +133,21 @@ const formatDateLabel = (timestamp) => {
 
 
 onMounted(async () => {
-  const [latestRes, allRes] = await Promise.all([
+  const [latestRes, allRes, enumRes] = await Promise.all([
     fetch('/patch/'),
-    fetch('/patch/all')
+    fetch('/patch/all'),
+    fetch('/item/map/')
   ])
 
   const latest = await latestRes.json()
   const all = await allRes.json()
-
+  const mapEnums = await enumRes.json()
   const options = []
 
   for (const patch of all) {
-    if (patch.timestamp) {
+    if (patch.hotfix) {
       options.push({
-        label: `${patch.patch} (${formatDateLabel(patch.timestamp)})`,
+        label: `${patch.patch} (${formatDateLabel(patch.hotfix)})`,
         patch: patch.patch,
         hotfix: patch.hotfix
       })
@@ -136,14 +160,29 @@ onMounted(async () => {
       })
     }
   }
-
   patchOptions.value = options
+  mapOptions.value = mapEnums.map(m => m.value)
+  //selectedMapOption.value = mapOptions.value[0]
+  selectedMapOption.value = "SR"
 
   // Select latest as default
   const latestMatch = options.find(p =>
     p.patch === latest.patch && (latest.hotfix ? p.hotfix === latest.hotfix : p.hotfix === null)
   )
   selectedPatchOption.value = latestMatch || options[0]
+
+  const patch = selectedPatchOption.value.patch
+  const hotfix = selectedPatchOption.value.hotfix
+  const map = selectedMapOption.value
+
+  champions.value = await fetch(buildUrl('/champion/all', patch, { hotfix })).then(res => res.json())
+  items.value = await fetch(buildUrl('/item/all', patch, { hotfix, map })).then(res => res.json())
+  runes.value = await fetch(buildUrl('/rune/all', patch, { hotfix })).then(res => res.json())
+  summonerspells.value = await fetch(buildUrl('/summonerspell/all', patch, { hotfix, map })).then(res => res.json())
+  blueConfig.summonerspells[0] = summonerspells.value.find(s => s.key === 'SummonerFlash')
+  blueConfig.summonerspells[1] = summonerspells.value.find(s => s.key === 'SummonerDot')
+  redConfig.summonerspells[0] = summonerspells.value.find(s => s.key === 'SummonerFlash')
+  redConfig.summonerspells[1] = summonerspells.value.find(s => s.key === 'SummonerDot')
 })
 
 

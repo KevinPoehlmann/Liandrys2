@@ -40,4 +40,5 @@ class ShortSummonerspell(BaseModel):
     key: str
     name: str
     validated: bool
+    maps: list[Map]
     image: Image

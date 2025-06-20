@@ -22,8 +22,8 @@ admin = APIRouter()
 
 
 @router.get("/all/{patch}")
-async def get_items(patch: str, hotfix: datetime | None = None) -> list[ShortItem]:
-    items = await fetch_short_items_by_patch(patch, hotfix)
+async def get_items(patch: str, hotfix: datetime | None = None, map: Map | None = None) -> list[ShortItem]:
+    items = await fetch_short_items_by_patch(patch, hotfix, map)
     if not items:
         raise HTTPException(status_code=404, detail=f"No items found for patch: {patch} !")
     return items
@@ -59,8 +59,8 @@ async def get_item_class() -> list[str]:
 
 
 @router.get("/map/")
-async def get_map() -> list[str]:
-    response = [e.value for e in Map]
+async def get_map() -> list[dict[str, str]]:
+    response = [{"name": e.name, "value": e.value} for e in Map]
     if not response:
         raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
     return response

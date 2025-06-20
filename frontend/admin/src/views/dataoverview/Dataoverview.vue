@@ -4,7 +4,7 @@
 
     <!-- Patch Selector -->
     <div class="flex items-center gap-4">
-      <label for="patchSelect" class="font-semibold">Select Patch:</label>
+      <label for="patchSelect" class="font-semibold">Patch:</label>
       <select
         id="patchSelect"
         v-model="selectedPatchKey"
@@ -20,6 +20,22 @@
         </option>
       </select>
 
+      <label for="mapSelect" class="font-semibold">Map:</label>
+      <select
+        id="mapSelect"
+        v-model="selectedMapKey"
+        class="border rounded px-2 py-1"
+      >
+        <option
+          v-for="(map, i) in maps"
+          :key="i"
+          :value="map"
+        >
+          {{ map }}
+        </option>
+      </select>
+      
+
       <label class="ml-4 inline-flex items-center space-x-2">
         <input type="checkbox" v-model="onlyShowInvalid" />
         <span>Only show unvalidated</span>
@@ -30,10 +46,10 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       <div v-for="(group, key) in groupedData" :key="key">
         <h2 class="text-xl font-semibold mb-2 capitalize">{{ key }}</h2>
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2 max-h-96 overflow-y-auto">
           <div
             v-for="item in filtered(group)"
-            :key="item.name"
+            :key="item._id"
             @click="navigateToEditor(key, item._id)"
             :class="[
               'flex items-center p-2 rounded text-white shadow cursor-pointer transition hover:opacity-80',
@@ -61,7 +77,9 @@ import axios from 'axios'
 const router = useRouter()
 
 const patches = ref([])
+const maps = ref([])
 const selectedPatchKey = ref("")
+const selectedMapKey = ref("")
 const onlyShowInvalid = ref(false)
 
 const champions = ref([])
@@ -95,6 +113,9 @@ onMounted(async () => {
     selectedPatchKey.value = patchKey(patches.value[0])
     await fetchAllData()
   }
+  const  enumRes  = await axios.get("/enum/")
+  maps.value = enumRes.data.Map.map(map => map.value);
+  selectedMapKey.value = maps.value[0]
 })
 
 function patchKey(patch) {
@@ -115,7 +136,11 @@ function imageUrl(image) {
 }
 
 function filtered(list) {
-  return onlyShowInvalid.value ? list.filter(obj => !obj.validated) : list
+  return list.filter(obj => {
+    const invalidFilter = !this.onlyShowInvalid || !obj.validated
+    const mapFilter = !this.selectedMapKey || (obj.maps && obj.maps.includes(this.selectedMapKey)) || !obj.maps
+    return invalidFilter && mapFilter
+  })
 }
 
 async function fetchAllData() {

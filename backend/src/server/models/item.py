@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 from datetime import datetime
 from typing import Self
 
@@ -68,5 +68,12 @@ class ShortItem(BaseModel):
     item_id: str
     name: str
     gold: int
+    active: bool
     validated: bool
+    maps: list[Map]
     image: Image
+
+    @root_validator(pre=True)
+    def convert_active_to_bool(cls, values):
+        values["active"] = bool(values.get("active"))
+        return values

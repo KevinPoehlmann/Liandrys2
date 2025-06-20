@@ -20,7 +20,7 @@
       </div>
     </div>
     <div class="text-xs text-right text-gray-700 dark:text-gray-200">
-      Total Cost: {{ totalCost }} gold
+      {{ totalCost }} gold
     </div>
 
     <ItemSelectModal
@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { computed, ref, inject, watch } from 'vue'
+import { computed, ref, inject } from 'vue'
 import NoItem from '@/assets/emptyicon.png'
 import ItemSelectModal from './ItemSelectModal.vue'
 
@@ -46,28 +46,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update'])
 const isOpen = ref(false)
-const allItems = ref([])
+const allItems = inject("items", ref([]))
 
-const patch = ref('')
-const hotfix = ref('')
 
-const injectPatchContext = inject('patchContext', null)
-
-const fetchItems = async () => {
-  if (!patch.value) return
-  let url = `/item/all/${patch.value}`
-  if (hotfix.value) url += `?hotfix=${encodeURIComponent(hotfix.value)}`
-  const res = await fetch(url)
-  allItems.value = await res.json()
-}
-
-watch(injectPatchContext, (ctx) => {
-  if (ctx) {
-    patch.value = ctx.patch
-    hotfix.value = ctx.hotfix
-    fetchItems()
-  }
-}, { immediate: true })
 
 const normalizedItems = computed(() => {
   const copy = [...props.items]
