@@ -307,6 +307,92 @@ def test_scrape_item_titanic(load_html):
     assert isinstance(item.active, ItemActive)
     assert item.active.name == "Titanic Crescent"
     assert item.passives[0].name == "Cleave"
+    assert item.stats[Stat.HP] == 600
+
+
+def test_scrape_item_pickaxe(load_html):
+    item_json = ItemJson(
+        name="Pickaxe",
+        description="Titanic Hydra description",
+        colloq="Titanic Hydra colloq",
+        plaintext="Titanic Hydra",
+        from_=["Ravenous Hydra"],
+        into=[],
+        image=Image(
+            full="Titanic_Hydra.png",
+            sprite="item0.png",
+            group="item",
+            x=0,
+            y=0,
+            w=48,
+            h=48
+        ),
+        gold=GoldJson(
+            base=0,
+            purchasable=True,
+            total=3000,
+            sell=2100
+        ),
+        tags=["Hydra"],
+        maps={
+            "11.1": True,
+            "11.2": True,
+            "11.3": False,
+        },
+        stats={
+            "HP": 600,
+            "AD": 40,
+        }
+    )
+    titanic_html = load_html("pickaxe")
+    item = scrape_item("5421", item_json, titanic_html, patch="15.7.1")
+    assert isinstance(item, NewItem)
+    assert item.name == "Pickaxe"
+    assert item.class_ == ItemClass.BASIC
+    assert item.stats[Stat.AD] == 25
+
+
+def test_scrape_item_cosmic_drive(load_html):
+    item_json = ItemJson(
+        name="Cpsmic Drive",
+        description="Titanic Hydra description",
+        colloq="Titanic Hydra colloq",
+        plaintext="Titanic Hydra",
+        from_=["Ravenous Hydra"],
+        into=[],
+        image=Image(
+            full="Titanic_Hydra.png",
+            sprite="item0.png",
+            group="item",
+            x=0,
+            y=0,
+            w=48,
+            h=48
+        ),
+        gold=GoldJson(
+            base=0,
+            purchasable=True,
+            total=3000,
+            sell=2100
+        ),
+        tags=["Hydra"],
+        maps={
+            "11.1": True,
+            "11.2": True,
+            "11.3": False,
+        },
+        stats={
+            "HP": 600,
+            "AD": 40,
+        }
+    )
+    titanic_html = load_html("cosmic_drive")
+    item = scrape_item("5421", item_json, titanic_html, patch="15.7.1")
+    assert isinstance(item, NewItem)
+    assert item.name == "Pickaxe"
+    assert item.class_ == ItemClass.BASIC
+    assert item.stats[Stat.AP] == 70
+    assert item.stats[Stat.ABILITY_HASTE] == 25
 
 
 def test_scrape_item_class_titanic(load_soup):

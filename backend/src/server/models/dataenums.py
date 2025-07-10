@@ -13,6 +13,7 @@ from pydantic import BaseModel
 class Stat(str, Enum):
     ABILITY_HASTE = "ability haste"
     AD = "ad"
+    AF = "adaptive force"
     AP = "ap"
     ARMOR = "armor"
     ARMOR_PEN_P = "armor penetration percent"

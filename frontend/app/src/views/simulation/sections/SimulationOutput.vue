@@ -1,8 +1,9 @@
 <template>
-  <div class="p-4 border rounded bg-gray-100 dark:bg-gray-800">
+  <div class="p-4 border rounded bg-gray-100 dark:bg-gray-800 w-full">
+    <div v-if="error" class="text-red-600 mt-2">{{ error }}</div>
     <h2 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Combo</h2>
 
-    <div class="flex gap-2 flex-wrap items-center mb-4">
+    <div class="flex gap-1 flex-wrap items-center mb-4 min-h-[2.5rem]">
       <div
         v-for="(action, index) in combo"
         :key="index"
@@ -17,15 +18,15 @@
       </div>
     </div>
 
-    <div class="text-sm text-gray-800 dark:text-gray-100">
-      <p><strong>Damage:</strong> {{ damage }} HP</p>
-      <p><strong>Time:</strong> {{ time }} seconds</p>
+    <div class="text-m text-gray-800 dark:text-gray-100">
+      <p><strong>Damage:</strong> {{ safeDamage }} HP</p>
+      <p><strong>Time:</strong> {{ safeTime }} seconds</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, watch } from 'vue'
 import NoIcon from '@/assets/NoChampion.png'
 import autoAttack from '@/assets/autoattack.png'
 
@@ -34,7 +35,23 @@ const props = defineProps({
   redConfig: Object,
   combo: Array,
   damage: Number,
-  time: Number
+  time: Number,
+  error: String
+})
+
+const safeDamage = ref(0)
+const safeTime = ref(0)
+
+watch(() => props.damage, (newVal) => {
+  if (typeof newVal === 'number') {
+    safeDamage.value = newVal
+  }
+})
+
+watch(() => props.time, (newVal) => {
+  if (typeof newVal === 'number') {
+    safeTime.value = newVal
+  }
 })
 
 const emit = defineEmits(['remove'])

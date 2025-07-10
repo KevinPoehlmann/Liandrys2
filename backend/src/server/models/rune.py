@@ -15,6 +15,7 @@ class NewRune(BaseModel):
     tree: str
     tree_id: int
     row: int
+    slot: int
     passive: Passive
     validated: bool = False
     changes: list[str] = []
@@ -38,5 +39,34 @@ class ShortRune(BaseModel):
     id: PydanticObjectId = Field(..., alias="_id")
     rune_id: int
     name: str
+    tree: str
+    tree_id: int
+    row: int
+    slot: int
     validated: bool
     image: Image
+
+
+
+RUNE_TREES = {
+    8000: {
+        "name": "Precision",
+        "image": "/images/rune/7201_Precision.png"
+    },
+    8100: {
+        "name": "Domination",
+        "image": "/images/rune/7200_Domination.png"
+    },
+    8200: {
+        "name": "Sorcery",
+        "image": "/images/rune/7202_Sorcery.png"
+    },
+    8300: {
+        "name": "Inspiration",
+        "image": "/images/rune/7203_Whimsy.png"
+    },
+    8400: {
+        "name": "Resolve",
+        "image": "/images/rune/7204_Resolve.png"
+    }
+}

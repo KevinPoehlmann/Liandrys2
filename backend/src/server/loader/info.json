@@ -81,5 +81,106 @@
         "duration": "duration",
         "range": "range",
         "target range": "target_range"
-    }
+    },
+    "runeStatShards": [
+        {
+            "rune_id": 7101,
+            "name": "Offence Adaptive Force",
+            "row": 0,
+            "slot": 0,
+            "stat": {
+                "stat": "adaptive force",
+                "scaling": "9"
+            },
+            "image": "statmodsadaptiveforceicon.png"
+        },
+        {
+            "rune_id": 7102,
+            "name": "Offence Attackspeed",
+            "row": 0,
+            "slot": 1,
+            "stat": {
+                "stat": "attackspeed",
+                "scaling": "0.1"
+            },
+            "image": "statmodsattackspeedicon.png"
+        },
+        {
+            "rune_id": 7103,
+            "name": "Offence Ability Haste",
+            "row": 0,
+            "slot": 2,
+            "stat": {
+                "stat": "ability haste",
+                "scaling": "8"
+            },
+            "image": "statmodscdrscalingicon.png"
+        },
+        {
+            "rune_id": 7201,
+            "name": "Flex Adaptive Force",
+            "row": 1,
+            "slot": 0,
+            "stat": {
+                "stat": "adaptive force",
+                "scaling": "9"
+            },
+            "image": "statmodsadaptiveforceicon.png"
+        },
+        {
+            "rune_id": 7202,
+            "name": "Flex Movementspeed",
+            "row": 1,
+            "slot": 1,
+            "stat": {
+                "stat": "move speed percent",
+                "scaling": "0.2"
+            },
+            "image": "statmodsmovementspeedicon.png"
+        },
+        {
+            "rune_id": 7203,
+            "name": "Flex Scaling Health",
+            "row": 1,
+            "slot": 2,
+            "stat": {
+                "stat": "hp",
+                "scaling": "10 * level"
+            },
+            "image": "statmodshealthplusicon.png"
+        },
+        {
+            "rune_id": 7301,
+            "name": "Defense Flat Health",
+            "row": 2,
+            "slot": 0,
+            "stat": {
+                "stat": "hp",
+                "scaling": "65"
+            },
+            "image": "statmodshealthscalingicon.png"
+        },
+        {
+            "rune_id": 7302,
+            "name": "Defense Tenacity",
+            "row": 2,
+            "slot": 1,
+            "stat": {
+                "stat": "tenacity percent",
+                "scaling": "0.1"
+            },
+            "image": "statmodstenacityicon.png"
+        },
+        {
+            "rune_id": 7303,
+            "name": "Defense Scaling Health",
+            "row": 2,
+            "slot": 2,
+            "stat": {
+                "stat": "hp",
+                "scaling": "10 * level"
+            },
+            "image": "statmodshealthplusicon.png"
+        }
+    ]
 }

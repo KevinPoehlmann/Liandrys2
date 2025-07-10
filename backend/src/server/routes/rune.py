@@ -10,7 +10,7 @@ from src.server.database import (
     fetch_rune_by_id,
     update_rune
 )
-from src.server.models.rune import ShortRune, Rune
+from src.server.models.rune import ShortRune, Rune, RUNE_TREES
 
 from src.server.routes.helpers import get_required_rune, parse_from_request
 
@@ -25,6 +25,11 @@ async def get_runes(patch: str, hotfix: datetime | None = None) -> list[ShortRun
     if not runes:
         raise HTTPException(status_code=404, detail=f"No runes found for patch. {patch} !")
     return runes
+
+
+@router.get("/trees/")
+async def get_trees() -> dict[int, dict[str, str]]:
+    return RUNE_TREES
 
 
 @router.get("/{rune_id}")

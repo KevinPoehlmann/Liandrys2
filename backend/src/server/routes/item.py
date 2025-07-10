@@ -29,6 +29,22 @@ async def get_items(patch: str, hotfix: datetime | None = None, map: Map | None 
     return items
 
 
+@router.get("/itemclass/")
+async def get_item_class() -> list[str]:
+    response = [e.value for e in ItemClass]
+    if not response:
+        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
+    return response
+
+
+@router.get("/map/")
+async def get_map() -> list[dict[str, str]]:
+    response = [{"name": e.name, "value": e.value} for e in Map]
+    if not response:
+        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
+    return response
+
+
 @router.get("/{item_id}")
 async def get_item(item_id: str) -> JSONResponse:
     item = await get_required_item(item_id)
@@ -45,22 +61,3 @@ async def put_item(request: Request) -> int:
         raise HTTPException(status_code=400, detail=f"Nothing changed for Item with ID: {item.id} !")
     return response.modified_count
 
-
-
-
-#------------------Enums--------------------------------------------------
-
-@router.get("/itemclass/")
-async def get_item_class() -> list[str]:
-    response = [e.value for e in ItemClass]
-    if not response:
-        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
-    return response
-
-
-@router.get("/map/")
-async def get_map() -> list[dict[str, str]]:
-    response = [{"name": e.name, "value": e.value} for e in Map]
-    if not response:
-        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
-    return response

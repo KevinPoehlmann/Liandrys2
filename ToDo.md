@@ -108,7 +108,7 @@
     - [x] Make Items selectable
     - [ ] Order Items by item class
     - [ ] Add filter to the "shop"
-    - [ ] Only show items for chosen map
+    - [x] Only show items for chosen map
 - [ ] Stack Selection
 - [x] Action Selection
     - [x] Add Ability points

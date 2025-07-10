@@ -19,25 +19,24 @@ from src.server.loader.helper import (
     RuneClass,
     SafeSession
 )
-from src.server.loader.patchexceptions import PatcherError, LoadError, ScrapeError
+from src.server.loader.patchexceptions import PatcherError, LoadError
 
 from src.server.models.json_validation import (
     ChampionsJson,
     ChampionJson,
     ItemsJson,
     ItemJson,
-    RuneJson,
     RuneTreeJson,
     SummonerspellsJson,
-    SummonerspellJson,
-    InfoJson,
-    PathJson,
-    UrlJson
+    SummonerspellJson
 )
 from src.server.models.champion import NewChampion
+from src.server.models.dataenums import Buff, Stat
 from src.server.models.image import Image
 from src.server.models.item import NewItem
 from src.server.models.patch import NewPatch, Patch
+from src.server.models.passive import Passive
+from src.server.models.passive_effect import PassiveEffect, StatProperties
 from src.server.models.rune import NewRune
 from src.server.models.summonerspell import NewSummonerspell
 
@@ -54,6 +53,7 @@ URLS = info_loader().urls
 PATHS = info_loader().paths
 ITEM_WIKI_NAMES = info_loader().itemWikiNames
 RUNE_WIKI_NAMES = info_loader().runeWikiNames
+RUNE_STAT_SHARDS = info_loader().runeStatShards
 
 
 patch_load_lock = asyncio.Lock()
@@ -252,8 +252,8 @@ async def _list_data(patch_ver: str, session: SafeSession) -> tuple[list[Champio
             rune_tree = RuneTreeJson(**tree)
             tree_icons.append(rune_tree.icon)
             for i, row in enumerate(rune_tree.slots):
-                for rune in row.runes:
-                    rune_list.append(RuneClass(rune, rune_tree.name, rune_tree.id_, i))
+                for j, rune in enumerate(row.runes):
+                    rune_list.append(RuneClass(rune, rune_tree.name, rune_tree.id_, i, j))
         await _load_rune_tree_images(tree_icons, session)
     except Exception as e:
         raise PatcherError(f"Failed to fetch runes for patch {patch_ver}", str(e))
@@ -288,6 +288,7 @@ async def _load_all_runes(rune_list: list[RuneClass], session: SafeSession, patc
         _load_rune(rune, session, patch)
         for rune in rune_list
     ]
+    rune_tasks.append(_load_rune_stat_shards(patch))
     await asyncio.gather(*rune_tasks)
 
 
@@ -336,6 +337,9 @@ async def _load_champion(champion_json: ChampionJson, session: SafeSession, patc
 
 
 async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, patch: NewPatch) -> None:
+    if item_id == "1038":
+        debug_logger.debug(f"[ITEM] we are at BF Sword")
+        pass
     if await db.exists_item_by_item_id(item_id, patch.patch, patch.hotfix):
         return
     
@@ -428,6 +432,42 @@ async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: Sa
     await db.add_summonerspell(summonerspell)
     patch.loaded_summonerspell_count += 1
     load_logger.info(f"[SUMMONERSPELL] {summonerspell.name} ✔ Loaded successfully")
+
+
+async def _load_rune_stat_shards(patch: NewPatch) -> None:
+    patch.rune_count += len(RUNE_STAT_SHARDS)
+    for shard in RUNE_STAT_SHARDS:
+        if await db.exists_rune_by_name(shard.name, patch.patch, patch.hotfix):
+            continue
+        rune = NewRune(
+            rune_id=shard.rune_id,
+            name=shard.name,
+            patch=patch.patch,
+            hotfix=patch.hotfix,
+            tree="Stat Shard",
+            tree_id=0,
+            row=shard.row,
+            slot=shard.slot,
+            passive=Passive(
+                name=shard.name,
+                effects=[
+                    PassiveEffect(
+                        buff=Buff.STATS,
+                        props=StatProperties(
+                            stat=Stat.from_str(shard.stat.stat),
+                            scaling=shard.stat.scaling
+                        )
+                    )
+                ],
+            ),
+            image=Image(
+                full=shard.image,
+                group="rune"
+            )
+        )
+        await db.add_rune(rune)
+        patch.loaded_rune_count += 1
+        load_logger.info(f"[RUNE] {rune.name} ✔ Loaded successfully")
 
 
 
@@ -738,9 +778,9 @@ def _find_rune(rune_name: str, runes_data: dict) -> RuneClass | None:
     for tree in runes_data:
         rune_tree = RuneTreeJson(**tree)
         for i, row in enumerate(rune_tree.slots):
-            for rune in row.runes:
+            for j, rune in enumerate(row.runes):
                 if rune.name == rune_name:
-                    return RuneClass(rune, rune_tree.name, rune_tree.id_, i)
+                    return RuneClass(rune, rune_tree.name, rune_tree.id_, i, j)
     return None
 
 

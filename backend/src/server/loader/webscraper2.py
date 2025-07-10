@@ -424,8 +424,7 @@ def _create_effect_component(effect_type: EffectType, formula: str, hp_scaling: 
 
 
 
-def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewItem:
-    
+def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewItem:   
     item = NewItem(
         item_id=item_id,
         name=item_json.name,
@@ -512,7 +511,10 @@ def _scrape_item_stats(content: Tag) -> tuple[dict[Stat, float], dict[Stat, floa
 
     all_stats = content.find_all("div", class_="infobox-section-stacked")
     if not all_stats:
-        return {}, {}
+        item_stats = _scrape_item_stat_block(content)
+        if not item_stats:
+            return {}, {}
+        return item_stats, {}
     item_stats = _scrape_item_stat_block(all_stats[0])
 
     masterwork_stats = {}
@@ -537,7 +539,10 @@ def _scrape_item_stat_block(block: Tag) -> dict[Stat, float]:
             parsed_stats[Stat.GOLD_P_10] = int(pair[1].split()[0])
             continue
         try:
-            parsed_stats[Stat.from_str(pair[1])] = float(pair[0])
+            if pair[1].endswith(" percent"):
+                parsed_stats[Stat.from_str(pair[1])] = float(pair[0])/100
+            else:
+                parsed_stats[Stat.from_str(pair[1])] = float(pair[0])
         except ValueError as e:
             patch_logger.warning(f"[ITEM] [SCRAPE] [?] Could not parse Item stat: {pair[1]} with value {pair[0]}")
             parsed_stats[Stat.ERROR] = float(pair[0])
@@ -620,6 +625,7 @@ def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str,
         tree=rune_class.tree,
         tree_id=rune_class.tree_id,
         row=rune_class.row,
+        slot=rune_class.slot,
         passive=passive,
         image=image
     )

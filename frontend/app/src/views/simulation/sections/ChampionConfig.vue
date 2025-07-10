@@ -19,9 +19,10 @@
     </div>
 
     <!-- Runes Placeholder -->
-    <div class="p-3 border rounded bg-purple-100 dark:bg-purple-900 text-purple-900 dark:text-purple-100">
-      <span class="text-sm">Runes Placeholder</span>
-    </div>
+    <RuneSelector
+      :runes="config.runes"
+      @update="updateRunes"
+    />
 
     <!-- Summoner Spells Placeholder -->
     <SummonerspellSelector
@@ -36,7 +37,7 @@
     />
 
     <!-- Stack Configuration Placeholder -->
-    <div class="p-3 border rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100">
+    <div class="p-3 border rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100 w-full">
       <span class="text-sm">Stacks Configuration Placeholder</span>
     </div>
 
@@ -61,6 +62,7 @@ import ActionPanel from './ActionPanel.vue'
 import ChampionSelector from './ChampionSelector.vue'
 import SummonerspellSelector from './SummonerspellSelector.vue'
 import ItemSelector from './ItemSelector.vue'
+import RuneSelector from './RuneSelector.vue'
 
 const props = defineProps({
   team: {
@@ -92,6 +94,9 @@ const updateSummonerspells = (value) => {
 }
 const updateItems = (value) => {
   props.config.items = value
+}
+const updateRunes = (value) => {
+  props.config.runes = value
 }
 const increaseAbilityPoint = (slot) => {
   const points = props.config.ability_points

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="relative w-fit">
     <div class="flex items-center gap-4 p-3 border rounded bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100">
       <div
         v-for="(spell, index) in normalizedSpells"

@@ -61,11 +61,11 @@
               :combo="combo"
               :damage="damage"
               :time="time"
+              :error="error"
               @remove="combo.splice($event, 1)"
             />
           </div>
         </div>
-        <div v-if="error" class="text-red-600 mt-2">{{ error }}</div>
       </div>
     </main>
   </div>
@@ -105,6 +105,17 @@ const blueConfig = reactive({
     r: 0
   },
   items: Array(6).fill(null),
+  runes: {
+    primary: {
+      treeId: null,
+      runes: Array(4).fill(null)
+    },
+    secondary: {
+      treeId: null,
+      runes: Array(4).fill(null)
+    },
+    shards: Array(3).fill(null)
+  },
   summonerspells: [null, null]
 })
 const redConfig = reactive({
@@ -117,6 +128,17 @@ const redConfig = reactive({
     r: 0
   },
   items: Array(6).fill(null),
+  runes: {
+    primary: {
+      treeId: null,
+      runes: Array(4).fill(null)
+    },
+    secondary: {
+      treeId: null,
+      runes: Array(4).fill(null)
+    },
+    shards: Array(3).fill(null)
+  },
   summonerspells: [null, null]
 })
 
@@ -189,11 +211,6 @@ onMounted(async () => {
 watch(
   () => [blueConfig.champion, redConfig.champion, blueConfig.level, redConfig.level, combo.value],
   async () => {
-    // Reset output
-    damage.value = 0
-    time.value = 0
-    error.value = null
-
     // Require both champions and a non-empty combo
     if (!blueConfig.champion || !redConfig.champion || combo.value.length === 0) return
 
@@ -220,6 +237,9 @@ watch(
         const err = await res.json()
         error.value = err.detail || 'Simulation failed.'
         return
+      }
+      else {
+        error.value = null
       }
 
       const result = await res.json()

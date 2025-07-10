@@ -33,7 +33,7 @@ async def v1_simulation(v1_request: V1Request) -> V1Response:
     except HTTPException:
         raise
     except SimulationError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=e.message)
     except NotImplementedError as e:
         raise HTTPException(status_code=501, detail=str(e))
     except Exception as e:

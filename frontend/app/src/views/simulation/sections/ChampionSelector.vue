@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="w-full">
     <div
       @click="isOpen = true"
       class="cursor-pointer flex items-center gap-3 p-3 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
@@ -10,7 +10,7 @@
         alt="Champion Icon"
         class="w-12 h-12 rounded object-cover bg-gray-300 dark:bg-gray-600"
       />
-      <span class="text-lg font-medium">
+      <span class="text-xl font-medium">
         {{ champion?.name || 'Select Champion' }}
       </span>
     </div>

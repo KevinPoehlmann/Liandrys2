@@ -302,6 +302,7 @@ class RuneClass():
     tree: str
     tree_id: int
     row: int
+    slot: int
 
     def __str__(self) -> str:
         return self.rune.name

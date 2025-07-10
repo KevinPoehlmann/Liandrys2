@@ -405,6 +405,8 @@ class Character():
 
     def _do_ability(self, action: Action, timestamp: float) -> ActionEffect:
         ability: ChampionAbility = self.ability_dict[action.action_type][0]
+        if not ability.validated:
+            raise NotImplementedError(f"Ability {action.action_type} is not implemented yet for {self.champion.name}")
         cooldown = self._evaluate_formula(ability.cooldown, {"rank": self.ability_dict[action.action_type][1]})
         cooldown *= 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
         cast_time = self._evaluate_formula(ability.cast_time,  {"rank": self.ability_dict[action.action_type][1]})

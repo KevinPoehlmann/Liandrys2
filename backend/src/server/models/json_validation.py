@@ -2,6 +2,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, validator, ValidationError
 
 from src.server.models.image import Image
+from src.server.models.passive_effect import StatProperties
 
 
 
@@ -207,6 +208,15 @@ class UrlJson(BaseModel):
     summonerspellImage: str
 
 
+class StatShardJson(BaseModel):
+    rune_id: int
+    name: str
+    row: int
+    slot: int
+    stat: StatProperties
+    image: str
+
+
 class InfoJson(BaseModel):
     paths: PathJson
     urls: UrlJson
@@ -215,3 +225,4 @@ class InfoJson(BaseModel):
     runeWikiNames: dict
     maps: dict
     abilityStats: dict
+    runeStatShards: list[StatShardJson]

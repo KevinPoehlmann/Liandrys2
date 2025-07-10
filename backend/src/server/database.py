@@ -298,7 +298,7 @@ async def fetch_short_runes_by_patch(patch: str, hotfix: datetime | None) -> lis
     runes = []
     cursor = rune_collection.find(
         {"patch":patch, "hotfix":hotfix},
-        {"_id": 1, "rune_id": 1, "name": 1, "validated": 1, "image": 1},
+        {"_id": 1, "rune_id": 1, "name": 1, "tree": 1, "tree_id": 1, "row": 1, "slot": 1, "validated": 1, "image": 1},
         sort=[("name", 1)])
     async for document in cursor:
         rune = ShortRune(**document)

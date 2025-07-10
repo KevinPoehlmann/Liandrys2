@@ -20,7 +20,7 @@
           >
             <img
               :src="getImageUrl(item)"
-              alt="Item Icon"
+              :alt="item.name"
               class="w-12 h-12 object-cover rounded bg-gray-300 dark:bg-gray-700"
             />
             <p class="text-xs mt-1 text-gray-900 dark:text-gray-100 truncate w-full">{{ item.name }}</p>
@@ -30,12 +30,12 @@
         <!-- Current Items Grid -->
         <div class="w-32">
           <p class="text-sm mb-2 text-center text-gray-900 dark:text-gray-100">Selected</p>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-3 gap-1 mb-2">
             <div
               v-for="(item, index) in normalizedItems"
               :key="index"
               @click="handleRemove(index)"
-              class="w-12 h-12 rounded overflow-hidden bg-gray-300 dark:bg-gray-600 cursor-pointer"
+              class="w-12 h-12 rounded overflow-hidden bg-gray-300 dark:bg-gray-600 relative cursor-pointer"
             >
               <img
                 :src="getImageUrl(item)"

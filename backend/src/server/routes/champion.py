@@ -32,6 +32,22 @@ async def get_champions(patch: str, hotfix: datetime | None = None) -> list[Shor
     return response
 
 
+@router.get("/rangetype/")
+async def get_rangeType() -> list[str]:
+    response = [e.value for e in RangeType]
+    if not response:
+        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
+    return response
+
+
+@router.get("/resourcetype/")
+async def get_resourceType() -> list[str]:
+    response = [e.value for e in ResourceType]
+    if not response:
+        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
+    return response
+
+
 @router.get("/{id_}")
 async def get_champion_by_id(id_: str) -> JSONResponse:
     champion = await get_required_champion(id_)
@@ -53,18 +69,3 @@ async def put_champion(request: Request) -> Champion:
 
 
 #------------------Enums--------------------------------------------------
-
-@router.get("/rangetype/")
-async def get_rangeType() -> list[str]:
-    response = [e.value for e in RangeType]
-    if not response:
-        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
-    return response
-
-
-@router.get("/resourcetype/")
-async def get_resourceType() -> list[str]:
-    response = [e.value for e in ResourceType]
-    if not response:
-        raise HTTPException(status_code=400, detail=f"Something went horribly wrong!")
-    return response
