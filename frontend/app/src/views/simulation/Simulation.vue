@@ -209,7 +209,7 @@ onMounted(async () => {
 
 
 watch(
-  () => [blueConfig.champion, redConfig.champion, blueConfig.level, redConfig.level, combo.value],
+  () => [blueConfig.champion, redConfig.champion, blueConfig.level, redConfig.level, combo.value, blueConfig.items, redConfig.items],
   async () => {
     // Require both champions and a non-empty combo
     if (!blueConfig.champion || !redConfig.champion || combo.value.length === 0) return

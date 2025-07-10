@@ -98,8 +98,8 @@
     - [x] Make Champions selectable
     - [ ] Filter Champions by role
 - [x] Level selection
-- [ ] Rune Selection
-    - [ ] Make Runes selectable
+- [x] Rune Selection
+    - [x] Make Runes selectable
     - [ ] Auto fill most used runes for chosen champion
 - [x] Summonerspell Selection
     - [x] Make Summonerspells selectable
