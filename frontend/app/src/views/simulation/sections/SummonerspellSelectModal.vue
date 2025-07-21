@@ -8,7 +8,7 @@
           v-for="spell in availableSpells"
           :key="spell.key"
           @click="handleSelect(spell)"
-          class="flex flex-col items-center cursor-pointer text-center"
+          class="flex flex-col items-center cursor-pointer text-center hover:scale-105"
           :class="{ 'opacity-50 pointer-events-none': isAlreadyUsed(spell) }"
         >
           <img

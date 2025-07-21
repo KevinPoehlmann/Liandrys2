@@ -1,6 +1,6 @@
 <template>
-  <div class="relative w-fit">
-    <div class="flex items-center gap-4 p-3 border rounded bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100">
+  <div class="relative w-full">
+    <div class="grid grid-cols-2 gap-4 p-3 border rounded bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100">
       <div
         v-for="(spell, index) in normalizedSpells"
         :key="index"
@@ -9,7 +9,7 @@
       >
         <img
           :src="getImageUrl(spell)"
-          class="w-12 h-12 rounded bg-gray-300 dark:bg-gray-600 object-cover"
+          class="w-12 h-12 rounded bg-gray-300 dark:bg-gray-600 object-cover hover:border border-gray-300"
           :alt="spell?.name || 'Empty'"
         />
         <span class="text-xs text-gray-800 dark:text-gray-100">

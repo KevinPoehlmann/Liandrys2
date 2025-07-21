@@ -1,7 +1,6 @@
 <template>
   <div
-    class="p-4 rounded shadow w-full h-full flex flex-col gap-4 bg-white dark:bg-gray-800"
-    :class="team === 'red' ? 'items-end text-right' : ''"
+    class="p-4 rounded shadow w-full h-full grid grid-cols-2 gap-4 bg-white dark:bg-gray-800"
   >
     <!-- Champion Selector -->
     <ChampionSelector
@@ -10,34 +9,39 @@
       :team="team"
     />
 
-    <!-- Level Selector -->
-    <div class="flex items-center gap-3">
-      <span class="text-sm font-semibold">Level</span>
-      <button @click="decreaseLevel" class="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700">-</button>
-      <span class="text-md font-mono w-6 text-center">{{ props.config.level }}</span>
-      <button @click="increaseLevel" class="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700">+</button>
+    <div class="grid grid-cols-1 gap-4">
+      <!-- Level Selector -->
+      <div class="flex items-center gap-3 border rounded p-2 w-fit">
+        <span class="text-sm font-semibold">Level</span>
+        <button @click="decreaseLevel" class="w-8 text-center px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 border border-transparent hover:border-gray-300">-</button>
+        <span class="text-md font-mono w-6 text-center">{{ props.config.level }}</span>
+        <button @click="increaseLevel" class="w-8 text-center px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 border border-transparent hover:border-gray-300">+</button>
+      </div>
+      
+      <!-- Runes Placeholder -->
+      <RuneSelector
+        :runes="config.runes"
+        @update="updateRunes"
+      />
     </div>
+    <div class="grid grid-cols-1 gap-4">
 
-    <!-- Runes Placeholder -->
-    <RuneSelector
-      :runes="config.runes"
-      @update="updateRunes"
-    />
-
-    <!-- Summoner Spells Placeholder -->
-    <SummonerspellSelector
+      <!-- Summoner Spells Placeholder -->
+      <SummonerspellSelector
       :spells="config.summonerspells"
       @update="updateSummonerspells"
-    />
-
-    <!-- Items Placeholder -->
-    <ItemSelector
+      />
+      
+      
+      <!-- Items Placeholder -->
+      <ItemSelector
       :items="config.items"
       @update="updateItems"
-    />
+      />
+    </div>
 
     <!-- Stack Configuration Placeholder -->
-    <div class="p-3 border rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100 w-full">
+    <div class="p-3 border rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100 w-full col-span-2">
       <span class="text-sm">Stacks Configuration Placeholder</span>
     </div>
 

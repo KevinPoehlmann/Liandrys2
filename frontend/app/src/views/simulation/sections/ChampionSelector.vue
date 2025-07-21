@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full">
+  <div class="w-full col-span-2">
     <div
       @click="isOpen = true"
       class="cursor-pointer flex items-center gap-3 p-3 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"

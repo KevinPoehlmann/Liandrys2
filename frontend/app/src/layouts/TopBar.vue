@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-white dark:bg-gray-800 shadow transition-colors duration-300">
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow transition-colors duration-300">
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
       
       <!-- Left: Navigation -->
@@ -30,7 +30,7 @@
           @click="toggleTheme"
           class="text-sm px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
         >
-          Toggle
+          {{ isDark ? '🌞 Light' : '🌙 Dark' }}
         </button>
       </div>
     </div>
@@ -41,8 +41,11 @@
 import { RouterLink } from 'vue-router'
 import icon from '@/assets/Liandrys.png'
 
-const toggleTheme = () => {
-  const html = document.documentElement
-  html.classList.toggle('dark')
-}
+const props = defineProps({
+  isDark: Boolean
+})
+
+const emit = defineEmits(['toggle-theme'])
+
+const toggleTheme = () => emit('toggle-theme')
 </script>

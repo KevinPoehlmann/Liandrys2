@@ -1,22 +1,25 @@
 <template>
   <div class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50" @click="handleBackdropClick">
-    <div ref="modalContent" class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-5xl max-h-[90vh] overflow-y-auto">
+    <div ref="modalContent" class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-5xl">
 
       <!-- Search Bar -->
-      <input
-        v-model="filter"
-        placeholder="Search items..."
-        class="mb-4 w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-      />
+      <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 pb-4">
+        <input
+          v-model="filter"
+          autofocus
+          placeholder="Search champions..."
+          class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+        />
+      </div>
 
       <div class="flex gap-6">
         <!-- Item Grid -->
-        <div class="flex-1 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-3">
+        <div class="flex-1 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-3 h-[60vh] overflow-y-auto">
           <div
             v-for="item in filteredItems"
             :key="item.id"
             @click="handleSelect(item)"
-            class="flex flex-col items-center cursor-pointer text-center"
+            class="flex flex-col items-center cursor-pointer text-center hover:scale-105"
           >
             <img
               :src="getImageUrl(item)"
@@ -30,12 +33,12 @@
         <!-- Current Items Grid -->
         <div class="w-32">
           <p class="text-sm mb-2 text-center text-gray-900 dark:text-gray-100">Selected</p>
-          <div class="grid grid-cols-3 gap-1 mb-2">
+          <div class="grid grid-cols-3 mb-2">
             <div
               v-for="(item, index) in normalizedItems"
               :key="index"
               @click="handleRemove(index)"
-              class="w-12 h-12 rounded overflow-hidden bg-gray-300 dark:bg-gray-600 relative cursor-pointer"
+              class="w-12 h-12 rounded overflow-hidden bg-gray-300 dark:bg-gray-600 relative cursor-pointer  hover:scale-105"
             >
               <img
                 :src="getImageUrl(item)"

@@ -1,6 +1,9 @@
 <template>
-  <div class="relative w-fit">
-    <div @click="isOpen = true" class="p-4 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition">
+  <div class="relative w-full">
+    <div
+      @click="isOpen = true"
+      class="p-4 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition min-h-[13rem]"
+    >
       <p
         v-if="!(primaryRunes.length || secondaryRunes.length || statShards.length)">
         Select Runes

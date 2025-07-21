@@ -151,7 +151,7 @@ function groupRunesByTree(treeId) {
     result[rune.row].push(rune)
   }
   for (const row of result) {
-    row.sort((a, b) => a.sort_order - b.sort_order)
+    row.sort((a, b) => a.slot - b.slot)
   }
   return result
 }
