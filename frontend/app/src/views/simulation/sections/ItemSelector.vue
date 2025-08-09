@@ -7,17 +7,17 @@
         :key="index"
         class="w-12 h-12 rounded overflow-hidden bg-gray-300 dark:bg-gray-600 relative"
         >
-        <img
-        :src="getImageUrl(item)"
-        class="w-full h-full object-cover"
-        :alt="item?.name || 'Empty'"
-        />
-        <span
-        v-if="item?.gold?.total"
-        class="absolute bottom-0 right-0 text-[10px] bg-black bg-opacity-70 text-white px-1 rounded-tl"
-        >
-        {{ item.gold.total }}g
-        </span>
+          <img
+          :src="getImageUrl(item)"
+          class="w-full h-full object-cover"
+          :alt="item?.name || 'Empty'"
+          />
+          <span
+          v-if="item?.gold?.total"
+          class="absolute bottom-0 right-0 text-[10px] bg-black bg-opacity-70 text-white px-1 rounded-tl"
+          >
+          {{ item.gold.total }}g
+          </span>
         </div>
       </div>
       <div class="text-m text-right text-gray-700 dark:text-gray-200">

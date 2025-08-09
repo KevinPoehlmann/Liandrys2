@@ -2,7 +2,7 @@
   <div class="p-4 border rounded transition w-full col-span-2">
     <div class="flex gap-2 flex-wrap items-center">
       <!-- Auto Attack -->
-      <button @click="addAction('aa')" class="action-tile">
+      <button @click="addAction('aa')" class="action-tile hover:border border-gray-300">
         <img :src="autoAttack" class="tile-image" alt="AA" />
       </button>
 
@@ -13,7 +13,12 @@
         class="flex flex-col items-center"
       >
         <button @click="increase(slot)" class="text-xs text-gray-700 dark:text-gray-300 cursor-pointer">▲</button>
-        <button @click="addAction(slot)" class="action-tile relative">
+        <button
+          @click="addAction(slot)"
+          class="action-tile relative"
+          :class="props.champion?.[slot]?.validated ? 'cursor-pointer hover:border border-gray-300' : ' cursor-not-allowed opacity-50'"
+          :disabled="!props.champion?.[slot]?.validated"
+        >
           <img :src="abilityIcons[slot]" class="tile-image" :alt="slot.toUpperCase()" />
           <span class="absolute top-0 left-0 text-[10px] bg-black bg-opacity-70 text-white px-1 rounded-br">
             {{ slot.toUpperCase() }}
@@ -32,7 +37,7 @@
         v-for="entry in activeSummonerSpells"
         :key="'s' + (entry.index + 1)"
         @click="addAction(`s${entry.index + 1}`)"
-        class="action-tile"
+        class="action-tile hover:border border-gray-300"
       >
         <img :src="getImageUrl(entry.spell)" class="tile-image" :alt="entry.spell.name" />
       </button>
@@ -42,7 +47,7 @@
         v-for="entry in activeItems"
         :key="'i' + (entry.index + 1)"
         @click="addAction(`i${entry.index + 1}`)"
-        class="action-tile"
+        class="action-tile hover:border border-gray-300"
       >
         <img :src="getImageUrl(entry.item)" class="tile-image" :alt="entry.item.name" />
       </button>
@@ -116,7 +121,7 @@ const getImageUrl = (entry) => {
 
 <style scoped lang="postcss">
 .action-tile {
-  @apply w-12 h-12 rounded overflow-hidden bg-gray-200 dark:bg-gray-700 p-0 cursor-pointer hover:border border-gray-300;
+  @apply w-12 h-12 rounded overflow-hidden bg-gray-200 dark:bg-gray-700 p-0;
 }
 .tile-image {
   @apply w-full h-full object-cover;

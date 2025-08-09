@@ -68,6 +68,7 @@ class ShortItem(BaseModel):
     item_id: str
     name: str
     gold: int
+    class_: ItemClass
     active: bool
     validated: bool
     maps: list[Map]

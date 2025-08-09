@@ -106,7 +106,7 @@
     - [ ] Auto fill most picked summonerspells for chosen champion
 - [x] Item Selection
     - [x] Make Items selectable
-    - [ ] Order Items by item class
+    - [x] Order Items by item class
     - [ ] Add filter to the "shop"
     - [x] Only show items for chosen map
 - [ ] Stack Selection

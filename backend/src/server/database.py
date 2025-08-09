@@ -251,7 +251,7 @@ async def fetch_short_items_by_patch(patch: str, hotfix: datetime | None, map: M
 
     cursor = item_collection.find(
         query,
-        {"_id": 1, "item_id": 1, "name": 1, "gold": 1, "active": 1, "validated": 1, "maps": 1, "image": 1},
+        {"_id": 1, "item_id": 1, "name": 1, "gold": 1, "active": 1, "class_": 1, "validated": 1, "maps": 1, "image": 1},
         sort=[("name", 1)])
     items = [ShortItem(**doc) async for doc in cursor]
     return items

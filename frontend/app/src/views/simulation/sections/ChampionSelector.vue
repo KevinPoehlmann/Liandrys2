@@ -10,7 +10,7 @@
         alt="Champion Icon"
         class="w-12 h-12 rounded object-cover bg-gray-300 dark:bg-gray-600"
       />
-      <span class="text-xl font-medium">
+      <span class="text-2xl font-medium">
         {{ champion?.name || 'Select Champion' }}
       </span>
     </div>

@@ -3,7 +3,7 @@
     <div ref="modalContent" class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-4xl">
 
       <!-- Sticky Search Bar -->
-      <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 pb-4">
+      <div class="bg-white dark:bg-gray-800 pb-4">
         <input
           v-model="filter"
           autofocus
@@ -13,7 +13,7 @@
       </div>
 
       <!-- Champion Grid -->
-      <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 max-h-[80vh] overflow-y-auto">
+      <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 h-[60vh] overflow-y-auto overflow-x-hidden items-start pt-4">
         <div
           v-for="champ in filteredChampions"
           :key="champ.key"
