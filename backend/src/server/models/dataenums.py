@@ -6,6 +6,11 @@ from pydantic import BaseModel
 
 
 
+############### Constants ###############
+
+TICKRATE = 30  # 30 ticks per second
+
+
 ############### Enums ###############
 
 #General
@@ -324,7 +329,6 @@ class EffectType(str, Enum):
     DAMAGE="Damage"
     HEAL="Heal"
     SHIELD="Shield"
-    SHADOW="Shadow"
     STATUS="Status"
 
 class ConditionType(str, Enum):
@@ -422,6 +426,22 @@ class Condition(BaseModel):
     value: float
 
 
+class EffectResult(BaseModel):
+    source: ActionType
+    actor: Actor
+    target: Actor
+    type_: EffectType
+    value: float
+    raw: float = 0
+    mitigated: float = 0
+    overheal: float = 0
+    damage_sub_type: DamageSubType | None = None
+
+
+class TickEvent(BaseModel):
+    tick: int
+    result: list[EffectResult]
+
 
 
 class EffectProperties(BaseModel):
@@ -471,14 +491,14 @@ class ProcessedHealProperties(EffectProperties):
 
 class ProcessedShieldProperties(EffectProperties):
     value: float
-    duration: float
+    duration: int
     dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.TRUE)
     hp_scaling: HpScaling = HpScaling.FLAT
 
 
 class ProcessedStatusProperties(EffectProperties):
     type_: StatusType
-    duration: float
+    duration: int
     strength: float = 0.0
 
 
@@ -511,6 +531,12 @@ class QueueComponent():
     props: EffectProperties | None = None
 
 
+@dataclass
+class DotState:
+    start: int
+    last_regular: int
+    end: int
+
 
 #Status
 
@@ -519,9 +545,9 @@ class EffectComp():
     source: ActionType
     target: Actor
     type_: EffectType
-    duration: float = 0.0
+    duration: int = 0
     interval: float = 0.0
-    delay: float = 0.0
+    delay: int = 0
     speed: int = 0
     props: EffectProperties | None = None
 
@@ -530,5 +556,5 @@ class EffectComp():
 
 @dataclass
 class ActionEffect():
-    time: float
+    tick: int
     effect_comps: list[EffectComp] = field(default_factory=list)

@@ -54,13 +54,15 @@
         <!-- Output / Timeline Area -->
         <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded shadow">
           <h2 class="text-xl font-semibold mb-4">Simulation Output</h2>
-          <div class="h-40 flex items-center justify-center text-gray-600 dark:text-gray-300">
+          <div class=" flex items-center justify-center text-gray-600 dark:text-gray-300">
             <SimulationOutput
               :blueConfig="blueConfig"
               :redConfig="redConfig"
               :combo="combo"
               :damage="damage"
-              :time="time"
+              :ticks="ticks"
+              :tickRate="tickRate"
+              :effectList="effectList"
               :error="error"
               @remove="combo.splice($event, 1)"
             />
@@ -144,7 +146,9 @@ const redConfig = reactive({
 
 const combo = ref([])
 const damage = ref(0)
-const time = ref(0)
+const ticks = ref(0)
+const tickRate = ref(0)
+const effectList = ref([])
 
 const error = ref(null)
 
@@ -244,7 +248,9 @@ watch(
 
       const result = await res.json()
       damage.value = result.damage
-      time.value = result.time
+      ticks.value = result.ticks
+      tickRate.value = result.tick_rate
+      effectList.value = result.effect_list
 
     } catch (e) {
       error.value = 'An unexpected error occurred.'

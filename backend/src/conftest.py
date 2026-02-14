@@ -149,10 +149,10 @@ def queue_heal_list(request) -> list[QueueComponent]:
     values=params.get("values", [])
     props=[ProcessedHealProperties(value=value) for value in values]
     queue_comps=[QueueComponent(
-        source=ActionType.AA,
+        source=ActionType.W,
         actor=Actor.BLUE,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
+        target=Actor.BLUE,
+        type_=EffectType.HEAL,
         props=prop
     ) for prop in props]
     return queue_comps
@@ -164,10 +164,10 @@ def queue_shield_list(request) -> list[QueueComponent]:
     values=params.get("values", [])
     props=[ProcessedShieldProperties(value=value, duration=duration) for duration, value in values]
     queue_comps=[QueueComponent(
-        source=ActionType.AA,
+        source=ActionType.W,
         actor=Actor.BLUE,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
+        target=Actor.BLUE,
+        type_=EffectType.SHIELD,
         props=prop
     ) for prop in props]
     return queue_comps
@@ -179,10 +179,10 @@ def queue_status_list(request) -> list[QueueComponent]:
     values=params.get("values", [])
     props=[ProcessedStatusProperties(type_=type_, duration=duration) for type_, duration in values]
     queue_comps=[QueueComponent(
-        source=ActionType.AA,
+        source=ActionType.W,
         actor=Actor.BLUE,
         target=Actor.RED,
-        type_=EffectType.DAMAGE,
+        type_=EffectType.STATUS,
         props=prop
     ) for prop in props]
     return queue_comps
@@ -194,7 +194,7 @@ def processed_status_props(request) -> ProcessedStatusProperties:
     params = getattr(request, "param", {})
     return ProcessedStatusProperties(
         type_=params.get("type", StatusType.STUN),
-        duration=params.get("duration", 1),
+        duration=params.get("duration", 30),
         strength=params.get("strength", 0),
     )
 
@@ -202,7 +202,7 @@ def processed_status_props(request) -> ProcessedStatusProperties:
 @pytest.fixture
 def action_effect_aa() -> ActionEffect:
     return ActionEffect(
-        time=0.215,
+        tick=7,
         effect_comps=[
             EffectComp(
                 source=ActionType.AA,
@@ -222,7 +222,7 @@ def action_effect_aa() -> ActionEffect:
 @pytest.fixture
 def action_effect_q() -> ActionEffect:
     return ActionEffect(
-        time=1.6,
+        tick=48,
         effect_comps=[
             EffectComp(
                 source=ActionType.Q,
@@ -260,7 +260,7 @@ def e_damage_w() -> EffectComp:
         source=ActionType.W,
         target=Actor.RED,
         type_=EffectType.DAMAGE,
-        duration=2,
+        duration=60,
         interval=0.5,
         props=DamageProperties(
             scaling="20 + 0.3 * ap",
@@ -278,9 +278,9 @@ def e_damage_e() -> EffectComp:
         source=ActionType.E,
         target=Actor.RED,
         type_=EffectType.DAMAGE,
-        duration=2,
+        duration=60,
         interval=0.5,
-        delay=0.2,
+        delay=6,
         props=DamageProperties(
             scaling="20 + 0.3 * ap",
             dmg_type=DamageType.DOT,
@@ -297,7 +297,7 @@ def e_damage_r() -> EffectComp:
         source=ActionType.R,
         target=Actor.RED,
         type_=EffectType.DAMAGE,
-        duration=2,
+        duration=60,
         interval=0.5,
         delay=0,
         speed=2000,
@@ -460,17 +460,6 @@ def q_damage_w() -> QueueComponent:
     ))
     return d
 
-
-@pytest.fixture
-def q_damage_w_shadow() -> QueueComponent:
-    d = QueueComponent(
-        source=ActionType.W,
-        actor=Actor.BLUE,
-        target=Actor.RED,
-        type_=EffectType.SHADOW,
-        props=None
-    )
-    return d
 
 
 @pytest.fixture

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from src.server.models.dataenums import ActionType, Actor
+from src.server.models.dataenums import ActionType, Actor, TickEvent
 
 
 class Rank(BaseModel):
@@ -29,8 +29,10 @@ class V1Request(BaseModel):
 
 
 class V1Response(BaseModel):
+    tick_rate: int
     damage: int
-    time: float
+    ticks: int
+    effect_list: list[TickEvent]
 
 
 class ItemRequest(BaseModel):

@@ -19,40 +19,50 @@
     </div>
 
     <div class="text-m text-gray-800 dark:text-gray-100">
-      <p><strong>Damage:</strong> {{ safeDamage }} HP</p>
-      <p><strong>Time:</strong> {{ safeTime }} seconds</p>
+      <p><strong>Damage:</strong> {{ totalDamage }} HP</p>
+      <p><strong>Time:</strong> {{ timeSeconds }} seconds</p>
+      <Chart
+        :tickRate="tickRate"
+        :flatList="flattenedEffects"
+        mode="subtype"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import NoIcon from '@/assets/NoChampion.png'
 import autoAttack from '@/assets/autoattack.png'
+import Chart from './Chart.vue'
 
 const props = defineProps({
   blueConfig: Object,
   redConfig: Object,
   combo: Array,
   damage: Number,
-  time: Number,
+  ticks: Number,
+  tickRate: Number,
+  effectList: Array,
   error: String
 })
 
-const safeDamage = ref(0)
-const safeTime = ref(0)
+const groupMode = ref('subtype')
 
-watch(() => props.damage, (newVal) => {
-  if (typeof newVal === 'number') {
-    safeDamage.value = newVal
-  }
+
+const totalDamage = computed(() => {
+  return typeof props.damage === 'number' ? props.damage : 0
 })
 
-watch(() => props.time, (newVal) => {
-  if (typeof newVal === 'number') {
-    safeTime.value = newVal
+
+const timeSeconds = computed(() => {
+  if (typeof props.ticks === 'number' && typeof props.tickRate === 'number' && props.tickRate > 0) {
+    return props.ticks / props.tickRate
   }
+  return 0
 })
+
+
 
 const emit = defineEmits(['remove'])
 
@@ -81,6 +91,20 @@ const getIcon = (action) => {
   }
   return NoIcon
 }
+
+
+const flattenedEffects = computed(() => {
+  const effects = []
+  for (const frame of props.effectList ?? []) {
+    const tick = frame.tick
+    for (const effect of frame.result ?? []) {
+      effects.push({ ...effect, tick })
+    }
+  }
+  return effects
+})
+
+
 </script>
 
 <style scoped>

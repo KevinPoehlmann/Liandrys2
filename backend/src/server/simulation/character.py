@@ -16,6 +16,7 @@ from src.server.models.dataenums import (
     DamageType,
     EffectComp,
     EffectProperties,
+    EffectResult,
     EffectType,
     HealProperties,
     HpScaling,
@@ -28,7 +29,8 @@ from src.server.models.dataenums import (
     Stat,
     StatusProperties,
     StatusType,
-    Actor
+    Actor,
+    TICKRATE
 )
 from src.server.models.effect import EffectComponent
 from src.server.models.item import Item
@@ -47,8 +49,8 @@ class Character():
         self.champion: Champion = champion
         self.level: int = lvl
         self.items: list[Item] = items
-        self.shields: list[tuple[float, float]] = []
-        self.status_effects: dict[StatusType, list[tuple[float, float]]] = defaultdict(list)
+        self.shields: list[tuple[int, float, ActionType, Actor]] = []
+        self.status_effects: dict[StatusType, list[tuple[int, float]]] = defaultdict(list)
         self.buffs: dict[Buff, list[BuffProperties]] = self._initialize_buffs()
         self.stacks: dict[ActionType, int] = defaultdict(int)
 
@@ -60,7 +62,7 @@ class Character():
             ActionType.E: (self.champion.e, rank.e),
             ActionType.R: (self.champion.r, rank.r)
         }
-        self.cooldowns: dict[ActionType, float] = {
+        self.cooldowns: dict[ActionType, int] = {
             ActionType.AA: 0,
             ActionType.Q: 0,
             ActionType.W: 0,
@@ -169,9 +171,9 @@ class Character():
         return math.prod(1 - effect[1] for effect in self.status_effects[StatusType.CRIPPLE])
         
 
-    def _remove_expired_status_effects(self, timestamp: float) -> None:
+    def _remove_expired_status_effects(self, tick: int) -> None:
         for status, effects in list(self.status_effects.items()):
-            self.status_effects[status] = [(exp, strength) for exp, strength in effects if exp > timestamp]
+            self.status_effects[status] = [(exp, strength) for exp, strength in effects if exp > tick]
             if not self.status_effects[status]:
                 del self.status_effects[status]
 
@@ -199,14 +201,14 @@ class Character():
         return value
 
 
-    def _calculate_damage(self, damage: ProcessedDamageProperties) -> float:
+    def _calculate_damage(self, damage: ProcessedDamageProperties) -> tuple[float, float, float]:
         value = self._calculate_hp_scaling(damage.value, damage.hp_scaling)
         resistance = self._get_resistance(damage.dmg_sub_type)
         resistance -= (resistance * damage.percent_pen)
         resistance -= damage.flat_pen
         resistance = max(resistance, 0)
         result = value * (100 / (resistance + 100))
-        return result
+        return result, value, value - result
     
 
     def _do_action_buff(self, action: BuffAction) -> EffectComponent | None:
@@ -242,15 +244,46 @@ class Character():
                         effect_components.append(comp)
         return effect_components """
 
+    
+
+    def _use_shields(self, damage: float, target: Actor) -> tuple[float, list[EffectResult]]:
+        results = []
+        for i, (exp, shield_val, source, actor) in enumerate(self.shields):
+            absorbed = min(damage, shield_val)
+            self.damage_shielded += absorbed
+            damage -= absorbed
+            self.shields[i] = (exp, shield_val-absorbed, source, actor)
+            results.append(EffectResult(
+                source=source,
+                actor=actor,
+                target=target,
+                type_=EffectType.SHIELD,
+                value=absorbed
+            ))
+            if damage <= 0:
+                break
+        return damage, results
 
 
-    def _apply_heals(self, components: list[QueueComponent]) -> None:
+    def _apply_heals(self, components: list[QueueComponent]) -> list[EffectResult]:
         total_heal = 0
+        max_hp = self._get_stat(Stat.HP)
+        results = []
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedHealProperties), "Heal component must have ProcessedHealProperties"
-                heal = self._calculate_hp_scaling(component.props.value, component.props.hp_scaling)
-                total_heal += heal
+                raw_heal = self._calculate_hp_scaling(component.props.value, component.props.hp_scaling)
+                total_heal += raw_heal
+                heal = max(raw_heal, min(total_heal, max_hp - self.hp))
+                results.append(EffectResult(
+                    source=component.source,
+                    actor=component.actor,
+                    target=component.target,
+                    type_=EffectType.HEAL,
+                    value=heal,
+                    raw=raw_heal,
+                    overheal=raw_heal - heal
+                ))
             except Exception as e:
                 raise SimulationError(
                     message=str(e),
@@ -258,18 +291,18 @@ class Character():
                     actor=component.actor,
                     phase="heal application"
                 ) from e
-        max_hp = self._get_stat(Stat.HP)
         total_heal = min(total_heal, max_hp - self.hp)
         self.healed += total_heal
         self.hp += total_heal
+        return results
     
 
-    def _apply_shields(self, components: list[QueueComponent], timestamp: float) -> None:
-        self.shields = [(exp, val) for exp, val in self.shields if exp > timestamp and val > 0]
+    def _apply_shields(self, components: list[QueueComponent], tick: int) -> None:
+        self.shields = [(exp, val, source, actor) for exp, val, source, actor in self.shields if exp > tick and val > 0]
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedShieldProperties), "Shield component must have ProcessedShieldProperties"
-                shield = (component.props.duration+timestamp, self._calculate_hp_scaling(component.props.value, component.props.hp_scaling))
+                shield = (component.props.duration + tick, self._calculate_hp_scaling(component.props.value, component.props.hp_scaling), component.source, component.actor)
                 self.shields.append(shield)
             except Exception as e:
                 raise SimulationError(
@@ -281,14 +314,27 @@ class Character():
         self.shields.sort()
     
 
-    def _apply_damages(self, components: list[QueueComponent]) -> list[QueueComponent]:
+    def _apply_damages(self, components: list[QueueComponent]) -> tuple[list[QueueComponent], list[EffectResult]]:
+        if not components:
+            return [], []
         total_damage = 0
         vamps = []
+        results = []
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedDamageProperties), "Damage component must have ProcessedDamageProperties"
-                damage = self._calculate_damage(component.props)
+                damage, raw_dmg, mitigated = self._calculate_damage(component.props)
                 total_damage += damage
+                results.append(EffectResult(
+                    source=component.source,
+                    actor=component.actor,
+                    target=component.target,
+                    type_=EffectType.DAMAGE,
+                    value=damage,
+                    raw=raw_dmg,
+                    mitigated=mitigated,
+                    damage_sub_type=component.props.dmg_sub_type
+                ))
                 if component.props.vamp > 0:
                     vamp = damage * component.props.vamp
                     vamps.append(QueueComponent(
@@ -305,21 +351,16 @@ class Character():
                     actor=component.actor,
                     phase="damage application"
                 ) from e
-
+        total_damage, shield_results = self._use_shields(total_damage, components[0].target)
         self.damage_taken += total_damage
-        for i, (exp, shield_val) in enumerate(self.shields):
-            absorbed = min(total_damage, shield_val)
-            self.damage_shielded += absorbed
-            total_damage -= absorbed
-            self.shields[i] = (exp, shield_val-absorbed)
-            if total_damage <= 0:
-                break
+        results.extend(shield_results)
         if total_damage > 0:
             self.hp -= total_damage
-        return vamps
+        return vamps, results
 
 
-    def _apply_status_effects(self, components: list[QueueComponent], timestamp: float) -> None:
+
+    def _apply_status_effects(self, components: list[QueueComponent], tick: int) -> None:
         tenacity_affected = {StatusType.BERSERK, StatusType.BLIND, StatusType.CRIPPLE, StatusType.DISARM,
                              StatusType.GROUND, StatusType.KINEMATICS, StatusType.SILENCE, StatusType.SLEEP,
                              StatusType.SLOW, StatusType.STUN, StatusType.SUSPENSION, StatusType.TAUNT}
@@ -327,8 +368,8 @@ class Character():
             try:
                 assert isinstance(component.props, ProcessedStatusProperties), "Status component must have ProcessedStatusProperties"
                 if component.props.type_ in tenacity_affected:
-                    component.props.duration = max(0.3, self._get_tenacity() * component.props.duration)
-                expiration = timestamp + component.props.duration
+                    component.props.duration = math.ceil(max(0.3, self._get_tenacity() * component.props.duration))
+                expiration = tick + component.props.duration
                 self.status_effects[component.props.type_].append((expiration, component.props.strength))
             except Exception as e:
                 raise SimulationError(
@@ -340,51 +381,51 @@ class Character():
 
 
 
-
-    def check_action_delay(self, action_type: ActionType, timestamp: float) -> float:
-        timestamp = max(timestamp, self.cooldowns[action_type])
-        self._remove_expired_status_effects(timestamp)
+    def check_action_delay(self, action_type: ActionType, tick: int) -> int:
+        tick = max(tick, self.cooldowns[action_type])
+        self._remove_expired_status_effects(tick)
 
         if StatusType.STASIS in self.status_effects:
-            timestamp = self.status_effects[StatusType.STASIS][0][0]
+            tick = self.status_effects[StatusType.STASIS][0][0]
 
         if StatusType.SUPPRESSION in self.status_effects:
             supression_delay = max(supression[0] for supression in self.status_effects[StatusType.SUPPRESSION])
-            timestamp = max(timestamp, supression_delay)
+            tick = max(tick, supression_delay)
 
         stuns = {StatusType.STUN, StatusType.SUSPENSION, StatusType.SLEEP, StatusType.AIRBORNE}
         stun_delays = [max(effect[0] for effect in self.status_effects[stun]) for stun in stuns if stun in self.status_effects]
         if stun_delays:
-            timestamp = max(timestamp, max(stun_delays))
+            tick = max(tick, max(stun_delays))
 
         if action_type == ActionType.AA and StatusType.DISARM in self.status_effects:
             disarm_delay = max(disarm[0] for disarm in self.status_effects[StatusType.DISARM])
-            timestamp = max(timestamp, disarm_delay)
+            tick = max(tick, disarm_delay)
         
         if action_type in self.ability_dict:
             silences = {StatusType.BERSERK, StatusType.SILENCE, StatusType.TAUNT}
             silence_delay = [max(effect[0] for effect in self.status_effects[silence]) for silence in silences if silence in self.status_effects]
             if silence_delay:
-                timestamp = max(timestamp, max(silence_delay))
+                tick = max(tick, max(silence_delay))
 
-        return timestamp
+        return tick
 
 
 
-    def do_action(self, action: Action, timestamp: float) -> ActionEffect:
+    def do_action(self, action: Action, tick: int) -> ActionEffect:
         if action.action_type == ActionType.AA:
-            return self._basic_attack(action.target, timestamp)
+            return self._basic_attack(action.target, tick)
         elif action.action_type in self.ability_dict:
-            return self._do_ability(action, timestamp)
+            return self._do_ability(action, tick)
         else:
             raise NotImplementedError(f"ActionType '{action.action_type}' not implemented in do_action()")
 
 
 
-    def _basic_attack(self, target: Actor, timestamp: float) -> ActionEffect:
+    def _basic_attack(self, target: Actor, tick: int) -> ActionEffect:
         attack_time = 1 / self._get_attackspeed()
-        self.cooldowns[ActionType.AA] = timestamp + attack_time
-        timestamp += attack_time * self.champion.attack_windup
+        attack_ticks = math.ceil(attack_time * TICKRATE)
+        self.cooldowns[ActionType.AA] = tick + attack_ticks
+        tick += math.ceil(attack_time * self.champion.attack_windup * TICKRATE)
         aa_props = DamageProperties(
             scaling=Stat.AD.value,
             dmg_type=DamageType.BASIC  #TODO check if Basic is right damage type
@@ -400,27 +441,29 @@ class Character():
         )
         effect_components = [dmg]
         """ effect_components.extend(self._check_buffs(ActionType.AA, Buff.CAST)) """
-        return ActionEffect(time=timestamp, effect_comps=effect_components)
+        return ActionEffect(tick=tick, effect_comps=effect_components)
     
 
-    def _do_ability(self, action: Action, timestamp: float) -> ActionEffect:
+    def _do_ability(self, action: Action, tick: int) -> ActionEffect:
         ability: ChampionAbility = self.ability_dict[action.action_type][0]
         if not ability.validated:
             raise NotImplementedError(f"Ability {action.action_type} is not implemented yet for {self.champion.name}")
         cooldown = self._evaluate_formula(ability.cooldown, {"rank": self.ability_dict[action.action_type][1]})
         cooldown *= 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
         cast_time = self._evaluate_formula(ability.cast_time,  {"rank": self.ability_dict[action.action_type][1]})
-        self.cooldowns[action.action_type] = timestamp + cast_time + cooldown
-        action_effect = ActionEffect(time=timestamp + cast_time)
+        cast_ticks = math.ceil(cast_time * TICKRATE)
+        cooldown_ticks = math.ceil((cooldown) * TICKRATE)
+        self.cooldowns[action.action_type] = tick + cooldown_ticks + cast_ticks
+        action_effect = ActionEffect(tick=tick + cast_ticks)
         for effect in ability.effects:
             for component in effect.effect_components:
                 effect_comp = EffectComp(
                     source=action.action_type,
                     target=action.target,
                     type_=component.type_,
-                    duration=component.duration,
-                    interval=component.interval,
-                    delay=component.delay,
+                    duration=math.ceil(component.duration * TICKRATE),
+                    interval=component.interval * TICKRATE,
+                    delay=math.ceil(component.delay * TICKRATE),
                     speed=component.speed,
                     props=component.props
                 )
@@ -433,9 +476,6 @@ class Character():
     def evaluate(self, queue_comps:list[QueueComponent]) -> list[QueueComponent]:
         component_list = []
         for component in queue_comps:
-            if component.type_ == EffectType.SHADOW:
-                continue
-
             variables = {"rank": self.ability_dict[component.source][1]} if component.source in self.ability_dict else {}
             assert isinstance(component.props, (DamageProperties, HealProperties, ShieldProperties)), \
                 "Component properties must be one of DamageProperties, HealProperties, ShieldProperties"
@@ -465,7 +505,7 @@ class Character():
                     assert isinstance(component.props, ShieldProperties), "Shield component must have ShieldProperties"
                     props=ProcessedShieldProperties(
                         value=result,
-                        duration=component.props.duration,
+                        duration=math.ceil(component.props.duration * TICKRATE),
                         dmg_sub_type=component.props.dmg_sub_type,
                         hp_scaling=component.props.hp_scaling
                     )
@@ -478,13 +518,13 @@ class Character():
                 target=component.target,
                 type_=component.type_,
                 props=props
-        )
+            )
             component_list.append(queue_component)
         return component_list
 
         
 
-    def take_effects(self, component_list: list[QueueComponent], timestamp: float) -> list[QueueComponent]:
+    def take_effects(self, component_list: list[QueueComponent], tick: int) -> tuple[list[QueueComponent], list[EffectResult]]:
         damages = []
         heals = []
         shields = []
@@ -501,8 +541,8 @@ class Character():
                     stati.append(component)
                 case _:
                     pass
-        self._apply_shields(shields, timestamp)
-        vamps = self._apply_damages(damages)
-        self._apply_heals(heals)
-        self._apply_status_effects(stati, timestamp)
-        return vamps
+        self._apply_shields(shields, tick)
+        vamps, results = self._apply_damages(damages)
+        results.extend(self._apply_heals(heals))
+        self._apply_status_effects(stati, tick)
+        return vamps, results

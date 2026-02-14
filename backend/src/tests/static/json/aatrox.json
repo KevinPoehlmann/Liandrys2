@@ -68,6 +68,7 @@
     "q": {
       "name": "Simple Damage",
       "description": "Only dealing damage.",
+      "validated": true,
       "effects": [
         {
           "text": "Very simple damage.",
