@@ -3,7 +3,7 @@ import requests
 
 from datetime import datetime
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock, mock_open
+from unittest.mock import AsyncMock, Mock
 from urllib.error import HTTPError
 
 from src.server.loader.helper import RuneClass
@@ -176,6 +176,13 @@ def test_get_newer_hotfixes_without_hotfix_param(patch_without_hotfix, hotfix_li
     result = _get_newer_hotfixes(patch_without_hotfix, hotfixes)
     assert result == expected
 
+def test_get_newer_hotfixes_keeps_incomplete_patch(patch_with_hotfix):
+    patch_with_hotfix.loaded_champion_count = 100
+    patch_with_hotfix.update_totals()
+    hotfixes = {"15.7.1": [datetime(2024, 4, 6, 12, 0), datetime(2024, 4, 6, 11, 0)]}
+    result = _get_newer_hotfixes(patch_with_hotfix, hotfixes)
+    assert result == {"15.7.1": [datetime(2024, 4, 6, 12, 0)]}
+
 
 
 @pytest.mark.asyncio
@@ -209,6 +216,7 @@ async def test_load_fresh_database_success(mocker):
     mocker.patch("src.server.loader.patchloader2._load_all_items", new=AsyncMock())
     mocker.patch("src.server.loader.patchloader2._load_all_runes", new=AsyncMock())
     mocker.patch("src.server.loader.patchloader2._load_all_summonerspells", new=AsyncMock())
+    mocker.patch("src.server.loader.patchloader2.db.fetch_patch_latest", new=AsyncMock(return_value=None))
 
     # Mock db.add_patch
     mock_upsert_patch = mocker.patch("src.server.loader.patchloader2.db.upsert_patch", new=AsyncMock())
@@ -220,7 +228,7 @@ async def test_load_fresh_database_success(mocker):
     assert mock_upsert_patch.called
 
 @pytest.mark.asyncio
-async def test_load_fresh_database_failure_triggers_cleanup(mocker):
+async def test_load_fresh_database_failure_saves_incomplete_patch(mocker):
     mock_patch = "15.7.1"
     mock_hotfix = datetime(2024, 4, 8)
     hotfixes = {mock_patch: [mock_hotfix]}
@@ -233,12 +241,15 @@ async def test_load_fresh_database_failure_triggers_cleanup(mocker):
     mocker.patch("src.server.loader.patchloader2._load_all_items", new=AsyncMock())
     mocker.patch("src.server.loader.patchloader2._load_all_runes", new=AsyncMock())
     mocker.patch("src.server.loader.patchloader2._load_all_summonerspells", new=AsyncMock())
+    mocker.patch("src.server.loader.patchloader2.db.fetch_patch_latest", new=AsyncMock(return_value=None))
 
     mock_upsert_patch = mocker.patch("src.server.loader.patchloader2.db.upsert_patch", new=AsyncMock())
 
     await _load_fresh_database(hotfixes)
 
-    mock_upsert_patch.assert_not_called()
+    # The incomplete patch is saved so the next load can resume it
+    saved_patch = mock_upsert_patch.call_args.args[0]
+    assert saved_patch.loaded_total_count < saved_patch.total_count
 
 
 
@@ -294,6 +305,7 @@ async def test_load_all_runes_calls_each(mocker, patch_with_hotfix):
 
     # Patch _load_rune
     mocked_load_rune = mocker.patch("src.server.loader.patchloader2._load_rune", new=AsyncMock())
+    mocker.patch("src.server.loader.patchloader2._load_rune_stat_shards", new=AsyncMock())
 
     await _load_all_runes(rune_list, mock_session, patch_with_hotfix)
 
@@ -362,7 +374,7 @@ async def test_load_item_success(mocker, patch_with_hotfix):
 
     session = AsyncMock()
 
-    mocker.patch("src.server.loader.patchloader2.db.exists_item_by_name", return_value=False)
+    mocker.patch("src.server.loader.patchloader2.db.exists_item_by_item_id", return_value=False)
 
     # Mock wiki fetch
     mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>infinity</html>")
@@ -418,7 +430,7 @@ async def test_load_summonerspell_success(mocker, patch_with_hotfix, smite):
 
     session = AsyncMock()
 
-    mocker.patch("src.server.loader.patchloader2.db.exists_summonerspell_by_name", return_value=False)
+    mocker.patch("src.server.loader.patchloader2.db.exists_summonerspell_by_key", return_value=False)
 
     mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>flash</html>")
     mocker.patch("src.server.loader.patchloader2.ws.scrape_summonerspell", return_value=smite)
@@ -498,14 +510,14 @@ async def test_load_image_downloads_file(mocker):
     mocker.patch("pathlib.Path.mkdir", return_value=None)
 
     # Patch file writing
-    mocked_open = mocker.patch("builtins.open", mock_open())
+    mocked_write = mocker.patch("pathlib.Path.write_bytes")
 
     # Run the function
     await _load_image(image, session, NewPatch(patch="15.8.1"))
 
     # Assertions
     session.get_bytes.assert_called_once_with("https://riot.cdn/15.8.1/img/champion/icon.png")
-    mocked_open.assert_called_once()
+    mocked_write.assert_called_once_with(b"fake_image_data")
 
 
 
@@ -527,7 +539,8 @@ async def test_load_image_rune(mocker):
     mocker.patch("pathlib.Path.exists", return_value=False)
 
     # Patch: simulate writing to disk with no real I/O
-    mocker.patch("builtins.open", mock_open())
+    mocker.patch("pathlib.Path.mkdir", return_value=None)
+    mocker.patch("pathlib.Path.write_bytes")
 
     # Act
     result = await _load_image_rune(icon, session)
@@ -871,6 +884,7 @@ async def test_patch_runes(mocker):
         tree="Domination",
         tree_id=8100,
         row=0,
+        slot=1,
         passive=Passive(name="Cheap Shot"),
         image=Image(
             full="Cheap_Shot.png",

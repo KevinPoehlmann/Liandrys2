@@ -354,7 +354,7 @@ def test_scrape_item_pickaxe(load_html):
 
 def test_scrape_item_cosmic_drive(load_html):
     item_json = ItemJson(
-        name="Cpsmic Drive",
+        name="Cosmic Drive",
         description="Titanic Hydra description",
         colloq="Titanic Hydra colloq",
         plaintext="Titanic Hydra",
@@ -389,8 +389,8 @@ def test_scrape_item_cosmic_drive(load_html):
     titanic_html = load_html("cosmic_drive")
     item = scrape_item("5421", item_json, titanic_html, patch="15.7.1")
     assert isinstance(item, NewItem)
-    assert item.name == "Pickaxe"
-    assert item.class_ == ItemClass.BASIC
+    assert item.name == "Cosmic Drive"
+    assert item.class_ == ItemClass.LEGENDARY
     assert item.stats[Stat.AP] == 70
     assert item.stats[Stat.ABILITY_HASTE] == 25
 
@@ -460,7 +460,8 @@ def test_scrape_rune_comet(load_html):
         ),
         tree="Sorcery",
         tree_id=2,
-        row=1
+        row=1,
+        slot=0
     )
     image = Image(
         full="arcane_comet.png",

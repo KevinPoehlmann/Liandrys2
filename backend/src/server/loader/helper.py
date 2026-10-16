@@ -244,40 +244,29 @@ def find_label(label: str) -> tuple[EffectType, DamageSubType]:
     return effect_type, damage_subtype
 
 
-def wiki_to_datetime(wiki_patch: str) -> datetime:
-    months = {
-        "January": "1",
-        "February": "2",
-        "March": "3",
-        "April": "4",
-        "May": "5",
-        "June": "6",
-        "July": "7",
-        "August": "8",
-        "September": "9",
-        "October": "10",
-        "November": "11",
-        "December": "12"
-    }
+def _remove_day_suffixes(text: str) -> str:
+    return re.sub(r"(\d+)(st|nd|rd|th)", r"\1", text)
 
-    cleaned = re.sub(r"(st|nd|rd|th)", "", wiki_patch.replace("Hotfix", "")).strip()
-    parts = cleaned.split()
 
-    if len(parts) != 2:
-        raise ScrapeError(f"Unexpected date format: '{wiki_patch}", "Patch", "Hotfix")
-
-    month_str, day_str = parts
-    month_num = months.get(month_str)
-    if not month_num:
-        raise ValueError(f"Unknown month name: '{month_str}'")
-
-    day = day_str.zfill(2)
-    year = str(datetime.now().year)
+def wiki_release_to_datetime(wiki_release: str) -> datetime:
+    cleaned = _remove_day_suffixes(wiki_release).strip()
     try:
-        hotfix_date = datetime.strptime(f"{year}-{month_num}-{day}", "%Y-%m-%d")
-        return hotfix_date
-    except ValueError as e:
-        raise ScrapeError(f"Error parsing date: {wiki_patch}", "Patch", "Hotfix")
+        return datetime.strptime(cleaned, "%B %d, %Y")
+    except ValueError:
+        raise ScrapeError(f"Unexpected release date format: '{wiki_release}'", "Patch", "Release")
+
+
+def wiki_to_datetime(wiki_hotfix: str, release_date: datetime) -> datetime:
+    cleaned = _remove_day_suffixes(wiki_hotfix.replace("Hotfix", "")).strip()
+    try:
+        hotfix_date = datetime.strptime(f"{cleaned} {release_date.year}", "%B %d %Y")
+    except ValueError:
+        raise ScrapeError(f"Unexpected date format: '{wiki_hotfix}'", "Patch", "Hotfix")
+
+    # Hotfix dates have no year: a December patch can get its hotfix in January
+    if hotfix_date < release_date:
+        hotfix_date = hotfix_date.replace(year=release_date.year + 1)
+    return hotfix_date
 
 
 def datetime_to_wiki(date: datetime) -> str:
@@ -409,7 +398,7 @@ class SafeSession:
         self.recent_429s = [t for t in self.recent_429s if now - t < 80]
         if len(self.recent_429s) >= 16:
             patch_logger.critical("[NETWORK] [RETRY] [429] Too many 429 responses in the last minute. Aborting further requests.")
-            self.abort_event.clear()
+            self.abort_event.set()
             if not self.backoff_event.is_set():
                 self.backoff_event.set()
             raise RuntimeError("Too many 429 responses, aborting further requests.")

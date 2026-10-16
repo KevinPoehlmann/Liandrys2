@@ -5,7 +5,7 @@ from src.server.models.pydanticid import PydanticObjectId
 
 class NewPatch(BaseModel):
     patch: str
-    timestamp: datetime = datetime.now()
+    timestamp: datetime = Field(default_factory=datetime.now)
     hotfix: datetime | None = None
     validated: bool = False
 

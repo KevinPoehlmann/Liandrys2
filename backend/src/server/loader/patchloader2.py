@@ -508,11 +508,10 @@ async def _load_image(image: Image, session: SafeSession, patch: NewPatch, force
     img_path = Path(PATHS.image) / image.group / image.full
 
     if not img_path.exists() or force_reload:
-        img_path.parent.mkdir(parents=True, exist_ok=True)
         img_url = f"{URLS.dataLink}{patch.patch}/{URLS.image}{image.group}/{image.full}"
         try:
-            with open(img_path, "wb") as img_file:
-                img_file.write(await session.get_bytes(img_url))
+            if not await _download_file(img_url, img_path, session):
+                raise LoadError(404, "Image not found", img_url, image.group, image.full)
         except HTTPError as e:
             raise LoadError(e.code, e.reason, e.url, image.group, image.full)
         except URLError as e:
@@ -527,11 +526,10 @@ async def _load_image(image: Image, session: SafeSession, patch: NewPatch, force
     if image.sprite and (image.x == image.y == 0):
         sprite_path = Path(PATHS.sprite) / image.sprite
         if not sprite_path.exists() or force_reload:
-            sprite_path.parent.mkdir(parents=True, exist_ok=True)
             sprite_url = f"{URLS.dataLink}{patch.patch}{URLS.sprite}{image.sprite}"
             try:
-                with open(sprite_path, "wb") as sprite_file:
-                    sprite_file.write(await session.get_bytes(sprite_url))
+                if not await _download_file(sprite_url, sprite_path, session):
+                    raise LoadError(404, "Sprite not found", sprite_url, image.group, image.sprite)
             except HTTPError as e:
                 raise LoadError(e.code, e.reason, e.url, image.group, image.full)
             except URLError as e:
@@ -551,15 +549,23 @@ async def _load_image_rune(icon: str, session: SafeSession) -> Image:
     img_path = Path(PATHS.image) / image.group / image.full
 
     if not img_path.exists():
-        img_path.parent.mkdir(parents=True, exist_ok=True)
         img_url = f"{URLS.dataLink}{URLS.image}{icon}"
         try:
-            with open(img_path, "wb") as image_file:
-                image_file.write(await session.get_bytes(img_url))
+            if not await _download_file(img_url, img_path, session):
+                patch_logger.error(f"[RUNE] [IMAGE] [{icon}] ❌ Image not found")
         except (HTTPError, URLError) as e:
             patch_logger.error(f"[RUNE] [IMAGE] [{icon}] ❌ Failed to load image: {e}")
 
     return image
+
+
+async def _download_file(url: str, path: Path, session: SafeSession) -> bool:
+    content = await session.get_bytes(url)
+    if not content:
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+    return True
 
 
 async def _load_rune_tree_images(icon_list: list[str], session: SafeSession) -> None:

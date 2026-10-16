@@ -1,5 +1,7 @@
 import pytest
 
+from datetime import datetime
+
 from src.server.models.dataenums import HpScaling, Stat, EffectType, DamageSubType
 from src.server.loader.helper import (
     info_loader,
@@ -10,7 +12,9 @@ from src.server.loader.helper import (
     parse_formula_from_list,
     parse_effect_formula,
     find_stat,
-    find_label
+    find_label,
+    wiki_release_to_datetime,
+    wiki_to_datetime
 )
 from src.server.loader.patchexceptions import PatcherError, ScrapeError
 
@@ -190,3 +194,34 @@ def test_find_label(label, effect_type, dmg_sub_type):
 def test_find_label_invalid(label):
     with pytest.raises(ScrapeError):
         find_label(label)
+
+
+
+@pytest.mark.parametrize(
+    "wiki_release, expected", [
+        ("March 19th, 2025", datetime(2025, 3, 19)),
+        ("August 1st, 2024", datetime(2024, 8, 1)),
+    ]
+)
+def test_wiki_release_to_datetime(wiki_release, expected):
+    assert wiki_release_to_datetime(wiki_release) == expected
+
+
+@pytest.mark.parametrize(
+    "wiki_hotfix, release_date, expected", [
+        ("March 20th Hotfix", datetime(2025, 3, 19), datetime(2025, 3, 20)),
+        ("August 22nd Hotfix", datetime(2024, 8, 14), datetime(2024, 8, 22)),
+        ("January 3rd Hotfix", datetime(2024, 12, 11), datetime(2025, 1, 3)),
+    ]
+)
+def test_wiki_to_datetime(wiki_hotfix, release_date, expected):
+    assert wiki_to_datetime(wiki_hotfix, release_date) == expected
+
+
+@pytest.mark.parametrize(
+    "invalid_date", [("Hotfix"), ("Smarch 3rd Hotfix"), ("March Hotfix")]
+)
+def test_wiki_to_datetime_invalid(invalid_date):
+    with pytest.raises(ScrapeError):
+        wiki_to_datetime(invalid_date, datetime(2025, 3, 19))
+

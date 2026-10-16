@@ -13,6 +13,7 @@ from src.server.loader.helper import (
     parse_effect_formula,
     find_label,
     wiki_to_datetime,
+    wiki_release_to_datetime,
     datetime_to_wiki
 )
 from src.server.loader.patchexceptions import ScrapeError
@@ -727,7 +728,8 @@ def scrape_hotfix_list(wiki_html: str) -> list[datetime]:
             break
     else:
         return []
-    
+
+    release_date = _scrape_release_date(soup)
     nav_list = patch_block.find_all("li", class_="toclevel-1")
     for topics in nav_list:
         if "Hotfixes" in topics.text:
@@ -735,10 +737,19 @@ def scrape_hotfix_list(wiki_html: str) -> list[datetime]:
             for hotfix in hotfixes:
                 date = hotfix.find("span", class_="toctext")
                 if date:
-                    hotfix_date = wiki_to_datetime(date.text)
+                    hotfix_date = wiki_to_datetime(date.text, release_date)
                     hotfix_list.append(hotfix_date)
 
     return hotfix_list
+
+
+def _scrape_release_date(soup: BeautifulSoup) -> datetime:
+    for row in soup.find_all("div", class_="infobox-data-row"):
+        label = row.find("div", class_="infobox-data-label")
+        value = row.find("div", class_="infobox-data-value")
+        if label and value and "Release Date" in label.text:
+            return wiki_release_to_datetime(value.text)
+    raise ScrapeError("Release date not found on patch page", "Patch", "Release")
 
 
 
