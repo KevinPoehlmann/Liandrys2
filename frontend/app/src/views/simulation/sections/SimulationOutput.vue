@@ -19,13 +19,53 @@
     </div>
 
     <div class="text-m text-gray-800 dark:text-gray-100">
-      <p><strong>Damage:</strong> {{ totalDamage }} HP</p>
-      <p><strong>Time:</strong> {{ timeSeconds }} seconds</p>
-      <Chart
-        :tickRate="tickRate"
-        :flatList="flattenedEffects"
-        mode="subtype"
-      />
+      <p><strong>Damage:</strong> {{ (totalDamage.toFixed()) }} HP</p>
+      <p><strong>Time:</strong> {{ (timeSeconds.toFixed(2)) }} seconds</p>
+      <p><strong>DPS:</strong> {{ (totalDamage / (timeSeconds || 1)).toFixed() }}</p>
+      <div class="w-full border rounded p-4 mt-2 border-blue-800 dark:border-blue-900">
+        <div class="flex justify-between">
+          <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-100">
+            {{blueConfig?.champion?.name || 'Blue Side'}}
+          </h3>
+          <ToggleButtons
+          v-model="blueChartType"
+          :options="['Damage', 'Tank', 'Heal']"
+          />
+          <ToggleButtons
+          v-model="blueChartMode"
+          :options="['subtype', 'source', 'total']"
+          />
+        </div>
+        <Chart
+          :tickRate="tickRate"
+          :flatList="flattenedEffects"
+          :mode="blueChartMode"
+          actor="blue"
+          :type_="blueChartType"
+        />
+      </div>
+      <div class="border rounded p-4 mt-2 border-red-800 dark:border-red-900">
+        <div class="flex justify-between">
+          <h3 class="text-lg font-semibold text-red-800 dark:text-red-100">
+            {{redConfig?.champion?.name || 'Red Side'}}
+          </h3>
+          <ToggleButtons
+          v-model="redChartType"
+          :options="['Damage', 'Tank', 'Heal']"
+          />
+          <ToggleButtons
+          v-model="redChartMode"
+          :options="['subtype', 'source', 'total']"
+          />
+        </div>
+        <Chart
+          :tickRate="tickRate"
+          :flatList="flattenedEffects"
+          :mode="redChartMode"
+          actor="red"
+          :type_="redChartType"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -35,6 +75,7 @@ import { ref, watch, computed } from 'vue'
 import NoIcon from '@/assets/NoChampion.png'
 import autoAttack from '@/assets/autoattack.png'
 import Chart from './Chart.vue'
+import ToggleButtons from './ToggleButtons.vue'
 
 const props = defineProps({
   blueConfig: Object,
@@ -47,7 +88,11 @@ const props = defineProps({
   error: String
 })
 
-const groupMode = ref('subtype')
+const blueChartType = ref("Damage")
+const blueChartMode = ref("subtype")
+
+const redChartType = ref("Tank")
+const redChartMode = ref("subtype")
 
 
 const totalDamage = computed(() => {

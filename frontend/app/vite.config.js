@@ -15,7 +15,7 @@ export default defineConfig({
       '/rune': 'http://liandrys-fastapi:5000',
       '/summonerspell': 'http://liandrys-fastapi:5000',
       '/simulation': 'http://liandrys-fastapi:5000',
-      '/images': 'http://liandrys-fastapi-admin:5001',
+      '/images': 'http://liandrys-fastapi:5000',
     },
     watch: {
       usePolling: true
