@@ -32,6 +32,7 @@ from src.server.models.dataenums import (
     ProcessedStatusProperties,
     QueueComponent,
     EffectType,
+    StatusProperties,
     StatusType,
     Actor
 )
@@ -418,6 +419,17 @@ def q_damage_aa() -> QueueComponent:
             hp_scaling=HpScaling.FLAT
     ))
     return d
+
+
+@pytest.fixture
+def q_stun_e() -> QueueComponent:
+    return QueueComponent(
+        source=ActionType.E,
+        actor=Actor.BLUE,
+        target=Actor.RED,
+        type_=EffectType.STATUS,
+        props=StatusProperties(type_=StatusType.STUN, duration=1.0)
+    )
 
 
 @pytest.fixture

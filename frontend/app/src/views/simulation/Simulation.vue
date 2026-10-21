@@ -196,24 +196,58 @@ onMounted(async () => {
     p.patch === latest.patch && (latest.hotfix ? p.hotfix === latest.hotfix : p.hotfix === null)
   )
   selectedPatchOption.value = latestMatch || options[0]
+  await loadPatchData()
+  for (const config of [blueConfig, redConfig]) {
+    config.summonerspells[0] = summonerspells.value.find(s => s.key === 'SummonerFlash')
+    config.summonerspells[1] = summonerspells.value.find(s => s.key === 'SummonerDot')
+  }
+})
 
-  const patch = selectedPatchOption.value.patch
-  const hotfix = selectedPatchOption.value.hotfix
+
+async function loadPatchData() {
+  const { patch, hotfix } = selectedPatchOption.value
   const map = selectedMapOption.value
 
-  champions.value = await fetch(buildUrl('/champion/all', patch, { hotfix })).then(res => res.json())
-  items.value = await fetch(buildUrl('/item/all', patch, { hotfix, map })).then(res => res.json())
-  runes.value = await fetch(buildUrl('/rune/all', patch, { hotfix })).then(res => res.json())
-  summonerspells.value = await fetch(buildUrl('/summonerspell/all', patch, { hotfix, map })).then(res => res.json())
-  blueConfig.summonerspells[0] = summonerspells.value.find(s => s.key === 'SummonerFlash')
-  blueConfig.summonerspells[1] = summonerspells.value.find(s => s.key === 'SummonerDot')
-  redConfig.summonerspells[0] = summonerspells.value.find(s => s.key === 'SummonerFlash')
-  redConfig.summonerspells[1] = summonerspells.value.find(s => s.key === 'SummonerDot')
+  const [championList, itemList, runeList, summonerspellList] = await Promise.all([
+    fetch(buildUrl('/champion/all', patch, { hotfix })).then(res => res.json()),
+    fetch(buildUrl('/item/all', patch, { hotfix, map })).then(res => res.json()),
+    fetch(buildUrl('/rune/all', patch, { hotfix })).then(res => res.json()),
+    fetch(buildUrl('/summonerspell/all', patch, { hotfix, map })).then(res => res.json())
+  ])
+  champions.value = championList
+  items.value = itemList
+  runes.value = runeList
+  summonerspells.value = summonerspellList
+}
+
+
+// Every patch has its own documents (and _ids), so selections are matched to the new patch by their stable keys.
+function findInPatch(list, old, isSame) {
+  if (!old) return null
+  return list.find(entry => isSame(entry, old)) ?? null
+}
+
+function remapConfig(config) {
+  const sameRune = (a, b) => a.rune_id === b.rune_id && a.row === b.row
+  config.champion = findInPatch(champions.value, config.champion, (a, b) => a.champion_id === b.champion_id)
+  config.items = config.items.map(item => findInPatch(items.value, item, (a, b) => a.item_id === b.item_id))
+  config.summonerspells = config.summonerspells.map(spell => findInPatch(summonerspells.value, spell, (a, b) => a.key === b.key))
+  config.runes.primary.runes = config.runes.primary.runes.map(rune => findInPatch(runes.value, rune, sameRune))
+  config.runes.secondary.runes = config.runes.secondary.runes.map(rune => findInPatch(runes.value, rune, sameRune))
+  config.runes.shards = config.runes.shards.map(rune => findInPatch(runes.value, rune, sameRune))
+}
+
+
+watch([selectedPatchOption, selectedMapOption], async (_, [oldPatch]) => {
+  if (!oldPatch) return  // initial load happens in onMounted
+  await loadPatchData()
+  remapConfig(blueConfig)
+  remapConfig(redConfig)
 })
 
 
 watch(
-  () => [blueConfig.champion, redConfig.champion, blueConfig.level, redConfig.level, combo.value, blueConfig.items, redConfig.items],
+  () => [blueConfig.champion, redConfig.champion, blueConfig.level, redConfig.level, blueConfig.ability_points, redConfig.ability_points, combo.value, blueConfig.items, redConfig.items],
   async () => {
     // Require both champions and a non-empty combo
     if (!blueConfig.champion || !redConfig.champion || combo.value.length === 0) return

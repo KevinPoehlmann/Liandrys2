@@ -51,6 +51,9 @@ def riot_to_wiki_patch(riot_patch: str) -> str:
     patch = patch.zfill(2)
     return f"V{season}.{patch}"
 
+def patch_sort_key(patch: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in patch.split("."))
+
 def wiki_to_riot_patch(wiki_patch: str) -> str:
     if not isinstance(wiki_patch, str) or not wiki_patch.lower().startswith("v"):
         raise PatcherError(f"Invalid wiki patch format: {wiki_patch}", f"Can't convert patch {wiki_patch} to Riot format.")

@@ -2,7 +2,7 @@ import pytest
 
 
 from src.server.simulation.simulation import Simulation
-from src.server.models.dataenums import ActionType, Actor, DotState
+from src.server.models.dataenums import ActionType, Actor, DotState, EffectType, StatusType
 from src.server.models.request import Action
 
 
@@ -256,6 +256,36 @@ class TestSimulation():
         sim._process_queue()
         assert round(sim.actors[Actor.RED].hp, 3) == 1210.446
         assert round(sim.actors[Actor.BLUE].hp, 3) == 918.363
+
+
+    def test_process_queue_keeps_damage_results_with_vamp(self, sim: Simulation, q_vamp_aa):
+        sim.queue = {15: [q_vamp_aa]}
+        sim.tick = 30
+        sim.actors[Actor.BLUE].hp = 900
+        sim._process_queue()
+        result_types = [result.type_ for result in sim.effect_list[0].result]
+        assert result_types == [EffectType.DAMAGE, EffectType.HEAL]
+
+
+    def test_process_queue_status(self, sim: Simulation, q_stun_e):
+        sim.queue = {10: [q_stun_e]}
+        sim.tick = 10
+        sim._process_queue()
+        assert sim.actors[Actor.RED].status_effects[StatusType.STUN] == [(40, 0)]
+
+
+    def test_do_combo_processes_effects_after_last_action(self, sim: Simulation, q_damage_aa):
+        sim.queue = {100: [q_damage_aa]}
+        result = sim.do_combo([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)])
+        assert sim.queue == {}
+        assert [event.tick for event in result.effect_list] == [7, 100]
+        assert result.ticks == 100
+
+
+    def test_do_combo_processes_remaining_dot_ticks(self, sim: Simulation, e_damage_w):
+        sim._queue_status([e_damage_w], Actor.BLUE)
+        result = sim.do_combo([])
+        assert [event.tick for event in result.effect_list] == [15, 30, 45, 60]
 
 
     def test_do_action(self, sim: Simulation, q_damage_aa):

@@ -96,11 +96,9 @@ class Character():
     
     def _get_buff_stat(self, stat: Stat) -> float:
         result = 0
-        if not self.buffs[Buff.STATS]:
-            return result
         for stat_property in self.buffs[Buff.STATS]:
             assert isinstance(stat_property, StatProperties)
-            if self._evaluate_condition(stat_property.condition):
+            if stat_property.stat == stat and self._evaluate_condition(stat_property.condition):
                 formula = stat_property.scaling
                 result += self._evaluate_formula(formula)
         return result
@@ -118,9 +116,13 @@ class Character():
         base_stat = self._get_base_stat(stat)
         bonus_stat = self._get_bonus_stat(stat)
         buff_stat = 0
+        # A buff formula evaluates all stats, including the one being buffed. The guard stops that recursion.
         if stat not in self.evaluating_stat:
             self.evaluating_stat.add(stat)
-            buff_stat = self._get_buff_stat(stat)
+            try:
+                buff_stat = self._get_buff_stat(stat)
+            finally:
+                self.evaluating_stat.discard(stat)
 
         result = base_stat + bonus_stat + buff_stat
 
@@ -249,6 +251,10 @@ class Character():
     def _use_shields(self, damage: float, target: Actor) -> tuple[float, list[EffectResult]]:
         results = []
         for i, (exp, shield_val, source, actor) in enumerate(self.shields):
+            if damage <= 0:
+                break
+            if shield_val <= 0:
+                continue
             absorbed = min(damage, shield_val)
             self.damage_shielded += absorbed
             damage -= absorbed
@@ -260,21 +266,19 @@ class Character():
                 type_=EffectType.SHIELD,
                 value=absorbed
             ))
-            if damage <= 0:
-                break
         return damage, results
 
 
     def _apply_heals(self, components: list[QueueComponent]) -> list[EffectResult]:
         total_heal = 0
-        max_hp = self._get_stat(Stat.HP)
+        missing_hp = self._get_stat(Stat.HP) - self.hp
         results = []
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedHealProperties), "Heal component must have ProcessedHealProperties"
                 raw_heal = self._calculate_hp_scaling(component.props.value, component.props.hp_scaling)
-                total_heal += raw_heal
-                heal = max(raw_heal, min(total_heal, max_hp - self.hp))
+                heal = min(raw_heal, max(missing_hp - total_heal, 0))
+                total_heal += heal
                 results.append(EffectResult(
                     source=component.source,
                     actor=component.actor,
@@ -291,7 +295,6 @@ class Character():
                     actor=component.actor,
                     phase="heal application"
                 ) from e
-        total_heal = min(total_heal, max_hp - self.hp)
         self.healed += total_heal
         self.hp += total_heal
         return results
@@ -324,17 +327,19 @@ class Character():
             try:
                 assert isinstance(component.props, ProcessedDamageProperties), "Damage component must have ProcessedDamageProperties"
                 damage, raw_dmg, mitigated = self._calculate_damage(component.props)
-                total_damage += damage
+                health_damage, shield_results = self._use_shields(damage, component.target)
+                total_damage += health_damage
                 results.append(EffectResult(
                     source=component.source,
                     actor=component.actor,
                     target=component.target,
                     type_=EffectType.DAMAGE,
-                    value=damage,
+                    value=health_damage,
                     raw=raw_dmg,
                     mitigated=mitigated,
                     damage_sub_type=component.props.dmg_sub_type
                 ))
+                results.extend(shield_results)
                 if component.props.vamp > 0:
                     vamp = damage * component.props.vamp
                     vamps.append(QueueComponent(
@@ -351,11 +356,8 @@ class Character():
                     actor=component.actor,
                     phase="damage application"
                 ) from e
-        total_damage, shield_results = self._use_shields(total_damage, components[0].target)
         self.damage_taken += total_damage
-        results.extend(shield_results)
-        if total_damage > 0:
-            self.hp -= total_damage
+        self.hp -= total_damage
         return vamps, results
 
 
@@ -367,9 +369,10 @@ class Character():
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedStatusProperties), "Status component must have ProcessedStatusProperties"
+                duration = component.props.duration
                 if component.props.type_ in tenacity_affected:
-                    component.props.duration = math.ceil(max(0.3, self._get_tenacity() * component.props.duration))
-                expiration = tick + component.props.duration
+                    duration = self._apply_tenacity(duration)
+                expiration = tick + duration
                 self.status_effects[component.props.type_].append((expiration, component.props.strength))
             except Exception as e:
                 raise SimulationError(
@@ -378,6 +381,12 @@ class Character():
                     actor=component.actor,
                     phase="status application"
                 ) from e
+
+
+    def _apply_tenacity(self, duration: int) -> int:
+        # Tenacity can't reduce a CC below 0.3 seconds, but a CC that is already shorter stays as it is.
+        min_duration = min(duration, math.ceil(0.3 * TICKRATE))
+        return max(min_duration, math.ceil(self._get_tenacity() * duration))
 
 
 
@@ -476,11 +485,14 @@ class Character():
     def evaluate(self, queue_comps:list[QueueComponent]) -> list[QueueComponent]:
         component_list = []
         for component in queue_comps:
+            if component.type_ == EffectType.STATUS:
+                component_list.append(self._process_status(component))
+                continue
             variables = {"rank": self.ability_dict[component.source][1]} if component.source in self.ability_dict else {}
             assert isinstance(component.props, (DamageProperties, HealProperties, ShieldProperties)), \
                 "Component properties must be one of DamageProperties, HealProperties, ShieldProperties"
             result = self._evaluate_formula(component.props.scaling, variables)
-            
+
             match component.type_:
                 case EffectType.DAMAGE:
                     """ self._check_buffs(component.source, Buff.HIT) """
@@ -521,6 +533,22 @@ class Character():
             )
             component_list.append(queue_component)
         return component_list
+
+
+    def _process_status(self, component: QueueComponent) -> QueueComponent:
+        assert isinstance(component.props, StatusProperties), "Status component must have StatusProperties"
+        props = ProcessedStatusProperties(
+            type_=component.props.type_,
+            duration=math.ceil(component.props.duration * TICKRATE),
+            strength=component.props.strength
+        )
+        return QueueComponent(
+            source=component.source,
+            actor=component.actor,
+            target=component.target,
+            type_=component.type_,
+            props=props
+        )
 
         
 

@@ -6,6 +6,7 @@ from bson import ObjectId
 from datetime import datetime
 from motor.core import AgnosticCollection, AgnosticDatabase
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
+from pymongo.collation import Collation
 from pymongo.errors import InvalidURI
 from pymongo.results import UpdateResult
 
@@ -20,6 +21,9 @@ from src.server.models.dataenums import Map
 
 
 patch_logger = logging.getLogger("patch_logger")
+
+# Patches are strings, so without numeric ordering "15.9.1" sorts after "15.10.1".
+PATCH_ORDER = {"sort": [("patch", -1), ("hotfix", -1)], "collation": Collation(locale="en", numericOrdering=True)}
 
 
 def connect_database() -> AgnosticDatabase:
@@ -115,7 +119,7 @@ async def upsert_patch(patch: NewPatch) -> str:
 
 
 async def fetch_patch_latest() -> Patch | None:
-    document = await patch_collection.find_one(sort=[("patch", -1), ("hotfix", -1)])
+    document = await patch_collection.find_one(**PATCH_ORDER)
     if not document:
         return None
     return Patch(**document)
@@ -130,7 +134,7 @@ async def fetch_patch_by_id(id_) -> Patch | None:
     
 async def fetch_patch_all() -> list[Patch]:
     patch_list = []
-    cursor = patch_collection.find(sort=[("patch", -1), ("hotfix", -1)])
+    cursor = patch_collection.find(**PATCH_ORDER)
     async for document in cursor:
         patch = Patch(**document)
         patch_list.append(patch)

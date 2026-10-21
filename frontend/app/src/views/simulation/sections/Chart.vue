@@ -48,28 +48,33 @@ function groupKey(e) {
   return "TOTAL"
 }
 
+function mitigatedKey(e) {
+  return props.mode === "total" ? "Mitigated" : `Mitigated ${groupKey(e)}`
+}
+
 const typeObject = computed(() => {
   if (props.type_ === "Damage") {
     return {
       filter_: e => e.type_ === "Damage" && e.actor === props.actor,
       contributions: e => [{
-        key: String(e.damage_sub_type ?? "UNKNOWN_SUBTYPE"),
+        key: groupKey(e),
         value: Number(e.value) || 0
       }],
       label: "Damage dealt"
     }
   } else if (props.type_ === "Tank") {
     return {
-      filter_: e => e.type_ === "Damage" && e.target === props.actor,
+      filter_: e => (e.type_ === "Damage" || e.type_ === "Shield") && e.target === props.actor,
       contributions: e => {
-        const subtype = String(e.damage_sub_type ?? "UNKNOWN_SUBTYPE")
+        if (e.type_ === "Shield") {
+          return [{ key: "Shielded", value: Number(e.value) || 0 }]
+        }
         const out = []
-
         if (e.value > 0) {
-          out.push({ key: subtype, value: Number(e.value) || 0 })
+          out.push({ key: groupKey(e), value: Number(e.value) || 0 })
         }
         if (e.mitigated > 0) {
-          out.push({ key: `Mitigated ${subtype}`, value: Number(e.mitigated) || 0 })
+          out.push({ key: mitigatedKey(e), value: Number(e.mitigated) || 0 })
         }
         return out
       },
@@ -79,7 +84,7 @@ const typeObject = computed(() => {
     return {
       filter_: e => e.type_ === "Heal" && e.actor === props.actor,
       contributions: e => [{
-        key: "Heal",
+        key: props.mode === "source" ? groupKey(e) : "Heal",
         value: Number(e.value) || 0
       }],
       label: "Healing done"
@@ -254,13 +259,17 @@ function colorForKey(key) {
     bg: "rgba(200, 40, 40, 0.5)",
     border: "rgb(200, 40, 40)"
   }
-  if (key === "Magical") return {
+  if (key === "Magic") return {
     bg: "rgba(180, 80, 200, 0.5)",
     border: "rgb(180, 80, 200)"
   }
   if (key === "True") return {
     bg: "rgba(230, 230, 230, 0.6)",
     border: "rgb(230, 230, 230)"
+  }
+  if (key === "Shielded") return {
+    bg: "rgba(60, 140, 220, 0.4)",
+    border: "rgb(60, 140, 220)"
   }
 
   return {

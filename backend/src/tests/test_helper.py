@@ -5,6 +5,7 @@ from datetime import datetime
 from src.server.models.dataenums import HpScaling, Stat, EffectType, DamageSubType
 from src.server.loader.helper import (
     info_loader,
+    patch_sort_key,
     riot_to_wiki_patch,
     wiki_to_riot_patch,
     parse_formula_from_table,
@@ -27,6 +28,11 @@ def test_info_loader():
     urls = info_loader().urls
     assert urls.patches == "https://ddragon.leagueoflegends.com/api/versions.json"
 
+
+
+def test_patch_sort_key():
+    patches = ["15.10.1", "15.9.1", "14.24.1", "15.1.1"]
+    assert sorted(patches, key=patch_sort_key) == ["14.24.1", "15.1.1", "15.9.1", "15.10.1"]
 
 
 @pytest.mark.parametrize(

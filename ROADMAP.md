@@ -16,25 +16,26 @@
 
 - [x] All tests green again (234), and no test touches the real DB
 - [x] Bugs found on the way: hotfix year came from `datetime.now()`, the suffix regex broke "August", broken images (write before download), `abort_event`, patch `timestamp`
-- [ ] Commit and push the current state to GitHub
+- [x] Commit and push the current state to GitHub
 
-## Phase 1: Simulation correctness
+## Phase 1: Simulation correctness ✅
 
 All bugs below were confirmed with probe tests. Each fix gets a regression test.
 
-- [ ] Effects after the last action are lost (delayed damage, projectiles, remaining DoT ticks): process the queue until it is empty
-- [ ] Status effects crash: they are never turned into `ProcessedStatusProperties`
-- [ ] Stat buffs never apply: `evaluating_stat` is never cleared (e.g. Aatrox AD stays the same with 5 or 10 stacks)
-- [ ] Damage results vanish from `effect_list` with vamp: `effect_results` is overwritten in the `_process_queue` loop
-- [ ] Expired shields keep blocking: `_use_shields` ignores expiry
-- [ ] Heal results: `max` → `min` (negative overheal)
-- [ ] Tenacity minimum compares 0.3 to ticks, not seconds
+- [x] Effects after the last action are lost (delayed damage, projectiles, remaining DoT ticks): process the queue until it is empty
+- [x] Status effects crash: they are never turned into `ProcessedStatusProperties`
+- [x] Stat buffs never apply: `evaluating_stat` is never cleared (e.g. Aatrox AD stays the same with 5 or 10 stacks)
+- [x] Damage results vanish from `effect_list` with vamp: `effect_results` is overwritten in the `_process_queue` loop
+- [x] Expired shields keep blocking: not reachable, `take_effects` drops expired shields before damage (regression test added)
+- [x] Heal results: `max` → `min` (negative overheal)
+- [x] Tenacity minimum compares 0.3 to ticks, not seconds
+- [x] Found on the way: stat buffs applied to every stat, not only their own `stat`
 
 Quick wins that fit in here:
-- [ ] `fetch_patch_latest` sorts the patch **string** ("15.9.1" > "15.10.1"); same for `sorted(...)` in the loader
-- [ ] User UI: changing the patch dropdown doesn't refetch data; the simulation `watch` misses `ability_points`
-- [ ] Chart: `"Magical"` → `"Magic"` color; the mode toggle (`subtype`/`source`/`total`) has no effect; shields missing in "Tank"
-- [ ] Admin UI: `filtered()` uses `this` in `<script setup>` (works in dev, crashes in a production build)
+- [x] `fetch_patch_latest` sorts the patch **string** ("15.9.1" > "15.10.1"); same for `sorted(...)` in the loader
+- [x] User UI: changing the patch dropdown doesn't refetch data; the simulation `watch` misses `ability_points`
+- [x] Chart: `"Magical"` → `"Magic"` color; the mode toggle (`subtype`/`source`/`total`) has no effect; shields missing in "Tank" (shields now apply per damage component, so damage `value` is health damage)
+- [x] Admin UI: `filtered()` uses `this` in `<script setup>` (works in dev, crashes in a production build)
 
 ## Phase 2: Ability system (data model)
 
@@ -55,6 +56,11 @@ Building blocks that are missing (each one gets a champion/item from the test gr
 - [ ] Non-linear rank values: `parse_formula_from_list` assumes linear steps (needs a lookup like `[40, 65, 90][rank - 1]`)
 - [ ] `extra = "forbid"` on the effect models, so typos in field names fail instead of being silently dropped
 - [ ] Later: pets (needs an actor concept beyond `blue`/`red`)
+
+Known gaps found in Phase 1 (fold them into the new design):
+- [ ] Cast buffs are commented out (`_check_buffs`), so stacks never rise in a real combo
+- [ ] `bonus <stat>` only counts items, not buffs
+- [ ] A status with `duration` on the EffectComponent (instead of in its props) is treated as a DoT and silently dropped without `interval`. Make that impossible in the model, or catch it in the Phase 3 data checks
 
 **Test group:** pick 5–6 champions with very different mechanics, plus a few items and runes. One test per combo with the expected damage. Every building block is "done" when its test-group member works.
 

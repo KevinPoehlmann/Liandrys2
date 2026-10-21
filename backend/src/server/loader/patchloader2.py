@@ -15,6 +15,7 @@ import src.server.loader.webscraper2 as ws
 
 from src.server.loader.helper import (
     info_loader,
+    patch_sort_key,
     riot_to_wiki_patch,
     RuneClass,
     SafeSession
@@ -576,7 +577,7 @@ async def _load_rune_tree_images(icon_list: list[str], session: SafeSession) -> 
 
 
 async def _load_all_patches(hotfixes_to_process: dict[str, list[datetime]], old_patch: NewPatch) -> None:
-    for patch_str in sorted(hotfixes_to_process.keys()):
+    for patch_str in sorted(hotfixes_to_process.keys(), key=patch_sort_key):
         hotfix_list = sorted(hotfixes_to_process[patch_str])
         hotfix_list = hotfix_list or [None]
 

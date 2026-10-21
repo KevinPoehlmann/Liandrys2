@@ -1,7 +1,10 @@
 import pytest
 from collections import defaultdict
 
-from src.server.models.dataenums import Stat, ActionType, Actor, DamageSubType, DamageType, HpScaling, StatusType
+from src.server.models.dataenums import (
+    Stat, ActionType, Actor, DamageSubType, DamageType, EffectType, HpScaling,
+    ProcessedDamageProperties, ProcessedStatusProperties, QueueComponent, StatusType
+)
 from src.server.models.request import Action
 
 
@@ -33,6 +36,17 @@ class TestCharacter():
     def test_get_stat(self, aatrox_with_items, stat, output):
         result = aatrox_with_items._get_stat(stat)
         assert round(result, 3) == output
+
+    @pytest.mark.parametrize("stacks, ad", [
+        (0, 120.45),
+        (5, 130.45),
+        (10, 140.45),
+    ])
+    def test_get_stat_applies_buff_with_current_stacks(self, aatrox_with_items, stacks, ad):
+        aatrox_with_items._get_stat(Stat.AD)
+        aatrox_with_items.stacks[ActionType.PASSIVE] = stacks
+        assert round(aatrox_with_items._get_stat(Stat.AD), 3) == ad
+        assert round(aatrox_with_items._get_stat(Stat.ARMOR), 3) == 117.832
 
     def test_get_attackspeed(self, aatrox_with_items):
         result = aatrox_with_items._get_attackspeed()
@@ -184,6 +198,17 @@ class TestCharacter():
         assert aatrox_with_items.healed == healed
 
 
+    @pytest.mark.parametrize("hp_subtraction, queue_heal_list, heals, overheals", [
+        (60, {"values": [50, 25, 25]}, [50, 10, 0], [0, 15, 25]),
+        (0, {"values": [30]}, [0], [30]),
+    ], indirect=["queue_heal_list"])
+    def test_apply_heals_results(self, aatrox_with_items, hp_subtraction, queue_heal_list, heals, overheals):
+        aatrox_with_items.hp -= hp_subtraction
+        results = aatrox_with_items._apply_heals(queue_heal_list)
+        assert [round(result.value, 3) for result in results] == heals
+        assert [round(result.overheal, 3) for result in results] == overheals
+
+
     @pytest.mark.parametrize("initial_shields, queue_shield_list, expected_shields", [
         ([], {"values":[(90, 50)]}, [(120, 50, ActionType.W, Actor.BLUE)]),
         ([(150, 100, ActionType.W, Actor.BLUE)], {"values":[(90, 50)]}, [(120, 50, ActionType.W, Actor.BLUE), (150, 100, ActionType.W, Actor.BLUE)]),
@@ -211,6 +236,20 @@ class TestCharacter():
         assert queue_res == []
         assert effect_res[0].raw == queue_damage_list[0].props.value
 
+    def test_apply_damages_reports_health_damage_after_shields(self, aatrox_with_items):
+        aatrox_with_items.shields = [(60, 70, ActionType.W, Actor.BLUE)]
+        queue_damage_list = [
+            QueueComponent(ActionType.Q, Actor.RED, Actor.BLUE, EffectType.DAMAGE, ProcessedDamageProperties(
+                value=value, flat_pen=0, percent_pen=0, dmg_type=DamageType.BASIC, dmg_sub_type=DamageSubType.TRUE))
+            for value in [50, 50]
+        ]
+        _, results = aatrox_with_items._apply_damages(queue_damage_list)
+        assert [(result.type_, result.value) for result in results] == [
+            (EffectType.DAMAGE, 0), (EffectType.SHIELD, 50),
+            (EffectType.DAMAGE, 30), (EffectType.SHIELD, 20),
+        ]
+        assert aatrox_with_items.damage_taken == 30
+
     def test_apply_vamps(self, aatrox_with_items, q_processed_vamp, q_processed_vamp_heal, compare_objects):
         queue_results, effect_results = aatrox_with_items._apply_damages([q_processed_vamp])
         assert compare_objects(queue_results[0], q_processed_vamp_heal)
@@ -224,6 +263,17 @@ class TestCharacter():
         aatrox_with_items.status_effects = defaultdict(list, initial_stati)
         aatrox_with_items._apply_status_effects(queue_status_list, 30)
         assert aatrox_with_items.status_effects == expected_stati
+
+
+    @pytest.mark.parametrize("tenacity, duration, expected", [
+        (1, 60, 60),
+        (0.5, 60, 30),
+        (0.1, 60, 9),  # floor of 0.3 seconds
+        (0.1, 6, 6),  # already shorter than 0.3 seconds
+    ])
+    def test_apply_tenacity(self, aatrox_with_items, monkeypatch, tenacity, duration, expected):
+        monkeypatch.setattr(aatrox_with_items, "_get_tenacity", lambda: tenacity)
+        assert aatrox_with_items._apply_tenacity(duration) == expected
 
 
     @pytest.mark.parametrize("cooldown, status_effects, action, delay", [
@@ -276,6 +326,18 @@ class TestCharacter():
         result = aatrox_with_items.evaluate([resolve_fixture])
         assert len(result) == 1
         assert round(result[0].props.value, 3) == output
+
+
+    def test_evaluate_status(self, aatrox_with_items, q_stun_e):
+        result = aatrox_with_items.evaluate([q_stun_e])
+        assert result[0].props == ProcessedStatusProperties(type_=StatusType.STUN, duration=30)
+
+
+    def test_take_effects_ignores_expired_shield(self, aatrox_with_items, q_processed_ad_flat):
+        aatrox_with_items.shields = [(30, 1000, ActionType.W, Actor.BLUE)]
+        aatrox_with_items.take_effects([q_processed_ad_flat], 60)
+        assert aatrox_with_items.damage_shielded == 0
+        assert aatrox_with_items.damage_taken > 0
 
 
     def test_take_effects(self, aatrox_with_items, q_processed_ad_flat, q_processed_ap_maxhp, q_processed_heal_flat):

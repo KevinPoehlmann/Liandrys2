@@ -137,8 +137,8 @@ function imageUrl(image) {
 
 function filtered(list) {
   return list.filter(obj => {
-    const invalidFilter = !this.onlyShowInvalid || !obj.validated
-    const mapFilter = !this.selectedMapKey || (obj.maps && obj.maps.includes(this.selectedMapKey)) || !obj.maps
+    const invalidFilter = !onlyShowInvalid.value || !obj.validated
+    const mapFilter = !selectedMapKey.value || (obj.maps && obj.maps.includes(selectedMapKey.value)) || !obj.maps
     return invalidFilter && mapFilter
   })
 }

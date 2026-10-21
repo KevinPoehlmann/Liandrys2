@@ -2,7 +2,7 @@ from collections import defaultdict
 import math
 
 
-from src.server.models.dataenums import DotState, EffectComp, QueueComponent, EffectType, Actor, ActionType, TickEvent, TICKRATE
+from src.server.models.dataenums import DotState, EffectComp, QueueComponent, Actor, ActionType, TickEvent, TICKRATE
 from src.server.models.request import V1Response, Action
 from src.server.simulation.character import Character
 from src.server.simulation.exceptions import SimulationError
@@ -40,7 +40,7 @@ class Simulation():
                     actor=action.actor,
                     phase="cast"
                 ) from e
-        self._process_queue()
+        self._process_remaining_queue()
         return V1Response(tick_rate=TICKRATE, damage=round(self.actors[Actor.RED].damage_taken), ticks=self.tick, effect_list=self.effect_list)
     
 
@@ -66,34 +66,38 @@ class Simulation():
 
 
     def _process_queue(self) -> None:
-        q_ticks = sorted(self.queue.keys())
-        for q_tick in q_ticks:
-            if q_tick > self.tick:
-                break
-            queue_entries = self.queue.pop(q_tick)
+        while self.queue and min(self.queue) <= self.tick:
+            self._process_tick(min(self.queue))
 
-            evaluation_types = [EffectType.DAMAGE, EffectType.HEAL, EffectType.SHIELD]
-            evaluation_entries = [entry for entry in queue_entries if entry.type_ in evaluation_types]
-            evaluated_entries = [entry for entry in queue_entries if entry.type_ not in evaluation_types]
-            evaluation_blue = [entry for entry in evaluation_entries if entry.actor == Actor.BLUE]
-            evaluation_red = [entry for entry in evaluation_entries if entry.actor == Actor.RED]
-            evaluated_entries.extend(self.actors[Actor.BLUE].evaluate(evaluation_blue))
-            evaluated_entries.extend(self.actors[Actor.RED].evaluate(evaluation_red))
 
-            effect_results = []
-            while evaluated_entries:
-                blue_list = [entry for entry in evaluated_entries if entry.target == Actor.BLUE]
-                red_list = [entry for entry in evaluated_entries if entry.target == Actor.RED]
+    def _process_remaining_queue(self) -> None:
+        while self.queue:
+            q_tick = min(self.queue)
+            self.tick = max(self.tick, q_tick)
+            self._process_tick(q_tick)
 
-                evaluated_entries, effect_results = self.actors[Actor.BLUE].take_effects(blue_list, q_tick)
-                evaluated_entries_b, effect_results_b = self.actors[Actor.RED].take_effects(red_list, q_tick)
-                evaluated_entries.extend(evaluated_entries_b)
-                effect_results.extend(effect_results_b)
-                
-            self.effect_list.append(TickEvent(
-                tick=q_tick,
-                result=effect_results
-            ))
+
+    def _process_tick(self, q_tick: int) -> None:
+        queue_entries = self.queue.pop(q_tick)
+        evaluation_blue = [entry for entry in queue_entries if entry.actor == Actor.BLUE]
+        evaluation_red = [entry for entry in queue_entries if entry.actor == Actor.RED]
+        evaluated_entries = self.actors[Actor.BLUE].evaluate(evaluation_blue)
+        evaluated_entries.extend(self.actors[Actor.RED].evaluate(evaluation_red))
+
+        effect_results = []
+        while evaluated_entries:
+            blue_list = [entry for entry in evaluated_entries if entry.target == Actor.BLUE]
+            red_list = [entry for entry in evaluated_entries if entry.target == Actor.RED]
+
+            evaluated_entries, results_blue = self.actors[Actor.BLUE].take_effects(blue_list, q_tick)
+            evaluated_entries_red, results_red = self.actors[Actor.RED].take_effects(red_list, q_tick)
+            evaluated_entries.extend(evaluated_entries_red)
+            effect_results.extend(results_blue + results_red)
+
+        self.effect_list.append(TickEvent(
+            tick=q_tick,
+            result=effect_results
+        ))
             
 
     def _apply_dot(self, effect_comp: EffectComp, actor: Actor) -> None:
