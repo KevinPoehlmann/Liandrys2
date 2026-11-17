@@ -112,4 +112,5 @@ The clock starts here. Enter champions, items and runes, working from the "only 
 - Routes: duplicate `parse_from_request`, enum endpoints duplicating `/enum`
 - Decide: champion stats `int` vs `float` (Pydantic v1 silently truncates floats in `int` fields)
 - Manual effect data lives per patch: fixes in older patches don't reach newer ones
+- Roles (live patch): top laners reach level 20 (formulas already expect 20 values; the user UI still caps at 18), and each role brings small perks that the request has to ask for
 - ARAM mode: per-champion modifiers (damage dealt/received, healing, shielding) applied by the simulation; items already have `maps`. Per-map ability values (e.g. Arena Aatrox R) are not planned for V1
