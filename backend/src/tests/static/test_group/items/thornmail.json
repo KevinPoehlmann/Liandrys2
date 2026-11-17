@@ -1,0 +1,55 @@
+{
+  "item_id": "3075",
+  "name": "Thornmail",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "gold": 2450,
+  "into": [],
+  "from_": [
+    "3076",
+    "1031",
+    "1028"
+  ],
+  "class_": "legendary item",
+  "validated": false,
+  "stats": {
+    "armor": 75.0,
+    "hp": 150.0
+  },
+  "masterwork": {
+    "armor": 100.0,
+    "hp": 335.0
+  },
+  "active": null,
+  "passives": [
+    {
+      "name": "Thorns",
+      "description": "When struck by a basic attack on-hit, deal 20 (+ 10% bonus armor) magic damage to the attacker and, if they are a champion, inflict them with  Grievous Wounds for 3 seconds.",
+      "static_cooldown": "",
+      "effects": [],
+      "raw_stats": {},
+      "changes": [],
+      "validated": false,
+      "unique": true
+    }
+  ],
+  "limitations": "Limited to 1 Thornmail.",
+  "requirements": "",
+  "maps": [
+    "SR",
+    "HA",
+    "NB",
+    "Brawl"
+  ],
+  "changes": [],
+  "image": {
+    "full": "3075.png",
+    "group": "item",
+    "sprite": "item2.png",
+    "x": 336,
+    "y": 432,
+    "h": 48,
+    "w": 48
+  },
+  "_id": "685961e17de6da37b9ad9290"
+}

@@ -1,0 +1,67 @@
+{
+  "item_id": "6676",
+  "name": "The Collector",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "gold": 3000,
+  "into": [],
+  "from_": [
+    "1037",
+    "3134",
+    "1018"
+  ],
+  "class_": "legendary item",
+  "validated": false,
+  "stats": {
+    "ad": 50.0,
+    "lethality": 10.0,
+    "critical strike chance percent": 0.25
+  },
+  "masterwork": {
+    "ad": 78.57,
+    "lethality": 10.0,
+    "critical strike chance percent": 0.25
+  },
+  "active": null,
+  "passives": [
+    {
+      "name": "Death",
+      "description": "If you deal post-mitigation damage that would leave a champion below 5% of their maximum health,  execute them.",
+      "static_cooldown": "",
+      "effects": [],
+      "raw_stats": {},
+      "changes": [],
+      "validated": false,
+      "unique": true
+    },
+    {
+      "name": "Taxes",
+      "description": "Killing a champion grants you an additional  25.",
+      "static_cooldown": "",
+      "effects": [],
+      "raw_stats": {},
+      "changes": [],
+      "validated": false,
+      "unique": true
+    }
+  ],
+  "limitations": "Limited to 1 The Collector.",
+  "requirements": "",
+  "maps": [
+    "SR",
+    "HA",
+    "NB",
+    "Brawl"
+  ],
+  "changes": [],
+  "image": {
+    "full": "6676.png",
+    "group": "item",
+    "sprite": "item5.png",
+    "x": 48,
+    "y": 192,
+    "h": 48,
+    "w": 48
+  },
+  "_id": "685962037de6da37b9ad9369"
+}

@@ -1,0 +1,39 @@
+{
+  "key": "SummonerBoost",
+  "name": "Cleanse",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "ability": {
+    "name": "Cleanse",
+    "description": "Removes all  disables (excluding  Airborne,  Nearsight, and  Suppression) and  summoner spell debuffs (excluding  Mark) affecting your champion, and grants you 75%  tenacity for 3 seconds.",
+    "cost": "0",
+    "cooldown": "240",
+    "cast_time": "0",
+    "recharge": "0",
+    "effects": [],
+    "raw_stats": {
+      "range": "Self",
+      "breaks stealth": "No",
+      "summoner level": "9"
+    },
+    "changes": [],
+    "validated": false
+  },
+  "validated": false,
+  "maps": [
+    "SR",
+    "HA",
+    "Brawl"
+  ],
+  "changes": [],
+  "image": {
+    "full": "SummonerBoost.png",
+    "group": "spell",
+    "sprite": "spell0.png",
+    "x": 48,
+    "y": 0,
+    "h": 48,
+    "w": 48
+  },
+  "_id": "685962237de6da37b9ad93bb"
+}

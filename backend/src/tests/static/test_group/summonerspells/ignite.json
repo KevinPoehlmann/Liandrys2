@@ -1,0 +1,39 @@
+{
+  "key": "SummonerDot",
+  "name": "Ignite",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "ability": {
+    "name": "Ignite",
+    "description": "Sets the target enemy champion on fire for 5 seconds,  revealing them and dealing 70 – 475 (based on level)  true damage over the duration, with the first tick of damage occurring briefly after the cast and subsequent ticks occurring every 1.056 seconds after the previous. The target is also inflicted with  Grievous Wounds for the same duration.",
+    "cost": "0",
+    "cooldown": "180",
+    "cast_time": "0",
+    "recharge": "0",
+    "effects": [],
+    "raw_stats": {
+      "range": " 600",
+      "breaks stealth": "Yes",
+      "summoner level": "9"
+    },
+    "changes": [],
+    "validated": false
+  },
+  "validated": false,
+  "maps": [
+    "SR",
+    "HA",
+    "Brawl"
+  ],
+  "changes": [],
+  "image": {
+    "full": "SummonerDot.png",
+    "group": "spell",
+    "sprite": "spell0.png",
+    "x": 192,
+    "y": 0,
+    "h": 48,
+    "w": 48
+  },
+  "_id": "685962227de6da37b9ad93ba"
+}

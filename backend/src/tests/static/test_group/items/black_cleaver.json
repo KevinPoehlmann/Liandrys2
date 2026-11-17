@@ -1,0 +1,67 @@
+{
+  "item_id": "3071",
+  "name": "Black Cleaver",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "gold": 3000,
+  "into": [],
+  "from_": [
+    "3044",
+    "3067",
+    "1037"
+  ],
+  "class_": "legendary item",
+  "validated": false,
+  "stats": {
+    "ad": 40.0,
+    "ability haste": 20.0,
+    "hp": 400.0
+  },
+  "masterwork": {
+    "ad": 49.52,
+    "ability haste": 30.67,
+    "hp": 525.0
+  },
+  "active": null,
+  "passives": [
+    {
+      "name": "Carve",
+      "description": "Dealing physical damage to an enemy champion applies a stack of Carve for 6 seconds, stacking up to 5 times. Each stack inflicts 6% armor reduction, up to 30% at 5 stacks.",
+      "static_cooldown": "",
+      "effects": [],
+      "raw_stats": {},
+      "changes": [],
+      "validated": false,
+      "unique": true
+    },
+    {
+      "name": "Fervor",
+      "description": "Dealing physical damage grants you 20 bonus movement speed for 2 seconds.",
+      "static_cooldown": "",
+      "effects": [],
+      "raw_stats": {},
+      "changes": [],
+      "validated": false,
+      "unique": true
+    }
+  ],
+  "limitations": "Limited to 1 Fatality item.",
+  "requirements": "",
+  "maps": [
+    "SR",
+    "HA",
+    "NB",
+    "Brawl"
+  ],
+  "changes": [],
+  "image": {
+    "full": "3071.png",
+    "group": "item",
+    "sprite": "item2.png",
+    "x": 144,
+    "y": 432,
+    "h": 48,
+    "w": 48
+  },
+  "_id": "685961e07de6da37b9ad9287"
+}

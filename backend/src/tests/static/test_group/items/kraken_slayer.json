@@ -1,0 +1,57 @@
+{
+  "item_id": "6672",
+  "name": "Kraken Slayer",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "gold": 3100,
+  "into": [],
+  "from_": [
+    "6690",
+    "3051",
+    "1043"
+  ],
+  "class_": "legendary item",
+  "validated": false,
+  "stats": {
+    "ad": 45.0,
+    "attackspeed": 0.4,
+    "move speed percent": 0.04
+  },
+  "masterwork": {
+    "ad": 59.29,
+    "attackspeed": 0.5667,
+    "move speed percent": 0.04
+  },
+  "active": null,
+  "passives": [
+    {
+      "name": "Bring It Down",
+      "description": "Basic attacks on-hit grant a stack for 3 seconds, up to 2 stacks. At 2 stacks, the next basic attack consumes all stacks to deal ( 150 – 200 /  120 – 160) (based on level) bonus physical damage on-hit, increased by 0% – 50% (based on target's missing health), for up to ( 225 – 300 /  180 – 240) (based on level) bonus physical damage.",
+      "static_cooldown": "",
+      "effects": [],
+      "raw_stats": {},
+      "changes": [],
+      "validated": false,
+      "unique": true
+    }
+  ],
+  "limitations": "Limited to 1 Kraken Slayer.",
+  "requirements": "",
+  "maps": [
+    "SR",
+    "HA",
+    "NB",
+    "Brawl"
+  ],
+  "changes": [],
+  "image": {
+    "full": "6672.png",
+    "group": "item",
+    "sprite": "item5.png",
+    "x": 384,
+    "y": 144,
+    "h": 48,
+    "w": 48
+  },
+  "_id": "685962037de6da37b9ad9364"
+}

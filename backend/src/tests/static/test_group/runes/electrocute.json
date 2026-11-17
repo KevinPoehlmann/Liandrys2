@@ -1,0 +1,31 @@
+{
+  "rune_id": 8112,
+  "name": "Electrocute",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "tree": "Domination",
+  "tree_id": 8100,
+  "row": 0,
+  "slot": 0,
+  "passive": {
+    "name": "Electrocute",
+    "description": "Damaging basic attacks, abilities, item effects, and summoner spells, as well as the application of  crowd control and damage over time effects, generate stacks against enemy  champions, up to one per attack or cast per champion. Applying 3 stacks to a target within a 3 second period causes them to be struck by lightning after a 0.25-second delay, dealing them 70 – 240 (based on level) (+ 10% bonus AD) (+ 5% AP) physical or magic damage.If「 10% bonus AD ≥ 5% AP, 」「 bonus AD ≥ 50% AP, 」deals physical damage. If otherwise, deals magic damage.",
+    "static_cooldown": "20 seconds",
+    "effects": [],
+    "raw_stats": {},
+    "changes": [],
+    "validated": false
+  },
+  "validated": false,
+  "changes": [],
+  "image": {
+    "full": "Electrocute.png",
+    "group": "rune",
+    "sprite": null,
+    "x": null,
+    "y": null,
+    "h": null,
+    "w": null
+  },
+  "_id": "685962207de6da37b9ad939a"
+}

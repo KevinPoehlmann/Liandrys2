@@ -39,13 +39,13 @@ Quick wins that fit in here:
 
 ## Phase 2: Ability system (data model)
 
-The core of the project. **Decide first, then build.** Every change here touches model + simulation + editor + tests.
+The core of the project. **Decide first, then build.** Every change here touches model + simulation + editor + tests. The design is in [docs/ability-system.md](docs/ability-system.md).
 
-Decisions to make:
-- [ ] **Formula variables:** names with spaces (`bonus ad`, `target's armor`) are SyntaxErrors in `eval`. Choose Python-safe names (`bonus_ad`, `target_armor`) and adjust what the scraper writes
-- [ ] **Target per component:** today every component hits `action.target`, so self-heals and shields land on the enemy. Add `target: self | target`
-- [ ] **Ability vs. passive:** keep them separate, or use one shared shape `trigger → conditions → actions`, with cost/cooldown kept on the ability?
-- [ ] **Escape hatch** for truly weird mechanics: a named Python function per special case instead of growing the generic system forever
+Decisions:
+- [x] **Formula variables:** own namespace with Python-safe names, a generated `target_` set, `by_rank`/`by_level` lookups; `HpScaling` is removed
+- [x] **Target per component:** `target` enum (`self | target`, extensible for pets/2v2)
+- [x] **Ability vs. passive:** separate containers, shared `Rule = trigger → conditions → actions` and one action vocabulary; named buffs with runtime instances, DoTs are buffs
+- [x] **Escape hatch:** `Custom(function, args)` returning normal actions
 
 Building blocks that are missing (each one gets a champion/item from the test group):
 - [ ] Timed buffs and "next attack" buffs: Sheen/Spellblade, Nasus Q, "+30% AS for 3s"
@@ -62,7 +62,7 @@ Known gaps found in Phase 1 (fold them into the new design):
 - [ ] `bonus <stat>` only counts items, not buffs
 - [ ] A status with `duration` on the EffectComponent (instead of in its props) is treated as a DoT and silently dropped without `interval`. Make that impossible in the model, or catch it in the Phase 3 data checks
 
-**Test group:** pick 5–6 champions with very different mechanics, plus a few items and runes. One test per combo with the expected damage. Every building block is "done" when its test-group member works.
+**Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Sheen, Thornmail, Kraken Slayer, The Collector, Black Cleaver, Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
 
 ## Phase 3: Admin side complete
 
@@ -84,7 +84,7 @@ The loader is parked until it's needed again. Do this before data entry.
 ## Phase 5: User side V1
 
 - [ ] Pass runes, summoner spells, item passives/actives and distance from the route into the simulation
-- [ ] Stack configuration (placeholder in the UI)
+- [ ] Scenario inputs in the UI: stack configuration (placeholder today, e.g. Veigar Q kills) and checkboxes like "wall behind the target" (Vayne E `terrain`)
 - [ ] Ability points: lowering the level should drop excess points
 - [ ] Ignore outdated simulation responses (race when clicking fast)
 

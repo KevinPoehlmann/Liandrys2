@@ -83,6 +83,14 @@ def load_soup(load_html):
     return _loader
 
 
+@pytest.fixture
+def load_champion():
+    def _loader(name: str) -> Champion:
+        with open(f"src/tests/static/test_group/champions/{name}.json", "r", encoding="utf-8") as f:
+            return Champion.parse_obj(json.load(f))
+    return _loader
+
+
 @pytest.fixture()
 def patch_with_hotfix() -> NewPatch:
     patch = NewPatch(
