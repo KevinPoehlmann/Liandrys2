@@ -45,6 +45,10 @@ class Stat(str, Enum):
     SLOW_RESIST_P = "slow resist percent"
     SUMMONER_HASTE = "summoner spell haste"
     TENACITY_P = "tenacity percent"
+    Q_COOLDOWN_REDUCTION = "q cooldown reduction"
+    W_COOLDOWN_REDUCTION = "w cooldown reduction"
+    E_COOLDOWN_REDUCTION = "e cooldown reduction"
+    R_COOLDOWN_REDUCTION = "r cooldown reduction"
     ARMOR_TARGET = "target's armor"
     BONUS_AD = "bonus ad"
     BONUS_AP = "bonus ap"
@@ -266,6 +270,7 @@ class ItemClass(str, Enum):
 #Ability details
 
 class DamageType(str, Enum):
+    ABILITY="Ability damage"
     AOE="Area damage"
     AOE_DOT="AOE DOT damage"
     BASIC="Basic damage"
@@ -401,6 +406,36 @@ class Comparison(str, Enum):
     GT="Greater than"
     LT="Less than"
     EQ="Equal"
+
+
+class Trigger(str, Enum):
+    ON_CAST = "on_cast"
+    ON_ATTACK = "on_attack"
+    ON_HIT = "on_hit"
+    ON_DAMAGE_DEALT = "on_damage_dealt"
+    ON_GET_HIT = "on_get_hit"
+    ON_INTERVAL = "on_interval"
+    ON_STACK = "on_stack"
+
+class Target(str, Enum):
+    SELF = "self"
+    TARGET = "target"
+    BEARER = "bearer"
+
+class RuleActionType(str, Enum):
+    DAMAGE = "Damage"
+    HEAL = "Heal"
+    SHIELD = "Shield"
+    STATUS = "Status"
+    APPLY_BUFF = "ApplyBuff"
+    REMOVE_BUFF = "RemoveBuff"
+    RESET_ATTACK = "ResetAttack"
+    MODIFY_COOLDOWN = "ModifyCooldown"
+    CUSTOM = "Custom"
+
+class StatMode(str, Enum):
+    FLAT = "flat"
+    PERCENT = "percent"
 
 
 ############### BaseModels ###############

@@ -99,7 +99,7 @@ In JSON every action has the same shape as today's polymorphic models, with all 
 
 ```json
 {"type_": "ApplyBuff", "props": {"buff": "silver_bolts", "target": "target", "stacks": "1"}}
-{"type_": "Damage", "props": {"target": "bearer", "scaling": "...", "dmg_type": "Default damage", "dmg_sub_type": "True", "vamp": 0.0}}
+{"type_": "Damage", "props": {"target": "bearer", "scaling": "...", "dmg_type": ["Proc damage"], "dmg_sub_type": "True", "vamp": 0.0}}
 {"type_": "ResetAttack", "props": {}}
 ```
 
@@ -292,8 +292,11 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **`bearer`:** introduced for Vayne W. Check it again with Darius, where `on_interval` has no counterpart at all.
 - **`Displace(distance)`:** Vayne E pushes the target 475 units back, which changes the travel time of later projectiles. Build it once the distance comes from the request (Phase 5); today it is always 0.
 - **Vayne simplifications:** the wall stun uses the full knockback time as delay (a closer wall would be earlier); the Q dash can be shortened by terrain (minimum unknown, we use the full dash).
-- **Scraper:** the step formula turned 75/127.5/180/232.5/285 into 75/127/179/231/283, and Vayne R's bonus AD became true damage. Fix with `by_rank` in Phase 4.
-- **Not modelled for Vayne:** Night Hunter (needs "facing an enemy"), Silver Bolts resetting on a new target (irrelevant in 1v1).
+- **Scraper or manual entry?** The old data had 75/127/179/231/283 for Vayne's wall damage (really 75/127.5/180/232.5/285) and Vayne R's bonus AD as true damage. Check when we get to the scraper (Phase 4).
+- **Night Hunter** (Vayne passive, bonus movement speed while facing an enemy) is left out for now. It is not irrelevant: the Q dash time uses `movespeed`, and items may scale with movement speed. Probably a scenario input ("facing the enemy") later.
+- **Not modelled for Vayne:** Silver Bolts resetting on a new target (irrelevant in 1v1).
+- **Damage tags:** `dmg_type` is a list of the wiki's damage tags (Aatrox Q is ability *and* area damage), defaulting to `["Ability damage"]`. The wiki's "Spell damage" is the old name for "Ability damage". The wiki's per-damage properties (`ApplyLifesteal`, `ApplyOmnivamp`, `TriggerOnHitEvents`) are not stored; the simulation derives them from the tags. Rare exceptions (Aatrox passive: proc damage with lifesteal) get handled when a test needs them.
+- **Extra tags on attacks:** Vayne's Q-empowered attack is tagged basic *and* ability damage. Planned solution: a buff field `attack_dmg_type: list[DamageType] = []`. When an attack is created, it adds the tags of the attacker's own active buffs (only buffs that set the field; target buffs never count). Build it when an item/rune reacts to the difference (e.g. Liandry's); nothing in the test group does.
 - **Trigger filters:** only `source` so far. Add keys when a test group member needs them (Black Cleaver: physical damage only).
 - **Annie's stun** must be bound to the damage of the ability, not to the cast.
 - **Riven:** when does the cooldown start with recasts? Probably after the last stage or when the recast window runs out, handled in the stage logic.

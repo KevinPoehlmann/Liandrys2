@@ -34,7 +34,8 @@ frontend/admin/     admin UI (Vue 3 + Vite + Tailwind) :5174 -> proxies to :5001
 
 **Models:**
 - Every type has `New<Type>` (no id, what the loader writes), `<Type>` (with `_id`) and `Short<Type>` (projection for lists).
-- Polymorphic `props` (EffectComponent, PassiveEffect, BuffAction) are resolved by custom `parse_obj` chains, because Pydantic v1 has no discriminated unions. **Always build models with `.parse_obj(...)`, never `Model(**data)`**, or `props` collapse to the empty base class. For the same reason, admin PUT routes take a raw `Request` + `parse_from_request` and GET routes return `JSONResponse(jsonable_encoder(...))`.
+- The old polymorphic `props` (EffectComponent, PassiveEffect, BuffAction) are resolved by custom `parse_obj` chains. **Always build those with `.parse_obj(...)`, never `Model(**data)`**, or `props` collapse to the empty base class. For the same reason, admin PUT routes take a raw `Request` + `parse_from_request` and GET routes return `JSONResponse(jsonable_encoder(...))`.
+- The new ability system (`models/rule.py`, see [docs/ability-system.md](docs/ability-system.md)) uses Pydantic 1.10's discriminated unions (`Literal` `type_` + `Field(discriminator="type_")`) and `extra = forbid`. It needs no `parse_obj` chain. The old effect models stay until the simulation is switched over.
 - Champion stats are flat fields (all present), item stats are `dict[Stat, float]` (sparse). This is deliberate.
 
 **Ability system:** an Ability has Effects, and each Effect has EffectComponents (Damage / Heal / Shield / Status, with `props` + `delay`/`duration`/`interval`/`speed`). A Passive has PassiveEffects keyed by `Buff` (Stats, Cast, Hit = on-hit, GetHit = when hit). Values are **formula strings** evaluated with `eval` in `Character._evaluate_formula`. Available variables: stat values, `level`, `rank`, stacks per `ActionType`.

@@ -62,6 +62,12 @@ Known gaps found in Phase 1 (fold them into the new design):
 - [ ] `bonus <stat>` only counts items, not buffs
 - [ ] A status with `duration` on the EffectComponent (instead of in its props) is treated as a DoT and silently dropped without `interval`. Make that impossible in the model, or catch it in the Phase 3 data checks
 
+Cleanup once the simulation runs on the new system (not before, the old models still live in these files):
+- [ ] Delete the old effect models (`effect.py`, `passive_effect.py`, `…Properties` / `Processed…Properties` / `Condition` in `dataenums.py`)
+- [ ] Move the simulation runtime types (`QueueComponent`, `DotState`, `EffectComp`, `ActionEffect`, `AttackspeedStats`) into `simulation/`, and the result types (`EffectResult`, `TickEvent`) into their own model
+- [ ] Remove dead code: `ItemStat`, `Mythic`, `Combo`, `ConditionType`, the unused `MultiValueEnum` import (then `aenum` can leave `requirements.txt`)
+- [ ] Rename `dataenums.py` → `enums.py` once it only holds enums and constants. It stays the import-free bottom layer: enums ← models ← simulation ← routes
+
 **Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Sheen, Thornmail, Kraken Slayer, The Collector, Black Cleaver, Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
 
 ## Phase 3: Admin side complete
@@ -106,3 +112,4 @@ The clock starts here. Enter champions, items and runes, working from the "only 
 - Routes: duplicate `parse_from_request`, enum endpoints duplicating `/enum`
 - Decide: champion stats `int` vs `float` (Pydantic v1 silently truncates floats in `int` fields)
 - Manual effect data lives per patch: fixes in older patches don't reach newer ones
+- ARAM mode: per-champion modifiers (damage dealt/received, healing, shielding) applied by the simulation; items already have `maps`. Per-map ability values (e.g. Arena Aatrox R) are not planned for V1
