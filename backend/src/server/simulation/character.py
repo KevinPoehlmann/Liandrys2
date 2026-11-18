@@ -26,8 +26,10 @@ from src.server.models.dataenums import (
     ProcessedStatusProperties,
     QueueComponent,
     ShieldProperties,
+    RuleActionType,
     Stat,
     StatMode,
+    Target,
     Trigger,
     StatusProperties,
     StatusType,
@@ -38,7 +40,7 @@ from src.server.models.effect import EffectComponent
 from src.server.models.item import Item
 from src.server.models.passive_effect import BuffProperties, BuffAction, StatProperties, StackProps, EffectProps
 from src.server.models.request import Rank, Action
-from src.server.models.rule import Buff as BuffDefinition, Rule, StatModifier
+from src.server.models.rule import Buff as BuffDefinition, DamageAction, DamageProps, Rule, Stage, StatModifier
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 from src.server.simulation.buff_instance import BuffInstance
@@ -87,6 +89,8 @@ class Character():
         self.buff_definitions: dict[str, tuple[BuffDefinition, ActionType]] = self._collect_buff_definitions()
         self.active_buffs: dict[str, BuffInstance] = {}
         self.pending_cooldowns: dict[str, tuple[ActionType, int]] = {}
+        self.locked_until: int = 0
+        self.lock_exceptions: set[ActionType] = set()
         self.current_hp: float = self.get_stat(Stat.HP)
         self.damage_taken: float = 0
         self.healed: float = 0
@@ -176,6 +180,10 @@ class Character():
 
     def reset_attack(self, tick: int) -> None:
         self.cooldowns[ActionType.AA] = tick
+
+    def lock(self, until: int, exceptions: set[ActionType]) -> None:
+        self.locked_until = until
+        self.lock_exceptions = exceptions
 
 
     def get_base_stat(self, stat: Stat) -> float:
@@ -499,6 +507,8 @@ class Character():
 
     def check_action_delay(self, action_type: ActionType, tick: int) -> int:
         tick = max(tick, self.cooldowns[action_type])
+        if action_type not in self.lock_exceptions:
+            tick = max(tick, self.locked_until)
         self._remove_expired_status_effects(tick)
 
         if StatusType.STASIS in self.status_effects:
@@ -529,7 +539,7 @@ class Character():
 
     def do_action(self, action: Action, tick: int) -> ActionEffect:
         if action.action_type == ActionType.AA:
-            return self._basic_attack(action.target, tick)
+            return self._basic_attack(action, tick)
         elif action.action_type in self.ability_dict:
             return self._do_ability(action, tick)
         else:
@@ -537,27 +547,29 @@ class Character():
 
 
 
-    def _basic_attack(self, target: Actor, tick: int) -> ActionEffect:
+    def _basic_attack(self, action: Action, tick: int) -> ActionEffect:
         attack_time = 1 / self._get_attackspeed()
-        attack_ticks = math.ceil(attack_time * TICKRATE)
-        self.cooldowns[ActionType.AA] = tick + attack_ticks
-        tick += math.ceil(attack_time * self.champion.attack_windup * TICKRATE)
-        aa_props = DamageProperties(
-            scaling=Stat.AD.value,
-            dmg_type=DamageType.BASIC  #TODO check if Basic is right damage type
-        )
-        if StatusType.BLIND in self.status_effects:
-            aa_props.scaling = "0"
-        dmg = EffectComp(
-            source=ActionType.AA,
-            target=target,
-            type_= EffectType.DAMAGE,
-            speed=self.champion.missile_speed,
-            props=aa_props
-        )
-        effect_components = [dmg]
-        """ effect_components.extend(self._check_buffs(ActionType.AA, Buff.CAST)) """
-        return ActionEffect(tick=tick, effect_comps=effect_components)
+        self.cooldowns[ActionType.AA] = tick + math.ceil(attack_time * TICKRATE)
+        windup_ticks = math.ceil(attack_time * self.champion.attack_windup * TICKRATE)
+        rule = self._basic_attack_rule(blinded=StatusType.BLIND in self.status_effects)
+        event = RuleEvent(rule=rule, slot=ActionType.AA, owner=action.actor, target=action.target)
+        return ActionEffect(tick=tick + windup_ticks, rule_events=[event], windup_cancel=self._windup_cancels())
+
+    def _windup_cancels(self) -> set[ActionType]:
+        return {
+            slot
+            for instance in self.active_buffs.values() if instance.source is self
+            for slot in instance.definition.windup_cancel
+        }
+
+    def _basic_attack_rule(self, blinded: bool) -> Rule:
+        damage = DamageAction(type_=RuleActionType.DAMAGE, props=DamageProps(
+            target=Target.TARGET,
+            scaling="0" if blinded else "ad",
+            dmg_type=[DamageType.BASIC],
+            dmg_sub_type=DamageSubType.PHYSIC
+        ))
+        return Rule(actions=[damage], speed=str(self.champion.missile_speed))
     
 
     def _do_ability(self, action: Action, tick: int) -> ActionEffect:
@@ -596,14 +608,25 @@ class Character():
         context = self.formula_context(slot)
         cast_ticks = math.ceil(evaluate_formula(ability.cast_time, context) * TICKRATE)
         cooldown_ticks = self._cooldown_ticks(ability, slot)
-        self.cooldowns[slot] = tick + cast_ticks + cooldown_ticks
+        cooldown_start = tick if ability.cooldown_starts_on_cast else tick + cast_ticks
+        self.cooldowns[slot] = cooldown_start + cooldown_ticks
         if ability.cooldown_starts_after:
             self._defer_cooldown(ability.cooldown_starts_after, slot, cooldown_ticks, tick + cast_ticks)
+        stage = ability.stages[0]
+        outcome = self._outcome(action, stage)
         rule_events = [
             RuleEvent(rule=rule, slot=action.action_type, owner=action.actor, target=action.target)
-            for rule in ability.stages[0].rules
+            for rule in stage.rules if rule.outcome in (None, outcome)
         ]
         return ActionEffect(tick=tick + cast_ticks, rule_events=rule_events)
+
+    @staticmethod
+    def _outcome(action: Action, stage: Stage) -> str | None:
+        if action.outcome is None:
+            return stage.outcomes[0] if stage.outcomes else None
+        if action.outcome not in stage.outcomes:
+            raise ValueError(f"Outcome '{action.outcome}' is not possible for {action.action_type}, choose one of {stage.outcomes}")
+        return action.outcome
 
 
     def _cooldown_ticks(self, ability: ChampionAbility, slot: ActionType) -> int:

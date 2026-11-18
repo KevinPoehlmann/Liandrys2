@@ -34,14 +34,18 @@ from src.server.models.dataenums import (
     EffectType,
     StatusProperties,
     StatusType,
-    Actor
+    Actor,
+    RuleActionType,
+    Target
 )
 from src.server.models.item import Item
+from src.server.models.rule import DamageAction, DamageProps, Rule
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 from src.server.models.patch import NewPatch, Patch
 from src.server.models.request import Rank
 from src.server.simulation.character import Character
+from src.server.simulation.events import RuleEvent
 from src.server.simulation.simulation import Simulation
 
 
@@ -217,22 +221,17 @@ def processed_status_props(request) -> ProcessedStatusProperties:
 
 
 @pytest.fixture
-def action_effect_aa() -> ActionEffect:
+def action_effect_aa(aatrox_with_items) -> ActionEffect:
+    damage = DamageAction(type_=RuleActionType.DAMAGE, props=DamageProps(
+        target=Target.TARGET,
+        scaling="ad",
+        dmg_type=[DamageType.BASIC],
+        dmg_sub_type=DamageSubType.PHYSIC
+    ))
+    rule = Rule(actions=[damage], speed=str(aatrox_with_items.champion.missile_speed))
     return ActionEffect(
         tick=7,
-        effect_comps=[
-            EffectComp(
-                source=ActionType.AA,
-                target=Actor.RED,
-                type_=EffectType.DAMAGE,
-                props=DamageProperties(
-                    scaling="ad",
-                    dmg_type=DamageType.BASIC,
-                    dmg_sub_type=DamageSubType.PHYSIC,
-                    hp_scaling=HpScaling.FLAT
-                )
-            )
-        ]
+        rule_events=[RuleEvent(rule=rule, slot=ActionType.AA, owner=Actor.BLUE, target=Actor.RED)]
     )
 
 

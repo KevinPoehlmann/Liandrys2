@@ -296,7 +296,7 @@ class TestCharacter():
 
 
     def test_basic_attack(self, aatrox_with_items, action_effect_aa, compare_objects):
-        result = aatrox_with_items._basic_attack(Actor.RED, 0)
+        result = aatrox_with_items._basic_attack(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), 0)
         assert compare_objects(result, action_effect_aa)
         assert aatrox_with_items.cooldowns[ActionType.AA] == 33
 

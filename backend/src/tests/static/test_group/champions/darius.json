@@ -33,10 +33,9 @@
     "name": "Hemorrhage",
     "description": "Innate: Darius'  damaging basic attacks and abilities apply a stack of Hemorrhage to enemies for 5 seconds, refreshing on subsequent applications and stacking up to 5 times.\n\n\n\nHemorrhage: For each stack, the target is dealt「 13 – 30 (based on level) (+ 30% bonus AD) total physical damage over the duration, 」「 3.25 – 7.5 (based on level) (+ 7.5% bonus AD) physical damage every 1.25 seconds over the duration, 」up to a maximum of「 65 – 150 (based on level) (+ 150% bonus AD) total physical damage over the duration. 」「 16.25 – 37.5 (based on level) (+ 37.5% bonus AD) physical damage with each tick. 」Hemorrhage deals 200% damage against  monsters.\n\n\n\nWhen Darius kills a champion with  Noxian Guillotine, or applies 5 stacks on an enemy  champion, he becomes empowered with Noxian Might for 5 seconds.\n\n\n\nNoxian Might: Darius gains 30 – 230 (based on level)  bonus attack damage and instantly applies 5 Hemorrhage stacks through his usual means.",
     "static_cooldown": "0",
-    "effects": [],
     "raw_stats": {},
     "changes": [],
-    "validated": false,
+    "validated": true,
     "image": {
       "full": "Darius_Icon_Hemorrhage.png",
       "group": "passive",
@@ -45,54 +44,122 @@
       "y": 96,
       "h": 48,
       "w": 48
-    }
+    },
+    "rules": [
+      {
+        "trigger": "on_hit",
+        "filter": null,
+        "outcome": null,
+        "conditions": [],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "hemorrhage",
+              "target": "target",
+              "stacks": "5 if stacks_noxian_might > 0 else 1"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "cooldown": "0"
+      }
+    ],
+    "stats": [],
+    "buffs": [
+      {
+        "name": "hemorrhage",
+        "duration": "5",
+        "max_stacks": 5,
+        "refresh": true,
+        "interval": "1.25",
+        "windup_cancel": [],
+        "stats": [],
+        "rules": [
+          {
+            "trigger": "on_interval",
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "bearer",
+                  "scaling": "(by_level(13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32) + 0.3 * bonus_ad) / 4 * stacks",
+                  "dmg_type": [
+                    "Proc damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          },
+          {
+            "trigger": "on_stack",
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "bearer",
+                "key": "stacks_hemorrhage",
+                "comparison": "Equal",
+                "value": "5"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "noxian_might",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      },
+      {
+        "name": "noxian_might",
+        "duration": "5",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "windup_cancel": [],
+        "stats": [
+          {
+            "stat": "ad",
+            "formula": "by_level(30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 85, 95, 105, 130, 155, 180, 205, 230, 255, 280)",
+            "mode": "flat",
+            "conversion": false
+          }
+        ],
+        "rules": []
+      }
+    ]
   },
   "q": {
     "name": "Decimate",
     "description": "Darius winds up and swings his axe in a wide circle. Enemies struck by the blade take more damage than those struck by the handle. Darius heals based on enemy champions and large monsters hit by the blade.",
     "cost": "25.0 + (rank - 1) * 5.0",
-    "cooldown": "9.0 + (rank - 1) * -1.0",
-    "cast_time": "0",
+    "cooldown": "by_rank(9, 8, 7, 6, 5)",
+    "cast_time": "0.75",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Darius becomes  ghosted for 1 second and hefts his axe for 0.75 seconds, afterward swinging it around himself to deal physical damage to nearby enemies. Enemies within the inner radius take 35% damage.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "50.0 + (rank - 1) * 30.0 + (1.0 + (rank - 1) * 0.09999999999999998) * ad",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Physical",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "Against champions and large monsters hit, Darius  heals for  15% – 45% (based on number of targets hit by the outer radius) of his missing health. Enemies hit by the inner radius do not refresh the duration of or gain a new stack of  Hemorrhage.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Darius can move during Decimate, but is unable to declare basic attacks or cast  Apprehend or  Noxian Guillotine.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "none",
       "effect radius": "240.0 + (rank - 1) * 220.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "DariusCleave.png",
@@ -102,53 +169,97 @@
       "y": 144,
       "h": 48,
       "w": 48
-    }
+    },
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [
+          "blade",
+          "handle",
+          "miss"
+        ],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": "blade",
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(50, 80, 110, 140, 170) + by_rank(1.0, 1.1, 1.2, 1.3, 1.4) * ad",
+                  "dmg_type": [
+                    "Area damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "Heal",
+                "props": {
+                  "target": "self",
+                  "scaling": "0.15 * missing_hp"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "hemorrhage",
+                  "target": "target",
+                  "stacks": "5 if stacks_noxian_might > 0 else 1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": "handle",
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "0.35 * (by_rank(50, 80, 110, 140, 170) + by_rank(1.0, 1.1, 1.2, 1.3, 1.4) * ad)",
+                  "dmg_type": [
+                    "Area damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "cooldown_starts_after": null
   },
   "w": {
     "name": "Crippling Strike",
     "description": "Darius's next attack strikes an enemy's crucial artery. As they bleed out, their Move Speed is slowed.",
     "cost": "40.0",
-    "cooldown": "5.0",
+    "cooldown": "5",
     "cast_time": "0",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Darius empowers his next basic attack within 4 seconds to have an  uncancellable windup, gain  25 bonus range, deal bonus physical damage and  slow the target by 90% for 1 second. This damage is affected by  critical strike modifiers.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": " + (0.4 + (rank - 1) * 0.04999999999999999) * ad",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Physical",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "If this attack kills the target, half of Crippling Strike's  cooldown is reduced and its  mana cost is refunded.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Crippling Strike  resets Darius'  basic attack timer.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "none"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "DariusNoxianTacticsONH.png",
@@ -158,39 +269,111 @@
       "y": 144,
       "h": 48,
       "w": 48
-    }
+    },
+    "cooldown_starts_after": "crippling_strike",
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "crippling_strike",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "ResetAttack",
+                "props": {}
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [
+      {
+        "name": "crippling_strike",
+        "duration": "4",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "windup_cancel": [
+          "q"
+        ],
+        "stats": [],
+        "rules": [
+          {
+            "trigger": "on_hit",
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(0.4, 0.45, 0.5, 0.55, 0.6) * ad",
+                  "dmg_type": [
+                    "Basic damage",
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Slow",
+                  "duration": "1",
+                  "strength": "0.9"
+                }
+              },
+              {
+                "type_": "RemoveBuff",
+                "props": {
+                  "buff": "crippling_strike",
+                  "target": "self"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ]
   },
   "e": {
     "name": "Apprehend",
     "description": "Darius hones his axe, passively causing his physical damage to ignore a percentage of his target's Armor. When activated, Darius sweeps up his enemies with his axe's hook and pulls them to him.",
     "cost": "70.0 + (rank - 1) * -10.0",
-    "cooldown": "26.0 + (rank - 1) * -2.5",
-    "cast_time": "0",
+    "cooldown": "by_rank(26, 23.5, 21, 18.5, 16)",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Passive: Darius gains  armor penetration.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Active: Darius sweeps his axe in a cone in the target direction, granting  sight of the area for 1 second while  pulling enemies hit towards him. Upon arrival, they rebound 150 units off of him, remaining  airborne and becoming  slowed by 40% for 1 second.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Darius is unable to move or cast  Decimate or  Noxian Guillotine for 0.4 seconds after Apprehend's cast time.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "effect radius": "535.0",
       "angle": "50°"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "DariusAxeGrabCone.png",
@@ -200,59 +383,80 @@
       "y": 0,
       "h": 48,
       "w": 48
-    }
+    },
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Airborne",
+                  "duration": "0.5",
+                  "strength": "0"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Slow",
+                  "duration": "1",
+                  "strength": "0.4"
+                }
+              }
+            ],
+            "delay": "0.5",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [
+      {
+        "stat": "armor penetration percent",
+        "formula": "by_rank(0.2, 0.25, 0.3, 0.35, 0.4)",
+        "mode": "flat",
+        "conversion": false
+      }
+    ],
+    "buffs": [],
+    "cooldown_starts_after": null
   },
   "r": {
     "name": "Noxian Guillotine",
     "description": "Darius leaps to an enemy champion and strikes a lethal blow, dealing true damage. This damage is increased for each stack of Hemorrhage on the target. If Noxian Guillotine is a killing blow, its cooldown is refreshed for a brief duration.",
     "cost": "100.0 + (rank - 1) * -50.0",
-    "cooldown": "120.0 + (rank - 1) * -20.0",
-    "cast_time": "0",
+    "cooldown": "by_rank(120, 100, 80)",
+    "cast_time": "0.3667",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Darius attempts to execute the target enemy  champion,  leaping towards them to deal  true damage, increased by 0% – 100% (based on target's  Hemorrhage stacks), and granting  sight of the area around them for 2.5 seconds from the start of the cast time.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "125.0 + (rank - 1) * 125.0 + (0.75) * bonus ad",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "True",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "If the target dies within 0.15 seconds after being hit by Noxian Guillotine, Darius  fears nearby  minions and  monsters for 3 seconds, during which they are gradually  slowed by up to 99% over the duration. He can also recast the ability within 20 seconds at no cost, which refreshes on further executions.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "At rank 3, Noxian Guillotine has no  mana cost and recast timer.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Darius is unable to cast  Decimate or  Apprehend for 0.25 seconds after Noxian Guillotine's cast time.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.3667",
       "target range": "475.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 3,
     "image": {
       "full": "DariusExecute.png",
@@ -262,9 +466,53 @@
       "y": 0,
       "h": 48,
       "w": 48
-    }
+    },
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "(by_rank(125, 250, 375) + 0.75 * bonus_ad) * (1 + 0.2 * target_stacks_hemorrhage)",
+                  "dmg_type": [
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "True",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "hemorrhage",
+                  "target": "target",
+                  "stacks": "5 if stacks_noxian_might > 0 else 1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "cooldown_starts_after": null,
+    "cooldown_starts_on_cast": true
   },
-  "validated": false,
+  "validated": true,
   "changes": [],
   "image": {
     "full": "Darius.png",

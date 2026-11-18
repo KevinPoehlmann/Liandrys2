@@ -288,11 +288,11 @@ class TestSimulation():
         assert [event.tick for event in result.effect_list] == [15, 30, 45, 60]
 
 
-    def test_cast(self, sim: Simulation, q_damage_aa):
+    def test_cast(self, sim: Simulation, action_effect_aa):
         sim._cast(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA))
         assert sim.tick == 7
         assert list(sim.queue.keys())[0] == 7
-        assert list(sim.queue.values())[0][0] == q_damage_aa
+        assert list(sim.queue.values())[0][0] == action_effect_aa.rule_events[0]
 
 
     @pytest.mark.parametrize("input, output", [

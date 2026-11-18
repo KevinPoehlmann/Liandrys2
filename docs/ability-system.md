@@ -17,14 +17,17 @@ Abilities and passives stay separate, because they carry different metadata. The
 ```python
 Ability:
     name, cost, cooldown, cast_time, recharge   # as today
-    cooldown_starts_after: str | None            # a buff name: the cooldown starts when that buff ends (Vayne Q)
+    cooldown_starts_after: str | None            # a buff name: the cooldown starts when that buff ends (Vayne Q, Darius W)
+    cooldown_starts_on_cast: bool = False        # default: the cooldown starts after the cast time (Darius Q); True for Darius R
     stages: list[Stage]                          # the active part; 1 for almost everything, Riven Q has 3
     rules: list[Rule]                            # the passive part, e.g. Vayne W; inactive at rank 0
+    stats: list[StatModifier]                    # the passive part, e.g. Darius E armor pen; inactive at rank 0
     buffs: list[Buff]
 
 Stage:
     recast_window: str
-    rules: list[Rule]        # trigger is implicitly "this stage is cast"
+    outcomes: list[str] = []  # how the cast can land, e.g. Darius Q ["blade", "handle", "miss"]; the first is the default
+    rules: list[Rule]         # trigger is implicitly "this stage is cast"
 
 Passive:
     name
@@ -41,6 +44,7 @@ Items and runes use the same `Ability` (actives) and `Passive`. Buff definitions
 Rule:
     trigger: Trigger | None     # None inside a Stage
     filter: TriggerFilter | None
+    outcome: str | None         # inside a Stage: runs only for this outcome; None = always
     conditions: list[Condition]
     actions: list[Action]
     delay: str = "0"            # the rule's actions land together after delay + travel time
@@ -53,6 +57,8 @@ A buff created while an event is handled does not react to that same event. Othe
 `on_stack` is the exception: it belongs to the buff itself, so it also fires for the stacks that create the instance. A condition decides whether anything happens (Silver Bolts at 3 stacks).
 
 Rules run in list order, one after the other. Buff changes (`ApplyBuff`, `RemoveBuff`) take effect immediately, so the next rule's conditions already see them. Damage, heals, shields and status go into the queue. The order is part of the meaning (see Annie and Darius below). Across containers the order is: champion passive, Q, W, E, R, items, runes, then active buffs.
+
+The outcome is chosen per action in the combo (`Action.outcome`), not in the scenario, because two Qs in one combo can land differently. It is a rule field and not a condition, because conditions compare numbers; this way a typo is caught when the stage is loaded. A miss is just an outcome no damage rule listens to; the cooldown still runs.
 
 `delay` and `speed` sit on the rule, not on each action: everything a missile carries (damage, stun, a stack) lands together. Components with different timings go into separate rules.
 
@@ -118,6 +124,7 @@ Buff:
     max_stacks: int = 1
     refresh: bool = True       # does a new stack reset the duration?
     interval: str = "0"        # for on_interval
+    windup_cancel: list[ActionType] = []  # slots that may start during the windup of an attack made with this buff; the hit still lands (Darius W -> Q)
     stats: list[StatModifier]  # active on the bearer
     rules: list[Rule]          # active while the buff is
 
@@ -300,10 +307,11 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Night Hunter** (Vayne passive, bonus movement speed while facing an enemy) is left out for now. It is not irrelevant: the Q dash time uses `movespeed`, and items may scale with movement speed. Probably a scenario input ("facing the enemy") later.
 - **Not modelled for Vayne:** Silver Bolts resetting on a new target (irrelevant in 1v1).
 - **Damage tags:** `dmg_type` is a list of the wiki's damage tags (Aatrox Q is ability *and* area damage), defaulting to `["Ability damage"]`. The wiki's "Spell damage" is the old name for "Ability damage". The wiki's per-damage properties (`ApplyLifesteal`, `ApplyOmnivamp`, `TriggerOnHitEvents`) are not stored; the simulation derives them from the tags. Rare exceptions (Aatrox passive: proc damage with lifesteal) get handled when a test needs them.
-- **Extra tags on attacks:** Vayne's Q-empowered attack is tagged basic *and* ability damage. Planned solution: a buff field `attack_dmg_type: list[DamageType] = []`. When an attack is created, it adds the tags of the attacker's own active buffs (only buffs that set the field; target buffs never count). Build it when an item/rune reacts to the difference (e.g. Liandry's); nothing in the test group does.
+- **Extra tags on attacks:** Vayne's Q-empowered attack is tagged basic *and* ability damage. Planned solution: a buff field `attack_dmg_type: list[DamageType] = []`. When an attack is created, it adds the tags of the attacker's own active buffs (only buffs that set the field; target buffs never count). Build it when an item/rune reacts to the difference (e.g. Liandry's); nothing in the test group does. Darius W is the same case (the whole attack is also ability damage); that a spell shield blocks all of it is a Darius-specific rule, deferred too.
 - **Trigger filters:** only `source` so far. Add keys when a test group member needs them (Black Cleaver: physical damage only).
 - **Annie's stun** must be bound to the damage of the ability, not to the cast.
 - **Riven:** when does the cooldown start with recasts? Probably after the last stage or when the recast window runs out, handled in the stage logic.
 - **Last DoT tick:** today it deals the full tick damage. Check whether that matches League.
 - **Deferred until a champion needs it:** `on_expire` (Zed R, Sion W), `on_takedown` plus extending a buff's duration (Vayne R +4 s, resets like Darius R; only matters with more than one enemy, so together with 2v2), a free `data` field on buff instances (Zed), more actors than blue/red (Tibbers, 2v2).
 - **Stat enum cleanup:** pseudo stats like `target's armor` or `units` only serve the scraper. Clean them up when the scraper is changed.
+- **Attack timing:** the windup locks the attacker; after it, abilities may start at once (the rest of the animation is skipped), while the next attack waits for the full attack time. Cancelling an attack inside its windup (no damage) is not modelled; a combo's attack always completes. `windup_cancel` is the only exception so far.

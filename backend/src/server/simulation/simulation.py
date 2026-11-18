@@ -81,13 +81,19 @@ class Simulation():
 
 
     def _cast(self, action: Action) -> None:
-        action_effect = self.actors[action.actor].do_action(action, self.tick)
+        start = self.tick
+        character = self.actors[action.actor]
+        action_effect = character.do_action(action, self.tick)
         self.tick = action_effect.tick
         self._queue_status(action_effect.effect_comps, action.actor)
         for rule_event in action_effect.rule_events:
             self._queue_rule(rule_event, self.tick)
         trigger = Trigger.ON_ATTACK if action.action_type == ActionType.AA else Trigger.ON_CAST
         self._fire(trigger, action.actor, action.target, action.action_type, self.tick)
+        if action_effect.windup_cancel:
+            # Everything else still waits for the windup; the cancelling slots may start right away.
+            character.lock(action_effect.tick, action_effect.windup_cancel)
+            self.tick = start
 
 
     def _fire(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType, tick: int) -> None:
@@ -136,7 +142,7 @@ class Simulation():
         delay = math.ceil(evaluate_formula(event.rule.delay, context) * TICKRATE)
         speed = evaluate_formula(event.rule.speed, context)
         travel_time = math.ceil(self.distance / speed * TICKRATE - 1e-9) if speed > 0 else 0
-        self.queue[tick + delay + travel_time].append(event)
+        self.queue.setdefault(tick + delay + travel_time, []).append(event)
 
 
     def _run_rule(self, event: RuleEvent, tick: int) -> list[QueueComponent]:
@@ -160,7 +166,7 @@ class Simulation():
                 stacks = int(evaluate_formula(props.stacks, owner.formula_context(event.slot)))
                 instance = self.actors[bearer].apply_buff(props.buff, owner, stacks, tick)
                 if instance.end is not None:
-                    self.queue[instance.end].append(BuffEnd(bearer=bearer, buff=props.buff, end=instance.end))
+                    self.queue.setdefault(instance.end, []).append(BuffEnd(bearer=bearer, buff=props.buff, end=instance.end))
                 self._fire_stack(instance.definition.rules, instance.slot, self._actor_of(instance.source), bearer, tick)
             case RemoveBuffAction(props=props):
                 self.actors[self._resolve_target(props.target, event)].remove_buff(props.buff, tick)

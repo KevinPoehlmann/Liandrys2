@@ -13,6 +13,7 @@ class Action(BaseModel):
     actor: Actor
     target: Actor
     action_type: ActionType
+    outcome: str | None = None
 
 
 

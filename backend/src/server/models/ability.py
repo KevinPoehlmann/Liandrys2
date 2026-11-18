@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 from src.server.models.effect import Effect
 from src.server.models.image import Image
-from src.server.models.rule import Buff, Rule, Stage
+from src.server.models.rule import Buff, Rule, Stage, StatModifier
 
 from src.server.models.dataenums import (
     ActiveType
@@ -19,8 +19,10 @@ class Ability(BaseModel):
     cast_time: str = "0"
     recharge: str = "0"
     cooldown_starts_after: str | None = None
+    cooldown_starts_on_cast: bool = False
     stages: list[Stage] = []
     rules: list[Rule] = []
+    stats: list[StatModifier] = []
     buffs: list[Buff] = []
     effects: list[Effect] = []
     raw_stats: dict[str, str] = {}

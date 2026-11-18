@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 from src.server.models.champion import Champion
 from src.server.models.dataenums import RuleActionType, Stat, Target, Trigger
-from src.server.models.rule import ApplyBuffAction, Buff, DamageAction, ResetAttackAction, Rule
+from src.server.models.rule import ApplyBuffAction, Buff, DamageAction, ResetAttackAction, Rule, Stage
 
 
 class TestRuleModels():
@@ -47,3 +47,13 @@ class TestRuleModels():
     def test_buff_name_must_be_identifier(self, name):
         with pytest.raises(ValidationError, match="valid identifier"):
             Buff(name=name)
+
+
+    def test_rule_outcome_must_be_declared_by_the_stage(self):
+        with pytest.raises(ValidationError, match="bladee"):
+            Stage.parse_obj({"outcomes": ["blade", "handle"], "rules": [{"outcome": "bladee"}]})
+
+
+    def test_stage_accepts_declared_outcomes(self):
+        stage = Stage.parse_obj({"outcomes": ["blade", "handle"], "rules": [{"outcome": "handle"}, {}]})
+        assert [rule.outcome for rule in stage.rules] == ["handle", None]

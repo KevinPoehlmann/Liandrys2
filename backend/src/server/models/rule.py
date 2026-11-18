@@ -127,6 +127,7 @@ class Condition(StrictModel):
 class Rule(StrictModel):
     trigger: Trigger | None = None
     filter: TriggerFilter | None = None
+    outcome: str | None = None
     conditions: list[Condition] = []
     actions: list[RuleAction] = []
     delay: str = "0"
@@ -147,6 +148,8 @@ class Buff(StrictModel):
     max_stacks: int = Field(1, ge=1)
     refresh: bool = True
     interval: str = "0"
+    # Slots that may start during the windup of an attack made while this buff is active; the hit still lands.
+    windup_cancel: list[ActionType] = []
     stats: list[StatModifier] = []
     rules: list[Rule] = []
 
@@ -160,4 +163,13 @@ class Buff(StrictModel):
 
 class Stage(StrictModel):
     recast_window: str = "0"
+    outcomes: list[str] = []
     rules: list[Rule] = []
+
+    @validator("rules")
+    def outcomes_are_declared(cls, rules: list[Rule], values: dict) -> list[Rule]:
+        declared = values.get("outcomes", [])
+        for rule in rules:
+            if rule.outcome is not None and rule.outcome not in declared:
+                raise ValueError(f"Outcome '{rule.outcome}' is not one of the stage's outcomes {declared}")
+        return rules
