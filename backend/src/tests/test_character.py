@@ -17,7 +17,7 @@ class TestCharacter():
         (Stat.MR, 38.334)
     ])
     def test_get_base_stat(self, aatrox_with_items, stat, output):
-        result = aatrox_with_items._get_base_stat(stat)
+        result = aatrox_with_items.get_base_stat(stat)
         assert round(result, 3) == output
 
     @pytest.mark.parametrize("stat, output", [
@@ -34,7 +34,7 @@ class TestCharacter():
         (Stat.SECONDS, 0)
     ])
     def test_get_stat(self, aatrox_with_items, stat, output):
-        result = aatrox_with_items._get_stat(stat)
+        result = aatrox_with_items.get_stat(stat)
         assert round(result, 3) == output
 
     @pytest.mark.parametrize("stacks, ad", [
@@ -43,10 +43,10 @@ class TestCharacter():
         (10, 140.45),
     ])
     def test_get_stat_applies_buff_with_current_stacks(self, aatrox_with_items, stacks, ad):
-        aatrox_with_items._get_stat(Stat.AD)
+        aatrox_with_items.get_stat(Stat.AD)
         aatrox_with_items.stacks[ActionType.PASSIVE] = stacks
-        assert round(aatrox_with_items._get_stat(Stat.AD), 3) == ad
-        assert round(aatrox_with_items._get_stat(Stat.ARMOR), 3) == 117.832
+        assert round(aatrox_with_items.get_stat(Stat.AD), 3) == ad
+        assert round(aatrox_with_items.get_stat(Stat.ARMOR), 3) == 117.832
 
     def test_get_attackspeed(self, aatrox_with_items):
         result = aatrox_with_items._get_attackspeed()
@@ -58,7 +58,7 @@ class TestCharacter():
         (DamageSubType.TRUE, (0, 0)),
     ])
     def test_get_penetration(self, aatrox_with_items, dmg_sub_type, output):
-        result = aatrox_with_items._get_penetration(dmg_sub_type)
+        result = aatrox_with_items.get_penetration(dmg_sub_type)
         assert result == output
 
     @pytest.mark.parametrize("dmg_sub_type, output", [
@@ -125,7 +125,7 @@ class TestCharacter():
         (0.1, HpScaling.CURRENT_HP , 90)
     ])
     def test_calculate_hp_scaling(self, aatrox_with_items, value, dmg_calc, output):
-        aatrox_with_items.hp = 900
+        aatrox_with_items.current_hp = 900
         result = aatrox_with_items._calculate_hp_scaling(value, dmg_calc)
         assert round(result, 3) == output
 
@@ -165,7 +165,7 @@ class TestCharacter():
         }, 72.0, 72.0, 0)
     ], indirect=["processed_damage_props"])
     def test_calculate_damage(self, aatrox_with_items, processed_damage_props, output_res, output_raw, output_mit):
-        aatrox_with_items.hp = 900
+        aatrox_with_items.current_hp = 900
         result, raw, mitigated = aatrox_with_items._calculate_damage(processed_damage_props)
         assert round(result, 3) == output_res
         assert round(raw, 3) == output_raw
@@ -192,9 +192,9 @@ class TestCharacter():
         (100, {"values": []}, 1202.26, 0)
     ], indirect=["queue_heal_list"])
     def test_apply_heals(self, aatrox_with_items, hp_subtraction, queue_heal_list, hp, healed):
-        aatrox_with_items.hp -= hp_subtraction
+        aatrox_with_items.current_hp -= hp_subtraction
         aatrox_with_items._apply_heals(queue_heal_list)
-        assert aatrox_with_items.hp == hp
+        assert aatrox_with_items.current_hp == hp
         assert aatrox_with_items.healed == healed
 
 
@@ -203,7 +203,7 @@ class TestCharacter():
         (0, {"values": [30]}, [0], [30]),
     ], indirect=["queue_heal_list"])
     def test_apply_heals_results(self, aatrox_with_items, hp_subtraction, queue_heal_list, heals, overheals):
-        aatrox_with_items.hp -= hp_subtraction
+        aatrox_with_items.current_hp -= hp_subtraction
         results = aatrox_with_items._apply_heals(queue_heal_list)
         assert [round(result.value, 3) for result in results] == heals
         assert [round(result.overheal, 3) for result in results] == overheals
@@ -231,7 +231,7 @@ class TestCharacter():
         queue_res, effect_res = aatrox_with_items._apply_damages(queue_damage_list)
         assert aatrox_with_items.damage_taken == damage_taken
         assert aatrox_with_items.damage_shielded == damage_shielded
-        assert aatrox_with_items.hp == hp
+        assert aatrox_with_items.current_hp == hp
         assert aatrox_with_items.shields == expected_shields
         assert queue_res == []
         assert effect_res[0].raw == queue_damage_list[0].props.value
@@ -343,4 +343,4 @@ class TestCharacter():
     def test_take_effects(self, aatrox_with_items, q_processed_ad_flat, q_processed_ap_maxhp, q_processed_heal_flat):
         aatrox_with_items.take_effects([q_processed_ad_flat, q_processed_ap_maxhp, q_processed_heal_flat], 0)
         assert round(aatrox_with_items.damage_taken, 3) == 175.372
-        assert round(aatrox_with_items.hp, 3) == 1302.26
+        assert round(aatrox_with_items.current_hp, 3) == 1302.26

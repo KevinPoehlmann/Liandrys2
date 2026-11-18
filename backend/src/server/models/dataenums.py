@@ -593,3 +593,4 @@ class EffectComp():
 class ActionEffect():
     tick: int
     effect_comps: list[EffectComp] = field(default_factory=list)
+    rule_events: list = field(default_factory=list)

@@ -1,11 +1,33 @@
 from collections import defaultdict
+from dataclasses import replace
 import math
 
 
-from src.server.models.dataenums import DotState, EffectComp, QueueComponent, Actor, ActionType, TickEvent, TICKRATE
+from src.server.models.dataenums import (
+    ActionType,
+    Actor,
+    Comparison,
+    DamageType,
+    DotState,
+    EffectComp,
+    EffectResult,
+    EffectType,
+    ProcessedDamageProperties,
+    ProcessedStatusProperties,
+    QueueComponent,
+    Target,
+    TickEvent,
+    Trigger,
+    TICKRATE
+)
 from src.server.models.request import V1Response, Action
+from src.server.models.rule import ApplyBuffAction, Condition, DamageAction, DamageProps, RemoveBuffAction, ResetAttackAction, Rule, RuleAction, StatusAction, StatusProps
 from src.server.simulation.character import Character
+from src.server.simulation.events import BuffEnd, RuleEvent
 from src.server.simulation.exceptions import SimulationError
+from src.server.simulation.formula import FormulaContext, evaluate_formula
+
+QueueEntry = QueueComponent | RuleEvent | BuffEnd
 
 
 
@@ -14,7 +36,7 @@ class Simulation():
     def __init__(self, blue: Character, red: Character, distance: int = 0):
         self.tick: int = 0
         self.distance: int = distance
-        self.queue: dict[int, list[QueueComponent]] = defaultdict(list)
+        self.queue: dict[int, list[QueueEntry]] = defaultdict(list)
         self.dots: dict[tuple[ActionType, Actor], DotState] = {}
         self.effect_list: list[TickEvent] = []
         self.actors: dict[Actor, Character] = {
@@ -26,29 +48,170 @@ class Simulation():
 
     def do_combo(self, combo: list[Action]) -> V1Response:
         for i, action in enumerate(combo):
-            delay = self.actors[action.actor].check_action_delay(action.action_type, self.tick)
-            if delay:
-                self.tick = delay
-            self._process_queue()
-            try:
-                self._do_action(action)
-            except Exception as e:
-                raise SimulationError(
-                    message=str(e),
-                    action_index=i,
-                    action_type=action.action_type,
-                    actor=action.actor,
-                    phase="cast"
-                ) from e
+            self.do_action(action, i)
         self._process_remaining_queue()
         return V1Response(tick_rate=TICKRATE, damage=round(self.actors[Actor.RED].damage_taken), ticks=self.tick, effect_list=self.effect_list)
-    
 
-    def _do_action(self, action: Action) -> None:
+
+    def do_action(self, action: Action, index: int | None = None) -> None:
+        self._wait_until_ready(action)
+        try:
+            self._cast(action)
+        except Exception as e:
+            raise SimulationError(
+                message=str(e),
+                action_index=index,
+                action_type=action.action_type,
+                actor=action.actor,
+                phase="cast"
+            ) from e
+
+
+    def _wait_until_ready(self, action: Action) -> None:
+        character = self.actors[action.actor]
+        self._process_queue()
+        ready = character.check_action_delay(action.action_type, self.tick)
+        # Events before the action can still change when it is ready, e.g. the hit that consumes Tumble starts Q's cooldown.
+        while self.queue and min(self.queue) <= ready:
+            q_tick = min(self.queue)
+            self.tick = max(self.tick, q_tick)
+            self._process_tick(q_tick)
+            ready = character.check_action_delay(action.action_type, self.tick)
+        self.tick = ready
+
+
+    def _cast(self, action: Action) -> None:
         action_effect = self.actors[action.actor].do_action(action, self.tick)
         self.tick = action_effect.tick
         self._queue_status(action_effect.effect_comps, action.actor)
-    
+        for rule_event in action_effect.rule_events:
+            self._queue_rule(rule_event, self.tick)
+        trigger = Trigger.ON_ATTACK if action.action_type == ActionType.AA else Trigger.ON_CAST
+        self._fire(trigger, action.actor, action.target, action.action_type, self.tick)
+
+
+    def _fire(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType, tick: int) -> None:
+        # Rules are collected before any of them runs, so a buff created by this event can't react to it.
+        for rule, slot, owner in self.actors[actor].triggered_rules(trigger, source):
+            self._queue_rule(RuleEvent(rule=rule, slot=slot, owner=self._actor_of(owner), target=counterpart), tick)
+
+
+    def _fire_hits(self, results: list[EffectResult], tick: int) -> None:
+        for result in results:
+            if result.source == ActionType.AA and result.type_ == EffectType.DAMAGE:
+                self._fire(Trigger.ON_HIT, result.actor, result.target, ActionType.AA, tick)
+
+
+    def _fire_stack(self, buff_rules: list[Rule], slot: ActionType, owner: Actor, bearer: Actor, tick: int) -> None:
+        # on_stack has no counterpart, so the bearer is also the `target`.
+        for rule in buff_rules:
+            if rule.trigger == Trigger.ON_STACK:
+                self._queue_rule(RuleEvent(rule=rule, slot=slot, owner=owner, target=bearer, bearer=bearer), tick)
+
+
+    def _holds(self, condition: Condition, event: RuleEvent) -> bool:
+        owner = self.actors[event.owner]
+        context = owner.formula_context(event.slot, target=self.actors[event.target])
+        # The key is read from the actor's point of view, the value is the owner's formula.
+        actor = self._resolve_target(condition.actor, event)
+        actor_view = replace(context, source=self.actors[actor], target=owner if actor != event.owner else context.target)
+        key = evaluate_formula(condition.key, actor_view)
+        value = evaluate_formula(condition.value, context)
+        match condition.comparison:
+            case Comparison.GT:
+                return key > value
+            case Comparison.LT:
+                return key < value
+            case Comparison.EQ:
+                return key == value
+
+
+    def _actor_of(self, character: Character) -> Actor:
+        return next(actor for actor, candidate in self.actors.items() if candidate is character)
+
+
+    def _queue_rule(self, event: RuleEvent, tick: int) -> None:
+        owner = self.actors[event.owner]
+        context = owner.formula_context(event.slot, target=self.actors[event.target])
+        delay = math.ceil(evaluate_formula(event.rule.delay, context) * TICKRATE)
+        speed = evaluate_formula(event.rule.speed, context)
+        travel_time = math.ceil(self.distance / speed * TICKRATE - 1e-9) if speed > 0 else 0
+        self.queue[tick + delay + travel_time].append(event)
+
+
+    def _run_rule(self, event: RuleEvent, tick: int) -> list[QueueComponent]:
+        if not all(self._holds(condition, event) for condition in event.rule.conditions):
+            return []
+        components = []
+        for action in event.rule.actions:
+            components.extend(self._run_action(action, event, tick))
+        return components
+
+
+    def _run_action(self, action: RuleAction, event: RuleEvent, tick: int) -> list[QueueComponent]:
+        owner = self.actors[event.owner]
+        match action:
+            case DamageAction(props=props):
+                return [self._damage(props, event)]
+            case StatusAction(props=props):
+                return [self._status(props, event)]
+            case ApplyBuffAction(props=props):
+                bearer = self._resolve_target(props.target, event)
+                stacks = int(evaluate_formula(props.stacks, owner.formula_context(event.slot)))
+                instance = self.actors[bearer].apply_buff(props.buff, owner, stacks, tick)
+                if instance.end is not None:
+                    self.queue[instance.end].append(BuffEnd(bearer=bearer, buff=props.buff, end=instance.end))
+                self._fire_stack(instance.definition.rules, instance.slot, self._actor_of(instance.source), bearer, tick)
+            case RemoveBuffAction(props=props):
+                self.actors[self._resolve_target(props.target, event)].remove_buff(props.buff, tick)
+            case ResetAttackAction():
+                owner.reset_attack(tick)
+            case _:
+                raise NotImplementedError(f"Action '{action.type_}' is not supported yet")
+        return []
+
+
+    def _target_and_context(self, target: Target, event: RuleEvent) -> tuple[Actor, FormulaContext]:
+        actor = self._resolve_target(target, event)
+        return actor, self.actors[event.owner].formula_context(event.slot, target=self.actors[actor])
+
+
+    def _damage(self, props: DamageProps, event: RuleEvent) -> QueueComponent:
+        target, context = self._target_and_context(props.target, event)
+        flat_pen, percent_pen = self.actors[event.owner].get_penetration(props.dmg_sub_type)
+        processed = ProcessedDamageProperties(
+            value=evaluate_formula(props.scaling, context),
+            flat_pen=flat_pen,
+            percent_pen=percent_pen,
+            dmg_type=props.dmg_type[0] if props.dmg_type else DamageType.DEFAULT,
+            dmg_sub_type=props.dmg_sub_type,
+            vamp=props.vamp
+        )
+        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE, props=processed)
+
+
+    def _status(self, props: StatusProps, event: RuleEvent) -> QueueComponent:
+        target, context = self._target_and_context(props.target, event)
+        processed = ProcessedStatusProperties(
+            type_=props.status,
+            duration=math.ceil(evaluate_formula(props.duration, context) * TICKRATE),
+            strength=evaluate_formula(props.strength, context)
+        )
+        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.STATUS, props=processed)
+
+
+    @staticmethod
+    def _resolve_target(target: Target, event: RuleEvent) -> Actor:
+        match target:
+            case Target.SELF:
+                return event.owner
+            case Target.TARGET:
+                return event.target
+            case Target.BEARER if event.bearer is not None:
+                return event.bearer
+            case _:
+                raise ValueError(f"Target '{target}' is only available inside buff rules")
+
 
     def _queue_status(self, effect_comps: list[EffectComp], actor: Actor) -> None:
         for effect_component in effect_comps:
@@ -78,11 +241,21 @@ class Simulation():
 
 
     def _process_tick(self, q_tick: int) -> None:
-        queue_entries = self.queue.pop(q_tick)
-        evaluation_blue = [entry for entry in queue_entries if entry.actor == Actor.BLUE]
-        evaluation_red = [entry for entry in queue_entries if entry.actor == Actor.RED]
-        evaluated_entries = self.actors[Actor.BLUE].evaluate(evaluation_blue)
-        evaluated_entries.extend(self.actors[Actor.RED].evaluate(evaluation_red))
+        entries = self.queue.pop(q_tick)
+        processed = []
+        for event in [entry for entry in entries if isinstance(entry, RuleEvent)]:
+            processed.extend(self._run_rule(event, q_tick))
+        raw = [entry for entry in entries if isinstance(entry, QueueComponent)]
+        if raw or processed:
+            self._apply_components(raw, processed, q_tick)
+        for end in [entry for entry in entries if isinstance(entry, BuffEnd)]:
+            self.actors[end.bearer].expire_buff(end.buff, end.end)
+
+
+    def _apply_components(self, raw: list[QueueComponent], processed: list[QueueComponent], q_tick: int) -> None:
+        evaluated_entries = processed
+        evaluated_entries += self.actors[Actor.BLUE].evaluate([entry for entry in raw if entry.actor == Actor.BLUE])
+        evaluated_entries += self.actors[Actor.RED].evaluate([entry for entry in raw if entry.actor == Actor.RED])
 
         effect_results = []
         while evaluated_entries:
@@ -98,7 +271,8 @@ class Simulation():
             tick=q_tick,
             result=effect_results
         ))
-            
+        self._fire_hits(effect_results, q_tick)
+
 
     def _apply_dot(self, effect_comp: EffectComp, actor: Actor) -> None:
         if effect_comp.interval <= 0:

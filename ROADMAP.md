@@ -94,6 +94,16 @@ The loader is parked until it's needed again. Do this before data entry.
 - [ ] Ability points: lowering the level should drop excess points
 - [ ] Ignore outdated simulation responses (race when clicking fast)
 
+## Phase 5½ (optional): AI drafts for data entry
+
+Speeds up Phase 6. Needs the Phase 2 format to be stable and the Phase 3 data checks in place, which catch the AI's mistakes.
+
+- [ ] Decide the route: Claude API from the admin backend (API key, billed per token, a few dollars to tens of dollars for the initial load, cents per patch), or drafting in Claude Code sessions on the Pro subscription (no extra cost, no app integration)
+- [ ] The AI writes only the **structure** (trigger, conditions, actions) and references the scraped named values. It never writes numbers itself
+- [ ] Output is validated against the rule schema (structured output + `extra = forbid`), then by the Phase 3 dry-run simulation
+- [ ] Admin editor: a "Draft with AI" button fills the form; a human reviews, and only a human sets `validated`
+- [ ] Per patch, draft only new or structurally changed abilities
+
 ## Phase 6: Data entry ⏱️
 
 The clock starts here. Enter champions, items and runes, working from the "only show invalid" list.

@@ -50,6 +50,8 @@ Rule:
 
 A buff created while an event is handled does not react to that same event. Otherwise Final Hour's stealth, which ends `on_cast`, would end on the very Q cast that created it.
 
+`on_stack` is the exception: it belongs to the buff itself, so it also fires for the stacks that create the instance. A condition decides whether anything happens (Silver Bolts at 3 stacks).
+
 Rules run in list order, one after the other. Buff changes (`ApplyBuff`, `RemoveBuff`) take effect immediately, so the next rule's conditions already see them. Damage, heals, shields and status go into the queue. The order is part of the meaning (see Annie and Darius below). Across containers the order is: champion passive, Q, W, E, R, items, runes, then active buffs.
 
 `delay` and `speed` sit on the rule, not on each action: everything a missile carries (damage, stun, a stack) lands together. Components with different timings go into separate rules.
@@ -303,5 +305,5 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Annie's stun** must be bound to the damage of the ability, not to the cast.
 - **Riven:** when does the cooldown start with recasts? Probably after the last stage or when the recast window runs out, handled in the stage logic.
 - **Last DoT tick:** today it deals the full tick damage. Check whether that matches League.
-- **Deferred until a champion needs it:** `on_expire` (Zed R, Sion W), a free `data` field on buff instances (Zed), more actors than blue/red (Tibbers, 2v2).
+- **Deferred until a champion needs it:** `on_expire` (Zed R, Sion W), `on_takedown` plus extending a buff's duration (Vayne R +4 s, resets like Darius R; only matters with more than one enemy, so together with 2v2), a free `data` field on buff instances (Zed), more actors than blue/red (Tibbers, 2v2).
 - **Stat enum cleanup:** pseudo stats like `target's armor` or `units` only serve the scraper. Clean them up when the scraper is changed.

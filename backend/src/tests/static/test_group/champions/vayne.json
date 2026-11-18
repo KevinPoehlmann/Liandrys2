@@ -37,7 +37,7 @@
       "effect radius": "2000.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "image": {
       "full": "Vayne_NightHunter.png",
       "group": "passive",
@@ -65,7 +65,7 @@
       "speed": "500 +totalmovement speed"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "VayneTumble.png",
@@ -156,7 +156,7 @@
     "recharge": "0",
     "raw_stats": {},
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "VayneSilveredBolts.png",
@@ -249,7 +249,7 @@
       "speed": "2200"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "VayneCondemn.png",
@@ -372,7 +372,7 @@
       "cast time": "none"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 3,
     "image": {
       "full": "VayneInquisition.png",
@@ -501,7 +501,7 @@
       }
     ]
   },
-  "validated": false,
+  "validated": true,
   "changes": [],
   "image": {
     "full": "Vayne.png",

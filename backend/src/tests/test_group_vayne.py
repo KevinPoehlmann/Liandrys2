@@ -1,6 +1,8 @@
+import math
+
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType
+from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, StatusType, TICKRATE
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character
 from src.server.simulation.simulation import Simulation
@@ -74,6 +76,14 @@ class TestVayne():
         assert true_damage_hits(vs_darius) == [pytest.approx(w_proc)]
 
 
+    def test_w_stacks_reset_after_proc(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(*[ActionType.AA] * 6))
+
+        w_proc = W_RANK_1_PERCENT * DARIUS_MAX_HP
+        assert true_damage_hits(vs_darius) == [pytest.approx(w_proc)] * 2
+        assert vs_darius.actors[Actor.RED].get_buff_stacks("silver_bolts") == 0
+
+
     def test_w_proc_has_minimum_damage(self, vs_annie_lvl_1: Simulation):
         vs_annie_lvl_1.do_combo(combo(ActionType.AA, ActionType.AA, ActionType.AA))
 
@@ -97,3 +107,92 @@ class TestVayne():
 
         expected = physical(VAYNE_AD + R_RANK_1_AD)
         assert vs_darius.actors[Actor.RED].damage_taken == pytest.approx(expected)
+
+
+Q_RANK_3_COOLDOWN_TICKS = 4 * TICKRATE
+Q_CAST_TICKS = math.ceil(300 / (500 + 330) * TICKRATE)
+TUMBLE_TICKS = 3 * TICKRATE
+R_RANK_1_Q_COOLDOWN_REDUCTION = 0.3
+
+
+def first_hit_tick(sim: Simulation, source: ActionType) -> int:
+    return next(
+        event.tick
+        for event in sim.effect_list
+        for result in event.result
+        if result.source == source and result.type_ == EffectType.DAMAGE
+    )
+
+
+E_RANK_1_WALL = 75
+E_KNOCKBACK_TICKS = math.ceil(475 / 2000 * TICKRATE)
+
+
+def hit_ticks(sim: Simulation, source: ActionType) -> list[int]:
+    return [
+        event.tick
+        for event in sim.effect_list
+        for result in event.result
+        if result.source == source and result.type_ == EffectType.DAMAGE
+    ]
+
+
+class TestVayneTerrain():
+
+    def test_e_stuns_against_a_wall(self, load_champion):
+        vayne = Character(load_champion("vayne"), 6, Rank(q=3, w=1, e=1, r=1), [], scenario={"terrain": 1})
+        darius = Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), [])
+        sim = Simulation(vayne, darius)
+
+        sim.do_combo(combo(ActionType.E))
+
+        knockback_tick, wall_tick = hit_ticks(sim, ActionType.E)
+        assert wall_tick - knockback_tick == E_KNOCKBACK_TICKS
+        assert darius.damage_taken == pytest.approx(physical(E_RANK_1) + physical(E_RANK_1_WALL))
+        assert StatusType.STUN in darius.status_effects
+
+
+    def test_e_without_wall_does_not_stun(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(ActionType.E))
+
+        darius = vs_darius.actors[Actor.RED]
+        assert darius.damage_taken == pytest.approx(physical(E_RANK_1))
+        assert StatusType.AIRBORNE in darius.status_effects
+        assert StatusType.STUN not in darius.status_effects
+
+
+class TestVayneTiming():
+
+    def test_q_cooldown_starts_when_tumble_is_consumed(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(ActionType.Q, ActionType.AA))
+
+        hit_tick = first_hit_tick(vs_darius, ActionType.Q)
+        assert vs_darius.actors[Actor.BLUE].cooldowns[ActionType.Q] == hit_tick + Q_RANK_3_COOLDOWN_TICKS
+
+
+    def test_q_cooldown_starts_when_tumble_expires(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(ActionType.Q))
+
+        expected = Q_CAST_TICKS + TUMBLE_TICKS + Q_RANK_3_COOLDOWN_TICKS
+        assert vs_darius.actors[Actor.BLUE].cooldowns[ActionType.Q] == expected
+
+
+    def test_final_hour_shortens_q_cooldown(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(ActionType.R, ActionType.Q))
+
+        shortened = round(Q_RANK_3_COOLDOWN_TICKS * (1 - R_RANK_1_Q_COOLDOWN_REDUCTION))
+        assert vs_darius.actors[Actor.BLUE].cooldowns[ActionType.Q] == Q_CAST_TICKS + TUMBLE_TICKS + shortened
+
+
+    def test_final_hour_stealth_starts_on_q_and_ends_on_attack(self, vs_darius: Simulation):
+        vayne = vs_darius.actors[Actor.BLUE]
+        r, q, aa = combo(ActionType.R, ActionType.Q, ActionType.AA)
+
+        vs_darius.do_action(r)
+        vs_darius.do_action(q)
+        vs_darius._process_queue()
+        assert vayne.get_buff_stacks("final_hour_stealth") == 1
+
+        vs_darius.do_action(aa)
+        vs_darius._process_queue()
+        assert vayne.get_buff_stacks("final_hour_stealth") == 0

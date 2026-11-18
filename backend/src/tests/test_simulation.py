@@ -252,16 +252,16 @@ class TestSimulation():
     def test_process_queue_heal(self, sim: Simulation, q_vamp_aa):
         sim.queue = {15: [q_vamp_aa]}
         sim.tick = 30
-        sim.actors[Actor.BLUE].hp = 900
+        sim.actors[Actor.BLUE].current_hp = 900
         sim._process_queue()
-        assert round(sim.actors[Actor.RED].hp, 3) == 1210.446
-        assert round(sim.actors[Actor.BLUE].hp, 3) == 918.363
+        assert round(sim.actors[Actor.RED].current_hp, 3) == 1210.446
+        assert round(sim.actors[Actor.BLUE].current_hp, 3) == 918.363
 
 
     def test_process_queue_keeps_damage_results_with_vamp(self, sim: Simulation, q_vamp_aa):
         sim.queue = {15: [q_vamp_aa]}
         sim.tick = 30
-        sim.actors[Actor.BLUE].hp = 900
+        sim.actors[Actor.BLUE].current_hp = 900
         sim._process_queue()
         result_types = [result.type_ for result in sim.effect_list[0].result]
         assert result_types == [EffectType.DAMAGE, EffectType.HEAL]
@@ -288,8 +288,8 @@ class TestSimulation():
         assert [event.tick for event in result.effect_list] == [15, 30, 45, 60]
 
 
-    def test_do_action(self, sim: Simulation, q_damage_aa):
-        sim._do_action(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA))
+    def test_cast(self, sim: Simulation, q_damage_aa):
+        sim._cast(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA))
         assert sim.tick == 7
         assert list(sim.queue.keys())[0] == 7
         assert list(sim.queue.values())[0][0] == q_damage_aa
@@ -307,4 +307,4 @@ class TestSimulation():
         result = sim.do_combo(input)
         assert result.damage == output[0]
         assert result.ticks == output[1]
-        assert round(sim.actors[Actor.RED].hp, 3) == output[2]
+        assert round(sim.actors[Actor.RED].current_hp, 3) == output[2]

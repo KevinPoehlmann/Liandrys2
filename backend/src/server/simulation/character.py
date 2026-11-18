@@ -27,6 +27,8 @@ from src.server.models.dataenums import (
     QueueComponent,
     ShieldProperties,
     Stat,
+    StatMode,
+    Trigger,
     StatusProperties,
     StatusType,
     Actor,
@@ -36,17 +38,30 @@ from src.server.models.effect import EffectComponent
 from src.server.models.item import Item
 from src.server.models.passive_effect import BuffProperties, BuffAction, StatProperties, StackProps, EffectProps
 from src.server.models.request import Rank, Action
+from src.server.models.rule import Buff as BuffDefinition, Rule, StatModifier
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
+from src.server.simulation.buff_instance import BuffInstance
+from src.server.simulation.events import RuleEvent
 from src.server.simulation.exceptions import SimulationError
+from src.server.simulation.formula import FormulaContext, evaluate_formula
 
                     
     
 
 
+SLOT_COOLDOWN_REDUCTION = {
+    ActionType.Q: Stat.Q_COOLDOWN_REDUCTION,
+    ActionType.W: Stat.W_COOLDOWN_REDUCTION,
+    ActionType.E: Stat.E_COOLDOWN_REDUCTION,
+    ActionType.R: Stat.R_COOLDOWN_REDUCTION,
+}
+
+
 class Character():
-    def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item]) -> None:
+    def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item], scenario: dict[str, float] | None = None) -> None:
         self.champion: Champion = champion
+        self.scenario: dict[str, float] = scenario or {}
         self.level: int = lvl
         self.items: list[Item] = items
         self.shields: list[tuple[int, float, ActionType, Actor]] = []
@@ -69,7 +84,10 @@ class Character():
             ActionType.E: 0,
             ActionType.R: 0,
         }
-        self.hp: float = self._get_stat(Stat.HP)
+        self.buff_definitions: dict[str, tuple[BuffDefinition, ActionType]] = self._collect_buff_definitions()
+        self.active_buffs: dict[str, BuffInstance] = {}
+        self.pending_cooldowns: dict[str, tuple[ActionType, int]] = {}
+        self.current_hp: float = self.get_stat(Stat.HP)
         self.damage_taken: float = 0
         self.healed: float = 0
         self.damage_shielded: float = 0
@@ -82,7 +100,85 @@ class Character():
         return buffs
 
 
-    def _get_base_stat(self, stat: Stat) -> float:
+    def _collect_buff_definitions(self) -> dict[str, tuple[BuffDefinition, ActionType]]:
+        containers = [(self.champion.passive, ActionType.PASSIVE)]
+        containers += [(ability, slot) for slot, (ability, _) in self.ability_dict.items()]
+        definitions = {}
+        for container, slot in containers:
+            for buff in container.buffs:
+                if buff.name in definitions:
+                    raise ValueError(f"Buff '{buff.name}' is defined twice for {self.champion.name}")
+                definitions[buff.name] = (buff, slot)
+        return definitions
+
+
+    def get_rank(self, slot: ActionType) -> int:
+        return self.ability_dict[slot][1] if slot in self.ability_dict else 0
+
+    def get_buff_stacks(self, buff: str) -> int:
+        instance = self.active_buffs.get(buff)
+        return instance.stacks if instance else 0
+
+    def formula_context(self, slot: ActionType, target: "Character | None" = None, stacks: int = 0) -> FormulaContext:
+        max_rank = self.ability_dict[slot][0].maxrank if slot in self.ability_dict else 0
+        return FormulaContext(source=self, target=target, rank=self.get_rank(slot), max_rank=max_rank, stacks=stacks, scenario=self.scenario)
+
+
+    def apply_buff(self, name: str, source: "Character", stacks: int, tick: int) -> BuffInstance:
+        definition, slot = source.buff_definitions[name]
+        end = self._buff_end(definition, source.formula_context(slot), tick)
+        instance = self.active_buffs.get(name)
+        if instance is None:
+            instance = BuffInstance(definition, source, slot, 0, tick, end)
+            self.active_buffs[name] = instance
+        elif definition.refresh:
+            instance.end = end
+        instance.stacks = min(instance.stacks + stacks, definition.max_stacks)
+        return instance
+
+    @staticmethod
+    def _buff_end(definition: BuffDefinition, context: FormulaContext, tick: int) -> int | None:
+        duration = evaluate_formula(definition.duration, context)
+        return tick + math.ceil(duration * TICKRATE) if duration > 0 else None
+
+    def remove_buff(self, name: str, tick: int) -> None:
+        if self.active_buffs.pop(name, None) and name in self.pending_cooldowns:
+            slot, cooldown_ticks = self.pending_cooldowns.pop(name)
+            self.cooldowns[slot] = tick + cooldown_ticks
+
+    def expire_buff(self, name: str, end: int) -> None:
+        # A refresh moves `end`, so an end event of an older `end` is outdated and ignored.
+        instance = self.active_buffs.get(name)
+        if instance and instance.end == end:
+            self.remove_buff(name, end)
+
+
+    def triggered_rules(self, trigger: Trigger, source: ActionType) -> list[tuple[Rule, ActionType, "Character"]]:
+        candidates = [(rule, ActionType.PASSIVE, self) for rule in self.champion.passive.rules]
+        candidates += [
+            (rule, slot, self)
+            for slot, (ability, rank) in self.ability_dict.items() if rank > 0
+            for rule in ability.rules
+        ]
+        candidates += [
+            (rule, instance.slot, instance.source)
+            for instance in self.active_buffs.values()
+            for rule in instance.definition.rules
+        ]
+        return [
+            (rule, slot, owner) for rule, slot, owner in candidates
+            if rule.trigger == trigger and self._passes_filter(rule, source)
+        ]
+
+    @staticmethod
+    def _passes_filter(rule: Rule, source: ActionType) -> bool:
+        return rule.filter is None or rule.filter.source is None or source in rule.filter.source
+
+    def reset_attack(self, tick: int) -> None:
+        self.cooldowns[ActionType.AA] = tick
+
+
+    def get_base_stat(self, stat: Stat) -> float:
         stat_name = stat.value
         base_value = getattr(self.champion, stat_name, None)
         if base_value is None:
@@ -101,10 +197,21 @@ class Character():
             if stat_property.stat == stat and self._evaluate_condition(stat_property.condition):
                 formula = stat_property.scaling
                 result += self._evaluate_formula(formula)
+        for instance in self.active_buffs.values():
+            for modifier in instance.definition.stats:
+                if modifier.stat == stat:
+                    result += self._evaluate_modifier(modifier, instance)
         return result
 
+    @staticmethod
+    def _evaluate_modifier(modifier: StatModifier, instance: BuffInstance) -> float:
+        if modifier.mode != StatMode.FLAT or modifier.conversion:
+            raise NotImplementedError(f"Stat modifier mode '{modifier.mode}' (conversion={modifier.conversion}) is not supported yet")
+        context = instance.source.formula_context(instance.slot, stacks=instance.stacks)
+        return evaluate_formula(modifier.formula, context)
 
-    def _get_stat(self, stat: Stat) -> float:
+
+    def get_stat(self, stat: Stat) -> float:
         if stat.value.startswith("bonus "):
             return self._get_bonus_stat(Stat.from_str(stat.value.removeprefix("bonus ")))
         
@@ -113,7 +220,7 @@ class Character():
         if stat == Stat.TENACITY_P:
             return self._get_tenacity()
         
-        base_stat = self._get_base_stat(stat)
+        base_stat = self.get_base_stat(stat)
         bonus_stat = self._get_bonus_stat(stat)
         buff_stat = 0
         # A buff formula evaluates all stats, including the one being buffed. The guard stops that recursion.
@@ -137,7 +244,7 @@ class Character():
         result *= self._get_cripple_value()
         return result
     
-    def _get_penetration(self, dmg_sub_type: DamageSubType) -> tuple[float, float]:
+    def get_penetration(self, dmg_sub_type: DamageSubType) -> tuple[float, float]:
         if dmg_sub_type == DamageSubType.PHYSIC:
             flat_pen = self._get_bonus_stat(Stat.LETHALITY)
             percent_pen = self._get_bonus_stat(Stat.ARMOR_PEN_P)
@@ -151,9 +258,9 @@ class Character():
     
     def _get_resistance(self, dmg_sub_type: DamageSubType) -> float:
         if dmg_sub_type == DamageSubType.PHYSIC:
-            return self._get_stat(Stat.ARMOR)
+            return self.get_stat(Stat.ARMOR)
         elif dmg_sub_type == DamageSubType.MAGIC:
-            return self._get_stat(Stat.MR)
+            return self.get_stat(Stat.MR)
         else:
             return 0
         
@@ -183,7 +290,7 @@ class Character():
         
     def _evaluate_formula(self, formula: str, additional_keywords: dict = {}) -> float:
         variables = {
-            stat.value: self._get_stat(stat) for stat in Stat
+            stat.value: self.get_stat(stat) for stat in Stat
         } | {
             "level": self.level
         } | {
@@ -195,11 +302,11 @@ class Character():
     def _calculate_hp_scaling(self, value: float, hp_scaling: HpScaling) -> float:
         match hp_scaling:
             case HpScaling.MAX_HP:
-                return value * self._get_stat(Stat.HP)
+                return value * self.get_stat(Stat.HP)
             case HpScaling.CURRENT_HP:
-                return value * self.hp
+                return value * self.current_hp
             case HpScaling.MISSING_HP:
-                return value * (self._get_stat(Stat.HP) - self.hp)
+                return value * (self.get_stat(Stat.HP) - self.current_hp)
         return value
 
 
@@ -271,7 +378,7 @@ class Character():
 
     def _apply_heals(self, components: list[QueueComponent]) -> list[EffectResult]:
         total_heal = 0
-        missing_hp = self._get_stat(Stat.HP) - self.hp
+        missing_hp = self.get_stat(Stat.HP) - self.current_hp
         results = []
         for component in components:
             try:
@@ -296,7 +403,7 @@ class Character():
                     phase="heal application"
                 ) from e
         self.healed += total_heal
-        self.hp += total_heal
+        self.current_hp += total_heal
         return results
     
 
@@ -357,7 +464,7 @@ class Character():
                     phase="damage application"
                 ) from e
         self.damage_taken += total_damage
-        self.hp -= total_damage
+        self.current_hp -= total_damage
         return vamps, results
 
 
@@ -457,6 +564,8 @@ class Character():
         ability: ChampionAbility = self.ability_dict[action.action_type][0]
         if not ability.validated:
             raise NotImplementedError(f"Ability {action.action_type} is not implemented yet for {self.champion.name}")
+        if ability.stages:
+            return self._cast_stage(action, ability, tick)
         cooldown = self._evaluate_formula(ability.cooldown, {"rank": self.ability_dict[action.action_type][1]})
         cooldown *= 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
         cast_time = self._evaluate_formula(ability.cast_time,  {"rank": self.ability_dict[action.action_type][1]})
@@ -482,6 +591,37 @@ class Character():
     
 
 
+    def _cast_stage(self, action: Action, ability: ChampionAbility, tick: int) -> ActionEffect:
+        slot = action.action_type
+        context = self.formula_context(slot)
+        cast_ticks = math.ceil(evaluate_formula(ability.cast_time, context) * TICKRATE)
+        cooldown_ticks = self._cooldown_ticks(ability, slot)
+        self.cooldowns[slot] = tick + cast_ticks + cooldown_ticks
+        if ability.cooldown_starts_after:
+            self._defer_cooldown(ability.cooldown_starts_after, slot, cooldown_ticks, tick + cast_ticks)
+        rule_events = [
+            RuleEvent(rule=rule, slot=action.action_type, owner=action.actor, target=action.target)
+            for rule in ability.stages[0].rules
+        ]
+        return ActionEffect(tick=tick + cast_ticks, rule_events=rule_events)
+
+
+    def _cooldown_ticks(self, ability: ChampionAbility, slot: ActionType) -> int:
+        cooldown = evaluate_formula(ability.cooldown, self.formula_context(slot))
+        haste = 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
+        reduction = 1 - self.get_stat(SLOT_COOLDOWN_REDUCTION[slot])
+        return math.ceil(cooldown * haste * reduction * TICKRATE)
+
+    def _defer_cooldown(self, buff: str, slot: ActionType, cooldown_ticks: int, cast_end: int) -> None:
+        # Until the buff is gone the cooldown can't start; its latest possible start is the end of the buff's full duration.
+        definition, buff_slot = self.buff_definitions[buff]
+        buff_end = self._buff_end(definition, self.formula_context(buff_slot), cast_end)
+        if buff_end is None:
+            raise ValueError(f"cooldown_starts_after needs a buff with a duration, '{buff}' has none")
+        self.pending_cooldowns[buff] = (slot, cooldown_ticks)
+        self.cooldowns[slot] = buff_end + cooldown_ticks
+
+
     def evaluate(self, queue_comps:list[QueueComponent]) -> list[QueueComponent]:
         component_list = []
         for component in queue_comps:
@@ -497,7 +637,7 @@ class Character():
                 case EffectType.DAMAGE:
                     """ self._check_buffs(component.source, Buff.HIT) """
                     assert isinstance(component.props, DamageProperties), "Damage component must have DamageProperties"
-                    flat_pen, percent_pen = self._get_penetration(component.props.dmg_sub_type)
+                    flat_pen, percent_pen = self.get_penetration(component.props.dmg_sub_type)
                     props=ProcessedDamageProperties(
                         value=result,
                         flat_pen=flat_pen,
