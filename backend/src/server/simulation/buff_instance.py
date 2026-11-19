@@ -16,3 +16,5 @@ class BuffInstance:
     stacks: int
     start: int
     end: int | None
+    last_interval: int | None = None
+    next_interval: int | None = None

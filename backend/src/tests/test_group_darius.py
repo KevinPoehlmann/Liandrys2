@@ -1,8 +1,10 @@
+import json
 import math
 
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, StatusType, TICKRATE
+from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, Stat, StatusType, TICKRATE
+from src.server.models.item import Item
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character
 from src.server.simulation.exceptions import SimulationError
@@ -188,6 +190,15 @@ class TestDariusAbilities():
         sim.do_combo(combo(ActionType.AA))
 
         assert hits(sim, ActionType.AA) == [(WINDUP_TICKS, pytest.approx(physical(DARIUS_AD, armor=VAYNE_ARMOR)))]
+
+
+    def test_e_armor_pen_stacks_multiplicatively_with_items(self, load_champion):
+        with open("src/tests/static/json/triforce.json", encoding="utf-8") as f:
+            item = Item.parse_obj(json.load(f)).copy(update={"stats": {Stat.ARMOR_PEN_P: 0.3}})
+        darius = Character(load_champion("darius"), 6, Rank(q=3, w=1, e=1, r=1), [item])
+
+        _, percent_pen = darius.get_penetration(DamageSubType.PHYSIC)
+        assert percent_pen == pytest.approx(1 - (1 - E_RANK_1_ARMOR_PEN) * (1 - 0.3))
 
 
     def test_e_knocks_up_then_slows(self, vs_vayne: Simulation):

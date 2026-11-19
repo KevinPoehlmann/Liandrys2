@@ -124,6 +124,8 @@ Buff:
     max_stacks: int = 1
     refresh: bool = True       # does a new stack reset the duration?
     interval: str = "0"        # for on_interval
+    tick_on_apply: bool = False  # first interval tick right on application (Ignite)
+    tick_on_end: bool = False    # extra tick when the buff ends off-rhythm (Darius bleed)
     windup_cancel: list[ActionType] = []  # slots that may start during the windup of an attack made with this buff; the hit still lands (Darius W -> Q)
     stats: list[StatModifier]  # active on the bearer
     rules: list[Rule]          # active while the buff is
@@ -155,7 +157,11 @@ Besides the normal stats there are per-slot stats such as `q cooldown reduction`
 
 When `ApplyBuff` creates an instance, the simulation schedules its interval events and its end. On a refresh it moves `end` and schedules the missing interval events. The instance remembers its current `end`. An end event that belongs to an outdated `end` is ignored, so old queue entries never need to be searched and removed.
 
-Like today's `_apply_dot`, a buff with an interval also ticks at its end, even if the last regular tick was just before.
+With `tick_on_end`, a buff with an interval also ticks at its end, even if the last regular tick was just before (Darius bleed). With `tick_on_apply`, the first tick comes right on application (Ignite: 5 ticks over 5 s, none at the end).
+
+Implementation: only the next interval tick is in the queue (`BuffTick`). The instance remembers it (`next_interval`); after a refresh the next tick is computed again and an event that no longer matches is ignored. Interval rules run before buff ends on the same tick, so the end tick still sees the stacks. An interval buff without a duration raises `NotImplementedError` (it would tick forever).
+
+Inside any buff rule (`on_interval`, `on_stack` and triggered ones like `on_hit`), `stacks` are the stacks of that buff on its bearer, and `bearer` is the character carrying it.
 
 Example, Darius' bleed:
 
@@ -300,13 +306,19 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 
 ## Open points
 
-- **`bearer`:** introduced for Vayne W. Check it again with Darius, where `on_interval` has no counterpart at all.
+- **Trigger list (from docs/league-mechanics.md, Triggers):** build when the test group needs them:
+  - `on_damage_dealt` / `on_get_hit` are in the model but never fired (Conqueror, Black Cleaver, Thornmail, Annie E).
+  - Missing categories: on-spell (ability lands; Luden's), on-cc (Aftershock), on-crit, on-death/takedown (2v2), on-heal/shield (Aery).
+  - The trigger filter needs damage tags and damage types besides slots: spell effects react to ability damage (including Darius W and Vayne Q attacks), Black Cleaver to physical damage.
+  - `on_cast` fires at the end of the cast time; the game fires some on-cast effects at the start. Check which when an item/rune needs it.
+- **`bearer`:** introduced for Vayne W, confirmed with Darius (`on_interval` uses the bearer as `target`). Triggered buff rules now also get the bearer.
+- **Percent penetration from several sources:** armor and magic pen percent stack multiplicatively, see `MULTIPLICATIVE_STATS`. Percent stats are stored as fractions (0.3, not 30); the loader already divides by 100.
 - **`Displace(distance)`:** Vayne E pushes the target 475 units back, which changes the travel time of later projectiles. Build it once the distance comes from the request (Phase 5); today it is always 0.
 - **Vayne simplifications:** the wall stun uses the full knockback time as delay (a closer wall would be earlier); the Q dash can be shortened by terrain (minimum unknown, we use the full dash).
 - **Scraper or manual entry?** The old data had 75/127/179/231/283 for Vayne's wall damage (really 75/127.5/180/232.5/285) and Vayne R's bonus AD as true damage. Check when we get to the scraper (Phase 4).
 - **Night Hunter** (Vayne passive, bonus movement speed while facing an enemy) is left out for now. It is not irrelevant: the Q dash time uses `movespeed`, and items may scale with movement speed. Probably a scenario input ("facing the enemy") later.
 - **Not modelled for Vayne:** Silver Bolts resetting on a new target (irrelevant in 1v1).
-- **Damage tags:** `dmg_type` is a list of the wiki's damage tags (Aatrox Q is ability *and* area damage), defaulting to `["Ability damage"]`. The wiki's "Spell damage" is the old name for "Ability damage". The wiki's per-damage properties (`ApplyLifesteal`, `ApplyOmnivamp`, `TriggerOnHitEvents`) are not stored; the simulation derives them from the tags. Rare exceptions (Aatrox passive: proc damage with lifesteal) get handled when a test needs them.
+- **Damage tags:** decided to follow the engine tags from the wiki's Damage page (BasicAttack, ActiveSpell, AOE, Periodic, Proc, Pet, Item, OnHit, …) when the first item/rune reacts to tags; see docs/league-mechanics.md. Until then: `dmg_type` is a list of the wiki's damage tags (Aatrox Q is ability *and* area damage), defaulting to `["Ability damage"]`. The wiki's "Spell damage" is the old name for "Ability damage". The wiki's per-damage properties (`ApplyLifesteal`, `ApplyOmnivamp`, `TriggerOnHitEvents`) are not stored; the simulation derives them from the tags. Rare exceptions (Aatrox passive: proc damage with lifesteal) get handled when a test needs them.
 - **Extra tags on attacks:** Vayne's Q-empowered attack is tagged basic *and* ability damage. Planned solution: a buff field `attack_dmg_type: list[DamageType] = []`. When an attack is created, it adds the tags of the attacker's own active buffs (only buffs that set the field; target buffs never count). Build it when an item/rune reacts to the difference (e.g. Liandry's); nothing in the test group does. Darius W is the same case (the whole attack is also ability damage); that a spell shield blocks all of it is a Darius-specific rule, deferred too.
 - **Trigger filters:** only `source` so far. Add keys when a test group member needs them (Black Cleaver: physical damage only).
 - **Annie's stun** must be bound to the damage of the ability, not to the cast.

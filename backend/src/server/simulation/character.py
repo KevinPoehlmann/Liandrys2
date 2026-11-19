@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import cast
+from typing import Iterator, cast
 import math
 
 from src.server.models.ability import ChampionAbility
@@ -51,6 +51,8 @@ from src.server.simulation.formula import FormulaContext, evaluate_formula
                     
     
 
+
+MULTIPLICATIVE_STATS = {Stat.ARMOR_PEN_P, Stat.MAGIC_PEN_P}
 
 SLOT_COOLDOWN_REDUCTION = {
     ActionType.Q: Stat.Q_COOLDOWN_REDUCTION,
@@ -157,21 +159,21 @@ class Character():
             self.remove_buff(name, end)
 
 
-    def triggered_rules(self, trigger: Trigger, source: ActionType) -> list[tuple[Rule, ActionType, "Character"]]:
-        candidates = [(rule, ActionType.PASSIVE, self) for rule in self.champion.passive.rules]
+    def triggered_rules(self, trigger: Trigger, source: ActionType) -> list[tuple[Rule, ActionType, "Character", str | None]]:
+        candidates = [(rule, ActionType.PASSIVE, self, None) for rule in self.champion.passive.rules]
         candidates += [
-            (rule, slot, self)
+            (rule, slot, self, None)
             for slot, (ability, rank) in self.ability_dict.items() if rank > 0
             for rule in ability.rules
         ]
         candidates += [
-            (rule, instance.slot, instance.source)
-            for instance in self.active_buffs.values()
+            (rule, instance.slot, instance.source, name)
+            for name, instance in self.active_buffs.items()
             for rule in instance.definition.rules
         ]
         return [
-            (rule, slot, owner) for rule, slot, owner in candidates
-            if rule.trigger == trigger and self._passes_filter(rule, source)
+            candidate for candidate in candidates
+            if candidate[0].trigger == trigger and self._passes_filter(candidate[0], source)
         ]
 
     @staticmethod
@@ -196,26 +198,47 @@ class Character():
         return base_value + scaling_value * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
 
     def _get_bonus_stat(self, stat: Stat) -> float:
-        return sum([item.stats[stat] for item in self.items if stat in item.stats])
-    
-    def _get_buff_stat(self, stat: Stat) -> float:
-        result = 0
-        for stat_property in self.buffs[Buff.STATS]:
-            assert isinstance(stat_property, StatProperties)
-            if stat_property.stat == stat and self._evaluate_condition(stat_property.condition):
-                formula = stat_property.scaling
-                result += self._evaluate_formula(formula)
+        values = [item.stats[stat] for item in self.items if stat in item.stats]
+        # A modifier formula evaluates all stats, including the one being modified. The guard stops that recursion.
+        if stat not in self.evaluating_stat:
+            self.evaluating_stat.add(stat)
+            try:
+                values += self._modifier_values(stat)
+            finally:
+                self.evaluating_stat.discard(stat)
+        if stat in MULTIPLICATIVE_STATS:
+            # Percent penetration from several sources stacks multiplicatively (Darius E notes).
+            return 1 - math.prod(1 - value for value in values)
+        return sum(values)
+
+    def _modifier_values(self, stat: Stat) -> list[float]:
+        values = [
+            self._evaluate_formula(stat_property.scaling)
+            for stat_property in self.buffs[Buff.STATS]
+            if isinstance(stat_property, StatProperties)
+            and stat_property.stat == stat and self._evaluate_condition(stat_property.condition)
+        ]
+        values += [
+            self._evaluate_modifier(modifier, context)
+            for modifier, context in self._active_modifiers() if modifier.stat == stat
+        ]
+        return values
+
+    def _active_modifiers(self) -> Iterator[tuple[StatModifier, FormulaContext]]:
+        for modifier in self.champion.passive.stats:
+            yield modifier, self.formula_context(ActionType.PASSIVE)
+        for slot, (ability, rank) in self.ability_dict.items():
+            if rank > 0:
+                for modifier in ability.stats:
+                    yield modifier, self.formula_context(slot)
         for instance in self.active_buffs.values():
             for modifier in instance.definition.stats:
-                if modifier.stat == stat:
-                    result += self._evaluate_modifier(modifier, instance)
-        return result
+                yield modifier, instance.source.formula_context(instance.slot, stacks=instance.stacks)
 
     @staticmethod
-    def _evaluate_modifier(modifier: StatModifier, instance: BuffInstance) -> float:
+    def _evaluate_modifier(modifier: StatModifier, context: FormulaContext) -> float:
         if modifier.mode != StatMode.FLAT or modifier.conversion:
             raise NotImplementedError(f"Stat modifier mode '{modifier.mode}' (conversion={modifier.conversion}) is not supported yet")
-        context = instance.source.formula_context(instance.slot, stacks=instance.stacks)
         return evaluate_formula(modifier.formula, context)
 
 
@@ -228,18 +251,7 @@ class Character():
         if stat == Stat.TENACITY_P:
             return self._get_tenacity()
         
-        base_stat = self.get_base_stat(stat)
-        bonus_stat = self._get_bonus_stat(stat)
-        buff_stat = 0
-        # A buff formula evaluates all stats, including the one being buffed. The guard stops that recursion.
-        if stat not in self.evaluating_stat:
-            self.evaluating_stat.add(stat)
-            try:
-                buff_stat = self._get_buff_stat(stat)
-            finally:
-                self.evaluating_stat.discard(stat)
-
-        result = base_stat + bonus_stat + buff_stat
+        result = self.get_base_stat(stat) + self._get_bonus_stat(stat)
 
         if stat == Stat.MOVESPEED:
             result *= self._get_slow_value()
@@ -479,7 +491,7 @@ class Character():
 
     def _apply_status_effects(self, components: list[QueueComponent], tick: int) -> None:
         tenacity_affected = {StatusType.BERSERK, StatusType.BLIND, StatusType.CRIPPLE, StatusType.DISARM,
-                             StatusType.GROUND, StatusType.KINEMATICS, StatusType.SILENCE, StatusType.SLEEP,
+                             StatusType.GROUND, StatusType.SILENCE, StatusType.SLEEP,
                              StatusType.SLOW, StatusType.STUN, StatusType.SUSPENSION, StatusType.TAUNT}
         for component in components:
             try:

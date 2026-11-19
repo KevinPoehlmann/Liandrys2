@@ -148,6 +148,8 @@ class Buff(StrictModel):
     max_stacks: int = Field(1, ge=1)
     refresh: bool = True
     interval: str = "0"
+    tick_on_apply: bool = False
+    tick_on_end: bool = False
     # Slots that may start during the windup of an attack made while this buff is active; the hit still lands.
     windup_cancel: list[ActionType] = []
     stats: list[StatModifier] = []

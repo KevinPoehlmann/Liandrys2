@@ -74,6 +74,8 @@
         "max_stacks": 5,
         "refresh": true,
         "interval": "1.25",
+        "tick_on_apply": false,
+        "tick_on_end": true,
         "windup_cancel": [],
         "stats": [],
         "rules": [
@@ -134,6 +136,8 @@
         "max_stacks": 1,
         "refresh": true,
         "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
         "windup_cancel": [],
         "stats": [
           {
@@ -311,6 +315,8 @@
         "max_stacks": 1,
         "refresh": true,
         "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
         "windup_cancel": [
           "q"
         ],

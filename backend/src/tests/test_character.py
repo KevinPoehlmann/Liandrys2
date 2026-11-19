@@ -344,3 +344,15 @@ class TestCharacter():
         aatrox_with_items.take_effects([q_processed_ad_flat, q_processed_ap_maxhp, q_processed_heal_flat], 0)
         assert round(aatrox_with_items.damage_taken, 3) == 175.372
         assert round(aatrox_with_items.current_hp, 3) == 1302.26
+
+    @pytest.mark.parametrize("stat, sub_type", [
+        (Stat.ARMOR_PEN_P, DamageSubType.PHYSIC),
+        (Stat.MAGIC_PEN_P, DamageSubType.MAGIC)
+    ])
+    def test_percent_penetration_stacks_multiplicatively(self, aatrox_with_items, stat, sub_type):
+        aatrox_with_items.items = [
+            item.copy(update={"stats": {stat: value}})
+            for item, value in zip(aatrox_with_items.items, [0.4, 0.3])
+        ]
+        _, percent_pen = aatrox_with_items.get_penetration(sub_type)
+        assert percent_pen == pytest.approx(1 - 0.6 * 0.7)

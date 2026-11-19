@@ -12,6 +12,14 @@ class RuleEvent:
     owner: Actor
     target: Actor
     bearer: Actor | None = None
+    buff: str | None = None
+
+
+@dataclass
+class BuffTick:
+    bearer: Actor
+    buff: str
+    tick: int
 
 
 @dataclass

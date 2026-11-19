@@ -40,6 +40,8 @@ frontend/admin/     admin UI (Vue 3 + Vite + Tailwind) :5174 -> proxies to :5001
 
 **Ability system:** an Ability has Effects, and each Effect has EffectComponents (Damage / Heal / Shield / Status, with `props` + `delay`/`duration`/`interval`/`speed`). A Passive has PassiveEffects keyed by `Buff` (Stats, Cast, Hit = on-hit, GetHit = when hit). Values are **formula strings** evaluated with `eval` in `Character._evaluate_formula`. Available variables: stat values, `level`, `rank`, stacks per `ActionType`.
 
+**Game rules:** [docs/league-mechanics.md](docs/league-mechanics.md) collects the live League mechanics (mitigation order, crit, shields, CC, movement speed, ...) with what the simulation does today. Check it before building simulation logic.
+
 **Simulation:** 30 ticks per second (`TICKRATE`). `Simulation.do_combo` walks the actions. `Character.do_action` produces `EffectComp`s. `_queue_status` schedules them by tick (delay, travel time, DoT ticks). `_process_queue`: the attacker `evaluate`s formulas, the defender `take_effects` (resistances, shields, heals, CC).
 
 ## Commands
