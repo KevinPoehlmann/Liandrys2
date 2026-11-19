@@ -1,6 +1,6 @@
 <template>
   <div class="w-full mt-2">
-    <Line :data="chartData" :options="chartOptions" />
+    <Line :data="chartData" :options="chartOptions" :plugins="[deathLines]" />
   </div>
 </template>
 
@@ -39,7 +39,36 @@ const props = defineProps({
 
   // optional later: filter sources
   selectedSources: { type: Array, default: () => [] },
+
+  maxSeconds: { type: Number, default: undefined },
+
+  // vertical lines, e.g. [{ seconds: 2.3, label: "Darius dies" }]
+  markers: { type: Array, default: () => [] },
 })
+
+// Pets have ids like "blue.tibbers"; their effects count for their team.
+const team = (actor) => String(actor ?? "").split(".")[0]
+
+const deathLines = {
+  id: "deathLines",
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea, scales } = chart
+    for (const marker of props.markers) {
+      const x = scales.x.getPixelForValue(marker.seconds)
+      if (x < chartArea.left || x > chartArea.right) continue
+      ctx.save()
+      ctx.strokeStyle = "rgb(220, 38, 38)"
+      ctx.setLineDash([4, 4])
+      ctx.beginPath()
+      ctx.moveTo(x, chartArea.top)
+      ctx.lineTo(x, chartArea.bottom)
+      ctx.stroke()
+      ctx.fillStyle = "rgb(220, 38, 38)"
+      ctx.fillText(marker.label, x + 4, chartArea.top + 12)
+      ctx.restore()
+    }
+  },
+}
 
 
 function groupKey(e) {
@@ -55,7 +84,7 @@ function mitigatedKey(e) {
 const typeObject = computed(() => {
   if (props.type_ === "Damage") {
     return {
-      filter_: e => e.type_ === "Damage" && e.actor === props.actor,
+      filter_: e => e.type_ === "Damage" && team(e.actor) === props.actor,
       contributions: e => [{
         key: groupKey(e),
         value: Number(e.value) || 0
@@ -64,7 +93,7 @@ const typeObject = computed(() => {
     }
   } else if (props.type_ === "Tank") {
     return {
-      filter_: e => (e.type_ === "Damage" || e.type_ === "Shield") && e.target === props.actor,
+      filter_: e => (e.type_ === "Damage" || e.type_ === "Shield") && team(e.target) === props.actor,
       contributions: e => {
         if (e.type_ === "Shield") {
           return [{ key: "Shielded", value: Number(e.value) || 0 }]
@@ -82,7 +111,7 @@ const typeObject = computed(() => {
     }
   } else if (props.type_ === "Heal") {
     return {
-      filter_: e => e.type_ === "Heal" && e.actor === props.actor,
+      filter_: e => e.type_ === "Heal" && team(e.actor) === props.actor,
       contributions: e => [{
         key: props.mode === "source" ? groupKey(e) : "Heal",
         value: Number(e.value) || 0
@@ -243,6 +272,8 @@ const chartOptions = computed(() => ({
   scales: {
     x: {
       type: "linear",
+      min: 0,
+      max: props.maxSeconds,
       title: { display: true, text: "Time (s)" },
     },
     y: {

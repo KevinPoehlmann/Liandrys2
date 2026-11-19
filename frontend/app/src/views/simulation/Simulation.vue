@@ -62,6 +62,8 @@
               :damage="damage"
               :ticks="ticks"
               :tickRate="tickRate"
+              :lastActionTick="lastActionTick"
+              :deaths="deaths"
               :effectList="effectList"
               :error="error"
               @remove="combo.splice($event, 1)"
@@ -148,6 +150,8 @@ const combo = ref([])
 const damage = ref(0)
 const ticks = ref(0)
 const tickRate = ref(0)
+const lastActionTick = ref(0)
+const deaths = ref({})
 const effectList = ref([])
 
 const error = ref(null)
@@ -284,6 +288,8 @@ watch(
       damage.value = result.damage
       ticks.value = result.ticks
       tickRate.value = result.tick_rate
+      lastActionTick.value = result.last_action_tick
+      deaths.value = result.deaths ?? {}
       effectList.value = result.effect_list
 
     } catch (e) {

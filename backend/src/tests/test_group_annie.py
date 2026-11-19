@@ -5,6 +5,7 @@ from src.server.models.dataenums import (
 )
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character, soft_cap_movespeed
+from src.server.simulation.pet import PetCharacter
 from src.server.simulation.simulation import Simulation
 
 
@@ -160,3 +161,102 @@ class TestMoltenShield():
 
         decay = max(0.0, 1 - elapsed_ticks * TICK_SECONDS / 1.5)
         assert character.get_stat(Stat.MOVESPEED) == pytest.approx(soft_cap_movespeed(ANNIE_MOVESPEED * (1 + MOLTEN_SPEED_LVL_6 * decay)))
+
+
+TIBBERS = Actor("blue.tibbers")
+SUMMON_TICK = CAST_TICKS
+TIBBERS_WINDUP = 0.2
+R_RANK_1_TIBBERS_ATTACK = 30
+R_RANK_1_AURA = 2.5
+ENRAGE_TICKS = to_ticks(3.036)
+
+
+def attack_ticks(attackspeed: float) -> tuple[int, int]:
+    """(attack time, windup) in ticks."""
+    return to_ticks(1 / attackspeed), to_ticks(TIBBERS_WINDUP / attackspeed)
+
+
+def tibbers_hits(sim: Simulation, source: ActionType) -> list[tuple[int, float]]:
+    return [
+        (event.tick, result.value)
+        for event in sim.effect_list
+        for result in event.result
+        if result.actor == TIBBERS and result.source == source and result.type_ == EffectType.DAMAGE
+    ]
+
+
+class TestTibbers():
+
+    @pytest.mark.parametrize("level, hp, resistance", [(6, 1275, 30), (11, 1850, 55), (18, 4000, 90)])
+    def test_stats_by_level(self, load_champion, level, hp, resistance):
+        owner = annie(load_champion, level)
+        definition, slot = owner.pet_definitions["tibbers"]
+        tibbers = PetCharacter(definition, owner, slot)
+
+        assert tibbers.get_stat(Stat.HP) == pytest.approx(hp)
+        assert tibbers.get_stat(Stat.ARMOR) == pytest.approx(resistance)
+        assert tibbers.get_stat(Stat.MR) == pytest.approx(resistance)
+        assert tibbers.get_stat(Stat.MOVESPEED) == pytest.approx(350)
+
+
+    def test_enraged_attacks_get_slower_with_each_attack(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(ActionType.R))
+
+        start, expected_hits = SUMMON_TICK, []
+        # The four fast attacks take 92 ticks; the enrage ends on the tick the fifth starts, which still gets it.
+        for attackspeed in (1.736, 1.536, 1.307, 1.043, 0.739, 0.625):
+            attack_time, windup = attack_ticks(attackspeed)
+            expected_hits.append(start + windup)
+            start += attack_time
+        assert ENRAGE_TICKS == sum(attack_ticks(attackspeed)[0] for attackspeed in (1.736, 1.536, 1.307, 1.043)) == 92
+        assert [tick for tick, _ in tibbers_hits(vs_darius, ActionType.AA)][:6] == expected_hits
+
+
+    def test_attacks_use_annies_magic_pen(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(ActionType.R))
+
+        _, first_hit = tibbers_hits(vs_darius, ActionType.AA)[0]
+        assert first_hit == pytest.approx(magic(R_RANK_1_TIBBERS_ATTACK))
+
+
+    def test_aura_burns_every_quarter_second_for_45_seconds(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(ActionType.R))
+
+        aura = tibbers_hits(vs_darius, ActionType.PASSIVE)
+        assert len(aura) == 180
+        assert aura[0] == (SUMMON_TICK + to_ticks(0.25), pytest.approx(magic(R_RANK_1_AURA)))
+        assert aura[-1][0] == SUMMON_TICK + to_ticks(45)
+
+
+    def test_tibbers_is_gone_after_45_seconds(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(ActionType.R))
+
+        last_attack, _ = tibbers_hits(vs_darius, ActionType.AA)[-1]
+        assert last_attack <= SUMMON_TICK + to_ticks(45)
+        assert vs_darius.actors[TIBBERS].expired
+
+
+    def test_pyromania_stun_enrages_tibbers_again(self, load_champion):
+        darius = Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), [])
+        sim = Simulation(annie(load_champion, pyromania_start=3), darius)
+
+        # R brings the 4th stack and summons Tibbers, Q stuns when it lands at tick 16.
+        sim.do_combo(combo(ActionType.R, ActionType.Q))
+
+        first_time, first_windup = attack_ticks(1.736)
+        second_start = SUMMON_TICK + first_time
+        assert second_start > 2 * CAST_TICKS
+        # Without the stun the second attack would use 1.536.
+        second_time, second_windup = attack_ticks(1.736)
+        _, third_windup = attack_ticks(1.536)
+        hits = [tick for tick, _ in tibbers_hits(sim, ActionType.AA)][:3]
+        assert hits == [SUMMON_TICK + first_windup, second_start + second_windup, second_start + second_time + third_windup]
+
+
+    def test_molten_shield_also_shields_tibbers(self, vs_darius: Simulation):
+        r, e = combo(ActionType.R, ActionType.E)
+        vs_darius.do_action(r)
+        vs_darius.do_action(e)
+        vs_darius._process_queue()  # only up to the E, the shield lasts 3 of Tibbers' 45 seconds
+
+        assert [value for _, value, _, _ in vs_darius.actors[TIBBERS].shields] == [E_RANK_1_SHIELD]

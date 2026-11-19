@@ -21,7 +21,7 @@ backend/            FastAPI, one codebase, two apps
     loader/         patchloader2.py (orchestration) + webscraper2.py (wiki scraping) + helper.py
     models/         Pydantic v1 models (see below)
     routes/         every module exposes `router` (read) and `admin` (write)
-    simulation/     simulation.py (tick queue) + character.py (stats, formulas, applying effects)
+    simulation/     simulation.py (tick queue) + character.py (stats, formulas, applying effects) + pet.py (summoned units)
   src/tests/        pytest; static wiki HTML/JSON fixtures in tests/static
   src/conftest.py   shared fixtures
 frontend/app/       user UI (Vue 3 + Vite + Tailwind + chart.js) :5173 -> proxies to :5000

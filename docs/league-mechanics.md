@@ -224,7 +224,7 @@ Pages: Champion_summoned_units (wiki marks it outdated, last updated V14.22)
 - Damage is credited to the owner. Tibbers' aura and Heimerdinger's turrets deal ability damage. Control: commanded (Tibbers, Daisy, clones), autonomous (most minions), uncontrollable (Fiddlesticks effigy, Lissandra R clones).
 - Some pet attacks apply life steal (Tibbers, Daisy, Voidlings — the wiki marks this unexpected).
 
-**Simulation:** ⚠ not modeled. Tibbers is the design check in the Annie step. For a damage calculator, most pets are probably just timed damage rules on the owner; clones and commanded pets need more.
+**Simulation:** autonomous minions ✓ (own actor `blue.<pet>`, attacks the owner's enemy until it expires, uses the owner's penetration — confirmed for Tibbers). ⚠ Pets can't be attacked or die yet; no commands (recast/move); no clones; pet life steal not modelled. Damage results carry the pet's id; crediting it to the owner is the frontend's job (team = first part of the id).
 
 ## Still to read
 From the wiki's 133 "Gameplay elements" pages, these look relevant later:

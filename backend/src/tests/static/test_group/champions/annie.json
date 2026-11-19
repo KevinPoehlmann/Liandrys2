@@ -120,7 +120,8 @@
                 "type_": "RemoveBuff",
                 "props": {
                   "buff": "pyromania",
-                  "target": "self"
+                  "target": "self",
+                  "stacks": null
                 }
               }
             ],
@@ -224,7 +225,16 @@
                 "type_": "RemoveBuff",
                 "props": {
                   "buff": "pyromania_energized",
-                  "target": "self"
+                  "target": "self",
+                  "stacks": null
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "tibbers_enrage",
+                  "target": "pet",
+                  "stacks": "5"
                 }
               }
             ],
@@ -345,7 +355,16 @@
                 "type_": "RemoveBuff",
                 "props": {
                   "buff": "pyromania_energized",
-                  "target": "self"
+                  "target": "self",
+                  "stacks": null
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "tibbers_enrage",
+                  "target": "pet",
+                  "stacks": "5"
                 }
               }
             ],
@@ -450,6 +469,15 @@
                 "type_": "Shield",
                 "props": {
                   "target": "self",
+                  "scaling": "by_rank(60, 95, 130, 165, 200) + 0.4 * ap",
+                  "duration": "3",
+                  "dmg_sub_type": "True"
+                }
+              },
+              {
+                "type_": "Shield",
+                "props": {
+                  "target": "pet",
                   "scaling": "by_rank(60, 95, 130, 165, 200) + 0.4 * ap",
                   "duration": "3",
                   "dmg_sub_type": "True"
@@ -649,7 +677,16 @@
                 "type_": "RemoveBuff",
                 "props": {
                   "buff": "pyromania_energized",
-                  "target": "self"
+                  "target": "self",
+                  "stacks": null
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "tibbers_enrage",
+                  "target": "pet",
+                  "stacks": "5"
                 }
               }
             ],
@@ -680,6 +717,23 @@
             "delay": "0",
             "speed": "0",
             "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Summon",
+                "props": {
+                  "pet": "tibbers"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
           }
         ]
       }
@@ -695,7 +749,134 @@
     ],
     "buffs": [],
     "inputs": [],
-    "cooldown_starts_after": null
+    "cooldown_starts_after": null,
+    "pets": [
+      {
+        "name": "tibbers",
+        "duration": "45",
+        "stats": {
+          "hp": "by_level(1275, 1275, 1275, 1275, 1275, 1275, 1350, 1425, 1500, 1575, 1850, 2125, 2400, 2675, 2950, 3300, 3650, 4000, 4000, 4000) + 0.5 * owner_ap + 1.5 * owner_bonus_hp",
+          "armor": "5 * level",
+          "mr": "5 * level",
+          "attackspeed": "[0.625, 0.739, 1.043, 1.307, 1.536, 1.736][stacks_tibbers_enrage]",
+          "movementspeed": "by_rank(350, 375, 400)"
+        },
+        "attack": {
+          "scaling": "by_rank(30, 50, 70) + 0.1 * owner_ap",
+          "dmg_type": [
+            "Ability damage"
+          ],
+          "dmg_sub_type": "Magic",
+          "windup": 0.2,
+          "missile_speed": 0
+        },
+        "passive": {
+          "name": "Tibbers",
+          "rules": [
+            {
+              "trigger": "on_start",
+              "filter": null,
+              "outcome": null,
+              "conditions": [],
+              "actions": [
+                {
+                  "type_": "ApplyBuff",
+                  "props": {
+                    "buff": "tibbers_enrage",
+                    "target": "self",
+                    "stacks": "5"
+                  }
+                },
+                {
+                  "type_": "ApplyBuff",
+                  "props": {
+                    "buff": "tibbers_aura",
+                    "target": "target",
+                    "stacks": "1"
+                  }
+                }
+              ],
+              "delay": "0",
+              "speed": "0",
+              "cooldown": "0"
+            }
+          ],
+          "stats": [],
+          "buffs": [
+            {
+              "name": "tibbers_enrage",
+              "duration": "3.036",
+              "max_stacks": 5,
+              "refresh": true,
+              "interval": "0",
+              "tick_on_apply": false,
+              "tick_on_end": false,
+              "windup_cancel": [],
+              "stats": [],
+              "rules": [
+                {
+                  "trigger": "on_attack",
+                  "filter": null,
+                  "outcome": null,
+                  "conditions": [],
+                  "actions": [
+                    {
+                      "type_": "RemoveBuff",
+                      "props": {
+                        "buff": "tibbers_enrage",
+                        "target": "bearer",
+                        "stacks": "1"
+                      }
+                    }
+                  ],
+                  "delay": "0",
+                  "speed": "0",
+                  "cooldown": "0"
+                }
+              ]
+            },
+            {
+              "name": "tibbers_aura",
+              "duration": "45",
+              "max_stacks": 1,
+              "refresh": true,
+              "interval": "0.25",
+              "tick_on_apply": false,
+              "tick_on_end": false,
+              "windup_cancel": [],
+              "stats": [],
+              "rules": [
+                {
+                  "trigger": "on_interval",
+                  "filter": null,
+                  "outcome": null,
+                  "conditions": [],
+                  "actions": [
+                    {
+                      "type_": "Damage",
+                      "props": {
+                        "target": "bearer",
+                        "scaling": "by_rank(2.5, 3.75, 5) + 0.01 * owner_ap",
+                        "dmg_type": [
+                          "Ability damage",
+                          "Area damage"
+                        ],
+                        "dmg_sub_type": "Magic",
+                        "vamp": 0.0
+                      }
+                    }
+                  ],
+                  "delay": "0",
+                  "speed": "0",
+                  "cooldown": "0"
+                }
+              ]
+            }
+          ],
+          "inputs": []
+        }
+      }
+    ]
   },
   "validated": true,
   "changes": [],

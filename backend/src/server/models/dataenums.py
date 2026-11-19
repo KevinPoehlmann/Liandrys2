@@ -1,8 +1,9 @@
 import math
+import re
 from aenum import MultiValueEnum
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import cast
+from typing import ClassVar, cast
 from pydantic import BaseModel
 
 
@@ -198,9 +199,36 @@ class Map(str, Enum):
             raise ValueError(f"{value!r} is not a valid alias for {cls.__name__}")
 
 
-class Actor(str, Enum):
-    BLUE = "blue"
-    RED = "red"
+class Actor(str):
+    """A unit in the simulation: the team first, then the path to the unit.
+
+    'blue' and 'red' are the champions, pets hang below their owner: 'blue.tibbers', 'blue.ghoul#2'.
+    """
+    BLUE: ClassVar["Actor"]
+    RED: ClassVar["Actor"]
+    PATTERN: ClassVar[re.Pattern] = re.compile(r"(blue|red)(\.[a-z][a-z0-9_]*(#\d+)?)*")
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value) -> "Actor":
+        if not isinstance(value, str) or not cls.PATTERN.fullmatch(value):
+            raise ValueError(f"{value!r} is not an actor id like 'blue' or 'blue.tibbers'")
+        return cls(value)
+
+    @classmethod
+    def __modify_schema__(cls, field_schema: dict) -> None:
+        field_schema.update(type="string", pattern=cls.PATTERN.pattern)
+
+    @property
+    def team(self) -> "Actor":
+        return Actor(self.split(".", 1)[0])
+
+
+Actor.BLUE = Actor("blue")
+Actor.RED = Actor("red")
 
 #Champions
 
@@ -431,6 +459,8 @@ class Target(str, Enum):
     SELF = "self"
     TARGET = "target"
     BEARER = "bearer"
+    PET = "pet"
+    OWNER = "owner"
 
 class RuleActionType(str, Enum):
     DAMAGE = "Damage"
@@ -441,6 +471,7 @@ class RuleActionType(str, Enum):
     REMOVE_BUFF = "RemoveBuff"
     RESET_ATTACK = "ResetAttack"
     MODIFY_COOLDOWN = "ModifyCooldown"
+    SUMMON = "Summon"
     CUSTOM = "Custom"
 
 class StatMode(str, Enum):

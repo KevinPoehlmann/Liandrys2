@@ -22,6 +22,22 @@
       <p><strong>Damage:</strong> {{ (totalDamage.toFixed()) }} HP</p>
       <p><strong>Time:</strong> {{ (timeSeconds.toFixed(2)) }} seconds</p>
       <p><strong>DPS:</strong> {{ (totalDamage / (timeSeconds || 1)).toFixed() }}</p>
+      <p v-for="marker in deathMarkers" :key="marker.label">
+        <strong>{{ marker.label }}:</strong> {{ marker.seconds.toFixed(2) }} seconds
+      </p>
+      <div class="flex items-center gap-2 mt-2">
+        <span>Chart until {{ visibleUntil.toFixed(1) }} s of {{ timeSeconds.toFixed(1) }} s</span>
+        <button
+          class="px-2 py-1 rounded border text-sm disabled:opacity-50"
+          :disabled="visibleUntil >= timeSeconds"
+          @click="extraSeconds += WINDOW_STEP_SECONDS"
+        >+{{ WINDOW_STEP_SECONDS }} s</button>
+        <button
+          class="px-2 py-1 rounded border text-sm disabled:opacity-50"
+          :disabled="visibleUntil >= timeSeconds"
+          @click="extraSeconds = Infinity"
+        >All</button>
+      </div>
       <div class="w-full border rounded p-4 mt-2 border-blue-800 dark:border-blue-900">
         <div class="flex justify-between">
           <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-100">
@@ -42,6 +58,8 @@
           :mode="blueChartMode"
           actor="blue"
           :type_="blueChartType"
+          :maxSeconds="visibleUntil"
+          :markers="deathMarkers"
         />
       </div>
       <div class="border rounded p-4 mt-2 border-red-800 dark:border-red-900">
@@ -64,6 +82,8 @@
           :mode="redChartMode"
           actor="red"
           :type_="redChartType"
+          :maxSeconds="visibleUntil"
+          :markers="deathMarkers"
         />
       </div>
     </div>
@@ -84,6 +104,8 @@ const props = defineProps({
   damage: Number,
   ticks: Number,
   tickRate: Number,
+  lastActionTick: Number,
+  deaths: Object,
   effectList: Array,
   error: String
 })
@@ -107,6 +129,25 @@ const timeSeconds = computed(() => {
   return 0
 })
 
+
+
+// The chart first shows 10 s after the last action; the simulation itself runs until every effect has ended.
+const WINDOW_STEP_SECONDS = 10
+const extraSeconds = ref(0)
+
+const toSeconds = (tick) => (props.tickRate > 0 ? tick / props.tickRate : 0)
+
+const visibleUntil = computed(() => {
+  const until = toSeconds(props.lastActionTick ?? 0) + WINDOW_STEP_SECONDS + extraSeconds.value
+  return Math.min(until, Math.max(timeSeconds.value, WINDOW_STEP_SECONDS))
+})
+
+const deathMarkers = computed(() => Object.entries(props.deaths ?? {}).map(([actor, tick]) => ({
+  label: `${actor === 'blue' ? props.blueConfig?.champion?.name ?? 'Blue' : props.redConfig?.champion?.name ?? 'Red'} dies`,
+  seconds: toSeconds(tick),
+})))
+
+watch(() => props.effectList, () => { extraSeconds.value = 0 })
 
 
 const emit = defineEmits(['remove'])

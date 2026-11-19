@@ -58,6 +58,16 @@ class TestBuffInstances():
         assert darius.get_buff_stacks("silver_bolts") == 3
 
 
+    def test_removing_stacks_ends_the_buff_at_zero(self, vayne, darius):
+        darius.apply_buff("silver_bolts", vayne, 3, 0)
+
+        darius.remove_stacks("silver_bolts", 1, 0)
+        assert darius.get_buff_stacks("silver_bolts") == 2
+
+        darius.remove_stacks("silver_bolts", 2, 0)
+        assert "silver_bolts" not in darius.active_buffs
+
+
     def test_buff_uses_the_rank_of_its_source(self, vayne, load_champion):
         vayne_rank_3 = Character(load_champion("vayne"), 16, Rank(q=5, w=5, e=5, r=3), [])
 

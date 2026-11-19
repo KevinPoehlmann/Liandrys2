@@ -98,12 +98,13 @@ Condition:
 |---|---|
 | `Damage`, `Heal`, `Shield`, `Status` | today's components, plus `target`. `delay`/`speed` move to the rule, `duration`/`interval` become a buff |
 | `ApplyBuff(buff, target, stacks)` | give a buff or add stacks |
-| `RemoveBuff(buff, target)` | consume "next attack" buffs, reset stacks |
+| `RemoveBuff(buff, target, stacks)` | consume "next attack" buffs, reset stacks; with `stacks` only that many (Tibbers' enrage loses one per attack) |
 | `ResetAttack` | Vayne Q, Riven Q, Darius W |
 | `ModifyCooldown(slot, amount \| reset)` | Darius R |
+| `Summon(pet)` | creates a pet defined in the ability's `pets` (Annie R) |
 | `Custom(function, args)` | escape hatch, see below |
 
-`target` is an enum, not a bool, so pets and 2v2 can be added later.
+`target` is an enum: `self`, `target`, `bearer` (buff rules), `pet` (the owner's active pet; the action is skipped while there is none), `owner` (inside pet rules).
 
 In JSON every action has the same shape as today's polymorphic models, with all fields in `props`:
 
@@ -324,8 +325,15 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
   - Missing categories: on-spell (ability lands; Luden's), on-cc (Aftershock), on-crit, on-death/takedown (2v2), on-heal/shield (Aery).
   - The trigger filter needs damage tags and damage types besides slots: spell effects react to ability damage (including Darius W and Vayne Q attacks), Black Cleaver to physical damage.
   - `on_cast` fires at the end of the cast time; the game fires some on-cast effects at the start. Check which when an item/rune needs it.
-- **Pets (decided):** a pet is its own actor (a third `Character` with its own stats, attack timer and buffs), not a buff of its owner. Needed for Tibbers, clones and 2v2 anyway. Comes as its own step after Annie.
-- **End of the simulation (decided, build with Tibbers):** the backend simulates until the last effect; the frontend shows up to 10 s after the last action and lets the user extend the view. Needs the tick of the last action in the response, and a hard cap for effects without an end.
+- **Pets (built):** a pet is its own actor, not a buff of its owner.
+  - **Actor ids:** `Actor` is a validated string: the team first, then the path to the unit (`blue`, `red`, `blue.tibbers`, `blue.ghoul#2`). Later `blue.top` and `blue.top.tibbers` fit the same pattern. The owner is stored on the pet, not read from the id.
+  - **Definition:** an ability lists `pets` (name, duration, stat formulas, attack, passive). Stat formulas use the rank of the summoning ability and read the owner with `owner_` (`owner_ap`). The pet's passive is the normal `Passive` model; the owner also knows the pet's buffs, so Annie's stun can enrage Tibbers.
+  - **Behaviour:** `PetCharacter` (simulation/pet.py) reuses `Character` and replaces only stats, attack speed (no ratio: bonus attack speed scales the base), windup, the attack rule and penetration (the owner's, confirmed for Tibbers). On summon its `on_start` rules fire and it attacks the owner's enemy on its own until it expires. On expiry its buffs end, including the ones it put on others (an aura modelled as a debuff on the enemy).
+  - **Expiry:** rules of an expired pet don't run anymore, so an attack still in flight misses (the owner's decision; not checked in game).
+  - **Tibbers:** stats from the wiki's templates (health per level from level 6, armor/MR `5 * level`, the rest by R rank). Enrage is a buff with 5 stacks, one removed per attack; the attack speed formula indexes a list with the remaining stacks (1.736 → 0.739, then 0.625). The aura is a debuff Tibbers puts on the enemy on summon (ticks every 0.25 s, 180 ticks); revisit when distance or several enemies matter. Left out: the enrage movement speed, Ghosted, Recovery, Revenge.
+  - **Enrage duration:** the wiki's 3 s is rounded; in ticks the enrage lasts until the 5th attack starts (92 ticks = 3.036 s), and an attack starting on a buff's end tick still gets the buff (the owner's observation in game). It stays time-based, so a stun on Tibbers would let it run out earlier.
+  - **Not yet:** the enemy attacking or killing the pet, recast/moving (Annie R stage 2), Tibbers' revenge on Annie's death (`on_death`), clones that copy the owner.
+- **End of the simulation (built):** the backend simulates until the last effect, at most 60 s after the start of the last action (`MAX_SECONDS_AFTER_LAST_ACTION`; no endless effect is known yet). The response carries `last_action_tick` and `deaths` (actor → tick at which its health first reached 0); the simulation goes on after a death so the overkill stays visible. The frontend shows 10 s after the last action, with "+10 s" and "All" buttons, and marks deaths with a dashed line. Pet results count for their team (first part of the actor id).
 - **`bearer`:** introduced for Vayne W, confirmed with Darius (`on_interval` uses the bearer as `target`). Triggered buff rules now also get the bearer.
 - **Percent penetration from several sources:** armor and magic pen percent stack multiplicatively, see `MULTIPLICATIVE_STATS`. Percent stats are stored as fractions (0.3, not 30); the loader already divides by 100.
 - **`Displace(distance)`:** Vayne E pushes the target 475 units back, which changes the travel time of later projectiles. Build it once the distance comes from the request (Phase 5); today it is always 0.
@@ -341,6 +349,6 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Shield and buff:** Molten Shield's reflect buff lasts as long as the shield (3 s) but doesn't end when the shield breaks. Fine in 1v1 (the first hit always meets the shield); with several enemies the buff should end with the shield.
 - **Riven:** when does the cooldown start with recasts? Probably after the last stage or when the recast window runs out, handled in the stage logic.
 - **Last DoT tick:** today it deals the full tick damage. Check whether that matches League.
-- **Deferred until a champion needs it:** `on_expire` (Zed R, Sion W), `on_takedown` plus extending a buff's duration (Vayne R +4 s, resets like Darius R; only matters with more than one enemy, so together with 2v2), a free `data` field on buff instances (Zed), more actors than blue/red (Tibbers, 2v2).
+- **Deferred until a champion needs it:** `on_expire` (Zed R, Sion W), `on_takedown` plus extending a buff's duration (Vayne R +4 s, resets like Darius R; only matters with more than one enemy, so together with 2v2), a free `data` field on buff instances (Zed), more champions than blue/red (2v2).
 - **Stat enum cleanup:** pseudo stats like `target's armor` or `units` only serve the scraper. Clean them up when the scraper is changed.
 - **Attack timing:** the windup locks the attacker; after it, abilities may start at once (the rest of the animation is skipped), while the next attack waits for the full attack time. Cancelling an attack inside its windup (no damage) is not modelled; a combo's attack always completes. `windup_cancel` is the only exception so far.

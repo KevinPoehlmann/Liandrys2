@@ -52,6 +52,7 @@ class ApplyBuffProps(StrictModel):
 class RemoveBuffProps(StrictModel):
     buff: str
     target: Target
+    stacks: str | None = None  # None removes the whole buff
 
 class ResetAttackProps(StrictModel):
     pass
@@ -60,6 +61,9 @@ class ModifyCooldownProps(StrictModel):
     slot: ActionType
     amount: str = "0"
     reset: bool = False
+
+class SummonProps(StrictModel):
+    pet: str
 
 class CustomProps(StrictModel):
     function: str
@@ -98,6 +102,10 @@ class ModifyCooldownAction(StrictModel):
     type_: Literal[RuleActionType.MODIFY_COOLDOWN]
     props: ModifyCooldownProps
 
+class SummonAction(StrictModel):
+    type_: Literal[RuleActionType.SUMMON]
+    props: SummonProps
+
 class CustomAction(StrictModel):
     type_: Literal[RuleActionType.CUSTOM]
     props: CustomProps
@@ -107,7 +115,7 @@ class CustomAction(StrictModel):
 RuleAction = Annotated[
     Union[
         DamageAction, HealAction, ShieldAction, StatusAction, ApplyBuffAction,
-        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, CustomAction
+        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, CustomAction
     ],
     Field(discriminator="type_")
 ]

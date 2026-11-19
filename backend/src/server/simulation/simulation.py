@@ -26,15 +26,19 @@ from src.server.models.dataenums import (
 from src.server.models.request import V1Response, Action
 from src.server.models.rule import (
     ApplyBuffAction, Condition, DamageAction, DamageProps, HealAction, HealProps, RemoveBuffAction,
-    ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps
+    ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps, SummonAction
 )
 from src.server.simulation.character import Character
 from src.server.simulation.buff_instance import BuffInstance
-from src.server.simulation.events import BuffEnd, BuffTick, RuleEvent
+from src.server.simulation.events import BuffEnd, BuffTick, PetAttackDue, PetExpire, RuleEvent
 from src.server.simulation.exceptions import SimulationError
 from src.server.simulation.formula import FormulaContext, evaluate_formula
+from src.server.simulation.pet import PetCharacter
 
-QueueEntry = QueueComponent | RuleEvent | BuffEnd | BuffTick
+QueueEntry = QueueComponent | RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
+
+# Effects without an end (none known yet) would keep the simulation running forever.
+MAX_SECONDS_AFTER_LAST_ACTION = 60
 
 
 
@@ -46,6 +50,8 @@ class Simulation():
         self.queue: dict[int, list[QueueEntry]] = defaultdict(list)
         self.dots: dict[tuple[ActionType, Actor], DotState] = {}
         self.effect_list: list[TickEvent] = []
+        self.last_action_tick: int = 0
+        self.deaths: dict[Actor, int] = {}
         self.actors: dict[Actor, Character] = {
             Actor.BLUE: blue,
             Actor.RED: red
@@ -58,7 +64,14 @@ class Simulation():
         for i, action in enumerate(combo):
             self.do_action(action, i)
         self._process_remaining_queue()
-        return V1Response(tick_rate=TICKRATE, damage=round(self.actors[Actor.RED].damage_taken), ticks=self.tick, effect_list=self.effect_list)
+        return V1Response(
+            tick_rate=TICKRATE,
+            damage=round(self.actors[Actor.RED].damage_taken),
+            ticks=self.tick,
+            last_action_tick=self.last_action_tick,
+            deaths=self.deaths,
+            effect_list=self.effect_list
+        )
 
 
     def do_action(self, action: Action, index: int | None = None) -> None:
@@ -89,8 +102,13 @@ class Simulation():
 
 
     def _start(self) -> None:
-        for actor, counterpart in ((Actor.BLUE, Actor.RED), (Actor.RED, Actor.BLUE)):
-            self._fire(Trigger.ON_START, actor, counterpart, ActionType.PASSIVE, self.tick)
+        for actor in list(self.actors):
+            self._fire(Trigger.ON_START, actor, self._enemy_of(actor), ActionType.PASSIVE, self.tick)
+
+
+    def _enemy_of(self, actor: Actor) -> Actor:
+        # 1v1: the enemy is the champion of the other team.
+        return Actor.RED if actor.team == Actor.BLUE else Actor.BLUE
 
 
     def _set_clock(self, tick: int) -> None:
@@ -101,6 +119,7 @@ class Simulation():
     def _cast(self, action: Action) -> None:
         self._set_clock(self.tick)
         start = self.tick
+        self.last_action_tick = start
         character = self.actors[action.actor]
         action_effect = character.do_action(action, self.tick)
         self.tick = action_effect.tick
@@ -170,6 +189,8 @@ class Simulation():
 
 
     def _run_rule(self, event: RuleEvent, tick: int) -> list[QueueComponent]:
+        if self._is_gone(event.owner):
+            return []  # e.g. an attack still in flight when the pet expires
         if not all(self._holds(condition, event) for condition in event.rule.conditions):
             return []
         components = []
@@ -180,6 +201,8 @@ class Simulation():
 
     def _run_action(self, action: RuleAction, event: RuleEvent, tick: int) -> list[QueueComponent]:
         owner = self.actors[event.owner]
+        if getattr(action.props, "target", None) == Target.PET and self._pet_of(event.owner) is None:
+            return []  # a rule for the pet while no pet is out
         match action:
             case DamageAction(props=props):
                 return [self._damage(props, event)]
@@ -198,9 +221,15 @@ class Simulation():
                 self._schedule_interval(bearer, instance)
                 self._fire_stack(props.buff, instance.definition.rules, instance.slot, self._actor_of(instance.source), bearer, tick)
             case RemoveBuffAction(props=props):
-                self.actors[self._resolve_target(props.target, event)].remove_buff(props.buff, tick)
+                bearer = self.actors[self._resolve_target(props.target, event)]
+                if props.stacks is None:
+                    bearer.remove_buff(props.buff, tick)
+                else:
+                    bearer.remove_stacks(props.buff, int(evaluate_formula(props.stacks, owner.formula_context(event.slot))), tick)
             case ResetAttackAction():
                 owner.reset_attack(tick)
+            case SummonAction(props=props):
+                self._summon(props.pet, event.owner, tick)
             case _:
                 raise NotImplementedError(f"Action '{action.type_}' is not supported yet")
         return []
@@ -300,8 +329,7 @@ class Simulation():
         return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.STATUS, props=processed)
 
 
-    @staticmethod
-    def _resolve_target(target: Target, event: RuleEvent) -> Actor:
+    def _resolve_target(self, target: Target, event: RuleEvent) -> Actor:
         match target:
             case Target.SELF:
                 return event.owner
@@ -309,8 +337,89 @@ class Simulation():
                 return event.target
             case Target.BEARER if event.bearer is not None:
                 return event.bearer
-            case _:
+            case Target.BEARER:
                 raise ValueError(f"Target '{target}' is only available inside buff rules")
+            case Target.PET:
+                pet = self._pet_of(event.owner)
+                if pet is None:
+                    raise ValueError(f"{event.owner} has no pet")
+                return pet
+            case Target.OWNER:
+                return self._owner_of(event.owner)
+
+
+    def _is_gone(self, actor: Actor) -> bool:
+        character = self.actors[actor]
+        return isinstance(character, PetCharacter) and character.expired
+
+
+    def _pet_of(self, owner: Actor) -> Actor | None:
+        pets = [
+            actor for actor, character in self.actors.items()
+            if isinstance(character, PetCharacter) and not character.expired and character.owner is self.actors[owner]
+        ]
+        if len(pets) > 1:
+            raise NotImplementedError(f"{owner} has several pets, target 'pet' is ambiguous: {pets}")
+        return pets[0] if pets else None
+
+
+    def _owner_of(self, actor: Actor) -> Actor:
+        return self._actor_of(self._pet(actor).owner)
+
+
+    def _pet(self, actor: Actor) -> PetCharacter:
+        pet = self.actors[actor]
+        if not isinstance(pet, PetCharacter):
+            raise ValueError(f"{actor} is not a pet")
+        return pet
+
+
+    def _summon(self, name: str, owner: Actor, tick: int) -> None:
+        owner_character = self.actors[owner]
+        definition, slot = owner_character.pet_definitions[name]
+        pet = PetCharacter(definition, owner_character, slot)
+        pet.current_tick = tick
+        pet_id = self._new_pet_id(owner, name)
+        self.actors[pet_id] = pet
+        lifetime = to_ticks(evaluate_formula(definition.duration, pet.formula_context(ActionType.PASSIVE)))
+        self.queue.setdefault(tick + lifetime, []).append(PetExpire(pet=pet_id))
+        self._fire(Trigger.ON_START, pet_id, self._enemy_of(pet_id), ActionType.PASSIVE, tick)
+        self.queue.setdefault(tick, []).append(PetAttackDue(pet=pet_id))
+
+
+    def _new_pet_id(self, owner: Actor, name: str) -> Actor:
+        pet_id = f"{owner}.{name}"
+        number = 2
+        while pet_id in self.actors:
+            pet_id = f"{owner}.{name}#{number}"
+            number += 1
+        return Actor(pet_id)
+
+
+    def _pet_attack(self, pet_id: Actor, tick: int) -> None:
+        pet = self._pet(pet_id)
+        if pet.expired:
+            return
+        ready = pet.check_action_delay(ActionType.AA, tick)
+        if ready > tick:
+            self.queue.setdefault(ready, []).append(PetAttackDue(pet=pet_id))
+            return
+        target = self._enemy_of(pet_id)
+        action_effect = pet.do_action(Action(actor=pet_id, target=target, action_type=ActionType.AA), tick)
+        for rule_event in action_effect.rule_events:
+            self._queue_rule(rule_event, action_effect.tick)
+        self._fire(Trigger.ON_ATTACK, pet_id, target, ActionType.AA, action_effect.tick)
+        self.queue.setdefault(pet.cooldowns[ActionType.AA], []).append(PetAttackDue(pet=pet_id))
+
+
+    def _expire_pet(self, pet_id: Actor, tick: int) -> None:
+        # The pet's buffs end with it, also the ones it put on others (an aura on the enemy).
+        pet = self._pet(pet_id)
+        pet.expired = True
+        for character in self.actors.values():
+            for name, instance in list(character.active_buffs.items()):
+                if character is pet or instance.source is pet:
+                    character.remove_buff(name, tick)
 
 
     def _queue_status(self, effect_comps: list[EffectComp], actor: Actor) -> None:
@@ -334,8 +443,12 @@ class Simulation():
 
 
     def _process_remaining_queue(self) -> None:
+        end = self.last_action_tick + to_ticks(MAX_SECONDS_AFTER_LAST_ACTION)
         while self.queue:
             q_tick = min(self.queue)
+            if q_tick > end:
+                self.queue.clear()
+                break
             self.tick = max(self.tick, q_tick)
             self._process_tick(q_tick)
 
@@ -351,30 +464,43 @@ class Simulation():
         raw = [entry for entry in entries if isinstance(entry, QueueComponent)]
         if raw or processed:
             self._apply_components(raw, processed, q_tick)
+        for expire in [entry for entry in entries if isinstance(entry, PetExpire)]:
+            self._expire_pet(expire.pet, q_tick)
+        # Like interval rules, an attack that starts on a buff's end tick still gets the buff (Tibbers' 5th enraged attack).
+        for due in [entry for entry in entries if isinstance(entry, PetAttackDue)]:
+            self._pet_attack(due.pet, q_tick)
         for end in [entry for entry in entries if isinstance(entry, BuffEnd)]:
             self.actors[end.bearer].expire_buff(end.buff, end.end)
 
 
     def _apply_components(self, raw: list[QueueComponent], processed: list[QueueComponent], q_tick: int) -> None:
         evaluated_entries = processed
-        evaluated_entries += self.actors[Actor.BLUE].evaluate([entry for entry in raw if entry.actor == Actor.BLUE])
-        evaluated_entries += self.actors[Actor.RED].evaluate([entry for entry in raw if entry.actor == Actor.RED])
+        for actor, character in self.actors.items():
+            evaluated_entries += character.evaluate([entry for entry in raw if entry.actor == actor])
 
         effect_results = []
         while evaluated_entries:
-            blue_list = [entry for entry in evaluated_entries if entry.target == Actor.BLUE]
-            red_list = [entry for entry in evaluated_entries if entry.target == Actor.RED]
-
-            evaluated_entries, results_blue = self.actors[Actor.BLUE].take_effects(blue_list, q_tick)
-            evaluated_entries_red, results_red = self.actors[Actor.RED].take_effects(red_list, q_tick)
-            evaluated_entries.extend(evaluated_entries_red)
-            effect_results.extend(results_blue + results_red)
+            # Damage can cause follow-up effects in the same tick (vamp heals), so repeat until nothing is left.
+            follow_ups = []
+            for actor, character in self.actors.items():
+                new_entries, results = character.take_effects([entry for entry in evaluated_entries if entry.target == actor], q_tick)
+                follow_ups += new_entries
+                effect_results += results
+            evaluated_entries = follow_ups
 
         self.effect_list.append(TickEvent(
             tick=q_tick,
             result=effect_results
         ))
+        self._record_deaths(q_tick)
         self._fire_damage_triggers(effect_results, q_tick)
+
+
+    def _record_deaths(self, tick: int) -> None:
+        # The simulation goes on after a death, so the chart can show the overkill.
+        for actor, character in self.actors.items():
+            if character.current_hp <= 0 and actor not in self.deaths:
+                self.deaths[actor] = tick
 
 
     def _apply_dot(self, effect_comp: EffectComp, actor: Actor) -> None:

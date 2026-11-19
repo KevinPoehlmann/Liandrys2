@@ -33,6 +33,8 @@ class V1Response(BaseModel):
     tick_rate: float
     damage: int
     ticks: int
+    last_action_tick: int
+    deaths: dict[Actor, int] = {}  # tick at which an actor's health first reached 0
     effect_list: list[TickEvent]
 
 

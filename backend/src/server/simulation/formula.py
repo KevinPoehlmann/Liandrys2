@@ -9,6 +9,7 @@ from src.server.simulation.exceptions import SimulationError
 # Top laners can reach level 20 on newer patches, so tables always cover 20 levels.
 MAX_LEVEL = 20
 TARGET_PREFIX = "target_"
+OWNER_PREFIX = "owner_"
 STACKS_PREFIX = "stacks_"
 
 
@@ -70,6 +71,7 @@ RANK_VARIABLES = {f"rank_{slot.value.lower()}": slot for slot in (ActionType.Q, 
 class FormulaContext:
     source: StatSource
     target: StatSource | None = None
+    owner: StatSource | None = None  # the summoner, inside pet formulas
     rank: int = 0
     max_rank: int = 0
     stacks: int = 0
@@ -98,13 +100,15 @@ class FormulaNamespace(Mapping[str, float]):
         if name in self._fixed:
             return self._fixed[name]
         if name.startswith(TARGET_PREFIX):
-            return self._read_target(name.removeprefix(TARGET_PREFIX))
+            return self._read_other(self._context.target, TARGET_PREFIX, name)
+        if name.startswith(OWNER_PREFIX):
+            return self._read_other(self._context.owner, OWNER_PREFIX, name)
         return self._read(self._context.source, name)
 
-    def _read_target(self, name: str) -> float:
-        if self._context.target is None:
-            raise KeyError(f"{TARGET_PREFIX}{name}")
-        return self._read(self._context.target, name)
+    def _read_other(self, actor: StatSource | None, prefix: str, name: str) -> float:
+        if actor is None:
+            raise KeyError(name)
+        return self._read(actor, name.removeprefix(prefix))
 
     @staticmethod
     def _read(actor: StatSource, name: str) -> float:

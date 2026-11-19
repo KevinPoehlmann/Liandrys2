@@ -23,6 +23,17 @@ class BuffTick:
 
 
 @dataclass
+class PetAttackDue:
+    """The pet attacks as soon as it can, starting at this tick."""
+    pet: Actor
+
+
+@dataclass
+class PetExpire:
+    pet: Actor
+
+
+@dataclass
 class BuffEnd:
     bearer: Actor
     buff: str

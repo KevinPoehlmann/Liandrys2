@@ -39,6 +39,8 @@ from src.server.models.dataenums import (
 )
 from src.server.models.effect import EffectComponent
 from src.server.models.item import Item
+from src.server.models.passive import Passive
+from src.server.models.pet import Pet
 from src.server.models.passive_effect import BuffProperties, BuffAction, StatProperties, StackProps, EffectProps
 from src.server.models.request import Rank, Action
 from src.server.models.rule import Buff as BuffDefinition, DamageAction, DamageProps, Input, Rule, Stage, StatModifier
@@ -79,8 +81,20 @@ def soft_cap_movespeed(speed: float) -> float:
 class Character():
     def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item], scenario: dict[str, float] | None = None) -> None:
         self.champion: Champion = champion
+        self.name: str = champion.name
+        self.passive: Passive = champion.passive
+        ability_dict = {
+            ActionType.Q: (champion.q, rank.q),
+            ActionType.W: (champion.w, rank.w),
+            ActionType.E: (champion.e, rank.e),
+            ActionType.R: (champion.r, rank.r)
+        }
+        self._setup(lvl, items, ability_dict, scenario or {})
+
+
+    def _setup(self, level: int, items: list[Item], ability_dict: dict[ActionType, tuple[ChampionAbility, int]], scenario: dict[str, float]) -> None:
         self.current_tick: int = 0
-        self.level: int = lvl
+        self.level: int = level
         self.items: list[Item] = items
         self.shields: list[tuple[int, float, ActionType, Actor]] = []
         self.status_effects: dict[StatusType, list[tuple[int, float]]] = defaultdict(list)
@@ -89,19 +103,17 @@ class Character():
 
         self.evaluating_stat: set = set()
 
-        self.ability_dict: dict[ActionType, tuple[ChampionAbility, int]] = {
-            ActionType.Q: (self.champion.q, rank.q),
-            ActionType.W: (self.champion.w, rank.w),
-            ActionType.E: (self.champion.e, rank.e),
-            ActionType.R: (self.champion.r, rank.r)
-        }
-        self.scenario: dict[str, float] = self._scenario(scenario or {})
+        self.ability_dict: dict[ActionType, tuple[ChampionAbility, int]] = ability_dict
+        self.scenario: dict[str, float] = self._scenario(scenario)
         self.cooldowns: dict[ActionType, int] = {
             ActionType.AA: 0,
             ActionType.Q: 0,
             ActionType.W: 0,
             ActionType.E: 0,
             ActionType.R: 0,
+        }
+        self.pet_definitions: dict[str, tuple[Pet, ActionType]] = {
+            pet.name: (pet, slot) for slot, (ability, _) in self.ability_dict.items() for pet in ability.pets
         }
         self.buff_definitions: dict[str, tuple[BuffDefinition, ActionType]] = self._collect_buff_definitions()
         self.active_buffs: dict[str, BuffInstance] = {}
@@ -116,19 +128,21 @@ class Character():
 
     def _initialize_buffs(self) -> dict[Buff, list[BuffProperties]]:
         buffs = defaultdict(list)
-        for effect in self.champion.passive.effects:
+        for effect in self.passive.effects:
             buffs[effect.buff].append(effect.props)
         return buffs
 
 
     def _collect_buff_definitions(self) -> dict[str, tuple[BuffDefinition, ActionType]]:
-        containers = [(self.champion.passive, ActionType.PASSIVE)]
+        containers = [(self.passive, ActionType.PASSIVE)]
         containers += [(ability, slot) for slot, (ability, _) in self.ability_dict.items()]
+        # The owner can apply its pets' buffs too, e.g. Annie's stun enrages Tibbers.
+        containers += [(pet.passive, slot) for pet, slot in self.pet_definitions.values()]
         definitions = {}
         for container, slot in containers:
             for buff in container.buffs:
                 if buff.name in definitions:
-                    raise ValueError(f"Buff '{buff.name}' is defined twice for {self.champion.name}")
+                    raise ValueError(f"Buff '{buff.name}' is defined twice for {self.name}")
                 definitions[buff.name] = (buff, slot)
         return definitions
 
@@ -137,7 +151,7 @@ class Character():
         inputs = {declared.name: declared for declared in self._declared_inputs()}
         unknown = set(given) - set(inputs)
         if unknown:
-            raise ValueError(f"Unknown scenario inputs for {self.champion.name}: {sorted(unknown)}")
+            raise ValueError(f"Unknown scenario inputs for {self.name}: {sorted(unknown)}")
         for name, value in given.items():
             declared = inputs[name]
             if (declared.min is not None and value < declared.min) or (declared.max is not None and value > declared.max):
@@ -145,7 +159,7 @@ class Character():
         return {name: given.get(name, declared.default) for name, declared in inputs.items()}
 
     def _declared_inputs(self) -> list[Input]:
-        containers = [self.champion.passive] + [ability for ability, _ in self.ability_dict.values()]
+        containers = [self.passive] + [ability for ability, _ in self.ability_dict.values()]
         return [declared for container in containers for declared in container.inputs]
 
 
@@ -187,6 +201,14 @@ class Character():
             slot, cooldown_ticks = self.pending_cooldowns.pop(name)
             self.cooldowns[slot] = tick + cooldown_ticks
 
+    def remove_stacks(self, name: str, stacks: int, tick: int) -> None:
+        instance = self.active_buffs.get(name)
+        if instance is None:
+            return
+        instance.stacks -= stacks
+        if instance.stacks <= 0:
+            self.remove_buff(name, tick)
+
     def expire_buff(self, name: str, end: int) -> None:
         # A refresh moves `end`, so an end event of an older `end` is outdated and ignored.
         instance = self.active_buffs.get(name)
@@ -195,7 +217,7 @@ class Character():
 
 
     def triggered_rules(self, trigger: Trigger, source: ActionType) -> list[tuple[Rule, ActionType, "Character", str | None]]:
-        candidates = [(rule, ActionType.PASSIVE, self, None) for rule in self.champion.passive.rules]
+        candidates = [(rule, ActionType.PASSIVE, self, None) for rule in self.passive.rules]
         candidates += [
             (rule, slot, self, None)
             for slot, (ability, rank) in self.ability_dict.items() if rank > 0
@@ -260,7 +282,7 @@ class Character():
         return values
 
     def _active_modifiers(self) -> Iterator[tuple[StatModifier, FormulaContext]]:
-        for modifier in self.champion.passive.stats:
+        for modifier in self.passive.stats:
             yield modifier, self.formula_context(ActionType.PASSIVE)
         for slot, (ability, rank) in self.ability_dict.items():
             if rank > 0:
@@ -601,10 +623,13 @@ class Character():
     def _basic_attack(self, action: Action, tick: int) -> ActionEffect:
         attack_time = 1 / self._get_attackspeed()
         self.cooldowns[ActionType.AA] = tick + to_ticks(attack_time)
-        windup_ticks = to_ticks(attack_time * self.champion.attack_windup)
+        windup_ticks = to_ticks(attack_time * self._attack_windup())
         rule = self._basic_attack_rule(blinded=StatusType.BLIND in self.status_effects)
         event = RuleEvent(rule=rule, slot=ActionType.AA, owner=action.actor, target=action.target)
         return ActionEffect(tick=tick + windup_ticks, rule_events=[event], windup_cancel=self._windup_cancels())
+
+    def _attack_windup(self) -> float:
+        return self.champion.attack_windup
 
     def _windup_cancels(self) -> set[ActionType]:
         return {
@@ -626,7 +651,7 @@ class Character():
     def _do_ability(self, action: Action, tick: int) -> ActionEffect:
         ability: ChampionAbility = self.ability_dict[action.action_type][0]
         if not ability.validated:
-            raise NotImplementedError(f"Ability {action.action_type} is not implemented yet for {self.champion.name}")
+            raise NotImplementedError(f"Ability {action.action_type} is not implemented yet for {self.name}")
         if ability.stages:
             return self._cast_stage(action, ability, tick)
         cooldown = self._evaluate_formula(ability.cooldown, {"rank": self.ability_dict[action.action_type][1]})
