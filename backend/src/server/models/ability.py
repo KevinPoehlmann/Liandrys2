@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 from src.server.models.effect import Effect
 from src.server.models.image import Image
-from src.server.models.rule import Buff, Rule, Stage, StatModifier
+from src.server.models.rule import Buff, Input, Rule, Stage, StatModifier
 
 from src.server.models.dataenums import (
     ActiveType
@@ -24,6 +24,7 @@ class Ability(BaseModel):
     rules: list[Rule] = []
     stats: list[StatModifier] = []
     buffs: list[Buff] = []
+    inputs: list[Input] = []
     effects: list[Effect] = []
     raw_stats: dict[str, str] = {}
     changes: list[str] = []

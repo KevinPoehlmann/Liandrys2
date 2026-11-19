@@ -41,7 +41,7 @@ from src.server.models.effect import EffectComponent
 from src.server.models.item import Item
 from src.server.models.passive_effect import BuffProperties, BuffAction, StatProperties, StackProps, EffectProps
 from src.server.models.request import Rank, Action
-from src.server.models.rule import Buff as BuffDefinition, DamageAction, DamageProps, Rule, Stage, StatModifier
+from src.server.models.rule import Buff as BuffDefinition, DamageAction, DamageProps, Input, Rule, Stage, StatModifier
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 from src.server.simulation.buff_instance import BuffInstance
@@ -63,10 +63,23 @@ SLOT_COOLDOWN_REDUCTION = {
 }
 
 
+def soft_cap_movespeed(speed: float) -> float:
+    # League's movement speed soft caps (see docs/league-mechanics.md).
+    if speed > 490:
+        return speed * 0.5 + 230
+    if speed > 415:
+        return speed * 0.8 + 83
+    if speed >= 220:
+        return speed
+    if speed >= 0:
+        return 110 + speed * 0.5
+    return 110 + speed * 0.01
+
+
 class Character():
     def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item], scenario: dict[str, float] | None = None) -> None:
         self.champion: Champion = champion
-        self.scenario: dict[str, float] = scenario or {}
+        self.current_tick: int = 0
         self.level: int = lvl
         self.items: list[Item] = items
         self.shields: list[tuple[int, float, ActionType, Actor]] = []
@@ -82,6 +95,7 @@ class Character():
             ActionType.E: (self.champion.e, rank.e),
             ActionType.R: (self.champion.r, rank.r)
         }
+        self.scenario: dict[str, float] = self._scenario(scenario or {})
         self.cooldowns: dict[ActionType, int] = {
             ActionType.AA: 0,
             ActionType.Q: 0,
@@ -119,6 +133,22 @@ class Character():
         return definitions
 
 
+    def _scenario(self, given: dict[str, float]) -> dict[str, float]:
+        inputs = {declared.name: declared for declared in self._declared_inputs()}
+        unknown = set(given) - set(inputs)
+        if unknown:
+            raise ValueError(f"Unknown scenario inputs for {self.champion.name}: {sorted(unknown)}")
+        for name, value in given.items():
+            declared = inputs[name]
+            if (declared.min is not None and value < declared.min) or (declared.max is not None and value > declared.max):
+                raise ValueError(f"Scenario input '{name}' must be between {declared.min} and {declared.max}, got {value}")
+        return {name: given.get(name, declared.default) for name, declared in inputs.items()}
+
+    def _declared_inputs(self) -> list[Input]:
+        containers = [self.champion.passive] + [ability for ability, _ in self.ability_dict.values()]
+        return [declared for container in containers for declared in container.inputs]
+
+
     def get_rank(self, slot: ActionType) -> int:
         return self.ability_dict[slot][1] if slot in self.ability_dict else 0
 
@@ -126,9 +156,13 @@ class Character():
         instance = self.active_buffs.get(buff)
         return instance.stacks if instance else 0
 
-    def formula_context(self, slot: ActionType, target: "Character | None" = None, stacks: int = 0) -> FormulaContext:
+    def formula_context(self, slot: ActionType, target: "Character | None" = None, stacks: int = 0, elapsed: float = 0.0) -> FormulaContext:
         max_rank = self.ability_dict[slot][0].maxrank if slot in self.ability_dict else 0
-        return FormulaContext(source=self, target=target, rank=self.get_rank(slot), max_rank=max_rank, stacks=stacks, scenario=self.scenario)
+        return FormulaContext(source=self, target=target, rank=self.get_rank(slot), max_rank=max_rank,
+                              stacks=stacks, elapsed=elapsed, scenario=self.scenario)
+
+    def buff_elapsed(self, instance: BuffInstance) -> float:
+        return (self.current_tick - instance.start) * TICK_SECONDS
 
 
     def apply_buff(self, name: str, source: "Character", stacks: int, tick: int) -> BuffInstance:
@@ -234,7 +268,7 @@ class Character():
                     yield modifier, self.formula_context(slot)
         for instance in self.active_buffs.values():
             for modifier in instance.definition.stats:
-                yield modifier, instance.source.formula_context(instance.slot, stacks=instance.stacks)
+                yield modifier, instance.source.formula_context(instance.slot, stacks=instance.stacks, elapsed=self.buff_elapsed(instance))
 
     @staticmethod
     def _evaluate_modifier(modifier: StatModifier, context: FormulaContext) -> float:
@@ -251,12 +285,16 @@ class Character():
             return self._get_attackspeed()
         if stat == Stat.TENACITY_P:
             return self._get_tenacity()
+        if stat == Stat.MOVESPEED:
+            return self._get_movespeed()
         
         result = self.get_base_stat(stat) + self._get_bonus_stat(stat)
-
-        if stat == Stat.MOVESPEED:
-            result *= self._get_slow_value()
         return result
+
+    def _get_movespeed(self) -> float:
+        flat = self.get_base_stat(Stat.MOVESPEED) + self._get_bonus_stat(Stat.MOVESPEED)
+        raw = flat * (1 + self._get_bonus_stat(Stat.MOVESPEED_P)) * self._get_slow_value()
+        return soft_cap_movespeed(raw)
 
     def _get_attackspeed(self) -> float:
         bonus = self.champion.attackspeed_per_lvl * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))

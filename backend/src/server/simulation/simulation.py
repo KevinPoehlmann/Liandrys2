@@ -14,6 +14,7 @@ from src.server.models.dataenums import (
     EffectType,
     ProcessedDamageProperties,
     ProcessedHealProperties,
+    ProcessedShieldProperties,
     ProcessedStatusProperties,
     QueueComponent,
     Target,
@@ -25,7 +26,7 @@ from src.server.models.dataenums import (
 from src.server.models.request import V1Response, Action
 from src.server.models.rule import (
     ApplyBuffAction, Condition, DamageAction, DamageProps, HealAction, HealProps, RemoveBuffAction,
-    ResetAttackAction, Rule, RuleAction, StatusAction, StatusProps
+    ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps
 )
 from src.server.simulation.character import Character
 from src.server.simulation.buff_instance import BuffInstance
@@ -53,6 +54,7 @@ class Simulation():
 
 
     def do_combo(self, combo: list[Action]) -> V1Response:
+        self._start()
         for i, action in enumerate(combo):
             self.do_action(action, i)
         self._process_remaining_queue()
@@ -86,7 +88,18 @@ class Simulation():
         self.tick = ready
 
 
+    def _start(self) -> None:
+        for actor, counterpart in ((Actor.BLUE, Actor.RED), (Actor.RED, Actor.BLUE)):
+            self._fire(Trigger.ON_START, actor, counterpart, ActionType.PASSIVE, self.tick)
+
+
+    def _set_clock(self, tick: int) -> None:
+        for character in self.actors.values():
+            character.current_tick = tick
+
+
     def _cast(self, action: Action) -> None:
+        self._set_clock(self.tick)
         start = self.tick
         character = self.actors[action.actor]
         action_effect = character.do_action(action, self.tick)
@@ -109,10 +122,15 @@ class Simulation():
             self._queue_rule(RuleEvent(rule=rule, slot=slot, owner=self._actor_of(owner), target=counterpart, bearer=bearer, buff=buff), tick)
 
 
-    def _fire_hits(self, results: list[EffectResult], tick: int) -> None:
+    def _fire_damage_triggers(self, results: list[EffectResult], tick: int) -> None:
         for result in results:
-            if result.source == ActionType.AA and result.type_ == EffectType.DAMAGE:
+            if result.type_ != EffectType.DAMAGE:
+                continue
+            if result.source == ActionType.AA:
                 self._fire(Trigger.ON_HIT, result.actor, result.target, ActionType.AA, tick)
+            # Damage absorbed by a shield still counts as taken; an attack without damage (blind) does not.
+            if result.raw > 0:
+                self._fire(Trigger.ON_DAMAGE_TAKEN, result.target, result.actor, result.source, tick)
 
 
     def _fire_stack(self, buff: str, buff_rules: list[Rule], slot: ActionType, owner: Actor, bearer: Actor, tick: int) -> None:
@@ -169,6 +187,8 @@ class Simulation():
                 return [self._status(props, event)]
             case HealAction(props=props):
                 return [self._heal(props, event)]
+            case ShieldAction(props=props):
+                return [self._shield(props, event)]
             case ApplyBuffAction(props=props):
                 bearer = self._resolve_target(props.target, event)
                 stacks = int(evaluate_formula(props.stacks, owner.formula_context(event.slot)))
@@ -192,9 +212,11 @@ class Simulation():
 
 
     def _context(self, event: RuleEvent, target: Actor) -> FormulaContext:
-        # Inside a buff rule, `stacks` are the stacks of that buff on its bearer.
-        stacks = self.actors[event.bearer].get_buff_stacks(event.buff) if event.buff and event.bearer else 0
-        return self.actors[event.owner].formula_context(event.slot, target=self.actors[target], stacks=stacks)
+        # Inside a buff rule, `stacks` and `elapsed` belong to that buff on its bearer.
+        bearer = self.actors[event.bearer] if event.bearer else None
+        instance = bearer.active_buffs.get(event.buff) if bearer and event.buff else None
+        stacks, elapsed = (instance.stacks, bearer.buff_elapsed(instance)) if instance else (0, 0.0)
+        return self.actors[event.owner].formula_context(event.slot, target=self.actors[target], stacks=stacks, elapsed=elapsed)
 
 
     def _schedule_interval(self, bearer: Actor, instance: BuffInstance) -> None:
@@ -258,6 +280,16 @@ class Simulation():
         return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.HEAL, props=processed)
 
 
+    def _shield(self, props: ShieldProps, event: RuleEvent) -> QueueComponent:
+        target, context = self._target_and_context(props.target, event)
+        processed = ProcessedShieldProperties(
+            value=evaluate_formula(props.scaling, context),
+            duration=to_ticks(evaluate_formula(props.duration, context)),
+            dmg_sub_type=props.dmg_sub_type
+        )
+        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.SHIELD, props=processed)
+
+
     def _status(self, props: StatusProps, event: RuleEvent) -> QueueComponent:
         target, context = self._target_and_context(props.target, event)
         processed = ProcessedStatusProperties(
@@ -309,6 +341,7 @@ class Simulation():
 
 
     def _process_tick(self, q_tick: int) -> None:
+        self._set_clock(q_tick)
         entries = self.queue.pop(q_tick)
         processed = []
         # Interval rules run before buff ends, so the tick at the end still sees the stacks.
@@ -341,7 +374,7 @@ class Simulation():
             tick=q_tick,
             result=effect_results
         ))
-        self._fire_hits(effect_results, q_tick)
+        self._fire_damage_triggers(effect_results, q_tick)
 
 
     def _apply_dot(self, effect_comp: EffectComp, actor: Actor) -> None:

@@ -10,7 +10,6 @@ from src.server.simulation.exceptions import SimulationError
 MAX_LEVEL = 20
 TARGET_PREFIX = "target_"
 STACKS_PREFIX = "stacks_"
-SCENARIO_DEFAULTS: dict[str, float] = {"terrain": 0}
 
 
 class FormulaError(SimulationError):
@@ -74,6 +73,7 @@ class FormulaContext:
     rank: int = 0
     max_rank: int = 0
     stacks: int = 0
+    elapsed: float = 0.0
     scenario: dict[str, float] = field(default_factory=dict)
 
 
@@ -91,7 +91,8 @@ class FormulaNamespace(Mapping[str, float]):
             "level": context.source.level,
             "rank": context.rank,
             "stacks": context.stacks,
-        } | ranks | SCENARIO_DEFAULTS | context.scenario
+            "elapsed": context.elapsed,
+        } | ranks | context.scenario
 
     def __getitem__(self, name: str) -> float:
         if name in self._fixed:

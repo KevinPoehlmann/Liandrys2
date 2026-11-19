@@ -90,7 +90,7 @@ The game's trigger categories:
 - **Attacks that apply on-hit *and* spell effects:** Darius W, Vayne Q, Blitzcrank R passive, Camille Q, Garen Q, Jax W, Nasus Q, Trundle Q, Volibear Q, … (Attack_effects/Abilities).
 - Rageblade's phantom hit repeats on-hit effects, not on-attack effects.
 
-**Simulation:** triggers `on_cast`, `on_attack`, `on_hit`, `on_stack`, `on_interval` work; `on_damage_dealt` and `on_get_hit` exist in the model but are not fired yet. `on_cast` always fires at the end of the cast time. ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
+**Simulation:** triggers `on_start`, `on_cast`, `on_attack`, `on_hit`, `on_damage_taken` (also when a shield absorbs everything), `on_stack`, `on_interval` work; `on_damage_dealt` and `on_get_hit` exist in the model but are not fired yet. `on_cast` always fires at the end of the cast time. ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
 
 ## Basic attacks and attack speed
 Pages: Basic_attack, Attack_speed, Attack_effects
@@ -149,7 +149,7 @@ Pages: Shield, Spell_shield
 - Some effects destroy shields before dealing damage (Blitzcrank R, Rell, executes).
 - A spell shield is not a damage shield: it blocks a hostile ability (all instances within 0.1 s), but secondary effects (stacks, refunds) still happen. It takes priority over normal shields.
 
-**Simulation:** `_use_shields` absorbs post-mitigation damage. ✓ ⚠ It uses the shields in insertion order, not soonest expiry. ⚠ No shield types, no spell shields. Annie (next test group member) has a shield, so this is the moment to fix the order.
+**Simulation:** `_use_shields` absorbs post-mitigation damage; `_apply_shields` keeps the shields sorted by expiry, so the one that expires first absorbs first. ✓ ⚠ No shield types (every shield absorbs everything), no spell shields, no Adaptive Defenses/Black Shield priority.
 
 ## Crowd control and tenacity
 Pages: Crowd_control, Types_of_Crowd_Control, Tenacity
@@ -188,7 +188,7 @@ Pages: Movement_speed
   - below 220: `110 + R × 0.5`; below 0: `110 + R × 0.01`
 - Only the **strongest** slow counts. Slow resist reduces each slow: `slow × (1 − resist)`.
 
-**Simulation:** only the strongest slow counts. ✓ ⚠ No flat/additive/multiplicative split, no soft caps, no slow resist. Matters for dashes whose time uses movement speed (Vayne Q) and later for distance (Phase 5).
+**Simulation:** `Character._get_movespeed`: (base + flat) × (1 + additive %) × (1 − strongest slow), then `soft_cap_movespeed`. ✓ ⚠ No multiplicative bonuses, no slow resist.
 
 ## Damage over time
 Pages: Damage_over_time (no patch stated, edited 2026-10)

@@ -79,9 +79,12 @@ class TestVariables():
         assert evaluate_formula("stacks_final_hour", FormulaContext(source=vayne)) == 0
 
 
-    def test_scenario_input_defaults_and_override(self, vayne):
-        assert evaluate_formula("terrain", FormulaContext(source=vayne)) == 0
+    def test_scenario_inputs_are_variables(self, vayne):
         assert evaluate_formula("terrain", FormulaContext(source=vayne, scenario={"terrain": 1})) == 1
+
+
+    def test_elapsed_is_a_variable(self, vayne):
+        assert evaluate_formula("1 - elapsed / 1.5", FormulaContext(source=vayne, elapsed=0.75)) == 0.5
 
 
     def test_builtins_min_max(self, vayne, darius):

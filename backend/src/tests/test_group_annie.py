@@ -1,0 +1,162 @@
+import pytest
+
+from src.server.models.dataenums import (
+    ActionType, Actor, EffectType, ProcessedShieldProperties, QueueComponent, Stat, StatusType, TICK_SECONDS, to_ticks
+)
+from src.server.models.request import Action, Rank
+from src.server.simulation.character import Character, soft_cap_movespeed
+from src.server.simulation.simulation import Simulation
+
+
+# Expected values are calculated by hand from the patch 15.12.1 fixtures, not by the simulation.
+# Stat growth at level 6: (6 - 1) * (0.7025 + 0.0175 * (6 - 1)) = 3.95
+GROWTH_LVL_6 = 3.95
+ANNIE_MAX_HP = 560 + 96 * GROWTH_LVL_6
+ANNIE_ARMOR = 23 + 4 * GROWTH_LVL_6
+ANNIE_MOVESPEED = 335
+DARIUS_MR = 32 + 2.05 * GROWTH_LVL_6
+VAYNE_AD = 60 + 2.35 * GROWTH_LVL_6
+VAYNE_MR = 30 + 1.3 * GROWTH_LVL_6
+
+R_RANK_1_MAGIC_PEN = 0.1
+Q_RANK_3 = 160
+CAST_TICKS = to_ticks(0.25)
+STUN_LVL_6 = 1.5
+E_RANK_1_SHIELD = 60
+E_RANK_1_REFLECT = 25
+MOLTEN_SPEED_LVL_6 = 0.2 + 0.3 * 5 / 17
+
+
+def magic(raw: float, mr: float = DARIUS_MR * (1 - R_RANK_1_MAGIC_PEN)) -> float:
+    return raw * 100 / (100 + mr)
+
+
+def physical(raw: float, armor: float) -> float:
+    return raw * 100 / (100 + armor)
+
+
+def combo(*action_types: ActionType) -> list[Action]:
+    return [Action(actor=Actor.BLUE, target=Actor.RED, action_type=a) for a in action_types]
+
+
+def hits(sim: Simulation, source: ActionType, target: Actor = Actor.RED) -> list[tuple[int, float]]:
+    return [
+        (event.tick, result.value)
+        for event in sim.effect_list
+        for result in event.result
+        if result.source == source and result.target == target and result.type_ == EffectType.DAMAGE
+    ]
+
+
+def annie(load_champion, level: int = 6, rank: Rank = Rank(q=3, w=1, e=1, r=1), **scenario) -> Character:
+    return Character(load_champion("annie"), level, rank, [], scenario=scenario)
+
+
+@pytest.fixture
+def vs_darius(load_champion) -> Simulation:
+    darius = Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), [])
+    return Simulation(annie(load_champion), darius)
+
+
+class TestPyromania():
+
+    def test_full_stacks_by_default_stun_with_the_first_ability(self, vs_darius: Simulation):
+        vs_darius.do_combo(combo(ActionType.Q))
+
+        darius = vs_darius.actors[Actor.RED]
+        assert darius.status_effects[StatusType.STUN] == [(CAST_TICKS + to_ticks(STUN_LVL_6), 0)]
+        assert darius.damage_taken == pytest.approx(magic(Q_RANK_3))
+        annie = vs_darius.actors[Actor.BLUE]
+        assert annie.get_buff_stacks("pyromania") == 0
+        assert annie.get_buff_stacks("pyromania_energized") == 0
+
+
+    @pytest.mark.parametrize("level, stun_seconds", [(1, 1.25), (5, 1.25), (6, 1.5), (11, 1.75), (18, 1.75)])
+    def test_stun_duration_by_level(self, load_champion, level, stun_seconds):
+        darius = Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), [])
+        sim = Simulation(annie(load_champion, level, Rank(q=1, w=0, e=0, r=0)), darius)
+
+        sim.do_combo(combo(ActionType.Q))
+
+        assert darius.status_effects[StatusType.STUN] == [(CAST_TICKS + to_ticks(stun_seconds), 0)]
+
+
+    def test_fourth_stack_does_not_stun_the_next_ability_does(self, load_champion):
+        darius = Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), [])
+        sim = Simulation(annie(load_champion, pyromania_start=3), darius)
+
+        sim.do_combo(combo(ActionType.Q, ActionType.W))
+
+        [(w_tick, _)] = hits(sim, ActionType.W)
+        assert w_tick == 2 * CAST_TICKS
+        assert darius.status_effects[StatusType.STUN] == [(w_tick + to_ticks(STUN_LVL_6), 0)]
+
+
+    def test_four_casts_build_up_to_the_stun(self, load_champion):
+        darius = Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), [])
+        sim = Simulation(annie(load_champion, pyromania_start=0), darius)
+
+        sim.do_combo(combo(ActionType.Q, ActionType.W, ActionType.E, ActionType.R, ActionType.W))
+
+        _, (second_w_tick, _) = hits(sim, ActionType.W)
+        assert darius.status_effects[StatusType.STUN] == [(second_w_tick + to_ticks(STUN_LVL_6), 0)]
+
+
+    def test_r_passive_magic_pen_only_while_r_is_learned(self, load_champion):
+        darius = Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), [])
+        sim = Simulation(annie(load_champion, rank=Rank(q=3, w=1, e=1, r=0)), darius)
+
+        sim.do_combo(combo(ActionType.Q))
+
+        assert darius.damage_taken == pytest.approx(magic(Q_RANK_3, mr=DARIUS_MR))
+
+
+class TestMoltenShield():
+
+    @pytest.fixture
+    def attacked_by_vayne(self, load_champion) -> Simulation:
+        vayne = Character(load_champion("vayne"), 6, Rank(q=1, w=0, e=0, r=0), [])
+        sim = Simulation(annie(load_champion), vayne)
+        e = Action(actor=Actor.BLUE, target=Actor.BLUE, action_type=ActionType.E)
+        aa = Action(actor=Actor.RED, target=Actor.BLUE, action_type=ActionType.AA)
+        sim.do_combo([e, aa, aa])
+        return sim
+
+
+    def test_shield_absorbs_damage_after_armor(self, attacked_by_vayne: Simulation):
+        annie = attacked_by_vayne.actors[Actor.BLUE]
+        two_hits = 2 * physical(VAYNE_AD, ANNIE_ARMOR)
+
+        assert annie.damage_shielded == pytest.approx(E_RANK_1_SHIELD)
+        assert annie.current_hp == pytest.approx(ANNIE_MAX_HP - (two_hits - E_RANK_1_SHIELD))
+
+
+    def test_reflect_once_per_cast_on_the_first_hit(self, attacked_by_vayne: Simulation):
+        [(first_hit, _), _] = hits(attacked_by_vayne, ActionType.AA, target=Actor.BLUE)
+
+        assert hits(attacked_by_vayne, ActionType.E) == [(first_hit, pytest.approx(magic(E_RANK_1_REFLECT, mr=VAYNE_MR * 0.9)))]
+
+
+    def test_shield_that_expires_first_absorbs_first(self, load_champion):
+        character = annie(load_champion)
+        long, short = (
+            QueueComponent(source=source, actor=Actor.BLUE, target=Actor.BLUE, type_=EffectType.SHIELD,
+                           props=ProcessedShieldProperties(value=50, duration=duration))
+            for source, duration in ((ActionType.E, 100), (ActionType.W, 50))
+        )
+        character._apply_shields([long, short], 0)
+
+        remaining, results = character._use_shields(60, Actor.BLUE)
+
+        assert remaining == 0
+        assert [(result.source, result.value) for result in results] == [(ActionType.W, 50), (ActionType.E, 10)]
+
+
+    @pytest.mark.parametrize("elapsed_ticks", [0, to_ticks(0.75), to_ticks(1.5)])
+    def test_bonus_movement_speed_decays_over_1_5_seconds(self, load_champion, elapsed_ticks):
+        character = annie(load_champion)
+        character.apply_buff("molten_shield_speed", character, 1, 0)
+        character.current_tick = elapsed_ticks
+
+        decay = max(0.0, 1 - elapsed_ticks * TICK_SECONDS / 1.5)
+        assert character.get_stat(Stat.MOVESPEED) == pytest.approx(soft_cap_movespeed(ANNIE_MOVESPEED * (1 + MOLTEN_SPEED_LVL_6 * decay)))

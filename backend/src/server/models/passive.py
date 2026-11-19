@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from src.server.models.image import Image
-from src.server.models.rule import Buff, Rule, StatModifier
+from src.server.models.rule import Buff, Input, Rule, StatModifier
 
 from src.server.models.passive_effect import PassiveEffect
 
@@ -13,6 +13,7 @@ class Passive(BaseModel):
     rules: list[Rule] = []
     stats: list[StatModifier] = []
     buffs: list[Buff] = []
+    inputs: list[Input] = []
     effects: list[PassiveEffect] = []
     raw_stats: dict[str, str] = {}
     changes: list[str] = []

@@ -33,10 +33,9 @@
     "name": "Pyromania",
     "description": "Innate - Pyromania: Annie generates a stack of Pyromania whenever she hits an enemy with  Disintegrate or casts her other abilities, stacking up to 4 times, at which she gains Energized.\n\n\n\nEnergized: Annie empowers her next cast of  Disintegrate,  Incinerate, or  Summon: Tibbers to consume all Pyromania stacks to  stun enemies hit for 1.25 / 1.5 / 1.75 (based on level) seconds.\n\n\n\nAnnie gains maximum stacks of Pyromania when the game starts and upon respawning. She will lose Energized and all Pyromania stacks upon death.",
     "static_cooldown": "0",
-    "effects": [],
     "raw_stats": {},
     "changes": [],
-    "validated": false,
+    "validated": true,
     "image": {
       "full": "Annie_Passive.png",
       "group": "passive",
@@ -45,49 +44,119 @@
       "y": 0,
       "h": 48,
       "w": 48
-    }
+    },
+    "inputs": [
+      {
+        "name": "pyromania_start",
+        "default": 4,
+        "min": 0,
+        "max": 4,
+        "description": "Pyromania stacks at the start of the combo (4 = Energized)"
+      }
+    ],
+    "rules": [
+      {
+        "trigger": "on_start",
+        "filter": null,
+        "outcome": null,
+        "conditions": [
+          {
+            "actor": "self",
+            "key": "pyromania_start",
+            "comparison": "Greater than",
+            "value": "0"
+          }
+        ],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "pyromania",
+              "target": "self",
+              "stacks": "pyromania_start"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "cooldown": "0"
+      }
+    ],
+    "stats": [],
+    "buffs": [
+      {
+        "name": "pyromania",
+        "duration": "0",
+        "max_stacks": 4,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "stats": [],
+        "rules": [
+          {
+            "trigger": "on_stack",
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "bearer",
+                "key": "stacks_pyromania",
+                "comparison": "Equal",
+                "value": "4"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "pyromania_energized",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "RemoveBuff",
+                "props": {
+                  "buff": "pyromania",
+                  "target": "self"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      },
+      {
+        "name": "pyromania_energized",
+        "duration": "0",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "stats": [],
+        "rules": []
+      }
+    ]
   },
   "q": {
     "name": "Disintegrate",
     "description": "Annie hurls a Mana infused fireball, dealing damage and refunding the Mana cost if it destroys the target.",
     "cost": "60.0 + (rank - 1) * 5.0",
-    "cooldown": "4.0",
-    "cast_time": "0",
+    "cooldown": "4",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Annie hurls a fireball at the target enemy that deals magic damage.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "80.0 + (rank - 1) * 40.0 + (0.8) * ap",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Magic",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "If this kills the target, Disintegrate's  cooldown is reduced by 50% and its  mana cost is refunded.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "target range": "625.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "AnnieQ.png",
@@ -97,45 +166,118 @@
       "y": 48,
       "h": 48,
       "w": 48
-    }
+    },
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "stacks_pyromania_energized",
+                "comparison": "Equal",
+                "value": "0"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "pyromania",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "1400",
+            "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "stacks_pyromania_energized",
+                "comparison": "Equal",
+                "value": "1"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Stun",
+                  "duration": "by_level(1.25, 1.25, 1.25, 1.25, 1.25, 1.5, 1.5, 1.5, 1.5, 1.5, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75)",
+                  "strength": "0"
+                }
+              },
+              {
+                "type_": "RemoveBuff",
+                "props": {
+                  "buff": "pyromania_energized",
+                  "target": "self"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "1400",
+            "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(80, 120, 160, 200, 240) + 0.8 * ap",
+                  "dmg_type": [
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "1400",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "inputs": [],
+    "cooldown_starts_after": null
   },
   "w": {
     "name": "Incinerate",
     "description": "Annie casts a blazing cone of fire, dealing damage to all enemies in the area.",
     "cost": "70.0 + (rank - 1) * 5.0",
-    "cooldown": "7.0",
-    "cast_time": "0",
+    "cooldown": "7",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Annie releases fire in a cone in the target direction, dealing magic damage to enemies hit.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "70.0 + (rank - 1) * 45.0 + (0.8) * ap",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Magic",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "effect radius": "600.0",
       "angle": "49.52°"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "AnnieW.png",
@@ -145,64 +287,118 @@
       "y": 48,
       "h": 48,
       "w": 48
-    }
+    },
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "stacks_pyromania_energized",
+                "comparison": "Equal",
+                "value": "0"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "pyromania",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "stacks_pyromania_energized",
+                "comparison": "Equal",
+                "value": "1"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Stun",
+                  "duration": "by_level(1.25, 1.25, 1.25, 1.25, 1.25, 1.5, 1.5, 1.5, 1.5, 1.5, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75)",
+                  "strength": "0"
+                }
+              },
+              {
+                "type_": "RemoveBuff",
+                "props": {
+                  "buff": "pyromania_energized",
+                  "target": "self"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(70, 115, 160, 205, 250) + 0.8 * ap",
+                  "dmg_type": [
+                    "Ability damage",
+                    "Area damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "inputs": [],
+    "cooldown_starts_after": null
   },
   "e": {
     "name": "Molten Shield",
     "description": "Grants Annie or an ally a shield, a burst of Move Speed, and damages enemies who strike her with attacks or spells.",
     "cost": "60.0 + (rank - 1) * 5.0",
-    "cooldown": "12.0 + (rank - 1) * -0.5",
+    "cooldown": "by_rank(12, 11.5, 11, 10.5, 10)",
     "cast_time": "0",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Annie grants herself or the target allied  champion and  Tibbers a  shield for 3 seconds and 20% – 50% (based on level)  bonus movement speed that decays over 1.5 seconds.",
-        "effect_components": [
-          {
-            "type_": "Shield",
-            "props": {
-              "scaling": "60.0 + (rank - 1) * 35.0 + (0.4) * ap",
-              "duration": 0.0,
-              "dmg_sub_type": "True",
-              "hp_scaling": "flat"
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "While Molten Shield is active, enemies that deal damage to it take magic damage. This may only occur once per enemy per cast for each active Molten Shield.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "25.0 + (rank - 1) * 10.0 + (0.4) * ap",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Magic",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "none",
       "target range": "800.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "AnnieE.png",
@@ -212,65 +408,180 @@
       "y": 48,
       "h": 48,
       "w": 48
-    }
+    },
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "stacks_pyromania_energized",
+                "comparison": "Equal",
+                "value": "0"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "pyromania",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Shield",
+                "props": {
+                  "target": "self",
+                  "scaling": "by_rank(60, 95, 130, 165, 200) + 0.4 * ap",
+                  "duration": "3",
+                  "dmg_sub_type": "True"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "molten_shield",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "molten_shield_speed",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [
+      {
+        "name": "molten_shield",
+        "duration": "3",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "stats": [],
+        "rules": [
+          {
+            "trigger": "on_damage_taken",
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "target",
+                "key": "stacks_molten_shield_reflected",
+                "comparison": "Equal",
+                "value": "0"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(25, 35, 45, 55, 65) + 0.4 * ap",
+                  "dmg_type": [
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "molten_shield_reflected",
+                  "target": "target",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      },
+      {
+        "name": "molten_shield_reflected",
+        "duration": "3",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "stats": [],
+        "rules": []
+      },
+      {
+        "name": "molten_shield_speed",
+        "duration": "1.5",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "stats": [
+          {
+            "stat": "move speed percent",
+            "formula": "(0.2 + 0.3 * (min(level, 18) - 1) / 17) * max(0, 1 - elapsed / 1.5)",
+            "mode": "flat",
+            "conversion": false
+          }
+        ],
+        "rules": []
+      }
+    ],
+    "inputs": [],
+    "cooldown_starts_after": null
   },
   "r": {
     "name": "Summon: Tibbers",
     "description": "Annie wills her bear Tibbers to life, dealing damage to units in the area. Tibbers can attack and also burns enemies that stand near him.",
     "cost": "100.0",
-    "cooldown": "130.0 + (rank - 1) * -15.0",
-    "cast_time": "0",
+    "cooldown": "by_rank(130, 115, 100)",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Passive: Annie gains  magic penetration.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Active: Annie summons  Tibbers to the target location in a burst of flame, dealing magic damage to enemies near him. Summon: Tibbers can be recast at any time while  Tibbers is alive.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "150.0 + (rank - 1) * 125.0 + (0.75) * ap",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Magic",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "Tibbers then remains on the field as a controllable  pet for up to 45 seconds.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Recast: Annie directs  Tibbers to the target location.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Summon: Tibber's recast can be used while affected by  cast-inhibiting crowd control. See Pets for more details about  Tibbers.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "target range": "600.0",
       "effect radius": "250.0 + (rank - 1) * 100.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 3,
     "image": {
       "full": "AnnieR.png",
@@ -280,9 +591,113 @@
       "y": 48,
       "h": 48,
       "w": 48
-    }
+    },
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "stacks_pyromania_energized",
+                "comparison": "Equal",
+                "value": "0"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "pyromania",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "stacks_pyromania_energized",
+                "comparison": "Equal",
+                "value": "1"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Stun",
+                  "duration": "by_level(1.25, 1.25, 1.25, 1.25, 1.25, 1.5, 1.5, 1.5, 1.5, 1.5, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75)",
+                  "strength": "0"
+                }
+              },
+              {
+                "type_": "RemoveBuff",
+                "props": {
+                  "buff": "pyromania_energized",
+                  "target": "self"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(150, 275, 400) + 0.75 * ap",
+                  "dmg_type": [
+                    "Ability damage",
+                    "Area damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [
+      {
+        "stat": "magic penetration percent",
+        "formula": "by_rank(0.1, 0.15, 0.2)",
+        "mode": "flat",
+        "conversion": false
+      }
+    ],
+    "buffs": [],
+    "inputs": [],
+    "cooldown_starts_after": null
   },
-  "validated": false,
+  "validated": true,
   "changes": [],
   "image": {
     "full": "Annie.png",

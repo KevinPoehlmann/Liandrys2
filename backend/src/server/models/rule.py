@@ -163,6 +163,22 @@ class Buff(StrictModel):
         return name
 
 
+class Input(StrictModel):
+    """A value the user chooses for the scenario, e.g. Annie's Pyromania stacks at the start."""
+    name: str
+    default: float = 0
+    min: float | None = None
+    max: float | None = None
+    description: str = ""
+
+    @validator("name")
+    def name_is_identifier(cls, name: str) -> str:
+        # Formulas read the input by its name.
+        if not name.isidentifier():
+            raise ValueError(f"Input name '{name}' must be a valid identifier, e.g. 'pyromania_start'")
+        return name
+
+
 class Stage(StrictModel):
     recast_window: str = "0"
     outcomes: list[str] = []

@@ -68,7 +68,9 @@ Trigger:
     on_attack        # basic attack launched
     on_hit           # basic attack lands (on-hit)
     on_damage_dealt  # any damage lands (Conqueror, Electrocute, Veigar, Black Cleaver)
-    on_get_hit       # hit by a basic attack (Thornmail, Annie E)
+    on_get_hit       # hit by a basic attack (Thornmail)
+    on_damage_taken  # any damage taken, also if a shield absorbs all of it (Annie E)
+    on_start         # once when the simulation starts (Annie's starting Pyromania stacks)
     on_interval      # periodically while a buff is active (DoTs, auras)
     on_stack         # this buff gained stacks, whatever applied them (Vayne W from attacks and E)
 
@@ -242,17 +244,28 @@ rules:
     actions: [ApplyBuff(spellblade, self)]
 ```
 
-**Annie passive**
+**Annie passive** (the stun belongs to the first ability that *lands*, so it sits in the landing rules of Q/W/R)
 ```yaml
+inputs: [pyromania_start, default 4, 0–4]
 buffs:
   - name: pyromania, max_stacks: 4
+    rules:
+      - trigger: on_stack
+        conditions: [bearer stacks_pyromania == 4]
+        actions: [ApplyBuff(pyromania_energized, self), RemoveBuff(pyromania, self)]
+  - name: pyromania_energized
 rules:
-  - trigger: on_cast
-    conditions: [self stacks_pyromania == 4]
-    actions: [Status(Stun, target), RemoveBuff(pyromania, self)]
-  - trigger: on_cast
-    actions: [ApplyBuff(pyromania, self, 1)]
+  - trigger: on_start
+    conditions: [self pyromania_start > 0]
+    actions: [ApplyBuff(pyromania, self, "pyromania_start")]
+# in each stage of Q/W/R (E only the first rule), in this order:
+  - conditions: [self stacks_pyromania_energized == 0]
+    actions: [ApplyBuff(pyromania, self)]
+  - conditions: [self stacks_pyromania_energized == 1]
+    actions: [Status(Stun, target), RemoveBuff(pyromania_energized, self)]
+  - actions: [Damage(...)]
 ```
+The ability that brings the 4th stack doesn't stun: `pyromania_energized` comes from the `on_stack` rule, which runs after the stun check in the same tick.
 
 **Darius passive**
 ```yaml
@@ -311,6 +324,8 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
   - Missing categories: on-spell (ability lands; Luden's), on-cc (Aftershock), on-crit, on-death/takedown (2v2), on-heal/shield (Aery).
   - The trigger filter needs damage tags and damage types besides slots: spell effects react to ability damage (including Darius W and Vayne Q attacks), Black Cleaver to physical damage.
   - `on_cast` fires at the end of the cast time; the game fires some on-cast effects at the start. Check which when an item/rune needs it.
+- **Pets (decided):** a pet is its own actor (a third `Character` with its own stats, attack timer and buffs), not a buff of its owner. Needed for Tibbers, clones and 2v2 anyway. Comes as its own step after Annie.
+- **End of the simulation (decided, build with Tibbers):** the backend simulates until the last effect; the frontend shows up to 10 s after the last action and lets the user extend the view. Needs the tick of the last action in the response, and a hard cap for effects without an end.
 - **`bearer`:** introduced for Vayne W, confirmed with Darius (`on_interval` uses the bearer as `target`). Triggered buff rules now also get the bearer.
 - **Percent penetration from several sources:** armor and magic pen percent stack multiplicatively, see `MULTIPLICATIVE_STATS`. Percent stats are stored as fractions (0.3, not 30); the loader already divides by 100.
 - **`Displace(distance)`:** Vayne E pushes the target 475 units back, which changes the travel time of later projectiles. Build it once the distance comes from the request (Phase 5); today it is always 0.
@@ -321,7 +336,9 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Damage tags:** decided to follow the engine tags from the wiki's Damage page (BasicAttack, ActiveSpell, AOE, Periodic, Proc, Pet, Item, OnHit, …) when the first item/rune reacts to tags; see docs/league-mechanics.md. Until then: `dmg_type` is a list of the wiki's damage tags (Aatrox Q is ability *and* area damage), defaulting to `["Ability damage"]`. The wiki's "Spell damage" is the old name for "Ability damage". The wiki's per-damage properties (`ApplyLifesteal`, `ApplyOmnivamp`, `TriggerOnHitEvents`) are not stored; the simulation derives them from the tags. Rare exceptions (Aatrox passive: proc damage with lifesteal) get handled when a test needs them.
 - **Extra tags on attacks:** Vayne's Q-empowered attack is tagged basic *and* ability damage. Planned solution: a buff field `attack_dmg_type: list[DamageType] = []`. When an attack is created, it adds the tags of the attacker's own active buffs (only buffs that set the field; target buffs never count). Build it when an item/rune reacts to the difference (e.g. Liandry's); nothing in the test group does. Darius W is the same case (the whole attack is also ability damage); that a spell shield blocks all of it is a Darius-specific rule, deferred too.
 - **Trigger filters:** only `source` so far. Add keys when a test group member needs them (Black Cleaver: physical damage only).
-- **Annie's stun** must be bound to the damage of the ability, not to the cast.
+- **Inputs (decided):** containers (passive, ability, later items and runes) declare `inputs` (name, default, min, max, description). The request's scenario overrides the defaults; unknown names or values out of range are errors. Formulas read inputs by name (`terrain` on Vayne E, `pyromania_start` on Annie's passive). The UI can build its fields from the declarations later.
+- **`elapsed`:** seconds since the buff started; available in buff stat formulas and buff rules (Annie's decaying Molten Shield speed). The simulation tells each character the current tick (`current_tick`); the character still never schedules anything itself.
+- **Shield and buff:** Molten Shield's reflect buff lasts as long as the shield (3 s) but doesn't end when the shield breaks. Fine in 1v1 (the first hit always meets the shield); with several enemies the buff should end with the shield.
 - **Riven:** when does the cooldown start with recasts? Probably after the last stage or when the recast window runs out, handled in the stage logic.
 - **Last DoT tick:** today it deals the full tick damage. Check whether that matches League.
 - **Deferred until a champion needs it:** `on_expire` (Zed R, Sion W), `on_takedown` plus extending a buff's duration (Vayne R +4 s, resets like Darius R; only matters with more than one enemy, so together with 2v2), a free `data` field on buff instances (Zed), more actors than blue/red (Tibbers, 2v2).

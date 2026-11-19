@@ -358,7 +358,16 @@
       }
     ],
     "rules": [],
-    "buffs": []
+    "buffs": [],
+    "inputs": [
+      {
+        "name": "terrain",
+        "default": 0,
+        "min": 0,
+        "max": 1,
+        "description": "1 if a wall is behind the target, so Condemn stuns"
+      }
+    ]
   },
   "r": {
     "name": "Final Hour",

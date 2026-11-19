@@ -424,6 +424,8 @@ class Trigger(str, Enum):
     ON_GET_HIT = "on_get_hit"
     ON_INTERVAL = "on_interval"
     ON_STACK = "on_stack"
+    ON_START = "on_start"
+    ON_DAMAGE_TAKEN = "on_damage_taken"
 
 class Target(str, Enum):
     SELF = "self"

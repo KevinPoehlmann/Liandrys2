@@ -6,6 +6,7 @@ from src.server.models.dataenums import (
     ProcessedDamageProperties, ProcessedStatusProperties, QueueComponent, StatusType
 )
 from src.server.models.request import Action
+from src.server.simulation.character import soft_cap_movespeed
 
 
 
@@ -356,3 +357,17 @@ class TestCharacter():
         ]
         _, percent_pen = aatrox_with_items.get_penetration(sub_type)
         assert percent_pen == pytest.approx(1 - 0.6 * 0.7)
+
+
+@pytest.mark.parametrize("raw, capped", [
+    (600, 530),  # wiki example
+    (450, 443),
+    (415, 415),
+    (300, 300),
+    (220, 220),
+    (180, 200),  # wiki example
+    (0, 110),
+    (-10000, 10),  # wiki example
+])
+def test_soft_cap_movespeed(raw, capped):
+    assert soft_cap_movespeed(raw) == pytest.approx(capped)
