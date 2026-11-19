@@ -42,7 +42,7 @@ frontend/admin/     admin UI (Vue 3 + Vite + Tailwind) :5174 -> proxies to :5001
 
 **Game rules:** [docs/league-mechanics.md](docs/league-mechanics.md) collects the live League mechanics (mitigation order, crit, shields, CC, movement speed, ...) with what the simulation does today. Check it before building simulation logic.
 
-**Simulation:** 30 ticks per second (`TICKRATE`). `Simulation.do_combo` walks the actions. `Character.do_action` produces `EffectComp`s. `_queue_status` schedules them by tick (delay, travel time, DoT ticks). `_process_queue`: the attacker `evaluate`s formulas, the defender `take_effects` (resistances, shields, heals, CC).
+**Simulation:** one tick is 0.033 s like the game server (`TICK_SECONDS`, `TICKRATE` ≈ 30.3). Convert seconds only with `to_ticks` (rounds up to whole ticks and removes float noise). `Simulation.do_combo` walks the actions. `Character.do_action` produces `EffectComp`s. `_queue_status` schedules them by tick (delay, travel time, DoT ticks). `_process_queue`: the attacker `evaluate`s formulas, the defender `take_effects` (resistances, shields, heals, CC).
 
 ## Commands
 

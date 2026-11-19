@@ -121,7 +121,7 @@ const seriesData = computed(() => {
   console.log("Deltas by tick:", deltasByTick)
 
   const ticks = Array.from(deltasByTick.keys()).sort((a, b) => a - b)
-  const labels = ticks.map(t => (t / tickRate))
+  const labels = ticks.map(t => Number((t / tickRate).toFixed(3)))
 
   console.log("Ticks:", ticks)
   console.log("Labels (s):", labels)

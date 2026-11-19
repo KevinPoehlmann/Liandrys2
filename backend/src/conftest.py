@@ -238,7 +238,7 @@ def action_effect_aa(aatrox_with_items) -> ActionEffect:
 @pytest.fixture
 def action_effect_q() -> ActionEffect:
     return ActionEffect(
-        tick=48,
+        tick=49,
         effect_comps=[
             EffectComp(
                 source=ActionType.Q,

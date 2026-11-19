@@ -34,7 +34,8 @@ from src.server.models.dataenums import (
     StatusProperties,
     StatusType,
     Actor,
-    TICKRATE
+    TICK_SECONDS,
+    to_ticks
 )
 from src.server.models.effect import EffectComponent
 from src.server.models.item import Item
@@ -145,7 +146,7 @@ class Character():
     @staticmethod
     def _buff_end(definition: BuffDefinition, context: FormulaContext, tick: int) -> int | None:
         duration = evaluate_formula(definition.duration, context)
-        return tick + math.ceil(duration * TICKRATE) if duration > 0 else None
+        return tick + to_ticks(duration) if duration > 0 else None
 
     def remove_buff(self, name: str, tick: int) -> None:
         if self.active_buffs.pop(name, None) and name in self.pending_cooldowns:
@@ -512,7 +513,7 @@ class Character():
 
     def _apply_tenacity(self, duration: int) -> int:
         # Tenacity can't reduce a CC below 0.3 seconds, but a CC that is already shorter stays as it is.
-        min_duration = min(duration, math.ceil(0.3 * TICKRATE))
+        min_duration = min(duration, to_ticks(0.3))
         return max(min_duration, math.ceil(self._get_tenacity() * duration))
 
 
@@ -561,8 +562,8 @@ class Character():
 
     def _basic_attack(self, action: Action, tick: int) -> ActionEffect:
         attack_time = 1 / self._get_attackspeed()
-        self.cooldowns[ActionType.AA] = tick + math.ceil(attack_time * TICKRATE)
-        windup_ticks = math.ceil(attack_time * self.champion.attack_windup * TICKRATE)
+        self.cooldowns[ActionType.AA] = tick + to_ticks(attack_time)
+        windup_ticks = to_ticks(attack_time * self.champion.attack_windup)
         rule = self._basic_attack_rule(blinded=StatusType.BLIND in self.status_effects)
         event = RuleEvent(rule=rule, slot=ActionType.AA, owner=action.actor, target=action.target)
         return ActionEffect(tick=tick + windup_ticks, rule_events=[event], windup_cancel=self._windup_cancels())
@@ -593,8 +594,8 @@ class Character():
         cooldown = self._evaluate_formula(ability.cooldown, {"rank": self.ability_dict[action.action_type][1]})
         cooldown *= 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
         cast_time = self._evaluate_formula(ability.cast_time,  {"rank": self.ability_dict[action.action_type][1]})
-        cast_ticks = math.ceil(cast_time * TICKRATE)
-        cooldown_ticks = math.ceil((cooldown) * TICKRATE)
+        cast_ticks = to_ticks(cast_time)
+        cooldown_ticks = to_ticks(cooldown)
         self.cooldowns[action.action_type] = tick + cooldown_ticks + cast_ticks
         action_effect = ActionEffect(tick=tick + cast_ticks)
         for effect in ability.effects:
@@ -603,9 +604,9 @@ class Character():
                     source=action.action_type,
                     target=action.target,
                     type_=component.type_,
-                    duration=math.ceil(component.duration * TICKRATE),
-                    interval=component.interval * TICKRATE,
-                    delay=math.ceil(component.delay * TICKRATE),
+                    duration=to_ticks(component.duration),
+                    interval=component.interval / TICK_SECONDS,
+                    delay=to_ticks(component.delay),
                     speed=component.speed,
                     props=component.props
                 )
@@ -618,7 +619,7 @@ class Character():
     def _cast_stage(self, action: Action, ability: ChampionAbility, tick: int) -> ActionEffect:
         slot = action.action_type
         context = self.formula_context(slot)
-        cast_ticks = math.ceil(evaluate_formula(ability.cast_time, context) * TICKRATE)
+        cast_ticks = to_ticks(evaluate_formula(ability.cast_time, context))
         cooldown_ticks = self._cooldown_ticks(ability, slot)
         cooldown_start = tick if ability.cooldown_starts_on_cast else tick + cast_ticks
         self.cooldowns[slot] = cooldown_start + cooldown_ticks
@@ -645,7 +646,7 @@ class Character():
         cooldown = evaluate_formula(ability.cooldown, self.formula_context(slot))
         haste = 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
         reduction = 1 - self.get_stat(SLOT_COOLDOWN_REDUCTION[slot])
-        return math.ceil(cooldown * haste * reduction * TICKRATE)
+        return to_ticks(cooldown * haste * reduction)
 
     def _defer_cooldown(self, buff: str, slot: ActionType, cooldown_ticks: int, cast_end: int) -> None:
         # Until the buff is gone the cooldown can't start; its latest possible start is the end of the buff's full duration.
@@ -692,7 +693,7 @@ class Character():
                     assert isinstance(component.props, ShieldProperties), "Shield component must have ShieldProperties"
                     props=ProcessedShieldProperties(
                         value=result,
-                        duration=math.ceil(component.props.duration * TICKRATE),
+                        duration=to_ticks(component.props.duration),
                         dmg_sub_type=component.props.dmg_sub_type,
                         hp_scaling=component.props.hp_scaling
                     )
@@ -714,7 +715,7 @@ class Character():
         assert isinstance(component.props, StatusProperties), "Status component must have StatusProperties"
         props = ProcessedStatusProperties(
             type_=component.props.type_,
-            duration=math.ceil(component.props.duration * TICKRATE),
+            duration=to_ticks(component.props.duration),
             strength=component.props.strength
         )
         return QueueComponent(

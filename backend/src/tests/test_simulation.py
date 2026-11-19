@@ -1,8 +1,17 @@
 import pytest
 
 
+from src.server.models import dataenums
+from src.server.simulation import simulation as simulation_module
 from src.server.simulation.simulation import Simulation
 from src.server.models.dataenums import ActionType, Actor, DotState, EffectType, StatusType
+
+
+@pytest.fixture
+def thirty_ticks_per_second(monkeypatch):
+    # The old DoT path (_apply_dot) goes away in the cleanup block; its hand-made tick values assume 30 ticks per second.
+    monkeypatch.setattr(dataenums, "TICK_SECONDS", 1 / 30)
+    monkeypatch.setattr(simulation_module, "TICKRATE", 30)
 from src.server.models.request import Action
 
 
@@ -135,6 +144,7 @@ class TestSimulation():
              DotState(start=-20, last_regular=55, end=60)),
         ]
     )
+    @pytest.mark.usefixtures("thirty_ticks_per_second")
     def test_apply_dot(self, sim: Simulation, e_damage_w, q_damage_w, initial_queue, initial_dot_state, expected_queue, expected_dot_state):
         sim.queue = {k: [q_damage_w for v in values] for k, values in initial_queue.items()}
         sim.dots[(e_damage_w.source, e_damage_w.target)] = initial_dot_state
@@ -196,6 +206,7 @@ class TestSimulation():
              {15: ["q_damage_w"], 30: ["q_damage_w"], 45: ["q_damage_w"], 60:["q_damage_w"]}),
         ]
     )
+    @pytest.mark.usefixtures("thirty_ticks_per_second")
     def test_queue_status(self, sim: Simulation, e_damage_aa, e_damage_w, q_damage_w, q_damage_aa,
                           initial_queue, initial_dot_state, queue_args, expected_queue):
         sim.dots[(e_damage_w.source, e_damage_w.target)] = initial_dot_state
@@ -271,7 +282,7 @@ class TestSimulation():
         sim.queue = {10: [q_stun_e]}
         sim.tick = 10
         sim._process_queue()
-        assert sim.actors[Actor.RED].status_effects[StatusType.STUN] == [(40, 0)]
+        assert sim.actors[Actor.RED].status_effects[StatusType.STUN] == [(41, 0)]
 
 
     def test_do_combo_processes_effects_after_last_action(self, sim: Simulation, q_damage_aa):
@@ -282,6 +293,7 @@ class TestSimulation():
         assert result.ticks == 100
 
 
+    @pytest.mark.usefixtures("thirty_ticks_per_second")
     def test_do_combo_processes_remaining_dot_ticks(self, sim: Simulation, e_damage_w):
         sim._queue_status([e_damage_w], Actor.BLUE)
         result = sim.do_combo([])
@@ -297,11 +309,11 @@ class TestSimulation():
 
     @pytest.mark.parametrize("input, output", [
         ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (55, 7, 1246.965)),
-        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (111, 40, 1191.67)),
-        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q)], (115, 25, 1187.131)),
-        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (115, 25, 1187.131)),
-        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (170, 40, 1131.836)),
-        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (170, 58, 1131.836)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (111, 41, 1191.67)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q)], (115, 26, 1187.131)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (115, 26, 1187.131)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (170, 41, 1131.836)),
+        ([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)], (170, 60, 1131.836)),
     ])
     def test_do_combo(self, sim: Simulation, input, output):
         result = sim.do_combo(input)

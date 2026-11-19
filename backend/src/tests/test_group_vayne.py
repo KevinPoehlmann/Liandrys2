@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, StatusType, TICKRATE
+from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, StatusType, to_ticks
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character
 from src.server.simulation.simulation import Simulation
@@ -109,9 +109,9 @@ class TestVayne():
         assert vs_darius.actors[Actor.RED].damage_taken == pytest.approx(expected)
 
 
-Q_RANK_3_COOLDOWN_TICKS = 4 * TICKRATE
-Q_CAST_TICKS = math.ceil(300 / (500 + 330) * TICKRATE)
-TUMBLE_TICKS = 3 * TICKRATE
+Q_RANK_3_COOLDOWN_TICKS = to_ticks(4)
+Q_CAST_TICKS = to_ticks(300 / (500 + 330))
+TUMBLE_TICKS = to_ticks(3)
 R_RANK_1_Q_COOLDOWN_REDUCTION = 0.3
 
 
@@ -125,7 +125,7 @@ def first_hit_tick(sim: Simulation, source: ActionType) -> int:
 
 
 E_RANK_1_WALL = 75
-E_KNOCKBACK_TICKS = math.ceil(475 / 2000 * TICKRATE)
+E_KNOCKBACK_TICKS = to_ticks(475 / 2000)
 
 
 def hit_ticks(sim: Simulation, source: ActionType) -> list[int]:

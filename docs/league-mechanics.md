@@ -15,7 +15,7 @@ Pages: Tick_and_updates (edited 2024-11, marked "needs clean-up")
 - Anything that would end in the middle of a tick happens on the **next whole tick**: a 0.25 s cast time takes 8 ticks = 0.264 s.
 - Some things only update every n-th tick: buffs every 8 ticks (0.264 s) and health regen every 16 ticks (both from the Damage_over_time page; the Tick page itself lists no cadences). The phase of these cadences runs from game start.
 
-**Simulation:** `TICKRATE = 30`, durations are rounded up to whole ticks (`math.ceil`). ✓ for the rounding. ⚠ 30 instead of 30.30 per second. ⚠ No update cadences; effects that wait for the next buff update (Ignite's first tick) happen right away, because the game clock's phase is unknown.
+**Simulation:** `TICK_SECONDS = 0.033`; `to_ticks` rounds every duration up to whole ticks. ✓ ⚠ No update cadences; effects that wait for the next buff update (Ignite's first tick) happen right away, because the game clock's phase is unknown.
 
 ## Champion stats and level growth
 Pages: Champion_statistic
@@ -193,7 +193,7 @@ Pages: Movement_speed
 ## Damage over time
 Pages: Damage_over_time (no patch stated, edited 2026-10)
 
-- Common intervals: 1 s, 0.5 s, 0.25 s, rarely 0.125 s. The engine runs every ~0.033 s (30 per second, like our `TICKRATE`).
+- Common intervals: 1 s, 0.5 s, 0.25 s, rarely 0.125 s. The engine runs every ~0.033 s (like our `TICK_SECONDS`).
 - **First tick:** some DoTs tick immediately on application, others only after the first interval. Defined per effect.
 - Most DoT debuffs can be refreshed; whether they stack is per effect (Darius and Briar bleed up to 5, Skarner up to 3, Brand explodes at 3).
 - Persistent (engine: Periodic) damage is "generally restrictive" for triggers and does not break sleep.
@@ -203,7 +203,7 @@ Pages: Damage_over_time (no patch stated, edited 2026-10)
 - So DoTs differ in both ends: Darius' bleed has no tick on application but one at the end, Ignite the other way round.
 - Not on the page: final tick at expiry, snapshot vs. live stats, rhythm on refresh. Our rules (tick at expiry, keep the rhythm) come from the user's game knowledge.
 
-**Simulation:** DoTs are buffs with `interval` and `on_interval` rules. The rhythm comes from the first stack, a refresh keeps it, the buff ticks once more at its end, damage is computed live at each tick. `tick_on_apply` and `tick_on_end` choose the two ends per buff. Ignite's first tick comes 0–0.264 s after the cast in the game (next stat update); we tick right away, because the phase of that update rhythm depends on the game clock. ⚠ `TICKRATE` is 30, the engine runs at ~30.3 (0.033 s): long intervals can land one tick early (Ignite's 5th tick at 127 instead of 128).
+**Simulation:** DoTs are buffs with `interval` and `on_interval` rules. The rhythm comes from the first stack, a refresh keeps it, the buff ticks once more at its end, damage is computed live at each tick. `tick_on_apply` and `tick_on_end` choose the two ends per buff. Ignite's first tick comes 0–0.264 s after the cast in the game (next stat update); we tick right away, because the phase of that update rhythm depends on the game clock.
 
 ## Cast time and channels
 Pages: Cast_time, Channel (both marked partly outdated)

@@ -30,7 +30,7 @@ class V1Request(BaseModel):
 
 
 class V1Response(BaseModel):
-    tick_rate: int
+    tick_rate: float
     damage: int
     ticks: int
     effect_list: list[TickEvent]

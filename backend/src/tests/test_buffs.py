@@ -2,14 +2,14 @@ import math
 
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, Stat, TICKRATE
+from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, Stat, to_ticks
 from src.server.models.request import Action, Rank
 from src.server.models.rule import Buff, Rule
 from src.server.simulation.character import Character
 from src.server.simulation.simulation import Simulation
 
 
-FINAL_HOUR_RANK_1_TICKS = 8 * TICKRATE
+FINAL_HOUR_RANK_1_TICKS = to_ticks(8)
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ class TestBuffInstances():
 
         vayne.apply_buff("final_hour", vayne_rank_3, 1, 0)
 
-        assert vayne.active_buffs["final_hour"].end == 12 * TICKRATE
+        assert vayne.active_buffs["final_hour"].end == to_ticks(12)
 
 
 IGNITE_INTERVAL = 1.056
@@ -100,4 +100,4 @@ class TestIntervalBuffs():
             if result.type_ == EffectType.DAMAGE and result.damage_sub_type == DamageSubType.TRUE
         ]
         [hit] = [event.tick for event in sim.effect_list for result in event.result if result.source == ActionType.AA]
-        assert burn_ticks == [hit + math.ceil(k * IGNITE_INTERVAL * TICKRATE) for k in range(5)]
+        assert burn_ticks == [hit + to_ticks(k * IGNITE_INTERVAL) for k in range(5)]

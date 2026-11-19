@@ -1,3 +1,4 @@
+import math
 from aenum import MultiValueEnum
 from dataclasses import dataclass, field
 from enum import Enum
@@ -8,7 +9,14 @@ from pydantic import BaseModel
 
 ############### Constants ###############
 
-TICKRATE = 30  # 30 ticks per second
+TICK_SECONDS = 0.033  # the server ticks every 33 ms
+TICKRATE = 1 / TICK_SECONDS  # about 30.3 ticks per second
+
+
+def to_ticks(seconds: float) -> int:
+    # Anything ending inside a tick happens on the next whole tick.
+    # Rounding first removes float noise, e.g. 0.264 / 0.033 = 8.000000000000002.
+    return math.ceil(round(seconds / TICK_SECONDS, 6))
 
 
 ############### Enums ###############

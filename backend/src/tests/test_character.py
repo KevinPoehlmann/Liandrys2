@@ -268,7 +268,7 @@ class TestCharacter():
     @pytest.mark.parametrize("tenacity, duration, expected", [
         (1, 60, 60),
         (0.5, 60, 30),
-        (0.1, 60, 9),  # floor of 0.3 seconds
+        (0.1, 60, 10),  # floor of 0.3 seconds
         (0.1, 6, 6),  # already shorter than 0.3 seconds
     ])
     def test_apply_tenacity(self, aatrox_with_items, monkeypatch, tenacity, duration, expected):
@@ -298,14 +298,14 @@ class TestCharacter():
     def test_basic_attack(self, aatrox_with_items, action_effect_aa, compare_objects):
         result = aatrox_with_items._basic_attack(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), 0)
         assert compare_objects(result, action_effect_aa)
-        assert aatrox_with_items.cooldowns[ActionType.AA] == 33
+        assert aatrox_with_items.cooldowns[ActionType.AA] == 34
 
 
     def test_do_ability(self, aatrox_with_items, action_effect_q, compare_objects):
         aatrox_with_items.cooldowns[ActionType.Q] = 30
         result = aatrox_with_items._do_ability(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), 30)
         assert compare_objects(result, action_effect_q)
-        assert aatrox_with_items.cooldowns[ActionType.Q] == 91
+        assert aatrox_with_items.cooldowns[ActionType.Q] == 93
 
 
     @pytest.mark.parametrize("action, timer, resolve_fixture", [
@@ -330,7 +330,7 @@ class TestCharacter():
 
     def test_evaluate_status(self, aatrox_with_items, q_stun_e):
         result = aatrox_with_items.evaluate([q_stun_e])
-        assert result[0].props == ProcessedStatusProperties(type_=StatusType.STUN, duration=30)
+        assert result[0].props == ProcessedStatusProperties(type_=StatusType.STUN, duration=31)
 
 
     def test_take_effects_ignores_expired_shield(self, aatrox_with_items, q_processed_ad_flat):

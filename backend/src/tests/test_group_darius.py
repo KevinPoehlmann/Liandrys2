@@ -3,7 +3,7 @@ import math
 
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, Stat, StatusType, TICKRATE
+from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, Stat, StatusType, to_ticks
 from src.server.models.item import Item
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character
@@ -17,27 +17,27 @@ GROWTH_LVL_6 = 3.95
 DARIUS_AD = 64 + 5 * GROWTH_LVL_6
 DARIUS_MAX_HP = 652 + 114 * GROWTH_LVL_6
 DARIUS_ATTACKSPEED = 0.625 + 0.625 * 0.01 * GROWTH_LVL_6
-ATTACK_TICKS = math.ceil(TICKRATE / DARIUS_ATTACKSPEED)
-WINDUP_TICKS = math.ceil(0.2 * TICKRATE / DARIUS_ATTACKSPEED)
+ATTACK_TICKS = to_ticks(1 / DARIUS_ATTACKSPEED)
+WINDUP_TICKS = to_ticks(0.2 / DARIUS_ATTACKSPEED)
 VAYNE_ARMOR = 23 + 4.6 * GROWTH_LVL_6
 
 E_RANK_1_ARMOR_PEN = 0.2
 BLEED_LVL_6 = 18
 BLEED_TICK_PER_STACK = BLEED_LVL_6 / 4
-BLEED_TICKS = 1.25 * TICKRATE
-BLEED_DURATION_TICKS = 5 * TICKRATE
+BLEED_INTERVAL = 1.25
+BLEED_DURATION_TICKS = to_ticks(5)
 NOXIAN_MIGHT_LVL_6 = 55
 Q_RANK_3 = 110 + 1.2 * DARIUS_AD
-Q_CAST_TICKS = math.ceil(0.75 * TICKRATE)
+Q_CAST_TICKS = to_ticks(0.75)
 Q_HEAL_PERCENT = 0.15
 Q_HANDLE = 0.35
-Q_RANK_3_COOLDOWN_TICKS = 7 * TICKRATE
+Q_RANK_3_COOLDOWN_TICKS = to_ticks(7)
 W_RANK_1 = 0.4 * DARIUS_AD
-W_COOLDOWN_TICKS = 5 * TICKRATE
-E_CAST_TICKS = math.ceil(0.25 * TICKRATE)
-E_AIRBORNE_TICKS = math.ceil(0.5 * TICKRATE)
+W_COOLDOWN_TICKS = to_ticks(5)
+E_CAST_TICKS = to_ticks(0.25)
+E_AIRBORNE_TICKS = to_ticks(0.5)
 R_RANK_1 = 125
-R_RANK_1_COOLDOWN_TICKS = 120 * TICKRATE
+R_RANK_1_COOLDOWN_TICKS = to_ticks(120)
 R_BONUS_PER_STACK = 0.2
 
 
@@ -66,8 +66,8 @@ def bleed_ticks(start: int, end: int) -> list[int]:
     # The bleed keeps the rhythm of its first stack and ticks once more when it ends.
     ticks = []
     k = 1
-    while start + math.ceil(k * BLEED_TICKS) <= end:
-        ticks.append(start + math.ceil(k * BLEED_TICKS))
+    while start + to_ticks(k * BLEED_INTERVAL) <= end:
+        ticks.append(start + to_ticks(k * BLEED_INTERVAL))
         k += 1
     return ticks if ticks[-1] == end else ticks + [end]
 
@@ -179,7 +179,7 @@ class TestDariusAbilities():
         [(w_tick, w_damage)] = hits(vs_vayne, ActionType.W)
         assert w_damage == pytest.approx(physical(W_RANK_1))
         assert vs_vayne.actors[Actor.BLUE].cooldowns[ActionType.W] == w_tick + W_COOLDOWN_TICKS
-        assert vs_vayne.actors[Actor.RED].status_effects[StatusType.SLOW] == [(w_tick + TICKRATE, pytest.approx(0.9))]
+        assert vs_vayne.actors[Actor.RED].status_effects[StatusType.SLOW] == [(w_tick + to_ticks(1), pytest.approx(0.9))]
 
 
     def test_e_passive_penetrates_armor(self, load_champion):
@@ -207,7 +207,7 @@ class TestDariusAbilities():
         vayne = vs_vayne.actors[Actor.RED]
         landing = E_CAST_TICKS + E_AIRBORNE_TICKS
         assert vayne.status_effects[StatusType.AIRBORNE] == [(landing, 0)]
-        assert vayne.status_effects[StatusType.SLOW] == [(landing + TICKRATE, pytest.approx(0.4))]
+        assert vayne.status_effects[StatusType.SLOW] == [(landing + to_ticks(1), pytest.approx(0.4))]
         assert vayne.damage_taken == 0
 
 

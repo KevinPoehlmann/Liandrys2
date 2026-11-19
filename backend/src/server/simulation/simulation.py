@@ -19,7 +19,8 @@ from src.server.models.dataenums import (
     Target,
     TickEvent,
     Trigger,
-    TICKRATE
+    TICKRATE,
+    to_ticks
 )
 from src.server.models.request import V1Response, Action
 from src.server.models.rule import (
@@ -144,9 +145,9 @@ class Simulation():
 
     def _queue_rule(self, event: RuleEvent, tick: int) -> None:
         context = self._context(event, event.target)
-        delay = math.ceil(evaluate_formula(event.rule.delay, context) * TICKRATE)
+        delay = to_ticks(evaluate_formula(event.rule.delay, context))
         speed = evaluate_formula(event.rule.speed, context)
-        travel_time = math.ceil(self.distance / speed * TICKRATE - 1e-9) if speed > 0 else 0
+        travel_time = to_ticks(self.distance / speed) if speed > 0 else 0
         self.queue.setdefault(tick + delay + travel_time, []).append(event)
 
 
@@ -206,7 +207,7 @@ class Simulation():
 
     @staticmethod
     def _next_interval(instance: BuffInstance) -> int | None:
-        interval = evaluate_formula(instance.definition.interval, instance.source.formula_context(instance.slot)) * TICKRATE
+        interval = evaluate_formula(instance.definition.interval, instance.source.formula_context(instance.slot))
         if interval <= 0:
             return None
         if instance.end is None:
@@ -214,9 +215,9 @@ class Simulation():
         # The rhythm is set by the first stack, refreshes keep it.
         definition, last = instance.definition, instance.last_interval
         k = 0 if definition.tick_on_apply else 1
-        while last is not None and instance.start + math.ceil(k * interval) <= last:
+        while last is not None and instance.start + to_ticks(k * interval) <= last:
             k += 1
-        rhythm_tick = instance.start + math.ceil(k * interval)
+        rhythm_tick = instance.start + to_ticks(k * interval)
         if rhythm_tick <= instance.end:
             return rhythm_tick
         ticks_at_end = definition.tick_on_end and (last is None or instance.end > last)
@@ -261,7 +262,7 @@ class Simulation():
         target, context = self._target_and_context(props.target, event)
         processed = ProcessedStatusProperties(
             type_=props.status,
-            duration=math.ceil(evaluate_formula(props.duration, context) * TICKRATE),
+            duration=to_ticks(evaluate_formula(props.duration, context)),
             strength=evaluate_formula(props.strength, context)
         )
         return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.STATUS, props=processed)
@@ -398,5 +399,5 @@ class Simulation():
 
 
     def _calculate_delay(self, effect_comp: EffectComp) -> int:
-        travel_time = (math.ceil(self.distance / effect_comp.speed * TICKRATE - 1e-9)) if effect_comp.speed > 0 else 0
+        travel_time = to_ticks(self.distance / effect_comp.speed) if effect_comp.speed > 0 else 0
         return effect_comp.delay + travel_time
