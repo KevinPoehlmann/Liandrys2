@@ -6,7 +6,7 @@ from src.server.models.dataenums import (
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character, soft_cap_movespeed
 from src.server.simulation.pet import PetCharacter
-from src.server.simulation.simulation import Simulation
+from src.server.simulation.simulation import DEFAULT_DISTANCE, Simulation
 
 
 # Expected values are calculated by hand from the patch 15.12.1 fixtures, not by the simulation.
@@ -22,6 +22,7 @@ VAYNE_MR = 30 + 1.3 * GROWTH_LVL_6
 R_RANK_1_MAGIC_PEN = 0.1
 Q_RANK_3 = 160
 CAST_TICKS = to_ticks(0.25)
+Q_TRAVEL_TICKS = to_ticks(DEFAULT_DISTANCE / 1400)  # 3 ticks
 STUN_LVL_6 = 1.5
 E_RANK_1_SHIELD = 60
 E_RANK_1_REFLECT = 25
@@ -65,7 +66,7 @@ class TestPyromania():
         vs_darius.do_combo(combo(ActionType.Q))
 
         darius = vs_darius.actors[Actor.RED]
-        assert darius.status_effects[StatusType.STUN] == [(CAST_TICKS + to_ticks(STUN_LVL_6), 0)]
+        assert darius.status_effects[StatusType.STUN] == [(CAST_TICKS + Q_TRAVEL_TICKS + to_ticks(STUN_LVL_6), 0)]
         assert darius.damage_taken == pytest.approx(magic(Q_RANK_3))
         annie = vs_darius.actors[Actor.BLUE]
         assert annie.get_buff_stacks("pyromania") == 0
@@ -79,7 +80,7 @@ class TestPyromania():
 
         sim.do_combo(combo(ActionType.Q))
 
-        assert darius.status_effects[StatusType.STUN] == [(CAST_TICKS + to_ticks(stun_seconds), 0)]
+        assert darius.status_effects[StatusType.STUN] == [(CAST_TICKS + Q_TRAVEL_TICKS + to_ticks(stun_seconds), 0)]
 
 
     def test_fourth_stack_does_not_stun_the_next_ability_does(self, load_champion):

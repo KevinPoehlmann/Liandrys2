@@ -6,7 +6,8 @@ from src.server.models.pet import Pet
 from src.server.models.rule import Buff, Input, Rule, Stage, StatModifier
 
 from src.server.models.dataenums import (
-    ActiveType
+    ActiveType,
+    CostResource
 )
 
 
@@ -16,6 +17,7 @@ class Ability(BaseModel):
     name: str
     description: str = ""
     cost: str = "0"
+    cost_resource: CostResource = CostResource.NONE  # paid when the cast starts
     cooldown: str = "0"
     cast_time: str = "0"
     recharge: str = "0"

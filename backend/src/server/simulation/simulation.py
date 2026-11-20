@@ -13,6 +13,7 @@ from src.server.models.dataenums import (
     EffectResult,
     EffectType,
     ProcessedDamageProperties,
+    ProcessedCostProperties,
     ProcessedHealProperties,
     ProcessedShieldProperties,
     ProcessedStatusProperties,
@@ -26,7 +27,8 @@ from src.server.models.dataenums import (
 from src.server.models.request import V1Response, Action
 from src.server.models.rule import (
     ApplyBuffAction, Condition, DamageAction, DamageProps, HealAction, HealProps, RemoveBuffAction,
-    ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps, SummonAction
+    ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps, SummonAction,
+    LockAction, PayCostAction
 )
 from src.server.simulation.character import Character
 from src.server.simulation.buff_instance import BuffInstance
@@ -37,6 +39,9 @@ from src.server.simulation.pet import PetCharacter
 
 QueueEntry = QueueComponent | RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
 
+# Close enough for any melee attack; projectiles still need travel time (Vladimir's E lands after a Hemoplague cast at its release).
+DEFAULT_DISTANCE = 100
+
 # Effects without an end (none known yet) would keep the simulation running forever.
 MAX_SECONDS_AFTER_LAST_ACTION = 60
 
@@ -44,7 +49,7 @@ MAX_SECONDS_AFTER_LAST_ACTION = 60
 
 
 class Simulation():
-    def __init__(self, blue: Character, red: Character, distance: int = 0):
+    def __init__(self, blue: Character, red: Character, distance: int = DEFAULT_DISTANCE):
         self.tick: int = 0
         self.distance: int = distance
         self.queue: dict[int, list[QueueEntry]] = defaultdict(list)
@@ -121,6 +126,9 @@ class Simulation():
         start = self.tick
         self.last_action_tick = start
         character = self.actors[action.actor]
+        cost = character.pay_ability_cost(action.action_type, action.actor)
+        if cost:
+            self.effect_list.append(TickEvent(tick=start, result=[cost]))
         action_effect = character.do_action(action, self.tick)
         self.tick = action_effect.tick
         self._queue_status(action_effect.effect_comps, action.actor)
@@ -203,6 +211,8 @@ class Simulation():
         owner = self.actors[event.owner]
         if getattr(action.props, "target", None) == Target.PET and self._pet_of(event.owner) is None:
             return []  # a rule for the pet while no pet is out
+        if self._misses_untargetable(action, event, tick):
+            return []
         match action:
             case DamageAction(props=props):
                 return [self._damage(props, event)]
@@ -219,6 +229,7 @@ class Simulation():
                 if instance.end is not None:
                     self.queue.setdefault(instance.end, []).append(BuffEnd(bearer=bearer, buff=props.buff, end=instance.end))
                 self._schedule_interval(bearer, instance)
+                self._rescale_slowed_buffs(bearer, tick)
                 self._fire_stack(props.buff, instance.definition.rules, instance.slot, self._actor_of(instance.source), bearer, tick)
             case RemoveBuffAction(props=props):
                 bearer = self.actors[self._resolve_target(props.target, event)]
@@ -226,6 +237,13 @@ class Simulation():
                     bearer.remove_buff(props.buff, tick)
                 else:
                     bearer.remove_stacks(props.buff, int(evaluate_formula(props.stacks, owner.formula_context(event.slot))), tick)
+                self._rescale_slowed_buffs(self._actor_of(bearer), tick)
+            case PayCostAction(props=props):
+                cost = ProcessedCostProperties(resource=props.resource, value=evaluate_formula(props.amount, self._context(event, event.owner)))
+                return [QueueComponent(source=event.slot, actor=event.owner, target=event.owner, type_=EffectType.COST, props=cost)]
+            case LockAction(props=props):
+                duration = to_ticks(evaluate_formula(props.duration, self._context(event, event.target)))
+                owner.lock(tick + duration, set(props.exceptions))
             case ResetAttackAction():
                 owner.reset_attack(tick)
             case SummonAction(props=props):
@@ -346,6 +364,33 @@ class Simulation():
                 return pet
             case Target.OWNER:
                 return self._owner_of(event.owner)
+            case Target.ENEMY:
+                return self._enemy_of(event.owner)
+
+
+    def _misses_untargetable(self, action: RuleAction, event: RuleEvent, tick: int) -> bool:
+        # Only debuffs already on the target keep ticking (bleed, Ignite); everything else is a new hit and misses:
+        # attacks, abilities, delayed bursts and auras (a buff on their source).
+        target = getattr(action.props, "target", None)
+        if target is None:
+            return False
+        actor = self._resolve_target(target, event)
+        if event.buff is not None and event.bearer == actor:
+            return False
+        return actor.team != event.owner.team and self.actors[actor].is_untargetable(tick)
+
+
+    def _rescale_slowed_buffs(self, bearer: Actor, tick: int) -> None:
+        character = self.actors[bearer]
+        for name, instance in list(character.active_buffs.items()):
+            slowing = [entry.rate for entry in instance.definition.slowed_while if entry.buff in character.active_buffs]
+            rate = min(slowing, default=1.0)
+            if rate == instance.rate or instance.end is None:
+                continue
+            remaining = (instance.end - tick) * instance.rate
+            instance.end = tick + math.ceil(round(remaining / rate, 6))
+            instance.rate = rate
+            self.queue.setdefault(instance.end, []).append(BuffEnd(bearer=bearer, buff=name, end=instance.end))
 
 
     def _is_gone(self, actor: Actor) -> bool:
@@ -471,6 +516,7 @@ class Simulation():
             self._pet_attack(due.pet, q_tick)
         for end in [entry for entry in entries if isinstance(entry, BuffEnd)]:
             self.actors[end.bearer].expire_buff(end.buff, end.end)
+            self._rescale_slowed_buffs(end.bearer, q_tick)
 
 
     def _apply_components(self, raw: list[QueueComponent], processed: list[QueueComponent], q_tick: int) -> None:

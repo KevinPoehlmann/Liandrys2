@@ -791,7 +791,7 @@
                   "type_": "ApplyBuff",
                   "props": {
                     "buff": "tibbers_aura",
-                    "target": "target",
+                    "target": "self",
                     "stacks": "1"
                   }
                 }
@@ -855,7 +855,7 @@
                     {
                       "type_": "Damage",
                       "props": {
-                        "target": "bearer",
+                        "target": "enemy",
                         "scaling": "by_rank(2.5, 3.75, 5) + 0.01 * owner_ap",
                         "dmg_type": [
                           "Ability damage",

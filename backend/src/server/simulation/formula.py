@@ -25,6 +25,7 @@ class StatSource(Protocol):
     def get_base_stat(self, stat: Stat) -> float: ...
     def get_rank(self, slot: ActionType) -> int: ...
     def get_buff_stacks(self, buff: str) -> int: ...
+    def get_cooldown(self, slot: ActionType) -> float: ...
 
 
 def _total(stat: Stat) -> Callable[[StatSource], float]:
@@ -76,6 +77,7 @@ class FormulaContext:
     max_rank: int = 0
     stacks: int = 0
     elapsed: float = 0.0
+    slot: ActionType | None = None
     scenario: dict[str, float] = field(default_factory=dict)
 
 
@@ -99,11 +101,19 @@ class FormulaNamespace(Mapping[str, float]):
     def __getitem__(self, name: str) -> float:
         if name in self._fixed:
             return self._fixed[name]
+        if name == "cooldown":
+            return self._cooldown()
         if name.startswith(TARGET_PREFIX):
             return self._read_other(self._context.target, TARGET_PREFIX, name)
         if name.startswith(OWNER_PREFIX):
             return self._read_other(self._context.owner, OWNER_PREFIX, name)
         return self._read(self._context.source, name)
+
+    def _cooldown(self) -> float:
+        # Seconds after haste and cooldown reduction, e.g. Vladimir's Crimson Rush fills with Transfusion's cooldown.
+        if self._context.slot is None:
+            raise KeyError("cooldown")
+        return self._context.source.get_cooldown(self._context.slot)
 
     def _read_other(self, actor: StatSource | None, prefix: str, name: str) -> float:
         if actor is None:

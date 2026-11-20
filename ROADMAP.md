@@ -56,6 +56,7 @@ Building blocks that are missing (each one gets a champion/item from the test gr
 - [ ] Non-linear rank values: `parse_formula_from_list` assumes linear steps (needs a lookup like `[40, 65, 90][rank - 1]`)
 - [ ] `extra = "forbid"` on the effect models, so typos in field names fail instead of being silently dropped
 - [ ] Later: pets (needs an actor concept beyond `blue`/`red`)
+- [ ] Results know their origin: `EffectResult.source` is only an `ActionType` today, so an item/rune proc (Sheen, Kraken, Electrocute) can't be told apart. Add the owning item/rune/buff while the result format is being rebuilt anyway; the post-V1 damage breakdown builds on it
 
 Known gaps found in Phase 1 (fold them into the new design):
 - [ ] Cast buffs are commented out (`_check_buffs`), so stacks never rise in a real combo
@@ -109,6 +110,17 @@ Speeds up Phase 6. Needs the Phase 2 format to be stable and the Phase 3 data ch
 The clock starts here. Enter champions, items and runes, working from the "only show invalid" list.
 
 ---
+
+## After V1: user comfort
+
+Ideas collected for later; mostly frontend.
+
+- Champion selection: class filter with the Data Dragon `tags` (Fighter, Mage, …; not positions, the champion model doesn't store them yet)
+- Item shop like in game: tag filters (Data Dragon item `tags`) and a build tree from `from`/`into`
+- Damage summary: total physical / magic / true taken, and a breakdown per source
+- Item contribution: direct procs via the result's origin (see Phase 2); stat contribution by simulating once without the item (the parts don't add up to the total, stats amplify each other)
+- Quick rune pages: first by hand in the admin editor or "recently used" in the browser; later aggregated from the Riot Match-V5 API, which would also give positions for a position filter (needs a production API key, rate limits, a collector job). Riot offers no recommended pages through the API
+- Production: disclaimer "not affiliated with Riot Games", register the project in the Riot Developer Portal
 
 ## Backlog (after V1 or when needed)
 

@@ -8,6 +8,7 @@ from src.server.models.dataenums import (
     ActionEffect,
     ActionType,
     Buff,
+    CostResource,
     BuffActionType,
     Condition,
     Comparison,
@@ -20,6 +21,7 @@ from src.server.models.dataenums import (
     EffectType,
     HealProperties,
     HpScaling,
+    ProcessedCostProperties,
     ProcessedDamageProperties,
     ProcessedHealProperties,
     ProcessedShieldProperties,
@@ -56,6 +58,8 @@ from src.server.simulation.formula import FormulaContext, evaluate_formula
 
 
 MULTIPLICATIVE_STATS = {Stat.ARMOR_PEN_P, Stat.MAGIC_PEN_P}
+# Damage amplifications from several sources multiply (Hemoplague notes).
+COMPOUNDING_STATS = {Stat.DAMAGE_TAKEN_P}
 
 SLOT_COOLDOWN_REDUCTION = {
     ActionType.Q: Stat.Q_COOLDOWN_REDUCTION,
@@ -102,6 +106,7 @@ class Character():
         self.stacks: dict[ActionType, int] = defaultdict(int)
 
         self.evaluating_stat: set = set()
+        self.ignoring_conversions: bool = False
 
         self.ability_dict: dict[ActionType, tuple[ChampionAbility, int]] = ability_dict
         self.scenario: dict[str, float] = self._scenario(scenario)
@@ -173,7 +178,7 @@ class Character():
     def formula_context(self, slot: ActionType, target: "Character | None" = None, stacks: int = 0, elapsed: float = 0.0) -> FormulaContext:
         max_rank = self.ability_dict[slot][0].maxrank if slot in self.ability_dict else 0
         return FormulaContext(source=self, target=target, rank=self.get_rank(slot), max_rank=max_rank,
-                              stacks=stacks, elapsed=elapsed, scenario=self.scenario)
+                              stacks=stacks, elapsed=elapsed, slot=slot, scenario=self.scenario)
 
     def buff_elapsed(self, instance: BuffInstance) -> float:
         return (self.current_tick - instance.start) * TICK_SECONDS
@@ -188,6 +193,7 @@ class Character():
             self.active_buffs[name] = instance
         elif definition.refresh:
             instance.end = end
+            instance.rate = 1.0
         instance.stacks = min(instance.stacks + stacks, definition.max_stacks)
         return instance
 
@@ -240,6 +246,27 @@ class Character():
     def reset_attack(self, tick: int) -> None:
         self.cooldowns[ActionType.AA] = tick
 
+    def is_untargetable(self, tick: int) -> bool:
+        return any(end > tick for end, _ in self.status_effects.get(StatusType.UNTARGETABLE, []))
+
+    def pay_ability_cost(self, slot: ActionType, actor: Actor) -> EffectResult | None:
+        if slot not in self.ability_dict:
+            return None
+        ability = self.ability_dict[slot][0]
+        if ability.cost_resource == CostResource.NONE:
+            return None
+        amount = evaluate_formula(ability.cost, self.formula_context(slot))
+        return self.pay_cost(ability.cost_resource, amount, slot, actor)
+
+    def pay_cost(self, resource: CostResource, amount: float, source: ActionType, actor: Actor) -> EffectResult:
+        if resource != CostResource.HEALTH:
+            raise NotImplementedError(f"{resource.value} costs need resources and regeneration, which come after Vladimir")
+        # A health cost can't kill: without enough health the cast isn't possible (Dr. Mundo).
+        if amount >= self.current_hp:
+            raise ValueError(f"Not enough health for {source.value}: it costs {amount:.0f}, {self.name} has {self.current_hp:.0f}")
+        self.current_hp -= amount
+        return EffectResult(source=source, actor=actor, target=actor, type_=EffectType.COST, value=amount)
+
     def lock(self, until: int, exceptions: set[ActionType]) -> None:
         self.locked_until = until
         self.lock_exceptions = exceptions
@@ -266,6 +293,8 @@ class Character():
         if stat in MULTIPLICATIVE_STATS:
             # Percent penetration from several sources stacks multiplicatively (Darius E notes).
             return 1 - math.prod(1 - value for value in values)
+        if stat in COMPOUNDING_STATS:
+            return math.prod(1 + value for value in values) - 1
         return sum(values)
 
     def _modifier_values(self, stat: Stat) -> list[float]:
@@ -277,7 +306,8 @@ class Character():
         ]
         values += [
             self._evaluate_modifier(modifier, context)
-            for modifier, context in self._active_modifiers() if modifier.stat == stat
+            for modifier, context in self._active_modifiers()
+            if modifier.stat == stat and not (modifier.conversion and self.ignoring_conversions)
         ]
         return values
 
@@ -292,11 +322,17 @@ class Character():
             for modifier in instance.definition.stats:
                 yield modifier, instance.source.formula_context(instance.slot, stacks=instance.stacks, elapsed=self.buff_elapsed(instance))
 
-    @staticmethod
-    def _evaluate_modifier(modifier: StatModifier, context: FormulaContext) -> float:
-        if modifier.mode != StatMode.FLAT or modifier.conversion:
-            raise NotImplementedError(f"Stat modifier mode '{modifier.mode}' (conversion={modifier.conversion}) is not supported yet")
-        return evaluate_formula(modifier.formula, context)
+    def _evaluate_modifier(self, modifier: StatModifier, context: FormulaContext) -> float:
+        if modifier.mode != StatMode.FLAT:
+            raise NotImplementedError(f"Stat modifier mode '{modifier.mode}' is not supported yet")
+        if not modifier.conversion:
+            return evaluate_formula(modifier.formula, context)
+        # A conversion only sees stats without conversions, so two of them can't feed each other (Vladimir's passive).
+        outer, self.ignoring_conversions = self.ignoring_conversions, True
+        try:
+            return evaluate_formula(modifier.formula, context)
+        finally:
+            self.ignoring_conversions = outer
 
 
     def get_stat(self, stat: Stat) -> float:
@@ -398,6 +434,9 @@ class Character():
         resistance -= damage.flat_pen
         resistance = max(resistance, 0)
         result = value * (100 / (resistance + 100))
+        if damage.dmg_sub_type != DamageSubType.TRUE:
+            # True damage isn't amplified (wiki: Hemoplague, probably an old state of the ability).
+            result *= 1 + self.get_stat(Stat.DAMAGE_TAKEN_P)
         return result, value, value - result
     
 
@@ -548,6 +587,14 @@ class Character():
         self.current_hp -= total_damage
         return vamps, results
 
+
+
+    def _apply_costs(self, components: list[QueueComponent]) -> list[EffectResult]:
+        results = []
+        for component in components:
+            assert isinstance(component.props, ProcessedCostProperties), "Cost component must have ProcessedCostProperties"
+            results.append(self.pay_cost(component.props.resource, component.props.value, component.source, component.actor))
+        return results
 
 
     def _apply_status_effects(self, components: list[QueueComponent], tick: int) -> None:
@@ -706,10 +753,16 @@ class Character():
 
 
     def _cooldown_ticks(self, ability: ChampionAbility, slot: ActionType) -> int:
+        return to_ticks(self.get_cooldown(slot))
+
+    def get_cooldown(self, slot: ActionType) -> float:
+        if slot not in SLOT_COOLDOWN_REDUCTION:
+            raise ValueError(f"{slot} has no cooldown")
+        ability = self.ability_dict[slot][0]
         cooldown = evaluate_formula(ability.cooldown, self.formula_context(slot))
         haste = 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
         reduction = 1 - self.get_stat(SLOT_COOLDOWN_REDUCTION[slot])
-        return to_ticks(cooldown * haste * reduction)
+        return cooldown * haste * reduction
 
     def _defer_cooldown(self, buff: str, slot: ActionType, cooldown_ticks: int, cast_end: int) -> None:
         # Until the buff is gone the cooldown can't start; its latest possible start is the end of the buff's full duration.
@@ -796,6 +849,7 @@ class Character():
         heals = []
         shields = []
         stati = []
+        costs = []
         for component in component_list:
             match component.type_:
                 case EffectType.DAMAGE:
@@ -806,10 +860,13 @@ class Character():
                     shields.append(component)
                 case EffectType.STATUS:
                     stati.append(component)
+                case EffectType.COST:
+                    costs.append(component)
                 case _:
                     pass
         self._apply_shields(shields, tick)
         vamps, results = self._apply_damages(damages)
         results.extend(self._apply_heals(heals))
+        results.extend(self._apply_costs(costs))
         self._apply_status_effects(stati, tick)
         return vamps, results

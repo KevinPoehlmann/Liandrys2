@@ -58,6 +58,7 @@ class Stat(str, Enum):
     W_COOLDOWN_REDUCTION = "w cooldown reduction"
     E_COOLDOWN_REDUCTION = "e cooldown reduction"
     R_COOLDOWN_REDUCTION = "r cooldown reduction"
+    DAMAGE_TAKEN_P = "damage taken percent"
     ARMOR_TARGET = "target's armor"
     BONUS_AD = "bonus ad"
     BONUS_AP = "bonus ap"
@@ -371,6 +372,14 @@ class EffectType(str, Enum):
     HEAL="Heal"
     SHIELD="Shield"
     STATUS="Status"
+    COST="Cost"
+
+class CostResource(str, Enum):
+    """What an ability costs; not the same as the champion's resource bar (Vladimir's bar is Crimson Rush, his costs are health)."""
+    NONE="none"
+    HEALTH="health"
+    MANA="mana"
+    ENERGY="energy"
 
 class ConditionType(str, Enum):
     HIT="hit"
@@ -394,6 +403,7 @@ class StatusType(str, Enum):
     STASIS = "Stasis"
     STUN = "Stun"
     SUPPRESSION = "Suppression"
+    UNTARGETABLE = "Untargetable"
     SUSPENSION = "Suspension"
     TAUNT = "Taunt"
     ERROR = "Error"
@@ -461,6 +471,7 @@ class Target(str, Enum):
     BEARER = "bearer"
     PET = "pet"
     OWNER = "owner"
+    ENEMY = "enemy"  # the enemy champion; auras hit it from a buff on their source
 
 class RuleActionType(str, Enum):
     DAMAGE = "Damage"
@@ -472,6 +483,8 @@ class RuleActionType(str, Enum):
     RESET_ATTACK = "ResetAttack"
     MODIFY_COOLDOWN = "ModifyCooldown"
     SUMMON = "Summon"
+    PAY_COST = "PayCost"
+    LOCK = "Lock"
     CUSTOM = "Custom"
 
 class StatMode(str, Enum):
@@ -576,6 +589,11 @@ class ProcessedStatusProperties(EffectProperties):
     type_: StatusType
     duration: int
     strength: float = 0.0
+
+
+class ProcessedCostProperties(EffectProperties):
+    resource: CostResource
+    value: float
 
 
 

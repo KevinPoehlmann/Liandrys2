@@ -46,7 +46,7 @@ Damage modifiers (page Damage_modifier, marked outdated):
 - Flat reduction: some before resistances (Fizz passive, Leona, Amumu, Guardian's Horn), some after (Bone Plating, Warden's Mail); never against true damage; a DoT is reduced per tick. *(unverified)*
 - Ignite and Smite are unaffected by damage modifiers. Some amplifiers deal their bonus as a separate damage instance (Zed R, Illaoi E). *(unverified)*
 
-**Simulation:** `Character._calculate_damage` applies percent pen, then flat pen, then clamps at 0. Percent pen stacks multiplicatively (`MULTIPLICATIVE_STATS`). ⚠ No resistance reduction yet. ⚠ When it comes, the clamp at 0 is wrong: a negative resistance from reduction must stay negative and use the negative formula. ⚠ No base/bonus split for bonus-only pen. ⚠ No damage amplification/reduction.
+**Simulation:** `Character._calculate_damage` applies percent pen, then flat pen, then clamps at 0. Percent pen stacks multiplicatively (`MULTIPLICATIVE_STATS`). ⚠ No resistance reduction yet. ⚠ When it comes, the clamp at 0 is wrong: a negative resistance from reduction must stay negative and use the negative formula. ⚠ No base/bonus split for bonus-only pen. Damage amplification: stat `damage taken percent` on the target, multiplied after resistances, sources multiply, true damage excluded (Hemoplague). ✓ ⚠ No flat amplification and no damage reduction yet.
 
 ## Damage tags
 Pages: Damage (marked "substantially incomplete" by the wiki)

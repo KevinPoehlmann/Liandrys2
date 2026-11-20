@@ -104,7 +104,9 @@ Condition:
 | `Summon(pet)` | creates a pet defined in the ability's `pets` (Annie R) |
 | `Custom(function, args)` | escape hatch, see below |
 
-`target` is an enum: `self`, `target`, `bearer` (buff rules), `pet` (the owner's active pet; the action is skipped while there is none), `owner` (inside pet rules).
+`target` is an enum: `self`, `target`, `bearer` (buff rules), `pet` (the owner's active pet; the action is skipped while there is none), `owner` (inside pet rules), `enemy` (the enemy champion; for auras).
+
+**Auras** are buffs on their source with an interval, whose rules hit `enemy` (Tibbers' Flame Aura, Sanguine Pool). Debuffs are buffs on the target itself (Darius' bleed, Ignite). The difference matters for untargetable targets.
 
 In JSON every action has the same shape as today's polymorphic models, with all fields in `props`:
 
@@ -298,8 +300,8 @@ rules:
 **Vladimir passive**
 ```yaml
 stats:
-  - ap: flat "bonus_hp / 30", conversion: true
-  - bonus_hp: flat "ap * 1.6", conversion: true
+  - ap: flat "0.03333 * bonus_hp", conversion: true
+  - hp: flat "1.6 * ap", conversion: true
 ```
 
 ## Test group
@@ -328,9 +330,9 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Pets (built):** a pet is its own actor, not a buff of its owner.
   - **Actor ids:** `Actor` is a validated string: the team first, then the path to the unit (`blue`, `red`, `blue.tibbers`, `blue.ghoul#2`). Later `blue.top` and `blue.top.tibbers` fit the same pattern. The owner is stored on the pet, not read from the id.
   - **Definition:** an ability lists `pets` (name, duration, stat formulas, attack, passive). Stat formulas use the rank of the summoning ability and read the owner with `owner_` (`owner_ap`). The pet's passive is the normal `Passive` model; the owner also knows the pet's buffs, so Annie's stun can enrage Tibbers.
-  - **Behaviour:** `PetCharacter` (simulation/pet.py) reuses `Character` and replaces only stats, attack speed (no ratio: bonus attack speed scales the base), windup, the attack rule and penetration (the owner's, confirmed for Tibbers). On summon its `on_start` rules fire and it attacks the owner's enemy on its own until it expires. On expiry its buffs end, including the ones it put on others (an aura modelled as a debuff on the enemy).
+  - **Behaviour:** `PetCharacter` (simulation/pet.py) reuses `Character` and replaces only stats, attack speed (no ratio: bonus attack speed scales the base), windup, the attack rule and penetration (the owner's, confirmed for Tibbers). On summon its `on_start` rules fire and it attacks the owner's enemy on its own until it expires. On expiry its buffs end, including debuffs it put on others.
   - **Expiry:** rules of an expired pet don't run anymore, so an attack still in flight misses (the owner's decision; not checked in game).
-  - **Tibbers:** stats from the wiki's templates (health per level from level 6, armor/MR `5 * level`, the rest by R rank). Enrage is a buff with 5 stacks, one removed per attack; the attack speed formula indexes a list with the remaining stacks (1.736 → 0.739, then 0.625). The aura is a debuff Tibbers puts on the enemy on summon (ticks every 0.25 s, 180 ticks); revisit when distance or several enemies matter. Left out: the enrage movement speed, Ghosted, Recovery, Revenge.
+  - **Tibbers:** stats from the wiki's templates (health per level from level 6, armor/MR `5 * level`, the rest by R rank). Enrage is a buff with 5 stacks, one removed per attack; the attack speed formula indexes a list with the remaining stacks (1.736 → 0.739, then 0.625). The aura is a buff on Tibbers hitting `enemy` (ticks every 0.25 s, 180 ticks); 1v1 assumes the enemy stays within 350 units. Left out: the enrage movement speed, Ghosted, Recovery, Revenge.
   - **Enrage duration:** the wiki's 3 s is rounded; in ticks the enrage lasts until the 5th attack starts (92 ticks = 3.036 s), and an attack starting on a buff's end tick still gets the buff (the owner's observation in game). It stays time-based, so a stun on Tibbers would let it run out earlier.
   - **Not yet:** the enemy attacking or killing the pet, recast/moving (Annie R stage 2), Tibbers' revenge on Annie's death (`on_death`), clones that copy the owner.
 - **End of the simulation (built):** the backend simulates until the last effect, at most 60 s after the start of the last action (`MAX_SECONDS_AFTER_LAST_ACTION`; no endless effect is known yet). The response carries `last_action_tick` and `deaths` (actor → tick at which its health first reached 0); the simulation goes on after a death so the overkill stays visible. The frontend shows 10 s after the last action, with "+10 s" and "All" buttons, and marks deaths with a dashed line. Pet results count for their team (first part of the actor id).
@@ -345,6 +347,16 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Extra tags on attacks:** Vayne's Q-empowered attack is tagged basic *and* ability damage. Planned solution: a buff field `attack_dmg_type: list[DamageType] = []`. When an attack is created, it adds the tags of the attacker's own active buffs (only buffs that set the field; target buffs never count). Build it when an item/rune reacts to the difference (e.g. Liandry's); nothing in the test group does. Darius W is the same case (the whole attack is also ability damage); that a spell shield blocks all of it is a Darius-specific rule, deferred too.
 - **Trigger filters:** only `source` so far. Add keys when a test group member needs them (Black Cleaver: physical damage only).
 - **Inputs (decided):** containers (passive, ability, later items and runes) declare `inputs` (name, default, min, max, description). The request's scenario overrides the defaults; unknown names or values out of range are errors. Formulas read inputs by name (`terrain` on Vayne E, `pyromania_start` on Annie's passive). The UI can build its fields from the declarations later.
+- **Conversions (built):** a modifier with `conversion: true` is evaluated while all conversion modifiers are switched off, so Vladimir's two bonuses don't feed each other. Percent modifiers (`mode: percent`, Rabadon) still raise NotImplementedError.
+- **`cooldown` (built):** formula variable with the cooldown of the formula's slot in seconds, after haste and per-slot reduction. Vladimir's Crimson Rush stack comes with a rule `delay: cooldown` after each Transfusion.
+- **Damage amplification (built):** stat `damage taken percent` on the target, applied after resistances; several sources multiply. True damage is not amplified (wiki, Hemoplague).
+- **Costs (built):** `cost` + `cost_resource` (none / health / mana / energy) are paid when the cast starts; the action `PayCost(resource, amount)` pays during an effect (Tides of Blood's charge). Results have the type `Cost`. Any resource can block a cast; a health cost can't kill, so it blocks when it would (Dr. Mundo). Mana and energy raise NotImplementedError until resources and regeneration are built.
+- **`Lock(duration, exceptions)` (built):** the owner can't attack or cast, except the listed slots (Sanguine Pool: summoners and items; the Tides of Blood charge also allows W). Reuses the windup lock.
+- **`Untargetable` (built):** a status; only debuffs already on the target keep ticking (the rule comes from a buff whose bearer is the target). Everything else from the enemy misses: attacks, abilities, delayed bursts and auras.
+- **`slowed_while` (built):** while one of the listed buffs is on the bearer, the buff's time runs at `rate`; the end is recomputed (rounded up to whole ticks) whenever such a buff starts or ends. Crimson Rush drains at 25 % in Sanguine Pool and while charging Tides of Blood; stasis comes with Zhonya's.
+- **Channels:** rules start at the end of the cast time, so Tides of Blood is a `Lock` for the charge time (an ability input) with rules delayed by the charge. Q and R interrupting the charge are not modelled: the next action in the combo starts at the release. The bolts fly at 4000, so a Hemoplague cast at the release lands first and amplifies them.
+- **Default distance (decided):** 100 units, close enough for melee attacks; projectiles still have travel time. Real distances come with Phase 5.
+- **Resources and regeneration (decided, after Vladimir, before Ignite):** HP, mana and energy regenerate over time; Ignite's Grievous Wounds also cuts regeneration.
 - **`elapsed`:** seconds since the buff started; available in buff stat formulas and buff rules (Annie's decaying Molten Shield speed). The simulation tells each character the current tick (`current_tick`); the character still never schedules anything itself.
 - **Shield and buff:** Molten Shield's reflect buff lasts as long as the shield (3 s) but doesn't end when the shield breaks. Fine in 1v1 (the first hit always meets the shield); with several enemies the buff should end with the shield.
 - **Riven:** when does the cooldown start with recasts? Probably after the last stage or when the recast window runs out, handled in the stage logic.

@@ -27,6 +27,9 @@ class FakeSource:
     def get_buff_stacks(self, buff: str) -> int:
         return self.buff_stacks.get(buff, 0)
 
+    def get_cooldown(self, slot: ActionType) -> float:
+        return {ActionType.Q: 4.5}[slot]
+
 
 @pytest.fixture
 def vayne():
@@ -81,6 +84,15 @@ class TestVariables():
 
     def test_scenario_inputs_are_variables(self, vayne):
         assert evaluate_formula("terrain", FormulaContext(source=vayne, scenario={"terrain": 1})) == 1
+
+
+    def test_cooldown_is_the_cooldown_of_the_formulas_slot(self, vayne):
+        assert evaluate_formula("cooldown", FormulaContext(source=vayne, slot=ActionType.Q)) == 4.5
+
+
+    def test_cooldown_needs_a_slot(self, vayne):
+        with pytest.raises(FormulaError):
+            evaluate_formula("cooldown", FormulaContext(source=vayne))
 
 
     def test_elapsed_is_a_variable(self, vayne):

@@ -18,3 +18,4 @@ class BuffInstance:
     end: int | None
     last_interval: int | None = None
     next_interval: int | None = None
+    rate: float = 1.0  # how fast the duration runs out, see Buff.slowed_while

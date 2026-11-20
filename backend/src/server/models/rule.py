@@ -5,6 +5,7 @@ from pydantic import BaseModel, Extra, Field, validator
 from src.server.models.dataenums import (
     ActionType,
     Comparison,
+    CostResource,
     DamageSubType,
     DamageType,
     RuleActionType,
@@ -65,6 +66,15 @@ class ModifyCooldownProps(StrictModel):
 class SummonProps(StrictModel):
     pet: str
 
+class PayCostProps(StrictModel):
+    resource: CostResource
+    amount: str
+
+class LockProps(StrictModel):
+    """The owner can't attack or cast for `duration` seconds, except the listed slots (Sanguine Pool: summoners, items)."""
+    duration: str
+    exceptions: list[ActionType] = []
+
 class CustomProps(StrictModel):
     function: str
     args: dict[str, str] = {}
@@ -106,6 +116,14 @@ class SummonAction(StrictModel):
     type_: Literal[RuleActionType.SUMMON]
     props: SummonProps
 
+class PayCostAction(StrictModel):
+    type_: Literal[RuleActionType.PAY_COST]
+    props: PayCostProps
+
+class LockAction(StrictModel):
+    type_: Literal[RuleActionType.LOCK]
+    props: LockProps
+
 class CustomAction(StrictModel):
     type_: Literal[RuleActionType.CUSTOM]
     props: CustomProps
@@ -115,7 +133,7 @@ class CustomAction(StrictModel):
 RuleAction = Annotated[
     Union[
         DamageAction, HealAction, ShieldAction, StatusAction, ApplyBuffAction,
-        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, CustomAction
+        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, PayCostAction, LockAction, CustomAction
     ],
     Field(discriminator="type_")
 ]
@@ -150,6 +168,12 @@ class StatModifier(StrictModel):
     conversion: bool = False
 
 
+class SlowedWhile(StrictModel):
+    """While `buff` is on the bearer, this buff's time runs at `rate` (Crimson Rush drains 75% slower in Sanguine Pool)."""
+    buff: str
+    rate: float = Field(..., gt=0, lt=1)
+
+
 class Buff(StrictModel):
     name: str
     duration: str = "0"
@@ -160,6 +184,7 @@ class Buff(StrictModel):
     tick_on_end: bool = False
     # Slots that may start during the windup of an attack made while this buff is active; the hit still lands.
     windup_cancel: list[ActionType] = []
+    slowed_while: list[SlowedWhile] = []
     stats: list[StatModifier] = []
     rules: list[Rule] = []
 
