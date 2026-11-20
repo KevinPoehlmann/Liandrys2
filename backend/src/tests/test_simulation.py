@@ -4,7 +4,14 @@ import pytest
 from src.server.models import dataenums
 from src.server.simulation import simulation as simulation_module
 from src.server.simulation.simulation import Simulation
+from src.tests.helpers import regenerated_health
 from src.server.models.dataenums import ActionType, Actor, DotState, EffectType, StatusType
+
+
+
+def hit_ticks(effect_list: list) -> list[int]:
+    # Regeneration ticks are tested in test_resources.py.
+    return [event.tick for event in effect_list if any(result.type_ != EffectType.REGEN for result in event.result)]
 
 
 @pytest.fixture
@@ -289,7 +296,7 @@ class TestSimulation():
         sim.queue = {100: [q_damage_aa]}
         result = sim.do_combo([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)])
         assert sim.queue == {}
-        assert [event.tick for event in result.effect_list] == [7, 100]
+        assert hit_ticks(result.effect_list) == [7, 100]
         assert result.ticks == 100
 
 
@@ -297,7 +304,7 @@ class TestSimulation():
     def test_do_combo_processes_remaining_dot_ticks(self, sim: Simulation, e_damage_w):
         sim._queue_status([e_damage_w], Actor.BLUE)
         result = sim.do_combo([])
-        assert [event.tick for event in result.effect_list] == [15, 30, 45, 60]
+        assert hit_ticks(result.effect_list) == [15, 30, 45, 60]
 
 
     def test_cast(self, sim: Simulation, action_effect_aa):
@@ -319,4 +326,4 @@ class TestSimulation():
         result = sim.do_combo(input)
         assert result.damage == output[0]
         assert result.ticks == output[1]
-        assert round(sim.actors[Actor.RED].current_hp, 3) == output[2]
+        assert round(sim.actors[Actor.RED].current_hp - regenerated_health(sim, Actor.RED), 3) == output[2]

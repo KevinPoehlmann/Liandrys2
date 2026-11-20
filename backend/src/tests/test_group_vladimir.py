@@ -10,6 +10,7 @@ from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character, soft_cap_movespeed
 from src.server.simulation.exceptions import SimulationError
 from src.server.simulation.simulation import DEFAULT_DISTANCE, Simulation
+from src.tests.helpers import regenerated_health
 
 
 # Expected values are calculated by hand from the patch 15.12.1 fixtures (live wiki values), not by the simulation.
@@ -216,7 +217,7 @@ class TestSanguinePool():
         assert results(sim, ActionType.W, EffectType.DAMAGE) == [(tick, pytest.approx(magic(W_RANK_1_TICK))) for tick in W_TICKS]
         # 30 % of the damage before mitigation.
         assert results(sim, ActionType.W, EffectType.HEAL) == [(tick, pytest.approx(0.3 * W_RANK_1_TICK)) for tick in W_TICKS]
-        assert vlad.current_hp == pytest.approx(0.85 * VLADIMIR_BASE_HP + 4 * 0.3 * W_RANK_1_TICK)
+        assert vlad.current_hp - regenerated_health(sim, Actor.BLUE) == pytest.approx(0.85 * VLADIMIR_BASE_HP + 4 * 0.3 * W_RANK_1_TICK)
 
 
     def test_no_attacks_or_abilities_while_pooled(self, load_champion, darius):
@@ -303,7 +304,7 @@ class TestTidesOfBlood():
 
         sim.do_combo(combo(ActionType.E))
 
-        assert vlad.current_hp == pytest.approx(0.1 * VLADIMIR_BASE_HP)
+        assert vlad.current_hp - regenerated_health(sim, Actor.BLUE) == pytest.approx(0.1 * VLADIMIR_BASE_HP)
 
 
     def test_hemoplague_cast_at_the_release_amplifies_the_bolts(self, load_champion, darius):

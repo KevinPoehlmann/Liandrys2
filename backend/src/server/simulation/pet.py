@@ -1,6 +1,6 @@
 from dataclasses import replace
 
-from src.server.models.dataenums import ActionType, DamageSubType, RuleActionType, Stat, Target
+from src.server.models.dataenums import ActionType, CostResource, DamageSubType, RuleActionType, Stat, Target
 from src.server.models.pet import Pet
 from src.server.models.rule import DamageAction, DamageProps, Rule
 from src.server.simulation.character import Character
@@ -19,6 +19,9 @@ class PetCharacter(Character):
         self.expired: bool = False
         self._setup(owner.level, [], {}, {})
 
+
+    def _casting_resource(self) -> CostResource:
+        return CostResource.NONE
 
     def formula_context(self, slot: ActionType, target: Character | None = None, stacks: int = 0, elapsed: float = 0.0) -> FormulaContext:
         # Every pet formula uses the rank of the summoning ability (by_rank) and the owner's inputs.

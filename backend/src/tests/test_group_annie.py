@@ -7,6 +7,7 @@ from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character, soft_cap_movespeed
 from src.server.simulation.pet import PetCharacter
 from src.server.simulation.simulation import DEFAULT_DISTANCE, Simulation
+from src.tests.helpers import regenerated_health
 
 
 # Expected values are calculated by hand from the patch 15.12.1 fixtures, not by the simulation.
@@ -130,7 +131,7 @@ class TestMoltenShield():
         two_hits = 2 * physical(VAYNE_AD, ANNIE_ARMOR)
 
         assert annie.damage_shielded == pytest.approx(E_RANK_1_SHIELD)
-        assert annie.current_hp == pytest.approx(ANNIE_MAX_HP - (two_hits - E_RANK_1_SHIELD))
+        assert annie.current_hp - regenerated_health(attacked_by_vayne, Actor.BLUE) == pytest.approx(ANNIE_MAX_HP - (two_hits - E_RANK_1_SHIELD))
 
 
     def test_reflect_once_per_cast_on_the_first_hit(self, attacked_by_vayne: Simulation):

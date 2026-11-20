@@ -9,6 +9,7 @@ from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character
 from src.server.simulation.exceptions import SimulationError
 from src.server.simulation.simulation import Simulation
+from src.tests.helpers import regenerated_health
 
 
 # Expected values are calculated by hand from the patch 15.12.1 fixtures, not by the simulation.
@@ -123,7 +124,10 @@ class TestDariusAbilities():
         vs_vayne.do_combo(combo(ActionType.Q))
 
         assert hits(vs_vayne, ActionType.Q) == [(Q_CAST_TICKS, pytest.approx(physical(Q_RANK_3)))]
-        assert darius.current_hp == pytest.approx(DARIUS_MAX_HP - 400 + Q_HEAL_PERCENT * 400)
+        # The heal is a percentage of missing health, which regeneration before the hit already reduced.
+        missing = 400 - regenerated_health(vs_vayne, Actor.BLUE, until=Q_CAST_TICKS)
+        heal = Q_HEAL_PERCENT * missing
+        assert darius.current_hp == pytest.approx(DARIUS_MAX_HP - 400 + heal + regenerated_health(vs_vayne, Actor.BLUE))
         assert vs_vayne.actors[Actor.RED].damage_taken == pytest.approx(physical(Q_RANK_3 + BLEED_LVL_6))
 
 
@@ -134,7 +138,7 @@ class TestDariusAbilities():
         vs_vayne.do_combo(q_with("handle"))
 
         assert vs_vayne.actors[Actor.RED].damage_taken == pytest.approx(physical(Q_HANDLE * Q_RANK_3))
-        assert darius.current_hp == pytest.approx(DARIUS_MAX_HP - 400)
+        assert darius.current_hp == pytest.approx(DARIUS_MAX_HP - 400 + regenerated_health(vs_vayne, Actor.BLUE))
 
 
     def test_q_miss_deals_nothing_but_starts_cooldown(self, vs_vayne: Simulation):

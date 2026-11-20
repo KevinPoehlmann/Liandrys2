@@ -36,6 +36,7 @@ from src.server.models.dataenums import (
     StatusProperties,
     StatusType,
     Actor,
+    ResourceType,
     TICK_SECONDS,
     to_ticks
 )
@@ -45,7 +46,9 @@ from src.server.models.passive import Passive
 from src.server.models.pet import Pet
 from src.server.models.passive_effect import BuffProperties, BuffAction, StatProperties, StackProps, EffectProps
 from src.server.models.request import Rank, Action
-from src.server.models.rule import Buff as BuffDefinition, DamageAction, DamageProps, Input, Rule, Stage, StatModifier
+from src.server.models.rule import (
+    Buff as BuffDefinition, DamageAction, DamageProps, Input, PayCostAction, PayCostProps, Rule, Stage, StatModifier
+)
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 from src.server.simulation.buff_instance import BuffInstance
@@ -60,6 +63,10 @@ from src.server.simulation.formula import FormulaContext, evaluate_formula
 MULTIPLICATIVE_STATS = {Stat.ARMOR_PEN_P, Stat.MAGIC_PEN_P}
 # Damage amplifications from several sources multiply (Hemoplague notes).
 COMPOUNDING_STATS = {Stat.DAMAGE_TAKEN_P}
+
+# Health, mana and energy regenerate every 0.5 s (16 engine loops), a tenth of the "per 5 seconds" stat each time.
+REGEN_TICKS = to_ticks(0.5)
+CASTING_RESOURCES = {ResourceType.MANA: CostResource.MANA, ResourceType.ENERGY: CostResource.ENERGY}
 
 SLOT_COOLDOWN_REDUCTION = {
     ActionType.Q: Stat.Q_COOLDOWN_REDUCTION,
@@ -126,6 +133,9 @@ class Character():
         self.locked_until: int = 0
         self.lock_exceptions: set[ActionType] = set()
         self.current_hp: float = self.get_stat(Stat.HP)
+        self.resource: CostResource = self._casting_resource()
+        self.current_resource: float = self._max_resource()
+        self.last_regen_tick: int = 0
         self.damage_taken: float = 0
         self.healed: float = 0
         self.damage_shielded: float = 0
@@ -249,23 +259,86 @@ class Character():
     def is_untargetable(self, tick: int) -> bool:
         return any(end > tick for end, _ in self.status_effects.get(StatusType.UNTARGETABLE, []))
 
-    def pay_ability_cost(self, slot: ActionType, actor: Actor) -> EffectResult | None:
-        if slot not in self.ability_dict:
+    def _casting_resource(self) -> CostResource:
+        return CASTING_RESOURCES.get(self.champion.resource_type, CostResource.NONE)
+
+    def _max_resource(self) -> float:
+        # Mana and energy share the champion's mana fields (Shen's 400 energy comes from the data).
+        return self.get_stat(Stat.MANA) if self.resource != CostResource.NONE else 0
+
+    def _pool(self, resource: CostResource) -> tuple[float, float, float]:
+        """Current value, maximum and gain per regeneration tick."""
+        if resource == CostResource.HEALTH:
+            return self.current_hp, self.get_stat(Stat.HP), self._regen_per_tick(Stat.HP_REG, Stat.HP_REG_P)
+        if resource != self.resource:
+            raise ValueError(f"{self.name} has no {resource.value} (uses {self.resource.value})")
+        return self.current_resource, self._max_resource(), self._regen_per_tick(Stat.MANA_REG, Stat.MANA_REG_P)
+
+    def _regen_per_tick(self, stat: Stat, base_percent: Stat) -> float:
+        per_5_seconds = self.get_base_stat(stat) * (1 + self._get_bonus_stat(base_percent)) + self._get_bonus_stat(stat)
+        return per_5_seconds / 10
+
+    @staticmethod
+    def _enough(resource: CostResource, amount: float, value: float) -> bool:
+        # A health cost can't kill: without more health than it costs the cast isn't possible (Dr. Mundo).
+        return value > amount if resource == CostResource.HEALTH else value >= amount
+
+    def regenerate(self, tick: int, actor: Actor) -> list[tuple[int, EffectResult]]:
+        results = []
+        while self.last_regen_tick + REGEN_TICKS <= tick:
+            self.last_regen_tick += REGEN_TICKS
+            pools = [CostResource.HEALTH] + ([self.resource] if self.resource != CostResource.NONE else [])
+            for resource in pools:
+                value, maximum, gain = self._pool(resource)
+                gain = min(gain, maximum - value)  # nothing at full
+                if gain > 0:
+                    self._change_pool(resource, gain)
+                    result = EffectResult(source=ActionType.PASSIVE, actor=actor, target=actor, type_=EffectType.REGEN, value=gain, resource=resource)
+                    results.append((self.last_regen_tick, result))
+        return results
+
+    def _change_pool(self, resource: CostResource, amount: float) -> None:
+        if resource == CostResource.HEALTH:
+            self.current_hp += amount
+        else:
+            self.current_resource += amount
+
+    def ability_cost(self, slot: ActionType) -> tuple[CostResource, float] | None:
+        ability = self.ability_dict[slot][0] if slot in self.ability_dict else None
+        if ability is None or ability.cost_resource == CostResource.NONE:
             return None
-        ability = self.ability_dict[slot][0]
-        if ability.cost_resource == CostResource.NONE:
-            return None
-        amount = evaluate_formula(ability.cost, self.formula_context(slot))
-        return self.pay_cost(ability.cost_resource, amount, slot, actor)
+        return ability.cost_resource, evaluate_formula(ability.cost, self.formula_context(slot))
+
+    def resource_ready(self, slot: ActionType, tick: int) -> int:
+        """The first tick from `tick` on with enough resource for the slot's cost, counting regeneration."""
+        cost = self.ability_cost(slot)
+        if cost is None:
+            return tick
+        resource, amount = cost
+        value, maximum, gain = self._pool(resource)
+        if not self._enough(resource, amount, maximum) or (gain <= 0 and not self._enough(resource, amount, value)):
+            raise ValueError(f"{slot.value} costs {amount:.0f} {resource.value}, {self.name} can never have that much")
+        regen_tick = self.last_regen_tick + REGEN_TICKS
+        while regen_tick <= tick:
+            value, regen_tick = min(maximum, value + gain), regen_tick + REGEN_TICKS
+        while not self._enough(resource, amount, value):
+            value, tick, regen_tick = min(maximum, value + gain), regen_tick, regen_tick + REGEN_TICKS
+        return tick
 
     def pay_cost(self, resource: CostResource, amount: float, source: ActionType, actor: Actor) -> EffectResult:
-        if resource != CostResource.HEALTH:
-            raise NotImplementedError(f"{resource.value} costs need resources and regeneration, which come after Vladimir")
-        # A health cost can't kill: without enough health the cast isn't possible (Dr. Mundo).
-        if amount >= self.current_hp:
-            raise ValueError(f"Not enough health for {source.value}: it costs {amount:.0f}, {self.name} has {self.current_hp:.0f}")
-        self.current_hp -= amount
-        return EffectResult(source=source, actor=actor, target=actor, type_=EffectType.COST, value=amount)
+        value, _, _ = self._pool(resource)
+        if amount > 0 and not self._enough(resource, amount, value):
+            raise ValueError(f"Not enough {resource.value} for {source.value}: it costs {amount:.0f}, {self.name} has {value:.0f}")
+        self._change_pool(resource, -amount)
+        return EffectResult(source=source, actor=actor, target=actor, type_=EffectType.COST, value=amount, resource=resource)
+
+    def _cost_event(self, action: Action) -> list[RuleEvent]:
+        # Checked when the cast starts, paid when it ends, so an interrupted cast costs nothing.
+        ability = self.ability_dict[action.action_type][0]
+        if ability.cost_resource == CostResource.NONE:
+            return []
+        pay = PayCostAction(type_=RuleActionType.PAY_COST, props=PayCostProps(resource=ability.cost_resource, amount=ability.cost))
+        return [RuleEvent(rule=Rule(actions=[pay]), slot=action.action_type, owner=action.actor, target=action.target)]
 
     def lock(self, until: int, exceptions: set[ActionType]) -> None:
         self.locked_until = until
@@ -737,7 +810,7 @@ class Character():
             self._defer_cooldown(ability.cooldown_starts_after, slot, cooldown_ticks, tick + cast_ticks)
         stage = ability.stages[0]
         outcome = self._outcome(action, stage)
-        rule_events = [
+        rule_events = self._cost_event(action) + [
             RuleEvent(rule=rule, slot=action.action_type, owner=action.actor, target=action.target)
             for rule in stage.rules if rule.outcome in (None, outcome)
         ]

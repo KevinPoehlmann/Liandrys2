@@ -148,7 +148,7 @@
   "q": {
     "name": "Disintegrate",
     "description": "Annie hurls a Mana infused fireball, dealing damage and refunding the Mana cost if it destroys the target.",
-    "cost": "60.0 + (rank - 1) * 5.0",
+    "cost": "by_rank(60, 65, 70, 75, 80)",
     "cooldown": "4",
     "cast_time": "0.25",
     "recharge": "0",
@@ -272,12 +272,13 @@
     "stats": [],
     "buffs": [],
     "inputs": [],
-    "cooldown_starts_after": null
+    "cooldown_starts_after": null,
+    "cost_resource": "mana"
   },
   "w": {
     "name": "Incinerate",
     "description": "Annie casts a blazing cone of fire, dealing damage to all enemies in the area.",
-    "cost": "70.0 + (rank - 1) * 5.0",
+    "cost": "by_rank(70, 75, 80, 85, 90)",
     "cooldown": "7",
     "cast_time": "0.25",
     "recharge": "0",
@@ -403,12 +404,13 @@
     "stats": [],
     "buffs": [],
     "inputs": [],
-    "cooldown_starts_after": null
+    "cooldown_starts_after": null,
+    "cost_resource": "mana"
   },
   "e": {
     "name": "Molten Shield",
     "description": "Grants Annie or an ally a shield, a burst of Move Speed, and damages enemies who strike her with attacks or spells.",
-    "cost": "60.0 + (rank - 1) * 5.0",
+    "cost": "by_rank(60, 65, 70, 75, 80)",
     "cooldown": "by_rank(12, 11.5, 11, 10.5, 10)",
     "cast_time": "0",
     "recharge": "0",
@@ -594,12 +596,13 @@
       }
     ],
     "inputs": [],
-    "cooldown_starts_after": null
+    "cooldown_starts_after": null,
+    "cost_resource": "mana"
   },
   "r": {
     "name": "Summon: Tibbers",
     "description": "Annie wills her bear Tibbers to life, dealing damage to units in the area. Tibbers can attack and also burns enemies that stand near him.",
-    "cost": "100.0",
+    "cost": "100",
     "cooldown": "by_rank(130, 115, 100)",
     "cast_time": "0.25",
     "recharge": "0",
@@ -876,7 +879,8 @@
           "inputs": []
         }
       }
-    ]
+    ],
+    "cost_resource": "mana"
   },
   "validated": true,
   "changes": [],

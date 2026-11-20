@@ -80,8 +80,8 @@ class Simulation():
 
 
     def do_action(self, action: Action, index: int | None = None) -> None:
-        self._wait_until_ready(action)
         try:
+            self._wait_until_ready(action)
             self._cast(action)
         except Exception as e:
             raise SimulationError(
@@ -96,14 +96,19 @@ class Simulation():
     def _wait_until_ready(self, action: Action) -> None:
         character = self.actors[action.actor]
         self._process_queue()
-        ready = character.check_action_delay(action.action_type, self.tick)
+        ready = self._ready_tick(character, action.action_type)
         # Events before the action can still change when it is ready, e.g. the hit that consumes Tumble starts Q's cooldown.
         while self.queue and min(self.queue) <= ready:
             q_tick = min(self.queue)
             self.tick = max(self.tick, q_tick)
             self._process_tick(q_tick)
-            ready = character.check_action_delay(action.action_type, self.tick)
+            ready = self._ready_tick(character, action.action_type)
         self.tick = ready
+
+
+    def _ready_tick(self, character: Character, slot: ActionType) -> int:
+        ready = character.check_action_delay(slot, self.tick)
+        return character.resource_ready(slot, ready)
 
 
     def _start(self) -> None:
@@ -117,8 +122,12 @@ class Simulation():
 
 
     def _set_clock(self, tick: int) -> None:
-        for character in self.actors.values():
+        regenerated = []
+        for actor, character in self.actors.items():
             character.current_tick = tick
+            regenerated += character.regenerate(tick, actor)
+        for regen_tick in sorted({regen_tick for regen_tick, _ in regenerated}):
+            self.effect_list.append(TickEvent(tick=regen_tick, result=[result for t, result in regenerated if t == regen_tick]))
 
 
     def _cast(self, action: Action) -> None:
@@ -126,9 +135,6 @@ class Simulation():
         start = self.tick
         self.last_action_tick = start
         character = self.actors[action.actor]
-        cost = character.pay_ability_cost(action.action_type, action.actor)
-        if cost:
-            self.effect_list.append(TickEvent(tick=start, result=[cost]))
         action_effect = character.do_action(action, self.tick)
         self.tick = action_effect.tick
         self._queue_status(action_effect.effect_comps, action.actor)

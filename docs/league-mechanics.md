@@ -139,6 +139,19 @@ Pages: Healing, Heal_and_shield_power, Life_steal, Vamp (Omnivamp), Grievous_Wou
 
 **Simulation:** heals are capped by missing HP in `_apply_heals`. ✓ ⚠ No heal power, no Grievous Wounds. ⚠ `vamp` exists on damage but life steal/omnivamp as stats don't.
 
+## Resources and regeneration
+Pages: Health_regeneration, Mana, Mana_regeneration, Energy, Ability_resource, Grievous_Wounds
+
+- Health and mana regenerate in 0.5 s intervals (the Damage_over_time page: every 16 engine loops = 0.528 s, which is `to_ticks(0.5)`). Disabled while the value equals the maximum. The stat is "per 5 seconds"; each interval restores a tenth (energy: "5 energy per 0.5 seconds").
+- Base regen grows per level like the other growing stats. Flat and "% base regen" bonuses are additive, 1:1: regen = base × (1 + % base) + flat. Multiplicative regen modifiers stack additively with each other.
+- Some mana sources depend on missing or maximum mana (Meditation, Crest of Insight, Howling Abyss).
+- Energy: 200 maximum (Shen 400, Akali up to 300), doesn't grow; 50 per 5 s; only Crest of Insight raises it. Restored by abilities (Lee Sin, Shen, Zed, Akali, Kennen, Ambessa) and Presence of Mind.
+- Only mana and energy are real casting costs. Fury, Rage, Heat, Flow, Grit, Ferocity, Blood Well, Crimson Rush and the like are empowerment or consumable stacks (buffs with stacks in our model).
+- Regen counts as healing only for healing modifiers: Grievous Wounds reduces it by 40%; heal and shield power, Revitalize etc. don't affect it.
+- No explicit in-combat/out-of-combat timer for regen; some sustain only works out of combat (Garen, Warmog's).
+
+**Simulation:** `Character.regenerate` catches up every 16 ticks when the clock moves (`Simulation._set_clock`), counted from tick 0, so regeneration never keeps the simulation alive. Health, mana and energy (max from the champion's mana fields) start full. Results of type `Regen` with a `resource`. ✓ ⚠ No in-/out-of-combat, no level-up mana restore, no missing/max-mana regen sources, no Grievous Wounds yet (comes with Ignite).
+
 ## Shields
 Pages: Shield, Spell_shield
 

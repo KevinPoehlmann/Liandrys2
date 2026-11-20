@@ -475,7 +475,7 @@
   "e": {
     "name": "Tides of Blood",
     "description": "Vladimir pays his own health to charge up a reservoir of blood which, when released, deals damage in the area around him but can be blocked by enemy units.",
-    "cost": "2.0 + ((charge time)maximumhealth - 0.0) // 0.25) * 2.0",
+    "cost": "0",
     "cooldown": "by_rank(13, 11, 9, 7, 5)",
     "cast_time": "0",
     "recharge": "0",

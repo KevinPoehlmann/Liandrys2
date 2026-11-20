@@ -373,6 +373,7 @@ class EffectType(str, Enum):
     SHIELD="Shield"
     STATUS="Status"
     COST="Cost"
+    REGEN="Regen"
 
 class CostResource(str, Enum):
     """What an ability costs; not the same as the champion's resource bar (Vladimir's bar is Crimson Rush, his costs are health)."""
@@ -525,6 +526,7 @@ class EffectResult(BaseModel):
     mitigated: float = 0
     overheal: float = 0
     damage_sub_type: DamageSubType | None = None
+    resource: CostResource | None = None  # for costs and regeneration
 
 
 class TickEvent(BaseModel):
