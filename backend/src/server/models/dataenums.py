@@ -375,6 +375,26 @@ class EffectType(str, Enum):
     COST="Cost"
     REGEN="Regen"
 
+class OriginKind(str, Enum):
+    ABILITY = "ability"
+    PASSIVE = "passive"
+    ATTACK = "attack"
+    SUMMONER = "summoner"
+    ITEM = "item"
+    RUNE = "rune"
+    REGEN = "regen"
+
+
+class Origin(BaseModel):
+    """Where a result comes from, for the damage breakdown: champion parts by slot, everything else by name."""
+    kind: OriginKind
+    name: str  # "Q", "passive", "AA", "Ignite", "Sheen", "health"
+    buff: str | None = None  # "hemorrhage", "tibbers_aura"
+
+    class Config:
+        frozen = True  # hashable, so results can be grouped by origin
+
+
 class CostResource(str, Enum):
     """What an ability costs; not the same as the champion's resource bar (Vladimir's bar is Crimson Rush, his costs are health)."""
     NONE="none"
@@ -405,6 +425,7 @@ class StatusType(str, Enum):
     STUN = "Stun"
     SUPPRESSION = "Suppression"
     UNTARGETABLE = "Untargetable"
+    GRIEVOUS_WOUNDS = "Grievous Wounds"  # strength = healing reduction, the strongest counts
     SUSPENSION = "Suspension"
     TAUNT = "Taunt"
     ERROR = "Error"
@@ -485,6 +506,7 @@ class RuleActionType(str, Enum):
     MODIFY_COOLDOWN = "ModifyCooldown"
     SUMMON = "Summon"
     PAY_COST = "PayCost"
+    CLEANSE = "Cleanse"
     LOCK = "Lock"
     CUSTOM = "Custom"
 
@@ -527,6 +549,7 @@ class EffectResult(BaseModel):
     overheal: float = 0
     damage_sub_type: DamageSubType | None = None
     resource: CostResource | None = None  # for costs and regeneration
+    origin: Origin | None = None
 
 
 class TickEvent(BaseModel):
@@ -625,6 +648,7 @@ class QueueComponent():
     target: Actor
     type_: EffectType
     props: EffectProperties | None = None
+    origin: Origin | None = None
 
 
 @dataclass

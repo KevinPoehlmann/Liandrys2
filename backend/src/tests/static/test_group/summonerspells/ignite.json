@@ -10,16 +10,98 @@
     "cooldown": "180",
     "cast_time": "0",
     "recharge": "0",
-    "effects": [],
     "raw_stats": {
       "range": " 600",
       "breaks stealth": "Yes",
       "summoner level": "9"
     },
     "changes": [],
-    "validated": false
+    "validated": true,
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "ignite",
+                  "target": "target",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Grievous Wounds",
+                  "duration": "5",
+                  "strength": "0.4"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "inputs": [],
+    "pets": [],
+    "buffs": [
+      {
+        "name": "ignite",
+        "duration": "5",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "1.056",
+        "tick_on_apply": true,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [
+          "summoner_debuff"
+        ],
+        "stats": [],
+        "rules": [
+          {
+            "trigger": "on_interval",
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "bearer",
+                  "scaling": "(70 + 20 * (min(level, 5) - 1) + 25 * max(0, level - 5)) / 5",
+                  "dmg_type": [
+                    "Proc damage",
+                    "DOT damage"
+                  ],
+                  "dmg_sub_type": "True",
+                  "vamp": 0.0
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ]
   },
-  "validated": false,
+  "validated": true,
   "maps": [
     "SR",
     "HA",

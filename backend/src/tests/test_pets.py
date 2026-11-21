@@ -155,7 +155,7 @@ class TestSummon():
 
         sim.do_combo(combo(ActionType.R, ActionType.E))
 
-        assert [value for _, value, _, _ in sim.actors[DUMMY].shields] == [50]
+        assert [shield.value for shield in sim.actors[DUMMY].shields] == [50]
 
 
     def test_rule_for_the_pet_does_nothing_without_a_pet(self, annie_with_pet, darius):
@@ -174,7 +174,7 @@ class TestSummon():
 
         sim.do_combo(combo(ActionType.R))
 
-        assert [(value, actor) for _, value, _, actor in annie.shields] == [(30, DUMMY)]
+        assert [(shield.value, shield.actor) for shield in annie.shields] == [(30, DUMMY)]
 
 
     def test_owner_knows_the_buffs_of_its_pets(self, annie_with_pet):

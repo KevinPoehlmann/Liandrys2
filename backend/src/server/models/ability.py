@@ -23,6 +23,7 @@ class Ability(BaseModel):
     recharge: str = "0"
     cooldown_starts_after: str | None = None
     cooldown_starts_on_cast: bool = False
+    usable_during_cc: bool = False  # Cleanse: only suppression and stasis block it
     stages: list[Stage] = []
     rules: list[Rule] = []
     stats: list[StatModifier] = []

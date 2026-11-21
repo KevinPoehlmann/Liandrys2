@@ -12,6 +12,7 @@ from src.server.models.dataenums import (
     EffectComp,
     EffectResult,
     EffectType,
+    Origin,
     ProcessedDamageProperties,
     ProcessedCostProperties,
     ProcessedHealProperties,
@@ -28,7 +29,7 @@ from src.server.models.request import V1Response, Action
 from src.server.models.rule import (
     ApplyBuffAction, Condition, DamageAction, DamageProps, HealAction, HealProps, RemoveBuffAction,
     ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps, SummonAction,
-    LockAction, PayCostAction
+    CleanseAction, LockAction, PayCostAction
 )
 from src.server.simulation.character import Character
 from src.server.simulation.buff_instance import BuffInstance
@@ -246,7 +247,11 @@ class Simulation():
                 self._rescale_slowed_buffs(self._actor_of(bearer), tick)
             case PayCostAction(props=props):
                 cost = ProcessedCostProperties(resource=props.resource, value=evaluate_formula(props.amount, self._context(event, event.owner)))
-                return [QueueComponent(source=event.slot, actor=event.owner, target=event.owner, type_=EffectType.COST, props=cost)]
+                return [QueueComponent(source=event.slot, actor=event.owner, target=event.owner, type_=EffectType.COST, props=cost, origin=self._origin(event))]
+            case CleanseAction(props=props):
+                bearer = self._resolve_target(props.target, event)
+                self.actors[bearer].cleanse(props.statuses, props.buff_tags, tick)
+                self._rescale_slowed_buffs(bearer, tick)
             case LockAction(props=props):
                 duration = to_ticks(evaluate_formula(props.duration, self._context(event, event.target)))
                 owner.lock(tick + duration, set(props.exceptions))
@@ -324,13 +329,13 @@ class Simulation():
             dmg_sub_type=props.dmg_sub_type,
             vamp=props.vamp
         )
-        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE, props=processed)
+        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE, props=processed, origin=self._origin(event))
 
 
     def _heal(self, props: HealProps, event: RuleEvent) -> QueueComponent:
         target, context = self._target_and_context(props.target, event)
         processed = ProcessedHealProperties(value=evaluate_formula(props.scaling, context))
-        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.HEAL, props=processed)
+        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.HEAL, props=processed, origin=self._origin(event))
 
 
     def _shield(self, props: ShieldProps, event: RuleEvent) -> QueueComponent:
@@ -340,7 +345,7 @@ class Simulation():
             duration=to_ticks(evaluate_formula(props.duration, context)),
             dmg_sub_type=props.dmg_sub_type
         )
-        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.SHIELD, props=processed)
+        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.SHIELD, props=processed, origin=self._origin(event))
 
 
     def _status(self, props: StatusProps, event: RuleEvent) -> QueueComponent:
@@ -350,7 +355,7 @@ class Simulation():
             duration=to_ticks(evaluate_formula(props.duration, context)),
             strength=evaluate_formula(props.strength, context)
         )
-        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.STATUS, props=processed)
+        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.STATUS, props=processed, origin=self._origin(event))
 
 
     def _resolve_target(self, target: Target, event: RuleEvent) -> Actor:
@@ -372,6 +377,10 @@ class Simulation():
                 return self._owner_of(event.owner)
             case Target.ENEMY:
                 return self._enemy_of(event.owner)
+
+
+    def _origin(self, event: RuleEvent) -> Origin:
+        return self.actors[event.owner].origin(event.slot, event.buff)
 
 
     def _misses_untargetable(self, action: RuleAction, event: RuleEvent, tick: int) -> bool:

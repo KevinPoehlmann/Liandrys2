@@ -1,10 +1,7 @@
-import math
-
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, Stat, to_ticks
+from src.server.models.dataenums import ActionType, Actor, Stat, to_ticks
 from src.server.models.request import Action, Rank
-from src.server.models.rule import Buff, Rule
 from src.server.simulation.character import Character
 from src.server.simulation.simulation import Simulation
 
@@ -74,40 +71,3 @@ class TestBuffInstances():
         vayne.apply_buff("final_hour", vayne_rank_3, 1, 0)
 
         assert vayne.active_buffs["final_hour"].end == to_ticks(12)
-
-
-IGNITE_INTERVAL = 1.056
-IGNITE_TICK = 14
-
-
-@pytest.fixture
-def vayne_with_ignite_on_hit(load_champion) -> Character:
-    # Placeholder until the real Ignite (test_group/summonerspells) runs in the new system:
-    # first tick on application, no tick at the end.
-    champion = load_champion("vayne")
-    champion.passive.buffs.append(Buff.parse_obj({
-        "name": "burn", "duration": "5", "interval": str(IGNITE_INTERVAL), "tick_on_apply": True,
-        "rules": [{"trigger": "on_interval", "actions": [{"type_": "Damage", "props": {
-            "target": "bearer", "scaling": str(IGNITE_TICK), "dmg_type": ["Proc damage"], "dmg_sub_type": "True"}}]}]
-    }))
-    champion.passive.rules.append(Rule.parse_obj({
-        "trigger": "on_hit", "actions": [{"type_": "ApplyBuff", "props": {"buff": "burn", "target": "target"}}]
-    }))
-    return Character(champion, 6, Rank(q=3, w=0, e=1, r=1), [])
-
-
-class TestIntervalBuffs():
-
-    def test_tick_on_apply_without_tick_on_end(self, vayne_with_ignite_on_hit, darius):
-        sim = Simulation(vayne_with_ignite_on_hit, darius)
-
-        sim.do_combo([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA)])
-
-        burn_ticks = [
-            event.tick
-            for event in sim.effect_list
-            for result in event.result
-            if result.type_ == EffectType.DAMAGE and result.damage_sub_type == DamageSubType.TRUE
-        ]
-        [hit] = [event.tick for event in sim.effect_list for result in event.result if result.source == ActionType.AA]
-        assert burn_ticks == [hit + to_ticks(k * IGNITE_INTERVAL) for k in range(5)]

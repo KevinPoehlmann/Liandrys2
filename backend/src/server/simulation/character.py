@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Iterator, cast
+from typing import Iterator, NamedTuple, cast
 import math
 
 from src.server.models.ability import ChampionAbility
@@ -21,6 +21,8 @@ from src.server.models.dataenums import (
     EffectType,
     HealProperties,
     HpScaling,
+    Origin,
+    OriginKind,
     ProcessedCostProperties,
     ProcessedDamageProperties,
     ProcessedHealProperties,
@@ -60,13 +62,24 @@ from src.server.simulation.formula import FormulaContext, evaluate_formula
     
 
 
-MULTIPLICATIVE_STATS = {Stat.ARMOR_PEN_P, Stat.MAGIC_PEN_P}
+MULTIPLICATIVE_STATS = {Stat.ARMOR_PEN_P, Stat.MAGIC_PEN_P, Stat.TENACITY_P}
 # Damage amplifications from several sources multiply (Hemoplague notes).
 COMPOUNDING_STATS = {Stat.DAMAGE_TAKEN_P}
 
 # Health, mana and energy regenerate every 0.5 s (16 engine loops), a tenth of the "per 5 seconds" stat each time.
 REGEN_TICKS = to_ticks(0.5)
 CASTING_RESOURCES = {ResourceType.MANA: CostResource.MANA, ResourceType.ENERGY: CostResource.ENERGY}
+
+SUMMONER_SLOTS = (ActionType.S1, ActionType.S2)
+
+
+class ShieldInstance(NamedTuple):
+    expires: int
+    value: float
+    source: ActionType
+    actor: Actor
+    origin: Origin | None
+
 
 SLOT_COOLDOWN_REDUCTION = {
     ActionType.Q: Stat.Q_COOLDOWN_REDUCTION,
@@ -90,7 +103,8 @@ def soft_cap_movespeed(speed: float) -> float:
 
 
 class Character():
-    def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item], scenario: dict[str, float] | None = None) -> None:
+    def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item], scenario: dict[str, float] | None = None,
+                 summonerspells: list[Summonerspell] | None = None) -> None:
         self.champion: Champion = champion
         self.name: str = champion.name
         self.passive: Passive = champion.passive
@@ -100,6 +114,10 @@ class Character():
             ActionType.E: (champion.e, rank.e),
             ActionType.R: (champion.r, rank.r)
         }
+        # Summoner spells run like abilities in the slots S1 and S2, always at rank 1.
+        spells = dict(zip(SUMMONER_SLOTS, summonerspells or []))
+        ability_dict |= {slot: (spell.ability, 1) for slot, spell in spells.items()}
+        self.summoner_names: dict[ActionType, str] = {slot: spell.name for slot, spell in spells.items()}
         self._setup(lvl, items, ability_dict, scenario or {})
 
 
@@ -107,7 +125,7 @@ class Character():
         self.current_tick: int = 0
         self.level: int = level
         self.items: list[Item] = items
-        self.shields: list[tuple[int, float, ActionType, Actor]] = []
+        self.shields: list[ShieldInstance] = []
         self.status_effects: dict[StatusType, list[tuple[int, float]]] = defaultdict(list)
         self.buffs: dict[Buff, list[BuffProperties]] = self._initialize_buffs()
         self.stacks: dict[ActionType, int] = defaultdict(int)
@@ -123,7 +141,7 @@ class Character():
             ActionType.W: 0,
             ActionType.E: 0,
             ActionType.R: 0,
-        }
+        } | {slot: 0 for slot in ability_dict}
         self.pet_definitions: dict[str, tuple[Pet, ActionType]] = {
             pet.name: (pet, slot) for slot, (ability, _) in self.ability_dict.items() for pet in ability.pets
         }
@@ -186,7 +204,7 @@ class Character():
         return instance.stacks if instance else 0
 
     def formula_context(self, slot: ActionType, target: "Character | None" = None, stacks: int = 0, elapsed: float = 0.0) -> FormulaContext:
-        max_rank = self.ability_dict[slot][0].maxrank if slot in self.ability_dict else 0
+        max_rank = getattr(self.ability_dict[slot][0], "maxrank", 0) if slot in self.ability_dict else 0
         return FormulaContext(source=self, target=target, rank=self.get_rank(slot), max_rank=max_rank,
                               stacks=stacks, elapsed=elapsed, slot=slot, scenario=self.scenario)
 
@@ -256,6 +274,27 @@ class Character():
     def reset_attack(self, tick: int) -> None:
         self.cooldowns[ActionType.AA] = tick
 
+    def origin(self, slot: ActionType, buff: str | None = None) -> Origin:
+        if slot == ActionType.AA:
+            return Origin(kind=OriginKind.ATTACK, name="BA", buff=buff)
+        if slot == ActionType.PASSIVE:
+            return Origin(kind=OriginKind.PASSIVE, name="passive", buff=buff)
+        if slot in self.summoner_names:
+            return Origin(kind=OriginKind.SUMMONER, name=self.summoner_names[slot], buff=buff)
+        return Origin(kind=OriginKind.ABILITY, name=slot.value.upper(), buff=buff)
+
+    def _healing_factor(self, tick: int) -> float:
+        # Grievous Wounds doesn't stack, the strongest counts. It reduces heals and health regeneration, not shields.
+        reductions = [strength for end, strength in self.status_effects.get(StatusType.GRIEVOUS_WOUNDS, []) if end > tick]
+        return 1 - max(reductions, default=0)
+
+    def cleanse(self, statuses: list[StatusType], buff_tags: list[str], tick: int) -> None:
+        for status in statuses:
+            self.status_effects.pop(status, None)
+        for name, instance in list(self.active_buffs.items()):
+            if set(instance.definition.tags) & set(buff_tags):
+                self.remove_buff(name, tick)
+
     def is_untargetable(self, tick: int) -> bool:
         return any(end > tick for end, _ in self.status_effects.get(StatusType.UNTARGETABLE, []))
 
@@ -290,10 +329,13 @@ class Character():
             pools = [CostResource.HEALTH] + ([self.resource] if self.resource != CostResource.NONE else [])
             for resource in pools:
                 value, maximum, gain = self._pool(resource)
+                if resource == CostResource.HEALTH:
+                    gain *= self._healing_factor(self.last_regen_tick)
                 gain = min(gain, maximum - value)  # nothing at full
                 if gain > 0:
                     self._change_pool(resource, gain)
-                    result = EffectResult(source=ActionType.PASSIVE, actor=actor, target=actor, type_=EffectType.REGEN, value=gain, resource=resource)
+                    result = EffectResult(source=ActionType.PASSIVE, actor=actor, target=actor, type_=EffectType.REGEN, value=gain,
+                                          resource=resource, origin=Origin(kind=OriginKind.REGEN, name=resource.value))
                     results.append((self.last_regen_tick, result))
         return results
 
@@ -325,12 +367,12 @@ class Character():
             value, tick, regen_tick = min(maximum, value + gain), regen_tick, regen_tick + REGEN_TICKS
         return tick
 
-    def pay_cost(self, resource: CostResource, amount: float, source: ActionType, actor: Actor) -> EffectResult:
+    def pay_cost(self, resource: CostResource, amount: float, source: ActionType, actor: Actor, origin: Origin | None = None) -> EffectResult:
         value, _, _ = self._pool(resource)
         if amount > 0 and not self._enough(resource, amount, value):
             raise ValueError(f"Not enough {resource.value} for {source.value}: it costs {amount:.0f}, {self.name} has {value:.0f}")
         self._change_pool(resource, -amount)
-        return EffectResult(source=source, actor=actor, target=actor, type_=EffectType.COST, value=amount, resource=resource)
+        return EffectResult(source=source, actor=actor, target=actor, type_=EffectType.COST, value=amount, resource=resource, origin=origin)
 
     def _cost_event(self, action: Action) -> list[RuleEvent]:
         # Checked when the cast starts, paid when it ends, so an interrupted cast costs nothing.
@@ -414,8 +456,6 @@ class Character():
         
         if stat == Stat.ATTACKSPEED_P:
             return self._get_attackspeed()
-        if stat == Stat.TENACITY_P:
-            return self._get_tenacity()
         if stat == Stat.MOVESPEED:
             return self._get_movespeed()
         
@@ -454,8 +494,9 @@ class Character():
         else:
             return 0
         
-    def _get_tenacity(self) -> float:
-        return math.prod(1 - item.stats[Stat.TENACITY_P] for item in self.items if Stat.TENACITY_P in item.stats)
+    def _cc_duration_factor(self) -> float:
+        # Tenacity from several sources stacks multiplicatively, like percent penetration.
+        return 1 - self.get_stat(Stat.TENACITY_P)
         
     def _get_slow_value(self) -> float:
         #self.remove_expired_status_effects()
@@ -550,7 +591,7 @@ class Character():
 
     def _use_shields(self, damage: float, target: Actor) -> tuple[float, list[EffectResult]]:
         results = []
-        for i, (exp, shield_val, source, actor) in enumerate(self.shields):
+        for i, (exp, shield_val, source, actor, origin) in enumerate(self.shields):
             if damage <= 0:
                 break
             if shield_val <= 0:
@@ -558,26 +599,29 @@ class Character():
             absorbed = min(damage, shield_val)
             self.damage_shielded += absorbed
             damage -= absorbed
-            self.shields[i] = (exp, shield_val-absorbed, source, actor)
+            self.shields[i] = ShieldInstance(exp, shield_val - absorbed, source, actor, origin)
             results.append(EffectResult(
                 source=source,
                 actor=actor,
                 target=target,
                 type_=EffectType.SHIELD,
-                value=absorbed
+                value=absorbed,
+                origin=origin
             ))
         return damage, results
 
 
-    def _apply_heals(self, components: list[QueueComponent]) -> list[EffectResult]:
+    def _apply_heals(self, components: list[QueueComponent], tick: int | None = None) -> list[EffectResult]:
         total_heal = 0
         missing_hp = self.get_stat(Stat.HP) - self.current_hp
+        factor = self._healing_factor(self.current_tick if tick is None else tick)
         results = []
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedHealProperties), "Heal component must have ProcessedHealProperties"
                 raw_heal = self._calculate_hp_scaling(component.props.value, component.props.hp_scaling)
-                heal = min(raw_heal, max(missing_hp - total_heal, 0))
+                reduced = raw_heal * factor
+                heal = min(reduced, max(missing_hp - total_heal, 0))
                 total_heal += heal
                 results.append(EffectResult(
                     source=component.source,
@@ -586,7 +630,8 @@ class Character():
                     type_=EffectType.HEAL,
                     value=heal,
                     raw=raw_heal,
-                    overheal=raw_heal - heal
+                    overheal=reduced - heal,
+                    origin=component.origin
                 ))
             except Exception as e:
                 raise SimulationError(
@@ -601,12 +646,12 @@ class Character():
     
 
     def _apply_shields(self, components: list[QueueComponent], tick: int) -> None:
-        self.shields = [(exp, val, source, actor) for exp, val, source, actor in self.shields if exp > tick and val > 0]
+        self.shields = [shield for shield in self.shields if shield[0] > tick and shield[1] > 0]
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedShieldProperties), "Shield component must have ProcessedShieldProperties"
-                shield = (component.props.duration + tick, self._calculate_hp_scaling(component.props.value, component.props.hp_scaling), component.source, component.actor)
-                self.shields.append(shield)
+                value = self._calculate_hp_scaling(component.props.value, component.props.hp_scaling)
+                self.shields.append(ShieldInstance(component.props.duration + tick, value, component.source, component.actor, component.origin))
             except Exception as e:
                 raise SimulationError(
                     message=str(e),
@@ -614,7 +659,7 @@ class Character():
                     actor=component.actor,
                     phase="shield application"
                 ) from e
-        self.shields.sort()
+        self.shields.sort(key=lambda shield: (shield[0], shield[1]))
     
 
     def _apply_damages(self, components: list[QueueComponent]) -> tuple[list[QueueComponent], list[EffectResult]]:
@@ -637,7 +682,8 @@ class Character():
                     value=health_damage,
                     raw=raw_dmg,
                     mitigated=mitigated,
-                    damage_sub_type=component.props.dmg_sub_type
+                    damage_sub_type=component.props.dmg_sub_type,
+                    origin=component.origin
                 ))
                 results.extend(shield_results)
                 if component.props.vamp > 0:
@@ -647,7 +693,8 @@ class Character():
                         actor=component.actor,
                         target=component.actor,
                         type_=EffectType.HEAL,
-                        props=ProcessedHealProperties(value=vamp)
+                        props=ProcessedHealProperties(value=vamp),
+                        origin=component.origin
                     ))
             except Exception as e:
                 raise SimulationError(
@@ -666,7 +713,7 @@ class Character():
         results = []
         for component in components:
             assert isinstance(component.props, ProcessedCostProperties), "Cost component must have ProcessedCostProperties"
-            results.append(self.pay_cost(component.props.resource, component.props.value, component.source, component.actor))
+            results.append(self.pay_cost(component.props.resource, component.props.value, component.source, component.actor, component.origin))
         return results
 
 
@@ -694,9 +741,12 @@ class Character():
     def _apply_tenacity(self, duration: int) -> int:
         # Tenacity can't reduce a CC below 0.3 seconds, but a CC that is already shorter stays as it is.
         min_duration = min(duration, to_ticks(0.3))
-        return max(min_duration, math.ceil(self._get_tenacity() * duration))
+        return max(min_duration, math.ceil(self._cc_duration_factor() * duration))
 
 
+
+    def _usable_during_cc(self, slot: ActionType) -> bool:
+        return slot in self.ability_dict and getattr(self.ability_dict[slot][0], "usable_during_cc", False)
 
     def check_action_delay(self, action_type: ActionType, tick: int) -> int:
         tick = max(tick, self.cooldowns[action_type])
@@ -711,6 +761,9 @@ class Character():
             supression_delay = max(supression[0] for supression in self.status_effects[StatusType.SUPPRESSION])
             tick = max(tick, supression_delay)
 
+        if self._usable_during_cc(action_type):
+            return tick
+
         stuns = {StatusType.STUN, StatusType.SUSPENSION, StatusType.SLEEP, StatusType.AIRBORNE}
         stun_delays = [max(effect[0] for effect in self.status_effects[stun]) for stun in stuns if stun in self.status_effects]
         if stun_delays:
@@ -720,7 +773,7 @@ class Character():
             disarm_delay = max(disarm[0] for disarm in self.status_effects[StatusType.DISARM])
             tick = max(tick, disarm_delay)
         
-        if action_type in self.ability_dict:
+        if action_type in SLOT_COOLDOWN_REDUCTION:  # summoner spells can be used while silenced
             silences = {StatusType.BERSERK, StatusType.SILENCE, StatusType.TAUNT}
             silence_delay = [max(effect[0] for effect in self.status_effects[silence]) for silence in silences if silence in self.status_effects]
             if silence_delay:
@@ -829,10 +882,12 @@ class Character():
         return to_ticks(self.get_cooldown(slot))
 
     def get_cooldown(self, slot: ActionType) -> float:
-        if slot not in SLOT_COOLDOWN_REDUCTION:
+        if slot not in self.ability_dict:
             raise ValueError(f"{slot} has no cooldown")
         ability = self.ability_dict[slot][0]
         cooldown = evaluate_formula(ability.cooldown, self.formula_context(slot))
+        if slot in SUMMONER_SLOTS:
+            return cooldown * 100 / (100 + self._get_bonus_stat(Stat.SUMMONER_HASTE))
         haste = 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
         reduction = 1 - self.get_stat(SLOT_COOLDOWN_REDUCTION[slot])
         return cooldown * haste * reduction
@@ -939,7 +994,7 @@ class Character():
                     pass
         self._apply_shields(shields, tick)
         vamps, results = self._apply_damages(damages)
-        results.extend(self._apply_heals(heals))
+        results.extend(self._apply_heals(heals, tick))
         results.extend(self._apply_costs(costs))
         self._apply_status_effects(stati, tick)
         return vamps, results

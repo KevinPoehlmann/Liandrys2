@@ -137,7 +137,7 @@ Pages: Healing, Heal_and_shield_power, Life_steal, Vamp (Omnivamp), Grievous_Wou
 - Grievous Wounds: −40% healing and HP regen received, does not stack. Affects all heals including life steal and omnivamp; does **not** affect shields.
 - Open in the wiki: whether vamp counts damage absorbed by shields.
 
-**Simulation:** heals are capped by missing HP in `_apply_heals`. ✓ ⚠ No heal power, no Grievous Wounds. ⚠ `vamp` exists on damage but life steal/omnivamp as stats don't.
+**Simulation:** heals are capped by missing HP in `_apply_heals`. ✓ Grievous Wounds is a status whose strength is the reduction; the strongest counts, it reduces heals and health regeneration (heal results keep the unreduced value in `raw`). ✓ ⚠ No heal power. ⚠ `vamp` exists on damage but life steal/omnivamp as stats don't.
 
 ## Resources and regeneration
 Pages: Health_regeneration, Mana, Mana_regeneration, Energy, Ability_resource, Grievous_Wounds
@@ -150,7 +150,7 @@ Pages: Health_regeneration, Mana, Mana_regeneration, Energy, Ability_resource, G
 - Regen counts as healing only for healing modifiers: Grievous Wounds reduces it by 40%; heal and shield power, Revitalize etc. don't affect it.
 - No explicit in-combat/out-of-combat timer for regen; some sustain only works out of combat (Garen, Warmog's).
 
-**Simulation:** `Character.regenerate` catches up every 16 ticks when the clock moves (`Simulation._set_clock`), counted from tick 0, so regeneration never keeps the simulation alive. Health, mana and energy (max from the champion's mana fields) start full. Results of type `Regen` with a `resource`. ✓ ⚠ No in-/out-of-combat, no level-up mana restore, no missing/max-mana regen sources, no Grievous Wounds yet (comes with Ignite).
+**Simulation:** `Character.regenerate` catches up every 16 ticks when the clock moves (`Simulation._set_clock`), counted from tick 0, so regeneration never keeps the simulation alive. Health, mana and energy (max from the champion's mana fields) start full. Results of type `Regen` with a `resource`. ✓ ⚠ No in-/out-of-combat, no level-up mana restore, no missing/max-mana regen sources.
 
 ## Shields
 Pages: Shield, Spell_shield
@@ -191,7 +191,9 @@ Pages: Crowd_control, Types_of_Crowd_Control, Tenacity
   - B: Cleanse, Milio, mode adjustments (ARAM)
   - C: Garen passive, Brittle (−30%)
 
-**Simulation:** `check_action_delay` blocks by CC; `_apply_tenacity` keeps the 0.3 s minimum. ✓ ⚠ Tenacity only from items and as a single product (no groups, no buffs). ⚠ No Root/Polymorph/Charm/Flee in `StatusType`.
+**Simulation:** `check_action_delay` blocks by CC; `_apply_tenacity` keeps the 0.3 s minimum. ✓ Tenacity comes from items and buffs (Cleanse) and stacks as one multiplicative product (`MULTIPLICATIVE_STATS`); `get_stat(TENACITY_P)` is the tenacity itself. ⚠ No stacking groups yet. ⚠ No Root/Polymorph/Charm/Flee in `StatusType`.
+
+**Cleanse** (wiki): removes all disables except airborne, nearsight, suppression and stasis, plus summoner spell debuffs (Ignite's damage, Exhaust); Ignite's Grievous Wounds stays (Cleanse and Ignite notes; the owner remembers it differently, not testable in the practice tool). Usable during CC except suppression and stasis. 75% tenacity for 3 s, 240 s cooldown. **Simulation:** action `Cleanse(target, statuses, buff_tags)` with the lists in the fixture, buff `tags`, ability flag `usable_during_cc`. ✓
 
 ## Movement speed and slows
 Pages: Movement_speed

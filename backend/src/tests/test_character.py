@@ -71,9 +71,8 @@ class TestCharacter():
         result = aatrox_with_items._get_resistance(dmg_sub_type)
         assert round(result, 3) == output
 
-    def test_get_tenacity(self, aatrox_with_items):
-        result = aatrox_with_items._get_tenacity()
-        assert result == 1
+    def test_cc_duration_factor_without_tenacity(self, aatrox_with_items):
+        assert aatrox_with_items._cc_duration_factor() == 1
 
     @pytest.mark.parametrize("slow_list, slow", [
         ([], 1),
@@ -179,12 +178,12 @@ class TestCharacter():
         (200, 50, (0, 0), (50, 100)),
     ])
     def test_use_shields(self, aatrox_with_items, input, expected_damage, expected_shields, expected_absorbed):
-        aatrox_with_items.shields = [(60, 50, ActionType.Q, Actor.BLUE), (90, 100, ActionType.W, Actor.BLUE)]
+        aatrox_with_items.shields = [(60, 50, ActionType.Q, Actor.BLUE, None), (90, 100, ActionType.W, Actor.BLUE, None)]
         damage, results = aatrox_with_items._use_shields(input, Actor.BLUE)
         assert damage == expected_damage
         assert results[0].value == expected_absorbed[0]
         assert results[1].value == expected_absorbed[1]
-        assert aatrox_with_items.shields == [(60, expected_shields[0], ActionType.Q, Actor.BLUE), (90, expected_shields[1], ActionType.W, Actor.BLUE)]
+        assert aatrox_with_items.shields == [(60, expected_shields[0], ActionType.Q, Actor.BLUE, None), (90, expected_shields[1], ActionType.W, Actor.BLUE, None)]
 
     @pytest.mark.parametrize("hp_subtraction, queue_heal_list, hp, healed", [
         (100, {"values": [100]}, 1302.26, 100),
@@ -211,11 +210,11 @@ class TestCharacter():
 
 
     @pytest.mark.parametrize("initial_shields, queue_shield_list, expected_shields", [
-        ([], {"values":[(90, 50)]}, [(120, 50, ActionType.W, Actor.BLUE)]),
-        ([(150, 100, ActionType.W, Actor.BLUE)], {"values":[(90, 50)]}, [(120, 50, ActionType.W, Actor.BLUE), (150, 100, ActionType.W, Actor.BLUE)]),
-        ([(150, 100, ActionType.W, Actor.BLUE)], {"values":[(90, 50), (150, 20)]}, [(120, 50, ActionType.W, Actor.BLUE), (150, 100, ActionType.W, Actor.BLUE), (180, 20, ActionType.W, Actor.BLUE)]),
-        ([(15, 50, ActionType.W, Actor.BLUE), (150, 100, ActionType.W, Actor.BLUE)], {"values":[(90, 50)]}, [(120, 50, ActionType.W, Actor.BLUE), (150, 100, ActionType.W, Actor.BLUE)]),
-        ([(90, -10, ActionType.W, Actor.BLUE)], {"values":[]}, []),
+        ([], {"values":[(90, 50)]}, [(120, 50, ActionType.W, Actor.BLUE, None)]),
+        ([(150, 100, ActionType.W, Actor.BLUE, None)], {"values":[(90, 50)]}, [(120, 50, ActionType.W, Actor.BLUE, None), (150, 100, ActionType.W, Actor.BLUE, None)]),
+        ([(150, 100, ActionType.W, Actor.BLUE, None)], {"values":[(90, 50), (150, 20)]}, [(120, 50, ActionType.W, Actor.BLUE, None), (150, 100, ActionType.W, Actor.BLUE, None), (180, 20, ActionType.W, Actor.BLUE, None)]),
+        ([(15, 50, ActionType.W, Actor.BLUE, None), (150, 100, ActionType.W, Actor.BLUE, None)], {"values":[(90, 50)]}, [(120, 50, ActionType.W, Actor.BLUE, None), (150, 100, ActionType.W, Actor.BLUE, None)]),
+        ([(90, -10, ActionType.W, Actor.BLUE, None)], {"values":[]}, []),
     ], indirect=["queue_shield_list"])
     def test_apply_shields(self, aatrox_with_items, initial_shields, queue_shield_list, expected_shields):
         aatrox_with_items.shields = initial_shields
@@ -224,8 +223,8 @@ class TestCharacter():
 
     @pytest.mark.parametrize("initial_shields, queue_damage_list, damage_taken, damage_shielded, hp, expected_shields", [
         ([], {"values":[50, 50]}, 100, 0, 1202.26, []),
-        ([(60, 50, ActionType.Q, Actor.BLUE), (90, 100, ActionType.W, Actor.BLUE)], {"values":[200]}, 50, 150, 1252.26, [(60, 0, ActionType.Q, Actor.BLUE), (90, 0, ActionType.W, Actor.BLUE)]),
-        ([(60, 50, ActionType.Q, Actor.BLUE), (90, 100, ActionType.W, Actor.BLUE)], {"values":[100]}, 0, 100, 1302.26, [(60, 0, ActionType.Q, Actor.BLUE), (90, 50, ActionType.W, Actor.BLUE)]),
+        ([(60, 50, ActionType.Q, Actor.BLUE, None), (90, 100, ActionType.W, Actor.BLUE, None)], {"values":[200]}, 50, 150, 1252.26, [(60, 0, ActionType.Q, Actor.BLUE, None), (90, 0, ActionType.W, Actor.BLUE, None)]),
+        ([(60, 50, ActionType.Q, Actor.BLUE, None), (90, 100, ActionType.W, Actor.BLUE, None)], {"values":[100]}, 0, 100, 1302.26, [(60, 0, ActionType.Q, Actor.BLUE, None), (90, 50, ActionType.W, Actor.BLUE, None)]),
     ], indirect=["queue_damage_list"])
     def test_apply_damages(self, aatrox_with_items, initial_shields, queue_damage_list, damage_taken, damage_shielded, hp, expected_shields):
         aatrox_with_items.shields = initial_shields
@@ -238,7 +237,7 @@ class TestCharacter():
         assert effect_res[0].raw == queue_damage_list[0].props.value
 
     def test_apply_damages_reports_health_damage_after_shields(self, aatrox_with_items):
-        aatrox_with_items.shields = [(60, 70, ActionType.W, Actor.BLUE)]
+        aatrox_with_items.shields = [(60, 70, ActionType.W, Actor.BLUE, None)]
         queue_damage_list = [
             QueueComponent(ActionType.Q, Actor.RED, Actor.BLUE, EffectType.DAMAGE, ProcessedDamageProperties(
                 value=value, flat_pen=0, percent_pen=0, dmg_type=DamageType.BASIC, dmg_sub_type=DamageSubType.TRUE))
@@ -266,14 +265,14 @@ class TestCharacter():
         assert aatrox_with_items.status_effects == expected_stati
 
 
-    @pytest.mark.parametrize("tenacity, duration, expected", [
+    @pytest.mark.parametrize("factor, duration, expected", [
         (1, 60, 60),
         (0.5, 60, 30),
         (0.1, 60, 10),  # floor of 0.3 seconds
         (0.1, 6, 6),  # already shorter than 0.3 seconds
     ])
-    def test_apply_tenacity(self, aatrox_with_items, monkeypatch, tenacity, duration, expected):
-        monkeypatch.setattr(aatrox_with_items, "_get_tenacity", lambda: tenacity)
+    def test_apply_tenacity(self, aatrox_with_items, monkeypatch, factor, duration, expected):
+        monkeypatch.setattr(aatrox_with_items, "_cc_duration_factor", lambda: factor)
         assert aatrox_with_items._apply_tenacity(duration) == expected
 
 
@@ -335,7 +334,7 @@ class TestCharacter():
 
 
     def test_take_effects_ignores_expired_shield(self, aatrox_with_items, q_processed_ad_flat):
-        aatrox_with_items.shields = [(30, 1000, ActionType.W, Actor.BLUE)]
+        aatrox_with_items.shields = [(30, 1000, ActionType.W, Actor.BLUE, None)]
         aatrox_with_items.take_effects([q_processed_ad_flat], 60)
         assert aatrox_with_items.damage_shielded == 0
         assert aatrox_with_items.damage_taken > 0

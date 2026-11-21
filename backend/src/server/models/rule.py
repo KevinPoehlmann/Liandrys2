@@ -70,6 +70,12 @@ class PayCostProps(StrictModel):
     resource: CostResource
     amount: str
 
+class CleanseProps(StrictModel):
+    """Removes the listed status types and every buff with one of the tags (Cleanse, QSS and Mikael's differ in both)."""
+    target: Target
+    statuses: list[StatusType] = []
+    buff_tags: list[str] = []
+
 class LockProps(StrictModel):
     """The owner can't attack or cast for `duration` seconds, except the listed slots (Sanguine Pool: summoners, items)."""
     duration: str
@@ -120,6 +126,10 @@ class PayCostAction(StrictModel):
     type_: Literal[RuleActionType.PAY_COST]
     props: PayCostProps
 
+class CleanseAction(StrictModel):
+    type_: Literal[RuleActionType.CLEANSE]
+    props: CleanseProps
+
 class LockAction(StrictModel):
     type_: Literal[RuleActionType.LOCK]
     props: LockProps
@@ -133,7 +143,7 @@ class CustomAction(StrictModel):
 RuleAction = Annotated[
     Union[
         DamageAction, HealAction, ShieldAction, StatusAction, ApplyBuffAction,
-        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, PayCostAction, LockAction, CustomAction
+        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, PayCostAction, LockAction, CleanseAction, CustomAction
     ],
     Field(discriminator="type_")
 ]
@@ -185,6 +195,7 @@ class Buff(StrictModel):
     # Slots that may start during the windup of an attack made while this buff is active; the hit still lands.
     windup_cancel: list[ActionType] = []
     slowed_while: list[SlowedWhile] = []
+    tags: list[str] = []  # e.g. "summoner_debuff", for Cleanse
     stats: list[StatModifier] = []
     rules: list[Rule] = []
 

@@ -10,16 +10,93 @@
     "cooldown": "240",
     "cast_time": "0",
     "recharge": "0",
-    "effects": [],
     "raw_stats": {
       "range": "Self",
       "breaks stealth": "No",
       "summoner level": "9"
     },
     "changes": [],
-    "validated": false
+    "validated": true,
+    "usable_during_cc": true,
+    "stages": [
+      {
+        "recast_window": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Cleanse",
+                "props": {
+                  "target": "self",
+                  "statuses": [
+                    "Blind",
+                    "Berserk",
+                    "Taunt",
+                    "Cripple",
+                    "Disarm",
+                    "Drowsy",
+                    "Sleep",
+                    "Ground",
+                    "Silence",
+                    "Slow",
+                    "Stun",
+                    "Suspension"
+                  ],
+                  "buff_tags": [
+                    "summoner_debuff"
+                  ]
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "cleanse_tenacity",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "inputs": [],
+    "pets": [],
+    "buffs": [
+      {
+        "name": "cleanse_tenacity",
+        "duration": "3",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "stats": [
+          {
+            "stat": "tenacity percent",
+            "formula": "0.75",
+            "mode": "flat",
+            "conversion": false
+          }
+        ],
+        "rules": []
+      }
+    ]
   },
-  "validated": false,
+  "validated": true,
   "maps": [
     "SR",
     "HA",

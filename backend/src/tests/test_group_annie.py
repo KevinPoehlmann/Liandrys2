@@ -261,4 +261,4 @@ class TestTibbers():
         vs_darius.do_action(e)
         vs_darius._process_queue()  # only up to the E, the shield lasts 3 of Tibbers' 45 seconds
 
-        assert [value for _, value, _, _ in vs_darius.actors[TIBBERS].shields] == [E_RANK_1_SHIELD]
+        assert [shield.value for shield in vs_darius.actors[TIBBERS].shields] == [E_RANK_1_SHIELD]
