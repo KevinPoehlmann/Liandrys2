@@ -22,6 +22,7 @@ class StatSource(Protocol):
     level: int
     current_hp: float
     is_champion: bool
+    is_ranged: bool
 
     def get_stat(self, stat: Stat) -> float: ...
     def get_base_stat(self, stat: Stat) -> float: ...
@@ -66,6 +67,7 @@ STAT_VARIABLES: dict[str, Callable[[StatSource], float]] = {
     "crit_chance": _total(Stat.CRIT_P),
     "movespeed": _total(Stat.MOVESPEED),
     "is_champion": lambda source: 1 if source.is_champion else 0,  # 0 for pets (Thornmail's Grievous Wounds)
+    "ranged": lambda source: 1 if source.is_ranged else 0,  # melee/ranged values (Mist's Edge)
 }
 
 RANK_VARIABLES = {f"rank_{slot.value.lower()}": slot for slot in (ActionType.Q, ActionType.W, ActionType.E, ActionType.R)}

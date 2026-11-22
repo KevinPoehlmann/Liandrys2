@@ -94,7 +94,8 @@
                     "target": "target",
                     "scaling": "base_ad",
                     "dmg_type": [
-                      "Proc damage"
+                      "Proc damage",
+                      "On-hit damage"
                     ],
                     "dmg_sub_type": "Physical",
                     "vamp": 0.0

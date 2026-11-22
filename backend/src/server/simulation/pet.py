@@ -11,6 +11,10 @@ class PetCharacter(Character):
     """A summoned unit: stats come from formulas, it has a passive and a basic attack but no abilities."""
     is_champion: bool = False
 
+    @property
+    def is_ranged(self) -> bool:
+        return self.definition.attack.missile_speed > 0
+
     def __init__(self, definition: Pet, owner: Character, slot: ActionType) -> None:
         self.definition: Pet = definition
         self.owner: Character = owner

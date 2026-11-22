@@ -1,0 +1,206 @@
+{
+  "item_id": "3153",
+  "name": "Blade of the Ruined King",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "gold": 3200,
+  "into": [],
+  "from_": [
+    "1053",
+    "1043",
+    "1037"
+  ],
+  "class_": "legendary item",
+  "validated": true,
+  "stats": {
+    "ad": 40.0,
+    "attackspeed": 0.25,
+    "life steal percent": 0.1
+  },
+  "masterwork": {},
+  "active": null,
+  "passives": [
+    {
+      "name": "Mist's Edge",
+      "description": "",
+      "unique": true,
+      "rules": [
+        {
+          "trigger": "on_hit",
+          "filter": null,
+          "outcome": null,
+          "conditions": [],
+          "actions": [
+            {
+              "type_": "Damage",
+              "props": {
+                "target": "target",
+                "scaling": "(0.06 if ranged else 0.09) * target_current_hp",
+                "dmg_type": [
+                  "Proc damage",
+                  "On-hit damage"
+                ],
+                "dmg_sub_type": "Physical",
+                "vamp": 0.0
+              }
+            }
+          ],
+          "delay": "0",
+          "speed": "0",
+          "acceleration": "0",
+          "max_speed": "0",
+          "cooldown": "0"
+        }
+      ],
+      "stats": [],
+      "buffs": [],
+      "inputs": [],
+      "assumptions": [],
+      "raw_stats": {},
+      "changes": [],
+      "validated": true
+    },
+    {
+      "name": "Clawing Shadows",
+      "description": "",
+      "unique": true,
+      "rules": [
+        {
+          "trigger": "on_hit",
+          "filter": null,
+          "outcome": null,
+          "conditions": [
+            {
+              "actor": "target",
+              "key": "is_champion",
+              "comparison": "Equal",
+              "value": "1"
+            },
+            {
+              "actor": "self",
+              "key": "stacks_clawing_shadows_cooldown",
+              "comparison": "Equal",
+              "value": "0"
+            }
+          ],
+          "actions": [
+            {
+              "type_": "ApplyBuff",
+              "props": {
+                "buff": "clawing_shadows",
+                "target": "target",
+                "stacks": "1"
+              }
+            }
+          ],
+          "delay": "0",
+          "speed": "0",
+          "acceleration": "0",
+          "max_speed": "0",
+          "cooldown": "0"
+        }
+      ],
+      "stats": [],
+      "buffs": [
+        {
+          "name": "clawing_shadows",
+          "duration": "6",
+          "max_stacks": 3,
+          "refresh": true,
+          "interval": "0",
+          "tick_on_apply": false,
+          "tick_on_end": false,
+          "windup_cancel": [],
+          "slowed_while": [],
+          "tags": [],
+          "stats": [],
+          "rules": [
+            {
+              "trigger": "on_stack",
+              "filter": null,
+              "outcome": null,
+              "conditions": [
+                {
+                  "actor": "bearer",
+                  "key": "stacks_clawing_shadows",
+                  "comparison": "Equal",
+                  "value": "3"
+                }
+              ],
+              "actions": [
+                {
+                  "type_": "Status",
+                  "props": {
+                    "target": "bearer",
+                    "status": "Slow",
+                    "duration": "1",
+                    "strength": "0.3"
+                  }
+                },
+                {
+                  "type_": "RemoveBuff",
+                  "props": {
+                    "buff": "clawing_shadows",
+                    "target": "bearer",
+                    "stacks": null
+                  }
+                },
+                {
+                  "type_": "ApplyBuff",
+                  "props": {
+                    "buff": "clawing_shadows_cooldown",
+                    "target": "self",
+                    "stacks": "1"
+                  }
+                }
+              ],
+              "delay": "0",
+              "speed": "0",
+              "acceleration": "0",
+              "max_speed": "0",
+              "cooldown": "0"
+            }
+          ]
+        },
+        {
+          "name": "clawing_shadows_cooldown",
+          "duration": "15",
+          "max_stacks": 1,
+          "refresh": true,
+          "interval": "0",
+          "tick_on_apply": false,
+          "tick_on_end": false,
+          "windup_cancel": [],
+          "slowed_while": [],
+          "tags": [],
+          "stats": [],
+          "rules": []
+        }
+      ],
+      "inputs": [],
+      "assumptions": [],
+      "raw_stats": {},
+      "changes": [],
+      "validated": true
+    }
+  ],
+  "limitations": "Limited to 1 Blade of the Ruined King.",
+  "requirements": "",
+  "maps": [
+    "SR",
+    "HA",
+    "NB",
+    "Brawl"
+  ],
+  "changes": [],
+  "image": {
+    "full": "3153.png",
+    "group": "item",
+    "sprite": "item0.png",
+    "x": 0,
+    "y": 0,
+    "h": 48,
+    "w": 48
+  },
+  "_id": "685961e07de6da37b9ad9300"
+}

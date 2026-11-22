@@ -318,6 +318,7 @@ class DamageType(str, Enum):
     PET="Pet damage"
     PROC="Proc damage"
     REACTIVE="Reactive damage"  # Thornmail: reacts to being hit
+    ON_HIT="On-hit damage"  # applies life steal like basic damage (Mist's Edge, Spellblade)
     SPELL="Spell damage"
 
 class DamageSubType(str, Enum):
@@ -384,6 +385,7 @@ class OriginKind(str, Enum):
     ITEM = "item"
     RUNE = "rune"
     REGEN = "regen"
+    VAMP = "vamp"  # life steal heals; later omnivamp
 
 
 class Origin(BaseModel):
@@ -542,6 +544,7 @@ class ProcessedDamageProperties(EffectProperties):
     dmg_type: DamageType
     dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.PHYSIC)
     vamp: float = 0
+    life_steal: float = 0
 
 
 class ProcessedHealProperties(EffectProperties):

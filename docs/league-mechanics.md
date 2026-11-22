@@ -78,7 +78,7 @@ The game's trigger categories:
 |---|---|---|
 | on-attack | the windup completes (some: when the attack starts) | Kayle passive waves, Rageblade, Runaan's |
 | on-cast | an ability is cast, **some at the start of the cast time, others at the end** | Annie passive, Lucian passive, Sheen gaining its buff |
-| on-hit | right after the attack's damage lands | Kraken, BotRK, Sheen proc |
+| on-hit | together with the attack's damage (on-hit formulas see the target before the hit) | BotRK, Sheen proc, Thornmail (on being hit) |
 | on-damage | any damage instance lands (also blocked damage; not if invulnerable, dodged or blinded) | Darius bleed, Conqueror, Black Cleaver, Liandry's |
 | on-spell | an ability lands ("on-hit for abilities") | Luden's |
 | on-cc / on-immobilization | a CC is applied | Aftershock, Volibear Q |
@@ -139,7 +139,7 @@ Pages: Healing, Heal_and_shield_power, Life_steal, Vamp (Omnivamp), Grievous_Wou
 - Grievous Wounds from being hit (Thornmail) lands before the attack's life steal, so the triggering attack already heals less (wiki, owner-confirmed). Keep this order when life steal is built.
 - Open in the wiki: whether vamp counts damage absorbed by shields.
 
-**Simulation:** heals are capped by missing HP in `_apply_heals`. ✓ Grievous Wounds is a status whose strength is the reduction; the strongest counts, it reduces heals and health regeneration (heal results keep the unreduced value in `raw`). ✓ ⚠ No heal power. ⚠ `vamp` exists on damage but life steal/omnivamp as stats don't.
+**Simulation:** heals are capped by missing HP in `_apply_heals`. ✓ Grievous Wounds is a status whose strength is the reduction; the strongest counts, it reduces heals and health regeneration (heal results keep the unreduced value in `raw`). ✓ ⚠ No heal power. ✓ Life steal heals from basic and on-hit damage after the tick's damage (origin `vamp / life steal`). ⚠ No omnivamp yet; `vamp` on a damage action is a per-rule vamp.
 
 ## Resources and regeneration
 Pages: Health_regeneration, Mana, Mana_regeneration, Energy, Ability_resource, Grievous_Wounds

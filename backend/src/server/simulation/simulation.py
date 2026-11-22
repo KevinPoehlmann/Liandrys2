@@ -17,6 +17,7 @@ from src.server.models.dataenums import (
     ProcessedShieldProperties,
     ProcessedStatusProperties,
     QueueComponent,
+    Stat,
     Target,
     TickEvent,
     Trigger,
@@ -165,19 +166,40 @@ class Simulation():
 
 
     def _fire(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType, tick: int) -> None:
+        for event in self._triggered_events(trigger, actor, counterpart, source):
+            self._queue_rule(event, tick)
+
+
+    def _triggered_events(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType) -> list[RuleEvent]:
         # Rules are collected before any of them runs, so a buff created by this event can't react to it.
-        for rule, slot, owner, buff in self.actors[actor].triggered_rules(trigger, source):
-            bearer = actor if buff else None
-            self._queue_rule(RuleEvent(rule=rule, slot=slot, owner=self._actor_of(owner), target=counterpart, bearer=bearer, buff=buff), tick)
+        return [
+            RuleEvent(rule=rule, slot=slot, owner=self._actor_of(owner), target=counterpart, bearer=actor if buff else None, buff=buff)
+            for rule, slot, owner, buff in self.actors[actor].triggered_rules(trigger, source)
+        ]
+
+
+    def _on_hit_components(self, attack: RuleEvent, components: list[QueueComponent], tick: int) -> list[QueueComponent]:
+        # On-hit effects run together with the attack, so their formulas see the target before its damage (Mist's Edge).
+        if attack.slot != ActionType.BA or attack.buff is not None:
+            return []
+        target = next((component.target for component in components if component.type_ == EffectType.DAMAGE), None)
+        if target is None:
+            return []
+        events = (self._triggered_events(Trigger.ON_HIT, attack.owner, target, ActionType.BA)
+                  + self._triggered_events(Trigger.ON_GET_HIT, target, attack.owner, ActionType.BA))
+        on_hit = []
+        for event in events:
+            if self._delay_ticks(event) == 0:
+                on_hit.extend(self._run_rule(event, tick))
+            else:
+                self._queue_rule(event, tick)
+        return on_hit
 
 
     def _fire_damage_triggers(self, results: list[EffectResult], tick: int) -> None:
         for result in results:
             if result.type_ != EffectType.DAMAGE:
                 continue
-            if result.source == ActionType.BA:
-                self._fire(Trigger.ON_HIT, result.actor, result.target, ActionType.BA, tick)
-                self._fire(Trigger.ON_GET_HIT, result.target, result.actor, ActionType.BA, tick)
             # Damage absorbed by a shield still counts as taken; an attack without damage (blind) does not.
             if result.raw > 0:
                 self._fire(Trigger.ON_DAMAGE_TAKEN, result.target, result.actor, result.source, tick)
@@ -212,11 +234,14 @@ class Simulation():
 
 
     def _queue_rule(self, event: RuleEvent, tick: int) -> None:
+        self.queue.setdefault(tick + self._delay_ticks(event), []).append(event)
+
+
+    def _delay_ticks(self, event: RuleEvent) -> int:
         context = self._context(event, event.target)
-        delay = to_ticks(evaluate_formula(event.rule.delay, context))
         rule = event.rule
         seconds = travel_time(self.distance, *(evaluate_formula(f, context) for f in (rule.speed, rule.acceleration, rule.max_speed)))
-        self.queue.setdefault(tick + delay + to_ticks(seconds), []).append(event)
+        return to_ticks(evaluate_formula(rule.delay, context)) + to_ticks(seconds)
 
 
     def _run_rule(self, event: RuleEvent, tick: int) -> list[QueueComponent]:
@@ -334,6 +359,14 @@ class Simulation():
         ]
 
 
+    @staticmethod
+    def _life_steal(props: DamageProps, owner: Character) -> float:
+        # Life steal heals from basic damage and on-hit damage, not from abilities or reactive damage (Thornmail).
+        if {DamageType.BASIC, DamageType.ON_HIT} & set(props.dmg_type):
+            return owner.get_stat(Stat.LIFE_STEAL_P)
+        return 0
+
+
     def _damage(self, props: DamageProps, event: RuleEvent) -> QueueComponent:
         target, context = self._target_and_context(props.target, event)
         flat_pen, percent_pen = self.actors[event.owner].get_penetration(props.dmg_sub_type)
@@ -343,7 +376,8 @@ class Simulation():
             percent_pen=percent_pen,
             dmg_type=props.dmg_type[0] if props.dmg_type else DamageType.DEFAULT,
             dmg_sub_type=props.dmg_sub_type,
-            vamp=props.vamp
+            vamp=props.vamp,
+            life_steal=self._life_steal(props, self.actors[event.owner])
         )
         return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE, props=processed, origin=self._origin(event))
 
@@ -521,7 +555,9 @@ class Simulation():
         # Interval rules run before buff ends, so the tick at the end still sees the stacks.
         interval_events = [event for entry in entries if isinstance(entry, BuffTick) for event in self._interval_events(entry)]
         for event in [entry for entry in entries if isinstance(entry, RuleEvent)] + interval_events:
-            processed.extend(self._run_rule(event, q_tick))
+            components = self._run_rule(event, q_tick)
+            processed.extend(components)
+            processed.extend(self._on_hit_components(event, components, q_tick))
         if processed:
             self._apply_components(processed, q_tick)
         for expire in [entry for entry in entries if isinstance(entry, PetExpire)]:

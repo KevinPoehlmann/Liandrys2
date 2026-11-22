@@ -21,6 +21,7 @@ from src.server.models.dataenums import (
     ProcessedShieldProperties,
     ProcessedStatusProperties,
     QueueComponent,
+    RangeType,
     ResourceType,
     RuleActionType,
     Stat,
@@ -145,6 +146,10 @@ class Character():
         self.healed: float = 0
         self.damage_shielded: float = 0
 
+
+    @property
+    def is_ranged(self) -> bool:
+        return self.champion.range_type == RangeType.RANGED
 
     def _item_passives(self) -> list[tuple[Passive, ActionType]]:
         # A unique passive is a shared named effect (Spellblade): several items give it only once.
@@ -647,6 +652,15 @@ class Character():
                         type_=EffectType.HEAL,
                         props=ProcessedHealProperties(value=vamp),
                         origin=component.origin
+                    ))
+                if component.props.life_steal > 0:
+                    vamps.append(QueueComponent(
+                        source=component.source,
+                        actor=component.actor,
+                        target=component.actor,
+                        type_=EffectType.HEAL,
+                        props=ProcessedHealProperties(value=damage * component.props.life_steal),
+                        origin=Origin(kind=OriginKind.VAMP, name="life steal")
                     ))
             except Exception as e:
                 raise SimulationError(
