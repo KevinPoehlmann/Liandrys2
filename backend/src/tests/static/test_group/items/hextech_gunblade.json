@@ -1,0 +1,111 @@
+{
+  "item_id": "3146",
+  "name": "Hextech Gunblade",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "gold": 3000,
+  "into": [],
+  "from_": [
+    "1053",
+    "3145",
+    "1052"
+  ],
+  "class_": "legendary item",
+  "validated": true,
+  "stats": {
+    "ad": 40.0,
+    "ap": 80.0,
+    "omnivamp percent": 0.1
+  },
+  "masterwork": {},
+  "active": {
+    "name": "Lightning Bolt",
+    "description": "",
+    "type_": "Active",
+    "unique": true,
+    "cost": "0",
+    "cost_resource": "none",
+    "cooldown": "60",
+    "cast_time": "0",
+    "recharge": "0",
+    "cooldown_starts_after": null,
+    "cooldown_starts_on_cast": false,
+    "usable_during_cc": false,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "175 + 78 * (min(level, 18) - 1) / 17 + 0.3 * ap",
+                  "dmg_type": [
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Slow",
+                  "duration": "1.5",
+                  "strength": "0.25"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "inputs": [],
+    "pets": [],
+    "assumptions": [
+      "The wiki gives only 175 - 253 (based on level); assumed to grow linearly from level 1 to 18."
+    ],
+    "raw_stats": {
+      "target range": "700"
+    },
+    "changes": [],
+    "validated": true
+  },
+  "passives": [],
+  "limitations": "Limited to 1 Hextech Gunblade.",
+  "requirements": "",
+  "maps": [
+    "SR",
+    "HA",
+    "NB",
+    "Brawl"
+  ],
+  "changes": [],
+  "image": {
+    "full": "3146.png",
+    "group": "item",
+    "sprite": "item0.png",
+    "x": 0,
+    "y": 0,
+    "h": 48,
+    "w": 48
+  },
+  "_id": "685961e07de6da37b9ad9301"
+}

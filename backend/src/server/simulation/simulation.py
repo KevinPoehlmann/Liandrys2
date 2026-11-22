@@ -31,7 +31,7 @@ from src.server.models.rule import (
     ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps, SummonAction,
     CleanseAction, ExecuteAction, LockAction, PayCostAction
 )
-from src.server.simulation.character import Character
+from src.server.simulation.character import SUMMONER_SLOTS, Character
 from src.server.simulation.buff_instance import BuffInstance
 from src.server.simulation.events import BuffEnd, BuffTick, PetAttackDue, PetExpire, RuleEvent
 from src.server.simulation.exceptions import SimulationError
@@ -402,7 +402,8 @@ class Simulation():
             dmg_type=props.dmg_type[0] if props.dmg_type else DamageType.DEFAULT,
             dmg_sub_type=props.dmg_sub_type,
             vamp=props.vamp,
-            life_steal=self._life_steal(props, self.actors[event.owner])
+            life_steal=self._life_steal(props, self.actors[event.owner]),
+            omnivamp=0 if event.slot in SUMMONER_SLOTS else self.actors[event.owner].get_stat(Stat.OMNIVAMP_P)
         )
         return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE, props=processed, origin=self._origin(event))
 
@@ -455,7 +456,8 @@ class Simulation():
 
 
     def _origin(self, event: RuleEvent) -> Origin:
-        return self.actors[event.owner].origin(event.slot, event.buff)
+        # Rules without a trigger and outside a buff come from a cast (an item's active, not its passives).
+        return self.actors[event.owner].origin(event.slot, event.buff, active=event.rule.trigger is None)
 
 
     def _misses_untargetable(self, action: RuleAction, event: RuleEvent, tick: int) -> bool:

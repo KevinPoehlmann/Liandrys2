@@ -117,8 +117,10 @@ class Character():
         self.evaluating_stat: set = set()
         self.ignoring_conversions: bool = False
 
-        self.ability_dict: dict[ActionType, tuple[Ability, int]] = ability_dict
         self.item_slots: dict[ActionType, Item] = dict(zip(ITEM_SLOTS, items))
+        # Item actives run like abilities in their item's slot, always at rank 1 (like summoner spells).
+        actives = {slot: (item.active, 1) for slot, item in self.item_slots.items() if item.active}
+        self.ability_dict: dict[ActionType, tuple[Ability, int]] = ability_dict | actives
         self.item_passives: list[tuple[Passive, ActionType]] = self._item_passives()
         self.scenario: dict[str, float] = self._scenario(scenario)
         self.cooldowns: dict[ActionType, int] = {
@@ -127,7 +129,7 @@ class Character():
             ActionType.W: 0,
             ActionType.E: 0,
             ActionType.R: 0,
-        } | {slot: 0 for slot in ability_dict}
+        } | {slot: 0 for slot in self.ability_dict} | {slot: 0 for slot in self.item_slots}
         self.pet_definitions: dict[str, tuple[Pet, ActionType]] = {
             pet.name: (pet, slot) for slot, (ability, _) in self.ability_dict.items() for pet in ability.pets
         }
@@ -286,7 +288,7 @@ class Character():
     def reset_attack(self, tick: int) -> None:
         self.cooldowns[ActionType.BA] = tick
 
-    def origin(self, slot: ActionType, buff: str | None = None) -> Origin:
+    def origin(self, slot: ActionType, buff: str | None = None, active: bool = False) -> Origin:
         if slot == ActionType.BA:
             return Origin(kind=OriginKind.ATTACK, name="BA", buff=buff)
         if slot == ActionType.PASSIVE:
@@ -294,7 +296,9 @@ class Character():
         if slot in self.summoner_names:
             return Origin(kind=OriginKind.SUMMONER, name=self.summoner_names[slot], buff=buff)
         if slot in self.item_slots:
-            return Origin(kind=OriginKind.ITEM, name=self.item_slots[slot].name, buff=buff)
+            item = self.item_slots[slot]
+            part = buff or (item.active.name if active and item.active else None)
+            return Origin(kind=OriginKind.ITEM, name=item.name, buff=part)
         return Origin(kind=OriginKind.ABILITY, name=slot.value.upper(), buff=buff)
 
     def _healing_factor(self, tick: int) -> float:
@@ -657,6 +661,15 @@ class Character():
                         props=ProcessedHealProperties(value=vamp),
                         origin=component.origin
                     ))
+                if component.props.omnivamp > 0:
+                    vamps.append(QueueComponent(
+                        source=component.source,
+                        actor=component.actor,
+                        target=component.actor,
+                        type_=EffectType.HEAL,
+                        props=ProcessedHealProperties(value=damage * component.props.omnivamp),
+                        origin=Origin(kind=OriginKind.VAMP, name="omnivamp")
+                    ))
                 if component.props.life_steal > 0:
                     vamps.append(QueueComponent(
                         source=component.source,
@@ -776,6 +789,8 @@ class Character():
             return self._basic_attack(action, tick)
         elif action.action_type in self.ability_dict:
             return self._do_ability(action, tick)
+        elif action.action_type in self.item_slots:
+            raise ValueError(f"{self.item_slots[action.action_type].name} has no active")
         else:
             raise NotImplementedError(f"ActionType '{action.action_type}' not implemented in do_action()")
 
@@ -864,6 +879,8 @@ class Character():
         cooldown = evaluate_formula(ability.cooldown, self.formula_context(slot))
         if slot in SUMMONER_SLOTS:
             return cooldown * 100 / (100 + self._get_bonus_stat(Stat.SUMMONER_HASTE))
+        if slot in ITEM_SLOTS:
+            return cooldown  # only item haste would shorten it, and nothing gives that today
         haste = 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
         reduction = 1 - self.get_stat(SLOT_COOLDOWN_REDUCTION[slot])
         return cooldown * haste * reduction

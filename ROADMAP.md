@@ -69,11 +69,11 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 - [ ] Remove dead code: `ItemStat`, `Mythic`, `Combo`, the unused `MultiValueEnum` import (then `aenum` can leave `requirements.txt`)
 - [ ] Rename `dataenums.py` → `enums.py` once it only holds enums and constants. It stays the import-free bottom layer: enums ← models ← simulation ← routes
 
-**Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Sheen, Thornmail, Blade of the Ruined King (replaces Kraken Slayer: current-health on-hit, life steal, melee/ranged), The Collector, Black Cleaver, Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
+**Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Sheen, Thornmail, Blade of the Ruined King (replaces Kraken Slayer: current-health on-hit, life steal, melee/ranged), The Collector, Hextech Gunblade (replaces Black Cleaver: item actives, omnivamp), Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
 
 - [x] Champions: Annie (+Tibbers), Darius, Vayne, Vladimir, Riven, Veigar
-- [ ] Items: Sheen, Thornmail, Blade of the Ruined King, The Collector done; Black Cleaver open
-- [ ] Runes: Conqueror, Electrocute
+- [x] Items: Sheen, Thornmail, Blade of the Ruined King, The Collector, Hextech Gunblade
+- [ ] Runes: Conqueror, Electrocute (runes as containers aren't wired into the simulation yet)
 
 ## Phase 3: Admin side complete
 
@@ -91,7 +91,7 @@ The loader is parked until it's needed again. Do this before data entry.
 - [ ] Error handling refactor: dead `urllib` excepts, `_retry` swallowing non-HTTP errors, `gather` without `return_exceptions` (orphaned tasks), blocking `requests.get` inside `async` functions, `image` unbound in `_load_rune`
 - [ ] Re-download the 12 zero-byte images
 - [ ] CommunityDragon as a data source. Checked for Riven (`raw.communitydragon.org/latest/game/data/characters/<name>/<name>.bin.json`): it has clean numbers per spell (`spellCastTime`/`castFrame` matching the wiki's cast times, cooldowns per rank, missile speeds, `DataValues` like `BaseDamage`/`ADRatio` per rank). `spellTotalTime` looks like a default (1.0 s on many spells), so real animation lengths would need the animation files. Probably more robust than scraping wiki HTML; the wiki's raw templates (`?action=raw`) are the other option.
-- [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions
+- [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions. Then `Lock` can tell an animation from a cast time: item actives can't be used during a cast time, but during a pure animation (wiki)
 - [ ] `extra = forbid` for the hand-entered containers (Ability, Passive, Pet) so typos fail; needs a fresh load or an `$unset` of the old `effects` in the DB first
 
 ## Phase 5: User side V1

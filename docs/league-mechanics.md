@@ -139,7 +139,7 @@ Pages: Healing, Heal_and_shield_power, Life_steal, Vamp (Omnivamp), Grievous_Wou
 - Grievous Wounds from being hit (Thornmail) lands before the attack's life steal, so the triggering attack already heals less (wiki, owner-confirmed). Keep this order when life steal is built.
 - Open in the wiki: whether vamp counts damage absorbed by shields.
 
-**Simulation:** heals are capped by missing HP in `_apply_heals`. ✓ Grievous Wounds is a status whose strength is the reduction; the strongest counts, it reduces heals and health regeneration (heal results keep the unreduced value in `raw`). ✓ ⚠ No heal power. ✓ Life steal heals from basic and on-hit damage after the tick's damage (origin `vamp / life steal`). ⚠ No omnivamp yet; `vamp` on a damage action is a per-rule vamp.
+**Simulation:** heals are capped by missing HP in `_apply_heals`. ✓ Grievous Wounds is a status whose strength is the reduction; the strongest counts, it reduces heals and health regeneration (heal results keep the unreduced value in `raw`). ✓ ⚠ No heal power. ✓ Life steal heals from basic and on-hit damage after the tick's damage (origin `vamp / life steal`). ✓ Omnivamp heals from all damage except Ignite/Smite (summoner spells), origin `vamp / omnivamp`. ⚠ The 33 % omnivamp against minions and monsters for area/pet/persistent damage comes with minions. `vamp` on a damage action is a per-rule vamp.
 
 ## Resources and regeneration
 Pages: Health_regeneration, Mana, Mana_regeneration, Energy, Ability_resource, Grievous_Wounds

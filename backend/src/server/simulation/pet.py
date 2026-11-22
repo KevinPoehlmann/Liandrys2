@@ -28,9 +28,9 @@ class PetCharacter(Character):
     def _casting_resource(self) -> CostResource:
         return CostResource.NONE
 
-    def origin(self, slot: ActionType, buff: str | None = None) -> Origin:
+    def origin(self, slot: ActionType, buff: str | None = None, active: bool = False) -> Origin:
         # Everything a pet does belongs to the ability that summoned it; the actor id tells the pet apart.
-        return self.owner.origin(self.summon_slot, buff)
+        return self.owner.origin(self.summon_slot, buff, active)
 
     def formula_context(self, slot: ActionType, target: Character | None = None, stacks: int = 0, elapsed: float = 0.0) -> FormulaContext:
         # Every pet formula uses the rank of the summoning ability (by_rank) and the owner's inputs.
