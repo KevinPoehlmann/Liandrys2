@@ -10,13 +10,197 @@
   "passive": {
     "name": "Conqueror",
     "description": "Dealing damage to enemy  champions grants stacks of Conqueror, lasting for 5 seconds, refreshing on subsequent damage against champions, and stacking up to 12 times. Gain ( 2 /  1) stacks from basic attacks and 2 stacks from abilities, spells, and item actives.Each stack of Conqueror grants 1.08 – 2.4 (based on level) bonus Attack Damage or 1.8 – 4 (based on level) Ability Power (Adaptive), up to 12.96 – 28.8 (based on level) bonus Attack Damage or 21.6 – 48 (based on level) Ability Power (Adaptive) at maximum stacks, at which you also  heal for ( 8% /  5%) of the post-mitigation damage dealt against enemy champions.Damage over time effects and ongoing sources of damage grant stacks only once every 4 seconds.",
-    "static_cooldown": "0",
-    "effects": [],
+    "rules": [
+      {
+        "trigger": "on_damage_dealt",
+        "filter": null,
+        "outcome": null,
+        "conditions": [
+          {
+            "actor": "target",
+            "key": "is_champion",
+            "comparison": "Equal",
+            "value": "1"
+          },
+          {
+            "actor": "self",
+            "key": "stacks_conqueror",
+            "comparison": "Equal",
+            "value": "12"
+          }
+        ],
+        "actions": [
+          {
+            "type_": "Heal",
+            "props": {
+              "target": "self",
+              "scaling": "(0.05 if ranged else 0.08) * damage"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "acceleration": "0",
+        "max_speed": "0",
+        "cooldown": "0",
+        "cast_cooldown": null
+      },
+      {
+        "trigger": "on_damage_dealt",
+        "filter": null,
+        "outcome": null,
+        "conditions": [
+          {
+            "actor": "target",
+            "key": "is_champion",
+            "comparison": "Equal",
+            "value": "1"
+          },
+          {
+            "actor": "self",
+            "key": "tag_basic",
+            "comparison": "Equal",
+            "value": "1"
+          },
+          {
+            "actor": "self",
+            "key": "tag_pet",
+            "comparison": "Equal",
+            "value": "0"
+          }
+        ],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "conqueror",
+              "target": "self",
+              "stacks": "1 if ranged else 2"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "acceleration": "0",
+        "max_speed": "0",
+        "cooldown": "0",
+        "cast_cooldown": null
+      },
+      {
+        "trigger": "on_damage_dealt",
+        "filter": null,
+        "outcome": null,
+        "conditions": [
+          {
+            "actor": "target",
+            "key": "is_champion",
+            "comparison": "Equal",
+            "value": "1"
+          },
+          {
+            "actor": "self",
+            "key": "tag_basic",
+            "comparison": "Equal",
+            "value": "0"
+          },
+          {
+            "actor": "self",
+            "key": "tag_proc * (1 - tag_pet)",
+            "comparison": "Equal",
+            "value": "0"
+          }
+        ],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "conqueror",
+              "target": "self",
+              "stacks": "2"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "acceleration": "0",
+        "max_speed": "0",
+        "cooldown": "0",
+        "cast_cooldown": "4"
+      },
+      {
+        "trigger": "on_damage_dealt",
+        "filter": null,
+        "outcome": null,
+        "conditions": [
+          {
+            "actor": "target",
+            "key": "is_champion",
+            "comparison": "Equal",
+            "value": "1"
+          },
+          {
+            "actor": "self",
+            "key": "stacks_conqueror",
+            "comparison": "Greater than",
+            "value": "0"
+          },
+          {
+            "actor": "self",
+            "key": "tag_basic * tag_pet",
+            "comparison": "Equal",
+            "value": "0"
+          }
+        ],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "conqueror",
+              "target": "self",
+              "stacks": "0"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "acceleration": "0",
+        "max_speed": "0",
+        "cooldown": "0",
+        "cast_cooldown": null
+      }
+    ],
+    "stats": [],
+    "buffs": [
+      {
+        "name": "conqueror",
+        "duration": "5",
+        "max_stacks": 12,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "stats": [
+          {
+            "stat": "adaptive force",
+            "formula": "stacks * (1.8 + 2.46 * (min(level, 18) - 1) / 17)",
+            "mode": "flat",
+            "conversion": false,
+            "snapshot": false
+          }
+        ],
+        "rules": []
+      }
+    ],
+    "inputs": [],
+    "assumptions": [],
     "raw_stats": {},
     "changes": [],
-    "validated": false
+    "validated": true
   },
-  "validated": false,
+  "validated": true,
   "changes": [],
   "image": {
     "full": "Conqueror.png",

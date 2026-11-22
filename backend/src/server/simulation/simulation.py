@@ -73,6 +73,9 @@ class Simulation():
         self.effect_list: list[TickEvent] = []
         self.last_action_tick: int = 0
         self.deaths: dict[Actor, int] = {}
+        self.casts: int = 0
+        # (owner, rule, cast instance, target) -> tick from which the rule may trigger again for that cast (cast_cooldown)
+        self.cast_gates: dict[tuple, float] = {}
         self.actors: dict[Actor, Character] = {
             Actor.BLUE: blue,
             Actor.RED: red
@@ -152,33 +155,40 @@ class Simulation():
         self.last_action_tick = start
         character = self.actors[action.actor]
         is_attack = action.action_type == ActionType.BA
+        cast = self._new_cast()
         if not is_attack:
             # The cast event comes at the start of the cast time (Spellblade, Riven's Runic Blade).
-            self._fire(Trigger.ON_CAST, action.actor, action.target, action.action_type, start)
+            self._fire(Trigger.ON_CAST, action.actor, action.target, action.action_type, start, cast=cast)
         action_effect = character.do_action(action, self.tick)
         self.tick = action_effect.tick
         for rule_event in action_effect.rule_events:
+            rule_event.cast = cast
             self._queue_rule(rule_event, self.tick)
         if is_attack:
-            self._fire(Trigger.ON_ATTACK, action.actor, action.target, action.action_type, self.tick)
+            self._fire(Trigger.ON_ATTACK, action.actor, action.target, action.action_type, self.tick, cast=cast)
         if action_effect.windup_cancel:
             # Everything else still waits for the windup; the cancelling slots may start right away.
             character.lock(action_effect.tick, action_effect.windup_cancel)
             self.tick = start
 
 
+    def _new_cast(self) -> int:
+        self.casts += 1
+        return self.casts
+
+
     def _fire(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType, tick: int,
-              values: dict[str, float] | None = None) -> None:
-        for event in self._triggered_events(trigger, actor, counterpart, source, values=values):
+              values: dict[str, float] | None = None, cast: int | None = None) -> None:
+        for event in self._triggered_events(trigger, actor, counterpart, source, values=values, cast=cast):
             self._queue_rule(event, tick)
 
 
     def _triggered_events(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType,
-                          crit: bool | None = None, values: dict[str, float] | None = None) -> list[RuleEvent]:
+                          crit: bool | None = None, values: dict[str, float] | None = None, cast: int | None = None) -> list[RuleEvent]:
         # Rules are collected before any of them runs, so a buff created by this event can't react to it.
         return [
             RuleEvent(rule=rule, slot=slot, owner=self._actor_of(owner), target=counterpart, bearer=actor if buff else None,
-                      buff=buff, crit=crit, values=values or {})
+                      buff=buff, crit=crit, values=values or {}, cast=cast)
             for rule, slot, owner, buff in self.actors[actor].triggered_rules(trigger, source)
         ]
 
@@ -190,8 +200,8 @@ class Simulation():
         target = next((component.target for component in components if component.type_ == EffectType.DAMAGE), None)
         if target is None:
             return []
-        events = (self._triggered_events(Trigger.ON_HIT, attack.owner, target, ActionType.BA, crit=attack.crit)
-                  + self._triggered_events(Trigger.ON_GET_HIT, target, attack.owner, ActionType.BA))
+        events = (self._triggered_events(Trigger.ON_HIT, attack.owner, target, ActionType.BA, crit=attack.crit, cast=attack.cast)
+                  + self._triggered_events(Trigger.ON_GET_HIT, target, attack.owner, ActionType.BA, cast=attack.cast))
         on_hit = []
         for event in events:
             if self._delay_ticks(event) == 0:
@@ -207,16 +217,34 @@ class Simulation():
                 continue
             # Damage absorbed by a shield still counts as taken; an attack without damage (blind) does not.
             if result.raw > 0:
-                values = {"damage": result.raw - result.mitigated, "health_damage": result.value}
-                self._fire(Trigger.ON_DAMAGE_TAKEN, result.target, result.actor, result.source, tick, values)
-                self._fire(Trigger.ON_DAMAGE_DEALT, result.actor, result.target, result.source, tick, values)
+                values = self._damage_values(result)
+                self._fire(Trigger.ON_DAMAGE_TAKEN, result.target, result.actor, result.source, tick, values, result.cast)
+                # A pet's damage counts for its owner too (The Collector executes with Tibbers).
+                dealer = self.actors[result.actor]
+                dealers = [result.actor] if dealer.is_champion else [result.actor, self._actor_of(dealer.owner)]
+                for actor in dealers:
+                    self._fire(Trigger.ON_DAMAGE_DEALT, actor, result.target, result.source, tick, values, result.cast)
 
 
-    def _fire_stack(self, buff: str, buff_rules: list[Rule], slot: ActionType, owner: Actor, bearer: Actor, tick: int) -> None:
+    @staticmethod
+    def _damage_values(result: EffectResult) -> dict[str, float]:
+        """`damage`, `health_damage`, the damage type and a 0/1 variable per tag (`tag_basic`, `tag_proc`, `tag_pet`, ...)."""
+        values = {
+            "damage": result.raw - result.mitigated,
+            "health_damage": result.value,
+            "physical": int(result.damage_sub_type == DamageSubType.PHYSIC),
+            "magic": int(result.damage_sub_type == DamageSubType.MAGIC),
+            "true": int(result.damage_sub_type == DamageSubType.TRUE),
+        }
+        return values | {f"tag_{tag.name.lower()}": int(tag in result.dmg_tags) for tag in DamageType}
+
+
+    def _fire_stack(self, buff: str, buff_rules: list[Rule], slot: ActionType, owner: Actor, bearer: Actor, tick: int,
+                    cast: int | None) -> None:
         # on_stack has no counterpart, so the bearer is also the `target`.
         for rule in buff_rules:
             if rule.trigger == Trigger.ON_STACK:
-                self._queue_rule(RuleEvent(rule=rule, slot=slot, owner=owner, target=bearer, bearer=bearer, buff=buff), tick)
+                self._queue_rule(RuleEvent(rule=rule, slot=slot, owner=owner, target=bearer, bearer=bearer, buff=buff, cast=cast), tick)
 
 
     def _holds(self, condition: Condition, event: RuleEvent) -> bool:
@@ -256,10 +284,23 @@ class Simulation():
             return []  # e.g. an attack still in flight when the pet expires
         if not all(self._holds(condition, event) for condition in event.rule.conditions):
             return []
+        if not self._passes_cast_gate(event, tick):
+            return []
         components = []
         for action in event.rule.actions:
             components.extend(self._run_action(action, event, tick))
         return components
+
+
+    def _passes_cast_gate(self, event: RuleEvent, tick: int) -> bool:
+        if event.rule.cast_cooldown is None or event.cast is None:
+            return True
+        key = (event.owner, id(event.rule), event.cast, event.target)
+        if tick < self.cast_gates.get(key, -math.inf):
+            return False
+        seconds = evaluate_formula(event.rule.cast_cooldown, self._context(event, event.target))
+        self.cast_gates[key] = math.inf if math.isinf(seconds) else tick + to_ticks(seconds)
+        return True
 
 
     def _run_action(self, action: RuleAction, event: RuleEvent, tick: int) -> list[QueueComponent]:
@@ -280,12 +321,12 @@ class Simulation():
             case ApplyBuffAction(props=props):
                 bearer = self._resolve_target(props.target, event)
                 stacks = int(evaluate_formula(props.stacks, owner.formula_context(event.slot)))
-                instance = self.actors[bearer].apply_buff(props.buff, owner, stacks, tick)
+                instance = self.actors[bearer].apply_buff(props.buff, owner, stacks, tick, event.cast)
                 if instance.end is not None:
                     self.queue.setdefault(instance.end, []).append(BuffEnd(bearer=bearer, buff=props.buff, end=instance.end))
                 self._schedule_interval(bearer, instance)
                 self._rescale_slowed_buffs(bearer, tick)
-                self._fire_stack(props.buff, instance.definition.rules, instance.slot, self._actor_of(instance.source), bearer, tick)
+                self._fire_stack(props.buff, instance.definition.rules, instance.slot, self._actor_of(instance.source), bearer, tick, event.cast)
             case RemoveBuffAction(props=props):
                 bearer = self.actors[self._resolve_target(props.target, event)]
                 if props.stacks is None:
@@ -303,16 +344,16 @@ class Simulation():
             case ExecuteAction(props=props):
                 target = self._resolve_target(props.target, event)
                 execute = ProcessedDamageProperties(value=0, flat_pen=0, percent_pen=0, dmg_type=DamageType.DEFAULT,
-                                                    dmg_sub_type=DamageSubType.TRUE, execute=True)
+                                                    dmg_sub_type=DamageSubType.TRUE, execute=True, tags=[DamageType.DEFAULT])
                 return [QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE,
-                                       props=execute, origin=self._origin(event))]
+                                       props=execute, origin=self._origin(event), cast=event.cast)]
             case LockAction(props=props):
                 duration = to_ticks(evaluate_formula(props.duration, self._context(event, event.target)))
                 owner.lock(tick + duration, set(props.exceptions))
             case ResetAttackAction():
                 owner.reset_attack(tick)
             case SummonAction(props=props):
-                self._summon(props.pet, event.owner, tick)
+                self._summon(props.pet, event.owner, tick, event.cast)
             case _:
                 raise NotImplementedError(f"Action '{action.type_}' is not supported yet")
         return []
@@ -368,7 +409,8 @@ class Simulation():
         self._schedule_interval(buff_tick.bearer, instance)
         owner = self._actor_of(instance.source)
         return [
-            RuleEvent(rule=rule, slot=instance.slot, owner=owner, target=buff_tick.bearer, bearer=buff_tick.bearer, buff=buff_tick.buff)
+            RuleEvent(rule=rule, slot=instance.slot, owner=owner, target=buff_tick.bearer, bearer=buff_tick.bearer,
+                      buff=buff_tick.buff, cast=instance.cast)
             for rule in instance.definition.rules if rule.trigger == Trigger.ON_INTERVAL
         ]
 
@@ -403,9 +445,12 @@ class Simulation():
             dmg_sub_type=props.dmg_sub_type,
             vamp=props.vamp,
             life_steal=self._life_steal(props, self.actors[event.owner]),
-            omnivamp=0 if event.slot in SUMMONER_SLOTS else self.actors[event.owner].get_stat(Stat.OMNIVAMP_P)
+            omnivamp=0 if event.slot in SUMMONER_SLOTS else self.actors[event.owner].get_stat(Stat.OMNIVAMP_P),
+            # A pet's damage is pet damage (wiki), whatever its own tags are.
+            tags=list(props.dmg_type) + ([DamageType.PET] if not self.actors[event.owner].is_champion and DamageType.PET not in props.dmg_type else [])
         )
-        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE, props=processed, origin=self._origin(event))
+        return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE, props=processed,
+                              origin=self._origin(event), cast=event.cast)
 
 
     def _heal(self, props: HealProps, event: RuleEvent) -> QueueComponent:
@@ -511,7 +556,7 @@ class Simulation():
         return pet
 
 
-    def _summon(self, name: str, owner: Actor, tick: int) -> None:
+    def _summon(self, name: str, owner: Actor, tick: int, cast: int | None = None) -> None:
         owner_character = self.actors[owner]
         definition, slot = owner_character.pet_definitions[name]
         pet = PetCharacter(definition, owner_character, slot)
@@ -520,7 +565,8 @@ class Simulation():
         self.actors[pet_id] = pet
         lifetime = to_ticks(evaluate_formula(definition.duration, pet.formula_context(ActionType.PASSIVE)))
         self.queue.setdefault(tick + lifetime, []).append(PetExpire(pet=pet_id))
-        self._fire(Trigger.ON_START, pet_id, self._enemy_of(pet_id), ActionType.PASSIVE, tick)
+        # The pet's start rules (Tibbers' aura) belong to the summoning cast.
+        self._fire(Trigger.ON_START, pet_id, self._enemy_of(pet_id), ActionType.PASSIVE, tick, cast=cast)
         self.queue.setdefault(tick, []).append(PetAttackDue(pet=pet_id))
 
 
@@ -543,9 +589,11 @@ class Simulation():
             return
         target = self._enemy_of(pet_id)
         action_effect = pet.do_action(Action(actor=pet_id, target=target, action_type=ActionType.BA), tick)
+        cast = self._new_cast()
         for rule_event in action_effect.rule_events:
+            rule_event.cast = cast
             self._queue_rule(rule_event, action_effect.tick)
-        self._fire(Trigger.ON_ATTACK, pet_id, target, ActionType.BA, action_effect.tick)
+        self._fire(Trigger.ON_ATTACK, pet_id, target, ActionType.BA, action_effect.tick, cast=cast)
         self.queue.setdefault(pet.cooldowns[ActionType.BA], []).append(PetAttackDue(pet=pet_id))
 
 

@@ -6,6 +6,7 @@
   "hotfix": "2025-06-12T00:00:00",
   "last_changed": "14.24.1",
   "range_type": "Melee",
+  "adaptive_type": "physical",
   "resource_type": "None",
   "hp": 630.0,
   "hp_per_lvl": 100,

@@ -179,6 +179,8 @@ class Rule(StrictModel):
     acceleration: str = "0"
     max_speed: str = "0"  # 0 = no cap
     cooldown: str = "0"
+    # Seconds before the same cast instance can trigger this rule again on the same target; "inf" = once (Electrocute).
+    cast_cooldown: str | None = None
 
 
 class StatModifier(StrictModel):

@@ -78,6 +78,7 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 ## Phase 3: Admin side complete
 
 - [ ] **Data checks on PUT:** run each changed ability once in a mini simulation (dummy target, all ranks), reject with a clear message on error
+- [ ] Editor: field for `Champion.adaptive_type`
 - [ ] Editor: show save errors (400/422); update `originalChampion` after saving; load `/enum` once and `provide` it
 - [ ] PUT without changes should not be an error (today: 400)
 - [ ] Migration: `schema_version` per document, an ordered list of migrations, `update_many` instead of one-by-one updates, migrations for all types
@@ -87,6 +88,7 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 
 The loader is parked until it's needed again. Do this before data entry.
 
+- [ ] Scrape each champion's adaptive type (physical/magic) from the wiki into `Champion.adaptive_type`; until then it is entered by hand (fixtures have it)
 - [ ] **Automatic stat patching:** re-scrape changed objects, take numbers/stats from the wiki, keep only the manual effects and mark them unvalidated
 - [ ] Error handling refactor: dead `urllib` excepts, `_retry` swallowing non-HTTP errors, `gather` without `return_exceptions` (orphaned tasks), blocking `requests.get` inside `async` functions, `image` unbound in `_load_rune`
 - [ ] Re-download the 12 zero-byte images

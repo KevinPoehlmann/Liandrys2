@@ -1,0 +1,42 @@
+{
+  "rune_id": 7201,
+  "name": "Flex Adaptive Force",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "tree": "Shards",
+  "tree_id": 0,
+  "row": 1,
+  "slot": 0,
+  "passive": {
+    "name": "Flex Adaptive Force",
+    "description": "",
+    "rules": [],
+    "stats": [
+      {
+        "stat": "adaptive force",
+        "formula": "9",
+        "mode": "flat",
+        "conversion": false,
+        "snapshot": false
+      }
+    ],
+    "buffs": [],
+    "inputs": [],
+    "assumptions": [],
+    "raw_stats": {},
+    "changes": [],
+    "validated": true
+  },
+  "validated": true,
+  "changes": [],
+  "image": {
+    "full": "statmodsadaptiveforceicon.png",
+    "group": "rune",
+    "sprite": null,
+    "x": null,
+    "y": null,
+    "h": null,
+    "w": null
+  },
+  "_id": "859621f7de6da37b9ad97201"
+}

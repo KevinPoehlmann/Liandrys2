@@ -7,7 +7,7 @@ from src.server.models.image import Image
 
 from .pydanticid import PydanticObjectId
 
-from src.server.models.dataenums import RangeType, ResourceType
+from src.server.models.dataenums import AdaptiveType, RangeType, ResourceType
 
 
 
@@ -21,6 +21,7 @@ class NewChampion(BaseModel):
     last_changed: str
 
     range_type: RangeType
+    adaptive_type: AdaptiveType | None = None  # entered by hand until the loader scrapes it (Phase 4)
     resource_type: ResourceType
     hp: float
     hp_per_lvl: int

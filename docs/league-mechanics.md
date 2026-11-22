@@ -90,7 +90,7 @@ The game's trigger categories:
 - **Attacks that apply on-hit *and* spell effects:** Darius W, Vayne Q, Blitzcrank R passive, Camille Q, Garen Q, Jax W, Nasus Q, Trundle Q, Volibear Q, … (Attack_effects/Abilities).
 - Rageblade's phantom hit repeats on-hit effects, not on-attack effects.
 
-**Simulation:** triggers `on_start`, `on_cast`, `on_attack`, `on_hit`, `on_damage_taken` (also when a shield absorbs everything), `on_stack`, `on_interval` work; `on_get_hit` fires together with `on_hit`, from the side of the one hit (the attacker is its `target`); `on_damage_dealt` fires for every damage above 0, from the side of the one who dealt it. `on_cast` fires at the start of the cast time (Spellblade is granted then, and stays if the cast is cancelled). ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
+**Simulation:** triggers `on_start`, `on_cast`, `on_attack`, `on_hit`, `on_damage_taken` (also when a shield absorbs everything), `on_stack`, `on_interval` work; `on_get_hit` fires together with `on_hit`, from the side of the one hit (the attacker is its `target`); `on_damage_dealt` fires for every damage above 0, from the side of the one who dealt it, and for a pet's damage also for its owner. Every action is a cast instance; rules can be gated per cast instance (`cast_cooldown`, Conqueror's 4 s). `on_cast` fires at the start of the cast time (Spellblade is granted then, and stays if the cast is cancelled). ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
 
 ## Basic attacks and attack speed
 Pages: Basic_attack, Attack_speed, Attack_effects
@@ -108,6 +108,14 @@ Pages: Basic_attack, Attack_speed, Attack_effects
 - Cripple (attack speed reduction) stacks multiplicatively *(unverified)*.
 
 **Simulation:** windup locks the attacker, then abilities may start at once, the next attack waits for the full timer. ✓ `on_attack` fires at the end of the windup, `on_hit` when the damage lands. ✓ Cripple multiplies. ⚠ No attack speed cap/floor. ⚠ Windup ignores `windup_modifier`; also the loader divides the wiki's modifier by 100 ([webscraper2.py:108](../backend/src/server/loader/webscraper2.py#L108)), which looks wrong given a default of 1. ⚠ An attack reset during a windup doesn't cancel the attack (only reachable if a combo casts a reset during a windup).
+
+## Adaptive force
+Pages: Adaptive_force
+
+- 1 adaptive force = 0.6 bonus AD or 1 AP. It goes to whichever the champion has more **bonus** of; a tie goes by the champion's adaptive type (physical/magic, listed on each champion's wiki page). Sources: the two shards, Conqueror, Gathering Storm, Absolute Focus, Waterwalking, Jack of All Trades.
+- The comparison doesn't count the champion's own passive AD/AP; item passives mostly count (exceptions on the wiki page, e.g. Archangel's, Manamune, Riftmaker). Rabadon's Magical Opus counts, including the part it adds to uncounted sources: Veigar's 10 Phenomenal Evil stacks count as 3 AP through Opus.
+
+**Simulation:** ✓ `Champion.adaptive_type`, adaptive force goes to AD or AP in `get_stat`; the comparison leaves out everything from the champion's passive and abilities. ⚠ Simplified on purpose (owner): all item passives count, and the Opus share of champion sources doesn't. Only matters when bonus AD and AP are nearly equal. Adaptive *damage* (Arcane Comet and Electrocute use a different, per-formula rule) comes with Electrocute.
 
 ## Critical strikes
 Pages: Critical_strike

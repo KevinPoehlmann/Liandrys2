@@ -168,6 +168,7 @@ def evaluate_formula(formula: str, context: FormulaContext) -> float:
         "min": min,
         "max": max,
         "floor": math.floor,
+        "inf": math.inf,
         "by_rank": _by_rank(context),
         "by_level": _by_level(context),
     }

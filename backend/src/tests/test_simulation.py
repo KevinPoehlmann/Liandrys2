@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from src.server.models.dataenums import ActionType, Actor
@@ -12,7 +14,8 @@ class TestSimulation():
         sim._cast(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.BA))
         assert sim.tick == 7
         assert list(sim.queue.keys())[0] == 7
-        assert list(sim.queue.values())[0][0] == action_effect_aa.rule_events[0]
+        # The queued attack carries its cast instance (the first cast of the simulation).
+        assert list(sim.queue.values())[0][0] == replace(action_effect_aa.rule_events[0], cast=1)
 
 
     @pytest.mark.parametrize("input, output", [

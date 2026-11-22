@@ -6,6 +6,7 @@
   "hotfix": "2025-06-12T00:00:00",
   "last_changed": "15.11.1",
   "range_type": "Ranged",
+  "adaptive_type": "magic",
   "resource_type": "Mana",
   "hp": 560.0,
   "hp_per_lvl": 96,
@@ -767,7 +768,7 @@
         "attack": {
           "scaling": "by_rank(30, 50, 70) + 0.1 * owner_ap",
           "dmg_type": [
-            "Ability damage"
+            "Basic damage"
           ],
           "dmg_sub_type": "Magic",
           "windup": 0.2,

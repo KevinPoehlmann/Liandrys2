@@ -166,6 +166,16 @@ class ActionType(str, Enum):
     I4="i4"
     I5="i5"
     I6="i6"
+    # Runes and stat shards have no actions; their slots only name the container for formulas, buffs and origins.
+    RUNE1="rune1"
+    RUNE2="rune2"
+    RUNE3="rune3"
+    RUNE4="rune4"
+    RUNE5="rune5"
+    RUNE6="rune6"
+    RUNE7="rune7"
+    RUNE8="rune8"
+    RUNE9="rune9"
 
 
 class Map(str, Enum):
@@ -232,6 +242,12 @@ Actor.BLUE = Actor("blue")
 Actor.RED = Actor("red")
 
 #Champions
+
+class AdaptiveType(str, Enum):
+    """Decides adaptive force when bonus AD and AP are equal (wiki: each champion's page)."""
+    PHYSICAL="physical"
+    MAGIC="magic"
+
 
 class RangeType(str, Enum):
     MELEE="Melee"
@@ -526,6 +542,8 @@ class EffectResult(BaseModel):
     damage_sub_type: DamageSubType | None = None
     resource: CostResource | None = None  # for costs and regeneration
     origin: Origin | None = None
+    dmg_tags: list[DamageType] = []  # for damage: all its tags (Conqueror and Electrocute filter by them)
+    cast: int | None = None  # the cast instance (attack, cast, item active) it belongs to
 
 
 class TickEvent(BaseModel):
@@ -547,6 +565,7 @@ class ProcessedDamageProperties(EffectProperties):
     vamp: float = 0
     life_steal: float = 0
     omnivamp: float = 0
+    tags: list[DamageType] = []
     execute: bool = False  # takes all remaining health, past shields (The Collector)
 
 
@@ -599,6 +618,7 @@ class QueueComponent():
     type_: EffectType
     props: EffectProperties | None = None
     origin: Origin | None = None
+    cast: int | None = None  # the cast instance it belongs to
 
 
 #Status

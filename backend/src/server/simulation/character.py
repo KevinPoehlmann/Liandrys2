@@ -7,6 +7,7 @@ from src.server.models.ability import Ability
 from src.server.models.dataenums import (
     ActionEffect,
     ActionType,
+    AdaptiveType,
     Actor,
     CostResource,
     DamageSubType,
@@ -35,6 +36,7 @@ from src.server.models.dataenums import (
 from src.server.models.champion import Champion
 from src.server.models.item import Item
 from src.server.models.passive import Passive
+from src.server.models.rune import Rune
 from src.server.models.pet import Pet
 from src.server.models.request import Rank, Action
 from src.server.models.rule import (
@@ -55,6 +57,9 @@ REGEN_TICKS = to_ticks(0.5)
 CASTING_RESOURCES = {ResourceType.MANA: CostResource.MANA, ResourceType.ENERGY: CostResource.ENERGY}
 
 SUMMONER_SLOTS = (ActionType.S1, ActionType.S2)
+RUNE_SLOTS = tuple(ActionType(f"rune{n}") for n in range(1, 10))
+CHAMPION_SLOTS = {ActionType.PASSIVE, ActionType.Q, ActionType.W, ActionType.E, ActionType.R}
+ADAPTIVE_AD_RATIO = 0.6  # one adaptive force is 0.6 bonus AD or 1 AP
 ITEM_SLOTS = (ActionType.I1, ActionType.I2, ActionType.I3, ActionType.I4, ActionType.I5, ActionType.I6)
 
 
@@ -90,7 +95,7 @@ def soft_cap_movespeed(speed: float) -> float:
 class Character():
     is_champion: bool = True
     def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item], scenario: dict[str, float] | None = None,
-                 summonerspells: list[Summonerspell] | None = None) -> None:
+                 summonerspells: list[Summonerspell] | None = None, runes: list[Rune] | None = None) -> None:
         self.champion: Champion = champion
         self.name: str = champion.name
         self.passive: Passive = champion.passive
@@ -104,10 +109,11 @@ class Character():
         spells = dict(zip(SUMMONER_SLOTS, summonerspells or []))
         ability_dict |= {slot: (spell.ability, 1) for slot, spell in spells.items()}
         self.summoner_names: dict[ActionType, str] = {slot: spell.name for slot, spell in spells.items()}
-        self._setup(lvl, items, ability_dict, scenario or {})
+        self._setup(lvl, items, ability_dict, scenario or {}, runes or [])
 
 
-    def _setup(self, level: int, items: list[Item], ability_dict: dict[ActionType, tuple[Ability, int]], scenario: dict[str, float]) -> None:
+    def _setup(self, level: int, items: list[Item], ability_dict: dict[ActionType, tuple[Ability, int]], scenario: dict[str, float],
+               runes: list[Rune] = ()) -> None:
         self.current_tick: int = 0
         self.level: int = level
         self.items: list[Item] = items
@@ -121,7 +127,10 @@ class Character():
         # Item actives run like abilities in their item's slot, always at rank 1 (like summoner spells).
         actives = {slot: (item.active, 1) for slot, item in self.item_slots.items() if item.active}
         self.ability_dict: dict[ActionType, tuple[Ability, int]] = ability_dict | actives
-        self.item_passives: list[tuple[Passive, ActionType]] = self._item_passives()
+        self.rune_slots: dict[ActionType, Rune] = dict(zip(RUNE_SLOTS, runes))
+        self.equipment_passives: list[tuple[Passive, ActionType]] = self._item_passives() + [
+            (rune.passive, slot) for slot, rune in self.rune_slots.items()]
+        self.choosing_adaptive: bool = False
         self.scenario: dict[str, float] = self._scenario(scenario)
         self.cooldowns: dict[ActionType, int] = {
             ActionType.BA: 0,
@@ -168,7 +177,7 @@ class Character():
     def _collect_buff_definitions(self) -> dict[str, tuple[BuffDefinition, ActionType]]:
         containers = [(self.passive, ActionType.PASSIVE)]
         containers += [(ability, slot) for slot, (ability, _) in self.ability_dict.items()]
-        containers += self.item_passives
+        containers += self.equipment_passives
         # The owner can apply its pets' buffs too, e.g. Annie's stun enrages Tibbers.
         containers += [(pet.passive, slot) for pet, slot in self.pet_definitions.values()]
         definitions = {}
@@ -193,7 +202,7 @@ class Character():
 
     def _declared_inputs(self) -> list[Input]:
         containers = [self.passive] + [ability for ability, _ in self.ability_dict.values()]
-        containers += [passive for passive, _ in self.item_passives]
+        containers += [passive for passive, _ in self.equipment_passives]
         return [declared for container in containers for declared in container.inputs]
 
 
@@ -213,7 +222,7 @@ class Character():
         return (self.current_tick - instance.start) * TICK_SECONDS
 
 
-    def apply_buff(self, name: str, source: "Character", stacks: int, tick: int) -> BuffInstance:
+    def apply_buff(self, name: str, source: "Character", stacks: int, tick: int, cast: int | None = None) -> BuffInstance:
         definition, slot = source.buff_definitions[name]
         end = self._buff_end(definition, source.formula_context(slot), tick)
         instance = self.active_buffs.get(name)
@@ -226,6 +235,8 @@ class Character():
         instance.stacks += stacks
         if definition.max_stacks:
             instance.stacks = min(instance.stacks, definition.max_stacks)
+        if cast is not None:
+            instance.cast = cast
         self._take_snapshots(instance)
         return instance
 
@@ -270,7 +281,7 @@ class Character():
             for slot, (ability, rank) in self.ability_dict.items() if rank > 0
             for rule in ability.rules
         ]
-        candidates += [(rule, slot, self, None) for passive, slot in self.item_passives for rule in passive.rules]
+        candidates += [(rule, slot, self, None) for passive, slot in self.equipment_passives for rule in passive.rules]
         candidates += [
             (rule, instance.slot, instance.source, name)
             for name, instance in self.active_buffs.items()
@@ -299,6 +310,8 @@ class Character():
             item = self.item_slots[slot]
             part = buff or (item.active.name if active and item.active else None)
             return Origin(kind=OriginKind.ITEM, name=item.name, buff=part)
+        if slot in self.rune_slots:
+            return Origin(kind=OriginKind.RUNE, name=self.rune_slots[slot].name, buff=buff)
         return Origin(kind=OriginKind.ABILITY, name=slot.value.upper(), buff=buff)
 
     def _healing_factor(self, tick: int) -> float:
@@ -428,33 +441,60 @@ class Character():
             return 1 - math.prod(1 - value for value in values)
         if stat in COMPOUNDING_STATS:
             return math.prod(1 + value for value in values) - 1
-        return sum(values)
+        return sum(values) + self._adaptive_share(stat)
 
-    def _modifier_values(self, stat: Stat) -> list[float]:
+    def _adaptive_share(self, stat: Stat) -> float:
+        if stat not in (Stat.AD, Stat.AP) or self.choosing_adaptive:
+            return 0
+        force = self._get_bonus_stat(Stat.AF)
+        if not force or self._adaptive_stat() != stat:
+            return 0
+        return force * ADAPTIVE_AD_RATIO if stat == Stat.AD else force
+
+    def _adaptive_stat(self) -> Stat:
+        # Compares bonus AD and AP without the champion's own passive and abilities (wiki). Simplified: the wiki counts
+        # e.g. the part of Veigar's stacks that Rabadon's Deathcap adds (docs/league-mechanics.md).
+        self.choosing_adaptive = True
+        try:
+            ad, ap = self._adaptive_basis(Stat.AD), self._adaptive_basis(Stat.AP)
+        finally:
+            self.choosing_adaptive = False
+        if ad != ap:
+            return Stat.AD if ad > ap else Stat.AP
+        if self.champion.adaptive_type is None:
+            raise ValueError(f"{self.name} has no adaptive type, so adaptive force can't choose between AD and AP")
+        return Stat.AD if self.champion.adaptive_type == AdaptiveType.PHYSICAL else Stat.AP
+
+    def _adaptive_basis(self, stat: Stat) -> float:
+        values = [item.stats[stat] for item in self.items if stat in item.stats]
+        return sum(values) + sum(self._modifier_values(stat, exclude_slots=CHAMPION_SLOTS))
+
+    def _modifier_values(self, stat: Stat, exclude_slots: set[ActionType] = frozenset()) -> list[float]:
         return [
             fixed if fixed is not None else self._evaluate_modifier(modifier, context)
-            for modifier, context, fixed in self._active_modifiers()
-            if modifier.stat == stat and not (modifier.conversion and self.ignoring_conversions)
+            for modifier, context, fixed, slot in self._active_modifiers()
+            if modifier.stat == stat and slot not in exclude_slots and not (modifier.conversion and self.ignoring_conversions)
         ]
 
-    def _active_modifiers(self) -> Iterator[tuple[StatModifier, FormulaContext | None, float | None]]:
-        """Modifier, the context to evaluate it in, or its fixed value (snapshot)."""
+    def _active_modifiers(self) -> Iterator[tuple[StatModifier, FormulaContext | None, float | None, ActionType]]:
+        """Modifier, the context to evaluate it in, or its fixed value (snapshot), and the slot it belongs to."""
         for modifier in self.passive.stats:
-            yield modifier, self.formula_context(ActionType.PASSIVE), None
+            yield modifier, self.formula_context(ActionType.PASSIVE), None, ActionType.PASSIVE
         for slot, (ability, rank) in self.ability_dict.items():
             if rank > 0:
                 for modifier in ability.stats:
-                    yield modifier, self.formula_context(slot), None
-        for passive, slot in self.item_passives:
+                    yield modifier, self.formula_context(slot), None, slot
+        for passive, slot in self.equipment_passives:
             for modifier in passive.stats:
-                yield modifier, self.formula_context(slot), None
+                yield modifier, self.formula_context(slot), None, slot
         for instance in self.active_buffs.values():
             for index, modifier in enumerate(instance.definition.stats):
                 if modifier.snapshot:
                     if index in instance.snapshots:
-                        yield modifier, None, instance.snapshots[index]
+                        yield modifier, None, instance.snapshots[index], instance.slot
                     continue
-                yield modifier, instance.source.formula_context(instance.slot, stacks=instance.stacks, elapsed=self.buff_elapsed(instance)), None
+                context = instance.source.formula_context(instance.slot, stacks=instance.stacks, elapsed=self.buff_elapsed(instance))
+                yield modifier, context, None, instance.slot
 
     def _evaluate_modifier(self, modifier: StatModifier, context: FormulaContext) -> float:
         if modifier.mode != StatMode.FLAT:
@@ -648,7 +688,9 @@ class Character():
                     raw=raw_dmg,
                     mitigated=mitigated,
                     damage_sub_type=component.props.dmg_sub_type,
-                    origin=component.origin
+                    origin=component.origin,
+                    dmg_tags=component.props.tags,
+                    cast=component.cast
                 ))
                 results.extend(shield_results)
                 if component.props.vamp > 0:

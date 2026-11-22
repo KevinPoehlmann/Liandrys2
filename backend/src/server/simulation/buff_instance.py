@@ -20,3 +20,4 @@ class BuffInstance:
     next_interval: int | None = None
     rate: float = 1.0  # how fast the duration runs out, see Buff.slowed_while
     snapshots: dict[int, float] = field(default_factory=dict)  # values of snapshot stat modifiers, by index
+    cast: int | None = None  # the cast instance that applied it last; its interval ticks belong to that cast
