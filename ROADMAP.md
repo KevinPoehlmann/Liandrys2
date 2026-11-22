@@ -71,6 +71,10 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 
 **Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Sheen, Thornmail, Kraken Slayer, The Collector, Black Cleaver, Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
 
+- [x] Champions: Annie (+Tibbers), Darius, Vayne, Vladimir, Riven, Veigar
+- [ ] Items: Sheen, Thornmail, Kraken Slayer, The Collector, Black Cleaver
+- [ ] Runes: Conqueror, Electrocute
+
 ## Phase 3: Admin side complete
 
 - [ ] **Data checks on PUT:** run each changed ability once in a mini simulation (dummy target, all ranks), reject with a clear message on error

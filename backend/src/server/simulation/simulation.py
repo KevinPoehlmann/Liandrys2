@@ -41,6 +41,21 @@ QueueEntry = RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
 # Close enough for any melee attack; projectiles still need travel time (Vladimir's E lands after a Hemoplague cast at its release).
 DEFAULT_DISTANCE = 100
 
+
+def travel_time(distance: float, speed: float, acceleration: float = 0, max_speed: float = 0) -> float:
+    """Seconds a missile needs; it speeds up until max_speed (Veigar R: 500 -> 4000 units/s)."""
+    if speed <= 0:
+        return 0
+    if acceleration <= 0:
+        return distance / speed
+    if max_speed > 0:
+        speedup_time = (max_speed - speed) / acceleration
+        speedup_distance = speed * speedup_time + acceleration * speedup_time ** 2 / 2
+        if speedup_distance < distance:
+            return speedup_time + (distance - speedup_distance) / max_speed
+    # distance = speed * t + acceleration * t² / 2, solved for t
+    return (-speed + math.sqrt(speed ** 2 + 2 * acceleration * distance)) / acceleration
+
 # Effects without an end (none known yet) would keep the simulation running forever.
 MAX_SECONDS_AFTER_LAST_ACTION = 60
 
@@ -194,9 +209,9 @@ class Simulation():
     def _queue_rule(self, event: RuleEvent, tick: int) -> None:
         context = self._context(event, event.target)
         delay = to_ticks(evaluate_formula(event.rule.delay, context))
-        speed = evaluate_formula(event.rule.speed, context)
-        travel_time = to_ticks(self.distance / speed) if speed > 0 else 0
-        self.queue.setdefault(tick + delay + travel_time, []).append(event)
+        rule = event.rule
+        seconds = travel_time(self.distance, *(evaluate_formula(f, context) for f in (rule.speed, rule.acceleration, rule.max_speed)))
+        self.queue.setdefault(tick + delay + to_ticks(seconds), []).append(event)
 
 
     def _run_rule(self, event: RuleEvent, tick: int) -> list[QueueComponent]:

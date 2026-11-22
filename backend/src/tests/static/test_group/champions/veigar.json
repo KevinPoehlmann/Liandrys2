@@ -33,10 +33,9 @@
     "name": "Phenomenal Evil Power",
     "description": "Innate: Veigar generates a stack of Phenomenal Evil for each enemy  champion hit by his abilities, and 5 stacks whenever he scores an enemy champion  takedown.\n\n\n\nPhenomenal Evil: For each stack, Veigar gains  1 ability power.",
     "static_cooldown": "0",
-    "effects": [],
     "raw_stats": {},
     "changes": [],
-    "validated": false,
+    "validated": true,
     "image": {
       "full": "VeigarEntropy.png",
       "group": "passive",
@@ -45,43 +44,73 @@
       "y": 96,
       "h": 48,
       "w": 48
-    }
+    },
+    "inputs": [
+      {
+        "name": "veigar_stacks",
+        "default": 0,
+        "min": 0,
+        "max": null,
+        "description": "Phenomenal Evil stacks at the start"
+      }
+    ],
+    "rules": [
+      {
+        "trigger": "on_start",
+        "filter": null,
+        "outcome": null,
+        "conditions": [],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "phenomenal_evil",
+              "target": "self",
+              "stacks": "veigar_stacks"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "acceleration": "0",
+        "max_speed": "0",
+        "cooldown": "0"
+      }
+    ],
+    "stats": [],
+    "assumptions": [],
+    "buffs": [
+      {
+        "name": "phenomenal_evil",
+        "duration": "0",
+        "max_stacks": 0,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "stats": [
+          {
+            "stat": "ap",
+            "formula": "stacks",
+            "mode": "flat",
+            "conversion": false,
+            "snapshot": false
+          }
+        ],
+        "rules": []
+      }
+    ]
   },
   "q": {
     "name": "Baleful Strike",
     "description": "Veigar unleashes a bolt of dark energy that deals magic damage to the first two enemies hit. Units killed by this bolt grant Veigar some ability power permanently.",
-    "cost": "30.0 + (rank - 1) * 5.0",
-    "cooldown": "6.0 + (rank - 1) * -0.5",
-    "cast_time": "0",
+    "cost": "by_rank(30, 35, 40, 45, 50)",
+    "cooldown": "by_rank(6, 5.5, 5, 4.5, 4)",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Veigar blasts a dark bolt in the target direction that deals magic damage to the first two enemies hit.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "80.0 + (rank - 1) * 40.0 + (0.5 + (rank - 1) * 0.04999999999999999) * ap",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Magic",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "If this kills an enemy, it generates 1 stack of  Phenomenal Evil, tripled against large  minions and  monsters.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "target range": "1050.0 + (rank - 1) * -60.0",
@@ -89,7 +118,7 @@
       "speed": "2200.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "VeigarBalefulStrike.png",
@@ -99,50 +128,72 @@
       "y": 0,
       "h": 48,
       "w": 48
-    }
+    },
+    "cost_resource": "mana",
+    "cooldown_starts_after": null,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(80, 120, 160, 200, 240) + by_rank(0.5, 0.55, 0.6, 0.65, 0.7) * ap",
+                  "dmg_type": [
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "phenomenal_evil",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "2200",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "inputs": [],
+    "assumptions": [],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "pets": []
   },
   "w": {
     "name": "Dark Matter",
     "description": "Veigar calls a great mass of dark matter to fall from the sky to the target location, dealing magic damage when it lands. Stacks of Phenomenal Evil reduce Dark Matter's cooldown.",
-    "cost": "60.0 + (rank - 1) * 5.0",
-    "cooldown": "8 – 0",
-    "cast_time": "0",
+    "cost": "by_rank(60, 65, 70, 75, 80)",
+    "cooldown": "8 * (1 - 0.1 * floor(stacks_phenomenal_evil / 50))",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Veigar casts down a mass of dark matter that strikes the target location after a 1.221 seconds delay, dealing magic damage to enemies hit.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "85.0 + (rank - 1) * 55.0 + (0.6 + (rank - 1) * 0.1) * ap",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Magic",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "Dark Matter's  cooldown is reduced based on stacks of  Phenomenal Evil.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "target range": "950.0",
       "effect radius": "240.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "VeigarDarkMatter.png",
@@ -152,34 +203,73 @@
       "y": 0,
       "h": 48,
       "w": 48
-    }
+    },
+    "cost_resource": "mana",
+    "cooldown_starts_after": null,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(85, 140, 195, 250, 305) + by_rank(0.7, 0.8, 0.9, 1.0, 1.1) * ap",
+                  "dmg_type": [
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "phenomenal_evil",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "1.221 - 0.25",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "inputs": [],
+    "assumptions": [],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "pets": [],
+    "cooldown_starts_on_cast": true
   },
   "e": {
     "name": "Event Horizon",
     "description": "Veigar twists the edges of space, creating a cage that Stuns enemies that pass through.",
-    "cost": "70.0 + (rank - 1) * 5.0",
-    "cooldown": "20.0 + (rank - 1) * -1.5",
-    "cast_time": "0",
+    "cost": "by_rank(70, 75, 80, 85, 90)",
+    "cooldown": "by_rank(20, 18.5, 17, 15.5, 14)",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Veigar forms a cage at the target location that erects after a 0.5 second delay, remaining there for 3 seconds. Enemies that collide with the edges of the cage are  knocked down and  stunned for a duration.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Event Horizon can affect enemies only once per cast.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "target range": "725.0",
       "effect radius": "411.0 + (rank - 1) * -10.5"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "VeigarEventHorizon.png",
@@ -189,44 +279,71 @@
       "y": 0,
       "h": 48,
       "w": 48
-    }
+    },
+    "cost_resource": "mana",
+    "cooldown_starts_after": null,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [
+          "hit",
+          "miss"
+        ],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": "hit",
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Stun",
+                  "duration": "by_rank(1.5, 1.75, 2, 2.25, 2.5)",
+                  "strength": "0"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "phenomenal_evil",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0.5",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "inputs": [],
+    "assumptions": [],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "pets": []
   },
   "r": {
     "name": "Primordial Burst",
     "description": "Blasts target enemy champion, dealing a large amount of magic damage, increasing based on the target's missing health.",
-    "cost": "100.0",
-    "cooldown": "100.0 + (rank - 1) * -20.0",
-    "cast_time": "0",
+    "cost": "100",
+    "cooldown": "by_rank(120, 90, 60)",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Veigar sends a primordial burst at the target enemy champion that deals magic damage, increased by 0% – 100% (based on target's missing health).",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "175.0 + (rank - 1) * 75.0 + (0.65 + (rank - 1) * 0.04999999999999999) * ap",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Magic",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "target range": "650.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 3,
     "image": {
       "full": "VeigarR.png",
@@ -236,9 +353,59 @@
       "y": 0,
       "h": 48,
       "w": 48
-    }
+    },
+    "cost_resource": "mana",
+    "cooldown_starts_after": null,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "(by_rank(175, 250, 325) + by_rank(0.65, 0.7, 0.75) * ap) * (1 + min(1, 1.5 * target_missing_hp_percent))",
+                  "dmg_type": [
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "phenomenal_evil",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "500",
+            "acceleration": "4000",
+            "max_speed": "4000",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "inputs": [],
+    "assumptions": [],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "pets": []
   },
-  "validated": false,
+  "validated": true,
   "changes": [],
   "image": {
     "full": "Veigar.png",

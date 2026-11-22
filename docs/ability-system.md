@@ -48,7 +48,9 @@ Rule:
     conditions: list[Condition]
     actions: list[Action]
     delay: str = "0"            # the rule's actions land together after delay + travel time
-    speed: str = "0"            # missile speed, 0 = instant
+    speed: str = "0"            # missile (start) speed, 0 = instant
+    acceleration: str = "0"     # units/s², 0 = constant speed (Veigar R: 500 -> 4000)
+    max_speed: str = "0"        # 0 = no cap
     cooldown: str = "0"         # Sheen 1.5 s, Electrocute; replaces static_cooldown
 ```
 
@@ -126,7 +128,7 @@ A buff is a named definition. At runtime a character carries **instances** of it
 Buff:
     name: str                  # valid Python identifier, unique per champion/item/rune
     duration: str = "0"        # 0 = unlimited
-    max_stacks: int = 1
+    max_stacks: int = 1        # 0 = unlimited (Veigar's Phenomenal Evil)
     refresh: bool = True       # does a new stack reset the duration?
     interval: str = "0"        # for on_interval
     tick_on_apply: bool = False  # first interval tick right on application (Ignite)
@@ -201,7 +203,7 @@ The formula namespace is built by the simulation and is separate from the `Stat`
 
 **Scenario inputs** are things the simulation can't know and the user ticks or enters: `terrain` (1 = there is a wall behind the target, Vayne E), starting stacks (Veigar Q kills). They are plain variables in the namespace. Tests set them directly; the UI comes in Phase 5.
 
-Implemented in `simulation/formula.py`. `bonus_<stat>` is total minus base, so buffs count as bonus too. `stacks_<buff>` of an inactive buff is 0 (typos in buff names are a job for the Phase 3 data checks). `current_mana` and `bonus_attackspeed` wait until a champion needs them. `eval` runs with empty builtins plus `min`, `max`, `by_rank`, `by_level`.
+Implemented in `simulation/formula.py`. `bonus_<stat>` is total minus base, so buffs count as bonus too. `stacks_<buff>` of an inactive buff is 0 (typos in buff names are a job for the Phase 3 data checks). `current_mana` and `bonus_attackspeed` wait until a champion needs them. `eval` runs with empty builtins plus `min`, `max`, `floor`, `by_rank`, `by_level`.
 
 All formulas are evaluated by the source (the champion that owns the rule or buff).
 
@@ -364,6 +366,7 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Recasts (built):** the next cast of a slot uses the next stage while it is inside that stage's `recast_window` (seconds after the previous cast) and not before its `recast_delay`; a pending recast ignores the cooldown. After the last stage, or when the window runs out, the ability starts over. Only the first stage starts the cooldown (Riven Q: 13 s from the first cast, `cooldown_starts_on_cast`; Riven R: after the buff, `cooldown_starts_after`). Wind Slash doesn't end Blade of the Exile (owner).
 - **Snapshot stats (built):** `StatModifier.snapshot` on a buff is evaluated once when the buff is applied or refreshed, without the buff's own snapshot values (Riven R: `0.2 * ad` fixed at the cast).
 - **Assumptions (built):** abilities and passives have `assumptions: list[str]` for what we assumed where data is missing, meant to be shown to the user. So far only Riven's Q uses it (cast and animation lock times). Design decisions that hold for everything stay in docs/league-mechanics.md.
+- **Veigar (built):** Phenomenal Evil is an unlimited, never-ending buff (`ap = stacks`); the `veigar_stacks` input sets the start stacks through an `on_start` rule. Every ability hit gives a stack through an explicit `ApplyBuff` in the ability's rule (Event Horizon too, without damage); a separate "ability hits" trigger waits for Luden's. Dark Matter's cooldown drops 10 % per 50 stacks in steps (`floor`, owner-confirmed). Missiles can accelerate (`acceleration`, `max_speed` on the rule; `travel_time` in simulation.py). Event Horizon has the outcomes `hit` (stuns as soon as the cage stands) and `miss`. Takedown and Q kill stacks wait for 2v2. Rule delays after a cast time round twice (Dark Matter lands at tick 38 instead of 37), accepted.
 - **Last DoT tick:** today it deals the full tick damage. Check whether that matches League.
 - **Deferred until a champion needs it:** `on_expire` (Zed R, Sion W), `on_takedown` plus extending a buff's duration (Vayne R +4 s, resets like Darius R; only matters with more than one enemy, so together with 2v2), a free `data` field on buff instances (Zed), more champions than blue/red (2v2).
 - **Stat enum cleanup:** pseudo stats like `target's armor` or `units` only serve the scraper. Clean them up when the scraper is changed.

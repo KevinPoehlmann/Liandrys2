@@ -1,3 +1,4 @@
+import math
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -161,6 +162,7 @@ def evaluate_formula(formula: str, context: FormulaContext) -> float:
         "__builtins__": {},
         "min": min,
         "max": max,
+        "floor": math.floor,
         "by_rank": _by_rank(context),
         "by_level": _by_level(context),
     }

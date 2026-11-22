@@ -106,6 +106,14 @@ class TestVariables():
         assert evaluate_formula(formula, context) == pytest.approx(72)
 
 
+    @pytest.mark.parametrize("stacks, result", [(49, 0), (50, 1), (149, 2)])
+    def test_builtin_floor(self, vayne, stacks, result):
+        vayne.buff_stacks["evil"] = stacks
+        context = FormulaContext(source=vayne)
+
+        assert evaluate_formula("floor(stacks_evil / 50)", context) == result
+
+
 class TestLookups():
 
     def test_by_rank_picks_the_current_rank(self, vayne):

@@ -198,7 +198,9 @@ class Character():
         elif definition.refresh:
             instance.end = end
             instance.rate = 1.0
-        instance.stacks = min(instance.stacks + stacks, definition.max_stacks)
+        instance.stacks += stacks
+        if definition.max_stacks:
+            instance.stacks = min(instance.stacks, definition.max_stacks)
         self._take_snapshots(instance)
         return instance
 

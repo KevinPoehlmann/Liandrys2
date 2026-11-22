@@ -97,6 +97,7 @@ Pages: Basic_attack, Attack_speed, Attack_effects
 
 - Attack timer = `1 / attack speed`. It has two phases: windup (attack is executed), then cooldown.
 - Melee attacks hit at the end of the windup; ranged attacks launch a missile there.
+- Missiles travel at their speed over the distance (the simulation assumes 100 units, `DEFAULT_DISTANCE`). Some accelerate up to a max speed (Veigar R: 500 → 4000 units/s at 4000 units/s², from CommunityDragon); the simulation models that.
 - Total attack speed: `base + ratio × (growth bonus + other bonus AS)`; growth uses the level formula. Most champions have ratio = base.
 - Cap 3.003 attacks/s, floor 0.2. Some champions change the cap (Bel'Veth, Jinx R, Varus, Hail of Blades, Sion, Zeri, Urgot W fixed at 3.0).
 - Windup: `currentWindup = baseWindup + windupModifier × (attackTime × windupPercent − baseWindup)` with `baseWindup = windupPercent / baseAS` (level 1, no bonus AS). With `windupModifier = 1` (default) this is simply `attackTime × windupPercent`.

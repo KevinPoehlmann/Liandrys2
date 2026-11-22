@@ -167,7 +167,9 @@ class Rule(StrictModel):
     conditions: list[Condition] = []
     actions: list[RuleAction] = []
     delay: str = "0"
-    speed: str = "0"
+    speed: str = "0"  # missile start speed, 0 = instant
+    acceleration: str = "0"
+    max_speed: str = "0"  # 0 = no cap
     cooldown: str = "0"
 
 
@@ -188,7 +190,7 @@ class SlowedWhile(StrictModel):
 class Buff(StrictModel):
     name: str
     duration: str = "0"
-    max_stacks: int = Field(1, ge=1)
+    max_stacks: int = Field(1, ge=0)  # 0 = unlimited (Veigar's Phenomenal Evil)
     refresh: bool = True
     interval: str = "0"
     tick_on_apply: bool = False
