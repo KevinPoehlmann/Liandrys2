@@ -317,6 +317,7 @@ class DamageType(str, Enum):
     NOTES="See Notes"
     PET="Pet damage"
     PROC="Proc damage"
+    REACTIVE="Reactive damage"  # Thornmail: reacts to being hit
     SPELL="Spell damage"
 
 class DamageSubType(str, Enum):

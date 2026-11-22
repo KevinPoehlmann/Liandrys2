@@ -177,6 +177,7 @@ class Simulation():
                 continue
             if result.source == ActionType.BA:
                 self._fire(Trigger.ON_HIT, result.actor, result.target, ActionType.BA, tick)
+                self._fire(Trigger.ON_GET_HIT, result.target, result.actor, ActionType.BA, tick)
             # Damage absorbed by a shield still counts as taken; an attack without damage (blind) does not.
             if result.raw > 0:
                 self._fire(Trigger.ON_DAMAGE_TAKEN, result.target, result.actor, result.source, tick)

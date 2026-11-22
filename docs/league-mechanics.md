@@ -90,7 +90,7 @@ The game's trigger categories:
 - **Attacks that apply on-hit *and* spell effects:** Darius W, Vayne Q, Blitzcrank R passive, Camille Q, Garen Q, Jax W, Nasus Q, Trundle Q, Volibear Q, … (Attack_effects/Abilities).
 - Rageblade's phantom hit repeats on-hit effects, not on-attack effects.
 
-**Simulation:** triggers `on_start`, `on_cast`, `on_attack`, `on_hit`, `on_damage_taken` (also when a shield absorbs everything), `on_stack`, `on_interval` work; `on_damage_dealt` and `on_get_hit` exist in the model but are not fired yet. `on_cast` fires at the start of the cast time (Spellblade is granted then, and stays if the cast is cancelled). ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
+**Simulation:** triggers `on_start`, `on_cast`, `on_attack`, `on_hit`, `on_damage_taken` (also when a shield absorbs everything), `on_stack`, `on_interval` work; `on_get_hit` fires together with `on_hit`, from the side of the one hit (the attacker is its `target`); `on_damage_dealt` exists in the model but is not fired yet. `on_cast` fires at the start of the cast time (Spellblade is granted then, and stays if the cast is cancelled). ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
 
 ## Basic attacks and attack speed
 Pages: Basic_attack, Attack_speed, Attack_effects
@@ -136,6 +136,7 @@ Pages: Healing, Heal_and_shield_power, Life_steal, Vamp (Omnivamp), Grievous_Wou
 - Life steal: % of post-mitigation damage of basic damage (and anything tagged "applies life steal", on-hit item damage). Omnivamp: % of all post-mitigation damage; 33% effectiveness for area/pet/persistent damage against minions and monsters. Neither benefits from heal power.
 - Drain (damage-based heals like Vladimir Q/E): benefits from heal power; pre-mitigation drains are calculated before damage modifiers.
 - Grievous Wounds: −40% healing and HP regen received, does not stack. Affects all heals including life steal and omnivamp; does **not** affect shields.
+- Grievous Wounds from being hit (Thornmail) lands before the attack's life steal, so the triggering attack already heals less (wiki, owner-confirmed). Keep this order when life steal is built.
 - Open in the wiki: whether vamp counts damage absorbed by shields.
 
 **Simulation:** heals are capped by missing HP in `_apply_heals`. ✓ Grievous Wounds is a status whose strength is the reduction; the strongest counts, it reduces heals and health regeneration (heal results keep the unreduced value in `raw`). ✓ ⚠ No heal power. ⚠ `vamp` exists on damage but life steal/omnivamp as stats don't.

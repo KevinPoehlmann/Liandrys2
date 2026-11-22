@@ -87,6 +87,7 @@ def soft_cap_movespeed(speed: float) -> float:
 
 
 class Character():
+    is_champion: bool = True
     def __init__(self, champion: Champion, lvl: int, rank: Rank ,items: list[Item], scenario: dict[str, float] | None = None,
                  summonerspells: list[Summonerspell] | None = None) -> None:
         self.champion: Champion = champion

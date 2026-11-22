@@ -11,7 +11,7 @@
     "1028"
   ],
   "class_": "legendary item",
-  "validated": false,
+  "validated": true,
   "stats": {
     "armor": 75.0,
     "hp": 150.0
@@ -25,12 +25,70 @@
     {
       "name": "Thorns",
       "description": "When struck by a basic attack on-hit, deal 20 (+ 10% bonus armor) magic damage to the attacker and, if they are a champion, inflict them with  Grievous Wounds for 3 seconds.",
-      "static_cooldown": "",
-      "effects": [],
       "raw_stats": {},
       "changes": [],
-      "validated": false,
-      "unique": true
+      "validated": true,
+      "unique": true,
+      "inputs": [],
+      "stats": [],
+      "buffs": [],
+      "assumptions": [],
+      "rules": [
+        {
+          "trigger": "on_get_hit",
+          "filter": null,
+          "outcome": null,
+          "conditions": [],
+          "actions": [
+            {
+              "type_": "Damage",
+              "props": {
+                "target": "target",
+                "scaling": "20 + 0.1 * bonus_armor",
+                "dmg_type": [
+                  "Reactive damage"
+                ],
+                "dmg_sub_type": "Magic",
+                "vamp": 0.0
+              }
+            }
+          ],
+          "delay": "0",
+          "speed": "0",
+          "acceleration": "0",
+          "max_speed": "0",
+          "cooldown": "0"
+        },
+        {
+          "trigger": "on_get_hit",
+          "filter": null,
+          "outcome": null,
+          "conditions": [
+            {
+              "actor": "target",
+              "key": "is_champion",
+              "comparison": "Equal",
+              "value": "1"
+            }
+          ],
+          "actions": [
+            {
+              "type_": "Status",
+              "props": {
+                "target": "target",
+                "status": "Grievous Wounds",
+                "duration": "3",
+                "strength": "0.4"
+              }
+            }
+          ],
+          "delay": "0",
+          "speed": "0",
+          "acceleration": "0",
+          "max_speed": "0",
+          "cooldown": "0"
+        }
+      ]
     }
   ],
   "limitations": "Limited to 1 Thornmail.",

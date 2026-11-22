@@ -21,6 +21,7 @@ class FormulaError(SimulationError):
 class StatSource(Protocol):
     level: int
     current_hp: float
+    is_champion: bool
 
     def get_stat(self, stat: Stat) -> float: ...
     def get_base_stat(self, stat: Stat) -> float: ...
@@ -64,6 +65,7 @@ STAT_VARIABLES: dict[str, Callable[[StatSource], float]] = {
     "ability_haste": _total(Stat.ABILITY_HASTE),
     "crit_chance": _total(Stat.CRIT_P),
     "movespeed": _total(Stat.MOVESPEED),
+    "is_champion": lambda source: 1 if source.is_champion else 0,  # 0 for pets (Thornmail's Grievous Wounds)
 }
 
 RANK_VARIABLES = {f"rank_{slot.value.lower()}": slot for slot in (ActionType.Q, ActionType.W, ActionType.E, ActionType.R)}

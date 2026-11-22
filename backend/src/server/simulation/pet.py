@@ -9,6 +9,7 @@ from src.server.simulation.formula import FormulaContext, evaluate_formula
 
 class PetCharacter(Character):
     """A summoned unit: stats come from formulas, it has a passive and a basic attack but no abilities."""
+    is_champion: bool = False
 
     def __init__(self, definition: Pet, owner: Character, slot: ActionType) -> None:
         self.definition: Pet = definition

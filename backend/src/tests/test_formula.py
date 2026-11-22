@@ -10,6 +10,7 @@ from src.server.simulation.formula import FormulaContext, FormulaError, evaluate
 class FakeSource:
     level: int = 6
     current_hp: float = 500
+    is_champion: bool = True
     stats: dict[Stat, float] = field(default_factory=dict)
     base_stats: dict[Stat, float] = field(default_factory=dict)
     ranks: dict[ActionType, int] = field(default_factory=dict)
