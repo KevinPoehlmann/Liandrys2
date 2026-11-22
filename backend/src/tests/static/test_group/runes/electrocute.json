@@ -9,14 +9,258 @@
   "slot": 0,
   "passive": {
     "name": "Electrocute",
-    "description": "Damaging basic attacks, abilities, item effects, and summoner spells, as well as the application of  crowd control and damage over time effects, generate stacks against enemy  champions, up to one per attack or cast per champion. Applying 3 stacks to a target within a 3 second period causes them to be struck by lightning after a 0.25-second delay, dealing them 70 – 240 (based on level) (+ 10% bonus AD) (+ 5% AP) physical or magic damage.If「 10% bonus AD ≥ 5% AP, 」「 bonus AD ≥ 50% AP, 」deals physical damage. If otherwise, deals magic damage.",
-    "static_cooldown": "20 seconds",
-    "effects": [],
+    "inputs": [],
+    "stats": [],
     "raw_stats": {},
     "changes": [],
-    "validated": false
+    "validated": true,
+    "assumptions": [
+      "Base damage grows linearly from 70 (level 1) to 260 (level 18), as the wiki's description says; its patch notes say 240."
+    ],
+    "rules": [
+      {
+        "trigger": "on_damage_dealt",
+        "filter": null,
+        "outcome": null,
+        "conditions": [
+          {
+            "actor": "target",
+            "key": "is_champion",
+            "comparison": "Equal",
+            "value": "1"
+          },
+          {
+            "actor": "self",
+            "key": "stacks_electrocute_cooldown",
+            "comparison": "Equal",
+            "value": "0"
+          },
+          {
+            "actor": "self",
+            "key": "tag_proc * (1 - tag_pet)",
+            "comparison": "Equal",
+            "value": "0"
+          }
+        ],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "electrocute",
+              "target": "target",
+              "stacks": "1"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "acceleration": "0",
+        "max_speed": "0",
+        "cooldown": "0",
+        "cast_cooldown": "inf"
+      },
+      {
+        "trigger": "on_debuff_dealt",
+        "filter": null,
+        "outcome": null,
+        "conditions": [
+          {
+            "actor": "target",
+            "key": "is_champion",
+            "comparison": "Equal",
+            "value": "1"
+          },
+          {
+            "actor": "self",
+            "key": "stacks_electrocute_cooldown",
+            "comparison": "Equal",
+            "value": "0"
+          },
+          {
+            "actor": "self",
+            "key": "cc * (1 - status_blind - status_cripple - status_drowsy - status_kinematics - status_nearsight - status_stasis) + dot",
+            "comparison": "Greater than",
+            "value": "0"
+          }
+        ],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "electrocute",
+              "target": "target",
+              "stacks": "1"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "acceleration": "0",
+        "max_speed": "0",
+        "cooldown": "0",
+        "cast_cooldown": "inf"
+      }
+    ],
+    "buffs": [
+      {
+        "name": "electrocute",
+        "duration": "3",
+        "max_stacks": 3,
+        "refresh": false,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "stats": [],
+        "rules": [
+          {
+            "trigger": "on_stack",
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "bearer",
+                "key": "stacks_electrocute",
+                "comparison": "Equal",
+                "value": "3"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "RemoveBuff",
+                "props": {
+                  "buff": "electrocute",
+                  "target": "bearer",
+                  "stacks": null
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "electrocute_cooldown",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "electrocute_strike",
+                  "target": "bearer",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          }
+        ]
+      },
+      {
+        "name": "electrocute_strike",
+        "duration": "0.25",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0.25",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "stats": [],
+        "rules": [
+          {
+            "trigger": "on_interval",
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "0.1 * bonus_ad",
+                "comparison": "Greater than",
+                "value": "0.05 * ap"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "bearer",
+                  "scaling": "70 + 190 * (min(level, 18) - 1) / 17 + 0.1 * bonus_ad + 0.05 * ap",
+                  "dmg_type": [
+                    "Proc damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          },
+          {
+            "trigger": "on_interval",
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "0.1 * bonus_ad",
+                "comparison": "Less or equal",
+                "value": "0.05 * ap"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "bearer",
+                  "scaling": "70 + 190 * (min(level, 18) - 1) / 17 + 0.1 * bonus_ad + 0.05 * ap",
+                  "dmg_type": [
+                    "Proc damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          }
+        ]
+      },
+      {
+        "name": "electrocute_cooldown",
+        "duration": "20",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "stats": [],
+        "rules": []
+      }
+    ],
+    "description": "Damaging basic attacks, abilities, item effects, and summoner spells, as well as the application of  crowd control and damage over time effects, generate stacks against enemy  champions, up to one per attack or cast per champion. Applying 3 stacks to a target within a 3 second period causes them to be struck by lightning after a 0.25-second delay, dealing them 70 – 240 (based on level) (+ 10% bonus AD) (+ 5% AP) physical or magic damage.If「 10% bonus AD ≥ 5% AP, 」「 bonus AD ≥ 50% AP, 」deals physical damage. If otherwise, deals magic damage."
   },
-  "validated": false,
+  "validated": true,
   "changes": [],
   "image": {
     "full": "Electrocute.png",

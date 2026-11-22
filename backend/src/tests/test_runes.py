@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, EffectType, OriginKind, Stat
+from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, OriginKind, Stat
 from src.server.models.request import Action, Rank
 from src.server.models.rune import Rune
 from src.server.simulation.character import Character
@@ -165,3 +165,77 @@ class TestPetDamageForTheOwner():
         pet_hits = {event.tick for event in sim.effect_list for result in event.result
                     if result.actor == TIBBERS and result.type_ == EffectType.DAMAGE}
         assert len(executes) == 1 and executes[0] in pet_hits
+
+
+ELECTROCUTE_LVL_6 = 70 + 190 * 5 / 17  # assumed linear from level 1 to 18
+STRIKE_DELAY = 8  # 0.25 s
+
+
+def strikes(sim: Simulation) -> list[tuple[int, float, object]]:
+    return [(event.tick, result.value, result.damage_sub_type) for event in sim.effect_list for result in event.result
+            if result.origin.name == "Electrocute" and result.type_ == EffectType.DAMAGE]
+
+
+def riven_with_electrocute(load_champion, items=()) -> Character:
+    return Character(load_champion("riven"), 6, Rank(q=3, w=1, e=0, r=0), list(items), runes=[load_rune("electrocute")])
+
+
+class TestElectrocute():
+
+    def test_three_casts_strike_after_0_25_seconds(self, load_champion):
+        sim = Simulation(riven_with_electrocute(load_champion), character(load_champion, "darius"))
+
+        sim.do_combo([blue(ActionType.Q)] * 3)
+
+        # Broken Wings hits at 8, 24 and 40 (each recast as soon as the lock allows); no bonus AD or AP is a tie, so magic.
+        darius_mr_magic = ELECTROCUTE_LVL_6 * 100 / (100 + DARIUS_MR)
+        assert strikes(sim) == [(40 + STRIKE_DELAY, pytest.approx(darius_mr_magic), DamageSubType.MAGIC)]
+
+
+    def test_damage_and_stun_of_one_cast_are_one_stack(self, load_champion):
+        sim = Simulation(riven_with_electrocute(load_champion), character(load_champion, "darius"))
+
+        # Ki Burst (damage and stun at 0) is one stack; the Broken Wings hits at 16 and 32 bring the other two.
+        sim.do_combo([blue(ActionType.W), blue(ActionType.Q), blue(ActionType.Q)])
+
+        assert [tick for tick, _, _ in strikes(sim)] == [32 + STRIKE_DELAY]
+
+
+    def test_crowd_control_without_damage_stacks(self, load_champion):
+        veigar = Character(load_champion("veigar"), 6, Rank(q=3, w=1, e=1, r=1), [], runes=[load_rune("electrocute")])
+        sim = Simulation(veigar, character(load_champion, "darius"))
+
+        # Baleful Strike hits at 18, Event Horizon stuns at 25 (no damage), Dark Matter lands at 54.
+        sim.do_combo([blue(ActionType.E), blue(ActionType.Q), blue(ActionType.W)])
+
+        # By then Veigar has 3 Phenomenal Evil stacks (3 AP).
+        expected = (ELECTROCUTE_LVL_6 + 0.05 * 3) * 100 / (100 + DARIUS_MR)
+        assert strikes(sim) == [(54 + STRIKE_DELAY, pytest.approx(expected), DamageSubType.MAGIC)]
+
+
+    def test_20_second_cooldown(self, load_champion):
+        sim = Simulation(riven_with_electrocute(load_champion), character(load_champion, "darius"))
+
+        sim.do_combo([blue(ActionType.Q)] * 3 + [blue(ActionType.BA)] * 3)
+
+        assert len(strikes(sim)) == 1
+
+
+    def test_physical_when_the_ad_part_is_bigger(self, load_champion, load_item):
+        riven = riven_with_electrocute(load_champion, items=[load_item("blade_of_the_ruined_king")])
+        sim = Simulation(riven, character(load_champion, "darius"))
+
+        sim.do_combo([blue(ActionType.Q)] * 3)
+
+        assert [(value, sub_type) for _, value, sub_type in strikes(sim)] == [
+            (pytest.approx(physical(ELECTROCUTE_LVL_6 + 0.1 * 40)), DamageSubType.PHYSIC)]
+
+
+    def test_tibbers_attacks_stack(self, load_champion):
+        annie = Character(load_champion("annie"), 6, Rank(q=3, w=1, e=1, r=1), [], runes=[load_rune("electrocute")])
+        sim = Simulation(annie, character(load_champion, "darius"))
+
+        # R's hit is one stack, Tibbers' attacks (pet damage) bring the other two.
+        sim.do_combo([blue(ActionType.R)])
+
+        assert len(strikes(sim)) == 1

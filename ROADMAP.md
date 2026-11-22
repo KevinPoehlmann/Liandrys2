@@ -50,10 +50,11 @@ Decisions:
 Building blocks that are missing (each one gets a champion/item from the test group):
 - [x] Timed buffs and "next attack" buffs: Sheen/Spellblade, Nasus Q, "+30% AS for 3s"
 - [x] `Hit` (on-hit) and `GetHit` (e.g. Thornmail)
-- [ ] Named stack counters with max, duration and reset: Conqueror (BotRK's Clawing Shadows and Vayne W done)
+- [x] Named stack counters with max, duration and reset: Conqueror, BotRK's Clawing Shadows, Vayne W, Electrocute
 - [x] Conditions with an actor (self/target/bearer): executes, "below 30% HP" (range conditions come with distance, Phase 5)
-- [ ] Recasts, auto-attack resets, cooldown reduction on hit
-- [ ] Non-linear rank values: `parse_formula_from_list` assumes linear steps (needs a lookup like `[40, 65, 90][rank - 1]`)
+- [x] Recasts (Riven), auto-attack resets (Riven Q, Vayne Q)
+- [ ] Cooldown reduction on hit (`ModifyCooldown` is in the model but not built; no test group member needs it, additive)
+- [x] ~~Non-linear rank values~~ (`by_rank(...)` lists every rank; the scraper no longer builds effects)
 - [x] ~~`extra = "forbid"` on the effect models~~ (the rule models have it; the old effect models are gone)
 - [x] Pets (actor ids like `blue.tibbers`, Tibbers)
 - [x] Results know their origin: `EffectResult.source` is only an `ActionType` today, so an item/rune proc (Sheen, Kraken, Electrocute) can't be told apart. Add the owning item/rune/buff while the result format is being rebuilt anyway; the post-V1 damage breakdown builds on it
@@ -73,7 +74,7 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 
 - [x] Champions: Annie (+Tibbers), Darius, Vayne, Vladimir, Riven, Veigar
 - [x] Items: Sheen, Thornmail, Blade of the Ruined King, The Collector, Hextech Gunblade
-- [ ] Runes: Conqueror, Electrocute (runes as containers aren't wired into the simulation yet)
+- [x] Runes: Conqueror, Electrocute (runes and stat shards in the simulation, adaptive force, cast instances)
 
 ## Phase 3: Admin side complete
 

@@ -471,6 +471,8 @@ class Comparison(str, Enum):
     GT="Greater than"
     LT="Less than"
     EQ="Equal"
+    GE="Greater or equal"
+    LE="Less or equal"
 
 
 class Trigger(str, Enum):
@@ -483,6 +485,7 @@ class Trigger(str, Enum):
     ON_STACK = "on_stack"
     ON_START = "on_start"
     ON_DAMAGE_TAKEN = "on_damage_taken"
+    ON_DEBUFF_DEALT = "on_debuff_dealt"  # a status (CC, Grievous Wounds) or a DoT applied to an enemy (Electrocute)
 
 class Target(str, Enum):
     SELF = "self"

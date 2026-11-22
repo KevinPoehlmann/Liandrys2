@@ -19,6 +19,7 @@ from src.server.models.dataenums import (
     ProcessedStatusProperties,
     QueueComponent,
     Stat,
+    StatusType,
     Target,
     TickEvent,
     Trigger,
@@ -42,6 +43,8 @@ QueueEntry = RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
 
 # Close enough for any melee attack; projectiles still need travel time (Vladimir's E lands after a Hemoplague cast at its release).
 DEFAULT_DISTANCE = 100
+# Statuses that are crowd control; Grievous Wounds and untargetability aren't.
+CROWD_CONTROL = set(StatusType) - {StatusType.GRIEVOUS_WOUNDS, StatusType.UNTARGETABLE, StatusType.REPLACE, StatusType.ERROR}
 CRIT_DAMAGE = 2.0
 
 
@@ -226,6 +229,14 @@ class Simulation():
                     self._fire(Trigger.ON_DAMAGE_DEALT, actor, result.target, result.source, tick, values, result.cast)
 
 
+    def _fire_debuff(self, event: RuleEvent, target: Actor, tick: int, status: StatusType | None = None, dot: bool = False) -> None:
+        if target.team == event.owner.team:
+            return
+        values = {"cc": int(status in CROWD_CONTROL), "dot": int(dot)}
+        values |= {f"status_{kind.name.lower()}": int(kind == status) for kind in StatusType}
+        self._fire(Trigger.ON_DEBUFF_DEALT, event.owner, target, event.slot, tick, values, event.cast)
+
+
     @staticmethod
     def _damage_values(result: EffectResult) -> dict[str, float]:
         """`damage`, `health_damage`, the damage type and a 0/1 variable per tag (`tag_basic`, `tag_proc`, `tag_pet`, ...)."""
@@ -262,6 +273,10 @@ class Simulation():
                 return key < value
             case Comparison.EQ:
                 return key == value
+            case Comparison.GE:
+                return key >= value
+            case Comparison.LE:
+                return key <= value
 
 
     def _actor_of(self, character: Character) -> Actor:
@@ -295,7 +310,8 @@ class Simulation():
     def _passes_cast_gate(self, event: RuleEvent, tick: int) -> bool:
         if event.rule.cast_cooldown is None or event.cast is None:
             return True
-        key = (event.owner, id(event.rule), event.cast, event.target)
+        # The gate is per container: Electrocute's damage and debuff rules give one stack per cast together.
+        key = (event.owner, event.slot, event.cast, event.target)
         if tick < self.cast_gates.get(key, -math.inf):
             return False
         seconds = evaluate_formula(event.rule.cast_cooldown, self._context(event, event.target))
@@ -313,7 +329,9 @@ class Simulation():
             case DamageAction(props=props):
                 return [self._damage(props, event)]
             case StatusAction(props=props):
-                return [self._status(props, event)]
+                component = self._status(props, event)
+                self._fire_debuff(event, component.target, tick, status=props.status)
+                return [component]
             case HealAction(props=props):
                 return [self._heal(props, event)]
             case ShieldAction(props=props):
@@ -325,6 +343,8 @@ class Simulation():
                 if instance.end is not None:
                     self.queue.setdefault(instance.end, []).append(BuffEnd(bearer=bearer, buff=props.buff, end=instance.end))
                 self._schedule_interval(bearer, instance)
+                if instance.definition.interval != "0":
+                    self._fire_debuff(event, bearer, tick, dot=True)
                 self._rescale_slowed_buffs(bearer, tick)
                 self._fire_stack(props.buff, instance.definition.rules, instance.slot, self._actor_of(instance.source), bearer, tick, event.cast)
             case RemoveBuffAction(props=props):

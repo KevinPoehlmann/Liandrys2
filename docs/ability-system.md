@@ -52,7 +52,7 @@ Rule:
     acceleration: str = "0"     # units/s², 0 = constant speed (Veigar R: 500 -> 4000)
     max_speed: str = "0"        # 0 = no cap
     cooldown: str = "0"         # Sheen 1.5 s, Electrocute; replaces static_cooldown
-    cast_cooldown: str | None   # per cast instance and target: "4" (Conqueror), "inf" = once (Electrocute)
+    cast_cooldown: str | None   # per container, cast instance and target: "4" (Conqueror), "inf" = once (Electrocute)
 ```
 
 A buff created while an event is handled does not react to that same event. Otherwise Final Hour's stealth, which ends `on_cast`, would end on the very Q cast that created it.
@@ -382,6 +382,7 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Cast instances (built with Conqueror):** every action (attack, cast, item active, summoner spell) and every pet attack is a new cast instance (`RuleEvent.cast`). Everything that follows from it shares it: on-hit and on-cast rules, the rules a cast queues, buffs it applies and their interval ticks (a refresh by a new cast takes the new one), on-stack rules, a summoned pet's start rules (Tibbers' aura belongs to R), damage results and the rules they trigger (The Collector's execute). `Rule.cast_cooldown` gates a rule per (owner, rule, cast instance, target).
 - **Damage tags in rules (decided instead of filter lists):** damage-triggered rules see `tag_<tag>` variables, so "neither basic nor non-pet proc damage" is the condition `tag_basic == 0` and `tag_proc * (1 - tag_pet) == 0`. A pet's damage always carries `Pet damage` and fires `on_damage_dealt` for its owner too (owner: Tibbers' aura and attacks trigger The Collector). Tibbers' attacks are basic damage (fixture fixed).
 - **Conqueror (built):** stacks and the heal are `on_damage_dealt` rules; the heal rule comes first, so the hit that brings the 12th stack doesn't heal yet (owner). Edge case: an on-hit part of that same hit (a second damage result) already heals.
+- **Electrocute (built):** new trigger `on_debuff_dealt` (a status or a DoT, i.e. a buff with an interval, applied to an enemy) with the variables `cc`, `dot` and `status_<type>`. The `cast_cooldown` gate is per container (owner, slot, cast instance, target), so Electrocute's damage and debuff rules give one stack per cast together. New comparisons `Greater or equal` / `Less or equal` pick the damage type (physical only if the AD part is bigger; a tie is magic, wiki). The delayed strike is a buff with one interval tick at its end, because a rule's conditions are checked when it runs, not when it is queued. Tibbers' attacks stack it (pet damage).
 - **Last DoT tick:** today it deals the full tick damage. Check whether that matches League.
 - **Deferred until a champion needs it:** `on_expire` (Zed R, Sion W), `on_takedown` plus extending a buff's duration (Vayne R +4 s, resets like Darius R; only matters with more than one enemy, so together with 2v2), a free `data` field on buff instances (Zed), more champions than blue/red (2v2).
 - **Stat enum cleanup:** pseudo stats like `target's armor` or `units` only serve the scraper. Clean them up when the scraper is changed.
