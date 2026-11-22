@@ -148,12 +148,16 @@ class Simulation():
         start = self.tick
         self.last_action_tick = start
         character = self.actors[action.actor]
+        is_attack = action.action_type == ActionType.BA
+        if not is_attack:
+            # The cast event comes at the start of the cast time (Spellblade, Riven's Runic Blade).
+            self._fire(Trigger.ON_CAST, action.actor, action.target, action.action_type, start)
         action_effect = character.do_action(action, self.tick)
         self.tick = action_effect.tick
         for rule_event in action_effect.rule_events:
             self._queue_rule(rule_event, self.tick)
-        trigger = Trigger.ON_ATTACK if action.action_type == ActionType.BA else Trigger.ON_CAST
-        self._fire(trigger, action.actor, action.target, action.action_type, self.tick)
+        if is_attack:
+            self._fire(Trigger.ON_ATTACK, action.actor, action.target, action.action_type, self.tick)
         if action_effect.windup_cancel:
             # Everything else still waits for the windup; the cancelling slots may start right away.
             character.lock(action_effect.tick, action_effect.windup_cancel)

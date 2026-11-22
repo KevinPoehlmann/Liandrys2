@@ -243,11 +243,14 @@ buffs:
   - name: spellblade, duration: "10"
     rules:
       - trigger: on_hit
-        actions: [Damage(scaling: "base_ad", target: target), RemoveBuff(spellblade, self)]
+        actions: [Damage(scaling: "base_ad", target: target), RemoveBuff(spellblade, self),
+                  ApplyBuff(spellblade_cooldown, self)]
+  - name: spellblade_cooldown, duration: "1.5"
 rules:
-  - trigger: on_cast, cooldown: "1.5"
+  - trigger: on_cast, filter: [q, w, e, r], condition: stacks_spellblade_cooldown == 0
     actions: [ApplyBuff(spellblade, self)]
 ```
+The cooldown is a buff because it starts with the empowered hit, not with the rule that grants the buff; an unused buff runs out without a cooldown (owner).
 
 **Annie passive** (the stun belongs to the first ability that *lands*, so it sits in the landing rules of Q/W/R)
 ```yaml
@@ -328,7 +331,7 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
   - `on_damage_dealt` / `on_get_hit` are in the model but never fired (Conqueror, Black Cleaver, Thornmail, Annie E).
   - Missing categories: on-spell (ability lands; Luden's), on-cc (Aftershock), on-crit, on-death/takedown (2v2), on-heal/shield (Aery).
   - The trigger filter needs damage tags and damage types besides slots: spell effects react to ability damage (including Darius W and Vayne Q attacks), Black Cleaver to physical damage.
-  - `on_cast` fires at the end of the cast time; the game fires some on-cast effects at the start. Check which when an item/rune needs it.
+  - `on_cast` fires at the start of the cast time (Sheen's wiki notes; owner agreed it fits everywhere). `on_attack` still fires at the end of the windup.
 - **Pets (built):** a pet is its own actor, not a buff of its owner.
   - **Actor ids:** `Actor` is a validated string: the team first, then the path to the unit (`blue`, `red`, `blue.tibbers`, `blue.ghoul#2`). Later `blue.top` and `blue.top.tibbers` fit the same pattern. The owner is stored on the pet, not read from the id.
   - **Definition:** an ability lists `pets` (name, duration, stat formulas, attack, passive). Stat formulas use the rank of the summoning ability and read the owner with `owner_` (`owner_ap`). The pet's passive is the normal `Passive` model; the owner also knows the pet's buffs, so Annie's stun can enrage Tibbers.
@@ -367,6 +370,7 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Snapshot stats (built):** `StatModifier.snapshot` on a buff is evaluated once when the buff is applied or refreshed, without the buff's own snapshot values (Riven R: `0.2 * ad` fixed at the cast).
 - **Assumptions (built):** abilities and passives have `assumptions: list[str]` for what we assumed where data is missing, meant to be shown to the user. So far only Riven's Q uses it (cast and animation lock times). Design decisions that hold for everything stay in docs/league-mechanics.md.
 - **Veigar (built):** Phenomenal Evil is an unlimited, never-ending buff (`ap = stacks`); the `veigar_stacks` input sets the start stacks through an `on_start` rule. Every ability hit gives a stack through an explicit `ApplyBuff` in the ability's rule (Event Horizon too, without damage); a separate "ability hits" trigger waits for Luden's. Dark Matter's cooldown drops 10 % per 50 stacks in steps (`floor`, owner-confirmed). Missiles can accelerate (`acceleration`, `max_speed` on the rule; `travel_time` in simulation.py). Event Horizon has the outcomes `hit` (stuns as soon as the cage stands) and `miss`. Takedown and Q kill stacks wait for 2v2. Rule delays after a cast time round twice (Dark Matter lands at tick 38 instead of 37), accepted.
+- **Items (built with Sheen):** items take the slots I1–I6 in list order, like summoner spells S1/S2. Their passives are collected like abilities (rules, buffs, stats, inputs) with rank 0, and results get the origin `item / <item name> / <buff>`. A `unique` passive is a shared named effect: several items with a passive of the same name give it once (two Spellblade items). Item groups from `limitations` ("Limited to 1 Spellblade item") belong to item picking (ROADMAP Phase 5). `Passive.static_cooldown` is gone; the scraped value stays in `raw_stats`, real cooldowns are rules or buffs.
 - **Last DoT tick:** today it deals the full tick damage. Check whether that matches League.
 - **Deferred until a champion needs it:** `on_expire` (Zed R, Sion W), `on_takedown` plus extending a buff's duration (Vayne R +4 s, resets like Darius R; only matters with more than one enemy, so together with 2v2), a free `data` field on buff instances (Zed), more champions than blue/red (2v2).
 - **Stat enum cleanup:** pseudo stats like `target's armor` or `units` only serve the scraper. Clean them up when the scraper is changed.

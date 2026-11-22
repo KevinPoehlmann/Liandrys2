@@ -1,6 +1,4 @@
-from fastapi import HTTPException, Request
-from pydantic import BaseModel, ValidationError
-from typing import Type, TypeVar
+from fastapi import HTTPException
 
 from src.server.database import fetch_champion_by_id, fetch_item_by_id, fetch_rune_by_id, fetch_summonerspell_by_id
 from src.server.models.champion import Champion
@@ -8,17 +6,6 @@ from src.server.models.item import Item
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 
-
-
-T = TypeVar("T", bound=BaseModel)
-
-async def parse_from_request(request: Request, model_cls: Type[T]) -> T:
-    try:
-        raw = await request.json()
-        return model_cls.parse_obj(raw)
-    except ValidationError as e:
-        raise HTTPException(status_code=422, detail=e.errors())
-    
 
 
 async def get_required_champion(id_: str) -> Champion:

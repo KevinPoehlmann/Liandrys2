@@ -1,7 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException
 
 
 
@@ -12,7 +10,7 @@ from src.server.database import (
 )
 from src.server.models.rune import ShortRune, Rune, RUNE_TREES
 
-from src.server.routes.helpers import get_required_rune, parse_from_request
+from src.server.routes.helpers import get_required_rune
 
 router = APIRouter()
 admin = APIRouter()
@@ -33,14 +31,12 @@ async def get_trees() -> dict[int, dict[str, str]]:
 
 
 @router.get("/{rune_id}")
-async def get_rune(rune_id: str) -> JSONResponse:
-    rune = await get_required_rune(rune_id)
-    return JSONResponse(content=jsonable_encoder(rune))
+async def get_rune(rune_id: str) -> Rune:
+    return await get_required_rune(rune_id)
 
 
 @admin.put("/")
-async def put_rune(request: Request) -> int:
-    rune = await parse_from_request(request, Rune)
+async def put_rune(rune: Rune) -> int:
     response = await update_rune(rune)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Rune with ID: {rune.id} !")

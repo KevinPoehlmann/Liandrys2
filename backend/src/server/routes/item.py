@@ -1,7 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException
 
 
 
@@ -13,7 +11,7 @@ from src.server.database import (
 from src.server.models.item import ShortItem, Item
 from src.server.models.dataenums import ItemClass, Map
 
-from src.server.routes.helpers import parse_from_request, get_required_item
+from src.server.routes.helpers import get_required_item
 
 
 router = APIRouter()
@@ -46,14 +44,12 @@ async def get_map() -> list[dict[str, str]]:
 
 
 @router.get("/{item_id}")
-async def get_item(item_id: str) -> JSONResponse:
-    item = await get_required_item(item_id)
-    return JSONResponse(content=jsonable_encoder(item))
+async def get_item(item_id: str) -> Item:
+    return await get_required_item(item_id)
 
 
 @admin.put("/")
-async def put_item(request: Request) -> int:
-    item = await parse_from_request(request, Item)
+async def put_item(item: Item) -> int:
     response = await update_item(item)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Item with ID: {item.id} !")

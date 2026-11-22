@@ -90,6 +90,14 @@ def load_champion():
     return _loader
 
 
+@pytest.fixture
+def load_item():
+    def _loader(name: str) -> Item:
+        with open(f"src/tests/static/test_group/items/{name}.json", "r", encoding="utf-8") as f:
+            return Item.parse_obj(json.load(f))
+    return _loader
+
+
 @pytest.fixture()
 def patch_with_hotfix() -> NewPatch:
     patch = NewPatch(

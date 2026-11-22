@@ -194,7 +194,6 @@ def _scrape_passive(soup: BeautifulSoup, passive_json: PassiveJson, champion_nam
     return ChampionPassive(
         name=passive_json.name,
         description=description,
-        static_cooldown=stats.pop("static cooldown", "0"),
         image=passive_json.image,
         raw_stats=stats,
         validated=False,
@@ -503,7 +502,6 @@ def _scrape_rune_passive(soup: BeautifulSoup) -> Passive:
     passive = Passive(
         name="Replace",
         description = passive_text,
-        static_cooldown=passive_stats.pop("cooldown", "0"),
         raw_stats=passive_stats
     )
     return passive

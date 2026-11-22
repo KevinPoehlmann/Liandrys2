@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, root_validator
 from datetime import datetime
-from typing import Self
 
 from src.server.models.ability import ItemActive
 from src.server.models.passive import ItemPassive
@@ -36,24 +35,6 @@ class NewItem(BaseModel):
     image: Image
 
 
-    @classmethod
-    def parse_obj(cls, obj: dict) -> Self:
-        if "passives" in obj:
-            obj["passives"] = [
-                ItemPassive.parse_obj(p) for p in obj["passives"]
-            ]
-        if obj.get("active") is not None:
-            obj["active"] = ItemActive.parse_obj(obj["active"])
-
-        if "stats" in obj:
-            obj["stats"] = {
-                Stat.from_str(k): v for k, v in obj["stats"].items()
-            }
-        if "masterwork" in obj:
-            obj["masterwork"] = {
-                Stat.from_str(k): v for k, v in obj["masterwork"].items()
-            }
-        return super().parse_obj(obj)
     
     
 class Item(NewItem):

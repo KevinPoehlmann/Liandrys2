@@ -12,10 +12,10 @@
     "class_": "legendary item",
     "ready_to_use": true,
     "stats": {
-      "attack damage": 45,
+      "ad": 45,
       "ability haste": 20,
-      "attack speed percent": 0.33,
-      "health": 300
+      "attackspeed": 0.33,
+      "hp": 300
     },
     "active": null,
     "passives": [

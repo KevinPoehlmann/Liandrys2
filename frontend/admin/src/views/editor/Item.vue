@@ -144,7 +144,6 @@ function addPassive() {
   item.value.passives.push({
     name: '',
     description: '',
-    static_cooldown: '',
     raw_stats: {},
     unique: false,
     changes: [],

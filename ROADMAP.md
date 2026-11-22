@@ -92,10 +92,12 @@ The loader is parked until it's needed again. Do this before data entry.
 - [ ] Re-download the 12 zero-byte images
 - [ ] CommunityDragon as a data source. Checked for Riven (`raw.communitydragon.org/latest/game/data/characters/<name>/<name>.bin.json`): it has clean numbers per spell (`spellCastTime`/`castFrame` matching the wiki's cast times, cooldowns per rank, missile speeds, `DataValues` like `BaseDamage`/`ADRatio` per rank). `spellTotalTime` looks like a default (1.0 s on many spells), so real animation lengths would need the animation files. Probably more robust than scraping wiki HTML; the wiki's raw templates (`?action=raw`) are the other option.
 - [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions
+- [ ] `extra = forbid` for the hand-entered containers (Ability, Passive, Pet) so typos fail; needs a fresh load or an `$unset` of the old `effects` in the DB first
 
 ## Phase 5: User side V1
 
 - [ ] Pass runes, summoner spells, item passives/actives and distance from the route into the simulation
+- [ ] Item groups from `limitations` ("Limited to 1 Spellblade item"): reject two items of one group when picking items
 - [ ] Scenario inputs in the UI: stack configuration (placeholder today, e.g. Veigar Q kills) and checkboxes like "wall behind the target" (Vayne E `terrain`)
 - [ ] Ability points: lowering the level should drop excess points
 - [ ] Ignore outdated simulation responses (race when clicking fast)
@@ -133,7 +135,7 @@ Ideas collected for later; mostly frontend.
 
 ## Backlog (after V1 or when needed)
 
-- Pydantic v2 (removes the `parse_obj` chains and the Request/JSONResponse workarounds), only once everything else is polished
+- Pydantic v2, only once everything else is polished
 - Security/production: separate Mongo users (`read` for the user backend, `readWrite` for admin), `.env` instead of credentials in compose, no public Mongo/admin ports, production build + nginx, safer `eval`
 - Raspberry Pi: deploy without swapping lines (env vars / override file)
 - Housekeeping: `requirements.txt` as UTF-8 with direct deps only, Python 3.11 locally too, node 18 → current LTS, unused `axios` in the user app

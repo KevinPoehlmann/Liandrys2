@@ -15,12 +15,6 @@
       <textarea v-model="passive.description" rows="3" class="w-full px-2 py-1 border rounded"></textarea>
     </div>
 
-    <!-- Static Cooldown -->
-    <div>
-      <label class="block text-sm font-medium mb-1">Static Cooldown</label>
-      <input v-model="passive.static_cooldown" class="w-full px-2 py-1 border rounded" />
-    </div>
-
     <!-- Unique checkbox for items -->
     <div v-if="showUnique" class="flex items-center gap-2">
       <input type="checkbox" v-model="passive.unique" />

@@ -7,7 +7,6 @@ from src.server.models.rule import Buff, Input, Rule, StatModifier
 class Passive(BaseModel):
     name: str
     description: str = ""
-    static_cooldown: str = ""
     rules: list[Rule] = []
     stats: list[StatModifier] = []
     buffs: list[Buff] = []

@@ -90,7 +90,7 @@ The game's trigger categories:
 - **Attacks that apply on-hit *and* spell effects:** Darius W, Vayne Q, Blitzcrank R passive, Camille Q, Garen Q, Jax W, Nasus Q, Trundle Q, Volibear Q, … (Attack_effects/Abilities).
 - Rageblade's phantom hit repeats on-hit effects, not on-attack effects.
 
-**Simulation:** triggers `on_start`, `on_cast`, `on_attack`, `on_hit`, `on_damage_taken` (also when a shield absorbs everything), `on_stack`, `on_interval` work; `on_damage_dealt` and `on_get_hit` exist in the model but are not fired yet. `on_cast` always fires at the end of the cast time. ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
+**Simulation:** triggers `on_start`, `on_cast`, `on_attack`, `on_hit`, `on_damage_taken` (also when a shield absorbs everything), `on_stack`, `on_interval` work; `on_damage_dealt` and `on_get_hit` exist in the model but are not fired yet. `on_cast` fires at the start of the cast time (Spellblade is granted then, and stays if the cast is cancelled). ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
 
 ## Basic attacks and attack speed
 Pages: Basic_attack, Attack_speed, Attack_effects

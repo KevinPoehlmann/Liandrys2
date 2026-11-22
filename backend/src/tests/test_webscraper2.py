@@ -167,9 +167,8 @@ def test_scrape_passive_malzahar(load_soup):
 
     assert isinstance(passive, ChampionPassive)
     assert passive.name == "Void Shift"
-    assert passive.static_cooldown == "30.0 + ((level - 1.0) // 5.0) * -6.0"
+    assert passive.raw_stats["static cooldown"] == "30.0 + ((level - 1.0) // 5.0) * -6.0"
     assert passive.description.startswith("Innate: Periodically, Malzahar")  # or similar
-    assert "cooldown" not in passive.raw_stats
 
 
 def test_scrape_ability_malzahar(load_soup):
@@ -439,7 +438,7 @@ def test_scrape_rune_passive_comet(load_soup):
     assert isinstance(result, Passive)
     assert result.name == "Replace"
     assert result.description.startswith("Dealing ability damage")
-    assert result.static_cooldown.startswith("20")
+    assert result.raw_stats["cooldown"].startswith("20")
     assert "range" in result.raw_stats
 
 

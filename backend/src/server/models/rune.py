@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
-from typing import Self
 
 from src.server.models.passive import Passive
 from src.server.models.image import Image
@@ -21,11 +20,6 @@ class NewRune(BaseModel):
     changes: list[str] = []
     image: Image | None = None
 
-    @classmethod
-    def parse_obj(cls, obj: dict) -> Self:
-        if obj.get("passive") is not None:
-            obj["passive"] = Passive.parse_obj(obj["passive"])
-        return super().parse_obj(obj)
     
 
 class Rune(NewRune):

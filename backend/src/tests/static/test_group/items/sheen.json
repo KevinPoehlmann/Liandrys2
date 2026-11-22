@@ -14,7 +14,7 @@
     "2022"
   ],
   "class_": "epic item",
-  "validated": false,
+  "validated": true,
   "stats": {
     "ability haste": 10.0
   },
@@ -24,12 +24,122 @@
     {
       "name": "Spellblade",
       "description": "After using an ability, your next basic attack within 10 seconds deals 100% base AD bonus physical damage on-hit (1.5 second cooldown, starts after using the empowered attack).",
-      "static_cooldown": "",
-      "effects": [],
       "raw_stats": {},
       "changes": [],
-      "validated": false,
-      "unique": true
+      "validated": true,
+      "unique": true,
+      "inputs": [],
+      "stats": [],
+      "assumptions": [],
+      "rules": [
+        {
+          "trigger": "on_cast",
+          "filter": {
+            "source": [
+              "q",
+              "w",
+              "e",
+              "r"
+            ]
+          },
+          "outcome": null,
+          "conditions": [
+            {
+              "actor": "self",
+              "key": "stacks_spellblade_cooldown",
+              "comparison": "Equal",
+              "value": "0"
+            }
+          ],
+          "actions": [
+            {
+              "type_": "ApplyBuff",
+              "props": {
+                "buff": "spellblade",
+                "target": "self",
+                "stacks": "1"
+              }
+            }
+          ],
+          "delay": "0",
+          "speed": "0",
+          "acceleration": "0",
+          "max_speed": "0",
+          "cooldown": "0"
+        }
+      ],
+      "buffs": [
+        {
+          "name": "spellblade",
+          "duration": "10",
+          "max_stacks": 1,
+          "refresh": true,
+          "interval": "0",
+          "tick_on_apply": false,
+          "tick_on_end": false,
+          "windup_cancel": [],
+          "slowed_while": [],
+          "tags": [],
+          "stats": [],
+          "rules": [
+            {
+              "trigger": "on_hit",
+              "filter": null,
+              "outcome": null,
+              "conditions": [],
+              "actions": [
+                {
+                  "type_": "Damage",
+                  "props": {
+                    "target": "target",
+                    "scaling": "base_ad",
+                    "dmg_type": [
+                      "Proc damage"
+                    ],
+                    "dmg_sub_type": "Physical",
+                    "vamp": 0.0
+                  }
+                },
+                {
+                  "type_": "RemoveBuff",
+                  "props": {
+                    "buff": "spellblade",
+                    "target": "self",
+                    "stacks": null
+                  }
+                },
+                {
+                  "type_": "ApplyBuff",
+                  "props": {
+                    "buff": "spellblade_cooldown",
+                    "target": "self",
+                    "stacks": "1"
+                  }
+                }
+              ],
+              "delay": "0",
+              "speed": "0",
+              "acceleration": "0",
+              "max_speed": "0",
+              "cooldown": "0"
+            }
+          ]
+        },
+        {
+          "name": "spellblade_cooldown",
+          "duration": "1.5",
+          "max_stacks": 1,
+          "refresh": true,
+          "interval": "0",
+          "tick_on_apply": false,
+          "tick_on_end": false,
+          "windup_cancel": [],
+          "slowed_while": [],
+          "tags": [],
+          "stats": [],
+          "rules": []
+        }
+      ]
     }
   ],
   "limitations": "Limited to 1 Spellblade item.",

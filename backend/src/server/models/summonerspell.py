@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Self
 
 from src.server.models.ability import Ability
 from src.server.models.dataenums import Map
@@ -21,11 +20,6 @@ class NewSummonerspell(BaseModel):
     changes: list[str] = []
     image: Image
 
-    @classmethod
-    def parse_obj(cls, obj: dict) -> Self:
-        if obj.get("ability") is not None:
-            obj["ability"] = Ability.parse_obj(obj["ability"])
-        return super().parse_obj(obj)
 
 
 class Summonerspell(NewSummonerspell):

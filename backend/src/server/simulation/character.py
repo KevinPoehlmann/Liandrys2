@@ -54,6 +54,7 @@ REGEN_TICKS = to_ticks(0.5)
 CASTING_RESOURCES = {ResourceType.MANA: CostResource.MANA, ResourceType.ENERGY: CostResource.ENERGY}
 
 SUMMONER_SLOTS = (ActionType.S1, ActionType.S2)
+ITEM_SLOTS = (ActionType.I1, ActionType.I2, ActionType.I3, ActionType.I4, ActionType.I5, ActionType.I6)
 
 
 class ShieldInstance(NamedTuple):
@@ -115,6 +116,8 @@ class Character():
         self.ignoring_conversions: bool = False
 
         self.ability_dict: dict[ActionType, tuple[Ability, int]] = ability_dict
+        self.item_slots: dict[ActionType, Item] = dict(zip(ITEM_SLOTS, items))
+        self.item_passives: list[tuple[Passive, ActionType]] = self._item_passives()
         self.scenario: dict[str, float] = self._scenario(scenario)
         self.cooldowns: dict[ActionType, int] = {
             ActionType.BA: 0,
@@ -142,9 +145,22 @@ class Character():
         self.damage_shielded: float = 0
 
 
+    def _item_passives(self) -> list[tuple[Passive, ActionType]]:
+        # A unique passive is a shared named effect (Spellblade): several items give it only once.
+        passives, unique_names = [], set()
+        for slot, item in self.item_slots.items():
+            for passive in item.passives:
+                if passive.unique:
+                    if passive.name in unique_names:
+                        continue
+                    unique_names.add(passive.name)
+                passives.append((passive, slot))
+        return passives
+
     def _collect_buff_definitions(self) -> dict[str, tuple[BuffDefinition, ActionType]]:
         containers = [(self.passive, ActionType.PASSIVE)]
         containers += [(ability, slot) for slot, (ability, _) in self.ability_dict.items()]
+        containers += self.item_passives
         # The owner can apply its pets' buffs too, e.g. Annie's stun enrages Tibbers.
         containers += [(pet.passive, slot) for pet, slot in self.pet_definitions.values()]
         definitions = {}
@@ -169,6 +185,7 @@ class Character():
 
     def _declared_inputs(self) -> list[Input]:
         containers = [self.passive] + [ability for ability, _ in self.ability_dict.values()]
+        containers += [passive for passive, _ in self.item_passives]
         return [declared for container in containers for declared in container.inputs]
 
 
@@ -245,6 +262,7 @@ class Character():
             for slot, (ability, rank) in self.ability_dict.items() if rank > 0
             for rule in ability.rules
         ]
+        candidates += [(rule, slot, self, None) for passive, slot in self.item_passives for rule in passive.rules]
         candidates += [
             (rule, instance.slot, instance.source, name)
             for name, instance in self.active_buffs.items()
@@ -269,6 +287,8 @@ class Character():
             return Origin(kind=OriginKind.PASSIVE, name="passive", buff=buff)
         if slot in self.summoner_names:
             return Origin(kind=OriginKind.SUMMONER, name=self.summoner_names[slot], buff=buff)
+        if slot in self.item_slots:
+            return Origin(kind=OriginKind.ITEM, name=self.item_slots[slot].name, buff=buff)
         return Origin(kind=OriginKind.ABILITY, name=slot.value.upper(), buff=buff)
 
     def _healing_factor(self, tick: int) -> float:
@@ -415,6 +435,9 @@ class Character():
             if rank > 0:
                 for modifier in ability.stats:
                     yield modifier, self.formula_context(slot), None
+        for passive, slot in self.item_passives:
+            for modifier in passive.stats:
+                yield modifier, self.formula_context(slot), None
         for instance in self.active_buffs.values():
             for index, modifier in enumerate(instance.definition.stats):
                 if modifier.snapshot:
