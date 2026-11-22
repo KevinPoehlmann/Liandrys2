@@ -51,22 +51,22 @@ Building blocks that are missing (each one gets a champion/item from the test gr
 - [ ] Timed buffs and "next attack" buffs: Sheen/Spellblade, Nasus Q, "+30% AS for 3s"
 - [ ] `Hit` (on-hit) and `GetHit` (e.g. Thornmail)
 - [ ] Named stack counters with max, duration and reset: Conqueror, Kraken
-- [ ] Conditions with an actor (self/target): executes, "below 30% HP"; use `ConditionType.RANGE`
+- [x] Conditions with an actor (self/target/bearer): executes, "below 30% HP" (range conditions come with distance, Phase 5)
 - [ ] Recasts, auto-attack resets, cooldown reduction on hit
 - [ ] Non-linear rank values: `parse_formula_from_list` assumes linear steps (needs a lookup like `[40, 65, 90][rank - 1]`)
-- [ ] `extra = "forbid"` on the effect models, so typos in field names fail instead of being silently dropped
-- [ ] Later: pets (needs an actor concept beyond `blue`/`red`)
-- [ ] Results know their origin: `EffectResult.source` is only an `ActionType` today, so an item/rune proc (Sheen, Kraken, Electrocute) can't be told apart. Add the owning item/rune/buff while the result format is being rebuilt anyway; the post-V1 damage breakdown builds on it
+- [x] ~~`extra = "forbid"` on the effect models~~ (the rule models have it; the old effect models are gone)
+- [x] Pets (actor ids like `blue.tibbers`, Tibbers)
+- [x] Results know their origin: `EffectResult.source` is only an `ActionType` today, so an item/rune proc (Sheen, Kraken, Electrocute) can't be told apart. Add the owning item/rune/buff while the result format is being rebuilt anyway; the post-V1 damage breakdown builds on it
 
 Known gaps found in Phase 1 (fold them into the new design):
-- [ ] Cast buffs are commented out (`_check_buffs`), so stacks never rise in a real combo
-- [ ] `bonus <stat>` only counts items, not buffs
-- [ ] A status with `duration` on the EffectComponent (instead of in its props) is treated as a DoT and silently dropped without `interval`. Make that impossible in the model, or catch it in the Phase 3 data checks
+- [x] ~~Cast buffs are commented out (`_check_buffs`)~~ (old path removed; stacks come from rules)
+- [x] `bonus <stat>` only counts items, not buffs
+- [x] ~~A status with `duration` on the EffectComponent~~ (EffectComponent is gone; DoTs are buffs with an interval)
 
 Cleanup once the simulation runs on the new system (not before, the old models still live in these files):
-- [ ] Delete the old effect models (`effect.py`, `passive_effect.py`, `…Properties` / `Processed…Properties` / `Condition` in `dataenums.py`)
-- [ ] Move the simulation runtime types (`QueueComponent`, `DotState`, `EffectComp`, `ActionEffect`, `AttackspeedStats`) into `simulation/`, and the result types (`EffectResult`, `TickEvent`) into their own model
-- [ ] Remove dead code: `ItemStat`, `Mythic`, `Combo`, `ConditionType`, the unused `MultiValueEnum` import (then `aenum` can leave `requirements.txt`)
+- [x] Delete the old effect models (`effect.py`, `passive_effect.py`, the old `…Properties` and `Condition` in `dataenums.py`; the `Processed…Properties` stay, the new path uses them)
+- [ ] Move the simulation runtime types (`QueueComponent`, `ActionEffect`, `AttackspeedStats`) into `simulation/`, and the result types (`EffectResult`, `TickEvent`) into their own model
+- [ ] Remove dead code: `ItemStat`, `Mythic`, `Combo`, the unused `MultiValueEnum` import (then `aenum` can leave `requirements.txt`)
 - [ ] Rename `dataenums.py` → `enums.py` once it only holds enums and constants. It stays the import-free bottom layer: enums ← models ← simulation ← routes
 
 **Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Sheen, Thornmail, Kraken Slayer, The Collector, Black Cleaver, Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
@@ -86,7 +86,8 @@ The loader is parked until it's needed again. Do this before data entry.
 - [ ] **Automatic stat patching:** re-scrape changed objects, take numbers/stats from the wiki, keep only the manual effects and mark them unvalidated
 - [ ] Error handling refactor: dead `urllib` excepts, `_retry` swallowing non-HTTP errors, `gather` without `return_exceptions` (orphaned tasks), blocking `requests.get` inside `async` functions, `image` unbound in `_load_rune`
 - [ ] Re-download the 12 zero-byte images
-- [ ] Check: can CommunityDragon provide ability numbers/formulas automatically? (unverified idea)
+- [ ] CommunityDragon as a data source. Checked for Riven (`raw.communitydragon.org/latest/game/data/characters/<name>/<name>.bin.json`): it has clean numbers per spell (`spellCastTime`/`castFrame` matching the wiki's cast times, cooldowns per rank, missile speeds, `DataValues` like `BaseDamage`/`ADRatio` per rank). `spellTotalTime` looks like a default (1.0 s on many spells), so real animation lengths would need the animation files. Probably more robust than scraping wiki HTML; the wiki's raw templates (`?action=raw`) are the other option.
+- [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions
 
 ## Phase 5: User side V1
 
@@ -120,6 +121,10 @@ Ideas collected for later; mostly frontend.
 - Damage summary: total physical / magic / true taken, and a breakdown per source
 - Item contribution: direct procs via the result's origin (see Phase 2); stat contribution by simulating once without the item (the parts don't add up to the total, stats amplify each other)
 - Quick rune pages: first by hand in the admin editor or "recently used" in the browser; later aggregated from the Riot Match-V5 API, which would also give positions for a position filter (needs a production API key, rate limits, a collector job). Riot offers no recommended pages through the API
+- Import from a past game: Riot ID → match list → pick a match and a minute → champions, levels, runes, summoner spells, items and ability points of both sides are filled in. Sources: Match-V5 match details (champion, runes, summoners) and timeline (per-minute frames with level; item purchase/sell/undo/destroy and skill level-up events, replayed up to the chosen time). Not in the data: stacks (Veigar Q, Mejai's), so they stay manual. Needs the same production API key as the rune pages, and data for the match's patch (older patches may be missing or unvalidated)
+- Build comparison: run the imported state and one or more variants ("Item X instead of Y") side by side in the chart, so you can see which item would have been better at that point
+- About page: what the app does, how to use it, how the simulation works and its limits; also the home of the Riot disclaimer
+- Feedback / bug report page (once things run roughly): pick champion (or item/rune) + ability, the patch is filled in automatically. Before submitting, show the open reports for that selection with a "same problem" (+1) button, so duplicates become votes instead of new reports. Admin UI gets a list to work through (open / fixed / rejected). Note: this is the first write endpoint on the user API, so it needs spam protection (rate limit, maybe a captcha) and its own collection with insert rights only (fits the separate Mongo users in the backlog)
 - Production: disclaimer "not affiliated with Riot Games", register the project in the Riot Developer Portal
 
 ## Backlog (after V1 or when needed)

@@ -15,8 +15,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from src.server.loader.patchexceptions import PatcherError, ScrapeError
-from src.server.models.dataenums import HpScaling, Stat, DamageSubType
-from src.server.models.effect import EffectType
 from src.server.models.json_validation import (
     InfoJson,
     RuneJson
@@ -130,121 +128,6 @@ def parse_formula_from_list(values: list[float], scale: str = "rank") -> str:
         formula = f"{values[0]} + ({scale} - 1) * {step}"
     return formula
 
-
-
-def parse_effect_formula(string: str) -> tuple[str, HpScaling]:
-    parentheses = r"(\(\+\s*)?"
-    values_reg = r"(?P<values>[\d/\.\s]+)"
-    percent = r"(?P<percent>%\s*)?"
-    multi = r"(?P<multi>\(\+\s[^\)]*\)\s*)?"
-    unit = r"(?P<unit>[\w'\s]+)?"
-    regex = parentheses + values_reg + percent + multi + unit + r"\)?"
-
-    hp_scaling = HpScaling.FLAT
-
-    match = re.fullmatch(regex, string)
-    if not match:
-        return string, hp_scaling
-    values = [float(v.strip()) for v in match.group("values").split("/")]
-    
-    if match.group("unit"):
-        stat, hp_scaling, perc = find_stat(match.group("unit"))
-        if stat == Stat.ERROR:
-            return string, hp_scaling
-        if perc:
-            values = [v / 100 for v in values]
-
-    if match.group("percent"):
-        values = [v / 100 for v in values]
-    
-    formula = parse_formula_from_list(values, scale="rank")
-    
-
-    if match.group("multi"):
-        multi_re = parentheses + values_reg + percent + unit + r"\)?"
-        multi_match = re.fullmatch(multi_re, match.group("multi").strip())
-        if not multi_match:
-            return string, hp_scaling
-        multi_values = [float(v.strip()) for v in multi_match.group("values").split("/")]
-
-        if multi_match.group("unit"):
-            multi_stat, _, multi_perc = find_stat(multi_match.group("unit"))
-            if multi_stat == Stat.ERROR:
-                return string, hp_scaling
-            if multi_perc:
-                multi_values = [v / 100 for v in multi_values]
-
-        if multi_match.group("percent"):
-            multi_values = [v / 100 for v in multi_values]
-
-        multi_formula = parse_formula_from_list(multi_values, scale="rank")
-
-        if multi_match.group("unit") and multi_stat != Stat.FLAT:
-            multi_formula = f"({multi_formula}) * {multi_stat.value}"
-        formula = f"{formula} + {multi_formula}"
-
-    if match.group("unit") and stat != Stat.FLAT:
-        formula = f"({formula}) * {stat.value}"
-
-    return formula, hp_scaling
-
-
-
-def find_stat(stat: str) -> tuple[Stat, HpScaling, bool]:
-    stat_enum = Stat.FLAT
-    hp_scale = HpScaling.FLAT
-    percent = False
-    stat = stat.lower()
-    if "per 100" in stat:
-        stat = stat.replace("per 100", "")
-        percent = True
-    if "of target's" in stat:
-        stat = stat.replace("of target's", "")
-        if "maximum health" in stat:
-            stat = stat.replace("maximum health", "")
-            hp_scale = HpScaling.MAX_HP
-        elif "current health" in stat:
-            stat = stat.replace("current health", "")
-            hp_scale = HpScaling.CURRENT_HP
-        elif "missing health" in stat:
-            stat = stat.replace("missing health", "")
-            hp_scale = HpScaling.MISSING_HP
-    stat = stat.strip()
-    if stat:
-        try:
-            stat_enum = Stat(stat)
-        except ValueError as e:
-            stat_enum = Stat.ERROR
-            patch_logger.warning(f"[CHAMPION] [SCRAPE] [?] Unknown stat: {stat}. Error: {e}")
-
-    return stat_enum, hp_scale, percent
-
-
-def contains_word(text: str, word: str) -> bool:
-    return re.search(rf"(?<!\w){re.escape(word)}(?!\w)", text.lower()) is not None
-
-
-def find_label(label: str) -> tuple[EffectType, DamageSubType]:
-    label = label.lower()
-    damage_subtype = DamageSubType.TRUE
-
-    if contains_word(label, "magic"):
-        damage_subtype = DamageSubType.MAGIC
-    elif contains_word(label, "physical"):
-        damage_subtype = DamageSubType.PHYSIC
-
-    if "damage" in label:
-        effect_type = EffectType.DAMAGE
-        if contains_word(label, "true"):
-            damage_subtype = DamageSubType.TRUE
-    elif contains_word(label, "heal"):
-        effect_type = EffectType.HEAL
-    elif contains_word(label, "shield"):
-        effect_type = EffectType.SHIELD
-    else:
-        raise ScrapeError(f"Can't find effect type for {label}.", "Champion", "Unknown")
-
-    return effect_type, damage_subtype
 
 
 def _remove_day_suffixes(text: str) -> str:

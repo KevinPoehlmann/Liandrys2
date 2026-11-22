@@ -87,16 +87,16 @@ def vs_vayne(darius, load_champion) -> Simulation:
 class TestDariusHemorrhage():
 
     def test_attack_applies_a_bleed_over_five_seconds(self, vs_vayne: Simulation):
-        vs_vayne.do_combo(combo(ActionType.AA))
+        vs_vayne.do_combo(combo(ActionType.BA))
 
         hit = WINDUP_TICKS
-        assert hits(vs_vayne, ActionType.AA) == [(hit, pytest.approx(physical(DARIUS_AD)))]
+        assert hits(vs_vayne, ActionType.BA) == [(hit, pytest.approx(physical(DARIUS_AD)))]
         assert [tick for tick, _ in hits(vs_vayne, ActionType.PASSIVE)] == bleed_ticks(hit, hit + BLEED_DURATION_TICKS)
         assert vs_vayne.actors[Actor.RED].damage_taken == pytest.approx(physical(DARIUS_AD + BLEED_LVL_6))
 
 
     def test_refresh_keeps_the_rhythm_and_ticks_at_the_end(self, vs_vayne: Simulation):
-        vs_vayne.do_combo(combo(ActionType.AA, ActionType.AA))
+        vs_vayne.do_combo(combo(ActionType.BA, ActionType.BA))
 
         first_hit, second_hit = WINDUP_TICKS, ATTACK_TICKS + WINDUP_TICKS
         expected_ticks = bleed_ticks(first_hit, second_hit + BLEED_DURATION_TICKS)
@@ -108,9 +108,9 @@ class TestDariusHemorrhage():
 
     def test_noxian_might_at_five_stacks_and_refreshed_by_each_hit(self, vs_vayne: Simulation):
         # Hits 6 to 9 land more than 5 seconds after the 5th, so the buff only lasts if every hit refreshes it.
-        vs_vayne.do_combo(combo(*[ActionType.AA] * 9))
+        vs_vayne.do_combo(combo(*[ActionType.BA] * 9))
 
-        attacks = [value for _, value in hits(vs_vayne, ActionType.AA)]
+        attacks = [value for _, value in hits(vs_vayne, ActionType.BA)]
         assert attacks[:5] == [pytest.approx(physical(DARIUS_AD))] * 5
         assert attacks[5:] == [pytest.approx(physical(DARIUS_AD + NOXIAN_MIGHT_LVL_6))] * 4
 
@@ -154,16 +154,16 @@ class TestDariusAbilities():
 
 
     def test_attack_windup_delays_q(self, vs_vayne: Simulation):
-        vs_vayne.do_combo(combo(ActionType.AA, ActionType.Q))
+        vs_vayne.do_combo(combo(ActionType.BA, ActionType.Q))
 
         [(q_tick, _)] = hits(vs_vayne, ActionType.Q)
         assert q_tick == WINDUP_TICKS + Q_CAST_TICKS
 
 
     def test_q_cancels_the_windup_of_the_w_attack(self, vs_vayne: Simulation):
-        vs_vayne.do_combo(combo(ActionType.W, ActionType.AA, ActionType.Q))
+        vs_vayne.do_combo(combo(ActionType.W, ActionType.BA, ActionType.Q))
 
-        [(aa_tick, _)] = hits(vs_vayne, ActionType.AA)
+        [(aa_tick, _)] = hits(vs_vayne, ActionType.BA)
         [(q_tick, _)] = hits(vs_vayne, ActionType.Q)
         assert aa_tick == WINDUP_TICKS
         assert q_tick == Q_CAST_TICKS
@@ -171,14 +171,14 @@ class TestDariusAbilities():
 
 
     def test_w_attack_windup_still_delays_e(self, vs_vayne: Simulation):
-        vs_vayne.do_combo(combo(ActionType.W, ActionType.AA, ActionType.E))
+        vs_vayne.do_combo(combo(ActionType.W, ActionType.BA, ActionType.E))
 
         landing = WINDUP_TICKS + E_CAST_TICKS + E_AIRBORNE_TICKS
         assert vs_vayne.actors[Actor.RED].status_effects[StatusType.AIRBORNE] == [(landing, 0)]
 
 
     def test_w_empowers_next_attack_and_starts_cooldown_on_hit(self, vs_vayne: Simulation):
-        vs_vayne.do_combo(combo(ActionType.AA, ActionType.W, ActionType.AA))
+        vs_vayne.do_combo(combo(ActionType.BA, ActionType.W, ActionType.BA))
 
         [(w_tick, w_damage)] = hits(vs_vayne, ActionType.W)
         assert w_damage == pytest.approx(physical(W_RANK_1))
@@ -191,9 +191,9 @@ class TestDariusAbilities():
         vayne = Character(load_champion("vayne"), 6, Rank(q=3, w=1, e=1, r=1), [])
         sim = Simulation(without_e, vayne)
 
-        sim.do_combo(combo(ActionType.AA))
+        sim.do_combo(combo(ActionType.BA))
 
-        assert hits(sim, ActionType.AA) == [(WINDUP_TICKS, pytest.approx(physical(DARIUS_AD, armor=VAYNE_ARMOR)))]
+        assert hits(sim, ActionType.BA) == [(WINDUP_TICKS, pytest.approx(physical(DARIUS_AD, armor=VAYNE_ARMOR)))]
 
 
     def test_e_armor_pen_stacks_multiplicatively_with_items(self, load_champion):
@@ -216,7 +216,7 @@ class TestDariusAbilities():
 
 
     def test_r_scales_with_bleed_stacks(self, vs_vayne: Simulation):
-        vs_vayne.do_combo(combo(ActionType.AA, ActionType.AA, ActionType.R))
+        vs_vayne.do_combo(combo(ActionType.BA, ActionType.BA, ActionType.R))
 
         [(_, r_damage)] = hits(vs_vayne, ActionType.R)
         assert r_damage == pytest.approx(R_RANK_1 * (1 + 2 * R_BONUS_PER_STACK))

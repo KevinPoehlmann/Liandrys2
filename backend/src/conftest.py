@@ -20,19 +20,14 @@ from src.server.models.champion import Champion
 from src.server.models.dataenums import (
     ActionEffect,
     ActionType,
-    DamageProperties,
     DamageSubType,
     DamageType,
-    HpScaling,
-    EffectComp,
-    HealProperties,
     ProcessedDamageProperties,
     ProcessedHealProperties,
     ProcessedShieldProperties,
     ProcessedStatusProperties,
     QueueComponent,
     EffectType,
-    StatusProperties,
     StatusType,
     Actor,
     RuleActionType,
@@ -138,8 +133,7 @@ def processed_damage_props(request) -> ProcessedDamageProperties:
         flat_pen=params.get("flat_pen", 0),
         percent_pen=params.get("perc_pen", 0),
         dmg_type=params.get("dmg_type", DamageType.BASIC),
-        dmg_sub_type=params.get("dmg_sub_type", DamageSubType.PHYSIC),
-        hp_scaling=params.get("hp_scaling", HpScaling.FLAT)
+        dmg_sub_type=params.get("dmg_sub_type", DamageSubType.PHYSIC)
     )
 
 
@@ -155,7 +149,7 @@ def queue_damage_list(request) -> list[QueueComponent]:
         dmg_sub_type=DamageSubType.TRUE
     ) for value in values]
     queue_comps=[QueueComponent(
-        source=ActionType.AA,
+        source=ActionType.BA,
         actor=Actor.BLUE,
         target=Actor.RED,
         type_=EffectType.DAMAGE,
@@ -231,106 +225,14 @@ def action_effect_aa(aatrox_with_items) -> ActionEffect:
     rule = Rule(actions=[damage], speed=str(aatrox_with_items.champion.missile_speed))
     return ActionEffect(
         tick=7,
-        rule_events=[RuleEvent(rule=rule, slot=ActionType.AA, owner=Actor.BLUE, target=Actor.RED)]
+        rule_events=[RuleEvent(rule=rule, slot=ActionType.BA, owner=Actor.BLUE, target=Actor.RED)]
     )
-
-
-@pytest.fixture
-def action_effect_q() -> ActionEffect:
-    return ActionEffect(
-        tick=49,
-        effect_comps=[
-            EffectComp(
-                source=ActionType.Q,
-                target=Actor.RED,
-                type_=EffectType.DAMAGE,
-                props=DamageProperties(
-                    scaling="-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
-                    dmg_type=DamageType.AOE,
-                    dmg_sub_type=DamageSubType.PHYSIC,
-                    hp_scaling=HpScaling.FLAT
-                )
-            )
-        ]
-    )
-
-
-@pytest.fixture()
-def e_damage_aa() -> EffectComp:
-    d = EffectComp(
-        source=ActionType.AA,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
-        props=DamageProperties(
-            scaling="ad",
-            dmg_type=DamageType.BASIC,
-            dmg_sub_type=DamageSubType.PHYSIC,
-            hp_scaling=HpScaling.FLAT,
-    ))
-    return d
-
-
-@pytest.fixture()
-def e_damage_w() -> EffectComp:
-    d = EffectComp(
-        source=ActionType.W,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
-        duration=60,
-        interval=0.5,
-        props=DamageProperties(
-            scaling="20 + 0.3 * ap",
-            dmg_type=DamageType.DOT,
-            dmg_sub_type=DamageSubType.MAGIC,
-            hp_scaling=HpScaling.FLAT,
-        )
-    )
-    return d
-
-
-@pytest.fixture()
-def e_damage_e() -> EffectComp:
-    d = EffectComp(
-        source=ActionType.E,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
-        duration=60,
-        interval=0.5,
-        delay=6,
-        props=DamageProperties(
-            scaling="20 + 0.3 * ap",
-            dmg_type=DamageType.DOT,
-            dmg_sub_type=DamageSubType.MAGIC,
-            hp_scaling=HpScaling.FLAT,
-        )
-    )
-    return d
-
-
-@pytest.fixture()
-def e_damage_r() -> EffectComp:
-    d = EffectComp(
-        source=ActionType.R,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
-        duration=60,
-        interval=0.5,
-        delay=0,
-        speed=2000,
-        props=DamageProperties(
-            scaling="20 + 0.3 * ap",
-            dmg_type=DamageType.DOT,
-            dmg_sub_type=DamageSubType.MAGIC,
-            hp_scaling=HpScaling.FLAT,
-        )
-    )
-    return d
 
 
 @pytest.fixture
 def q_processed_ad_flat() -> QueueComponent:
     p = QueueComponent(
-        source=ActionType.AA,
+        source=ActionType.BA,
         actor=Actor.BLUE,
         target=Actor.RED,
         type_=EffectType.DAMAGE,
@@ -339,8 +241,7 @@ def q_processed_ad_flat() -> QueueComponent:
             flat_pen=10,
             percent_pen=0.5,
             dmg_type=DamageType.BASIC,
-            dmg_sub_type=DamageSubType.PHYSIC,
-            hp_scaling=HpScaling.FLAT
+            dmg_sub_type=DamageSubType.PHYSIC
         ))
     return p
 
@@ -348,17 +249,16 @@ def q_processed_ad_flat() -> QueueComponent:
 @pytest.fixture
 def q_processed_ap_maxhp():
     p = QueueComponent(
-        source=ActionType.AA,
+        source=ActionType.BA,
         actor=Actor.BLUE,
         target=Actor.RED,
         type_=EffectType.DAMAGE,
         props=ProcessedDamageProperties(
-            value=0.1,
+            value=130.226,  # 10 % of 1302.26 maximum health
             flat_pen=18,
             percent_pen=0,
             dmg_type=DamageType.BASIC,
-            dmg_sub_type=DamageSubType.MAGIC,
-            hp_scaling=HpScaling.MAX_HP
+            dmg_sub_type=DamageSubType.MAGIC
         ))
     return p
 
@@ -371,8 +271,7 @@ def q_processed_heal_flat() -> QueueComponent:
         target=Actor.RED,
         type_=EffectType.HEAL,
         props=ProcessedHealProperties(
-            value=440.15 ,
-            hp_scaling=HpScaling.FLAT
+            value=440.15 
     ))
     return d
 
@@ -380,7 +279,7 @@ def q_processed_heal_flat() -> QueueComponent:
 @pytest.fixture
 def q_processed_vamp() -> QueueComponent:
     d = QueueComponent(
-        source=ActionType.AA,
+        source=ActionType.BA,
         actor=Actor.BLUE,
         target=Actor.RED,
         type_=EffectType.DAMAGE,
@@ -390,7 +289,6 @@ def q_processed_vamp() -> QueueComponent:
             percent_pen=0.3,
             dmg_type=DamageType.BASIC,
             dmg_sub_type=DamageSubType.PHYSIC,
-            hp_scaling=HpScaling.FLAT,
             vamp=0.2
         )
     )
@@ -400,106 +298,14 @@ def q_processed_vamp() -> QueueComponent:
 @pytest.fixture
 def q_processed_vamp_heal() -> QueueComponent:
     d = QueueComponent(
-        source=ActionType.AA,
+        source=ActionType.BA,
         actor=Actor.BLUE,
         target=Actor.BLUE,
         type_=EffectType.HEAL,
         props=ProcessedHealProperties(
-            value=21.920,
-            hp_scaling=HpScaling.FLAT
+            value=21.920
         )
     )
-    return d
-
-
-@pytest.fixture
-def q_damage_aa() -> QueueComponent:
-    d = QueueComponent(
-        source=ActionType.AA,
-        actor=Actor.BLUE,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
-        props=DamageProperties(
-            scaling="ad",
-            dmg_type=DamageType.BASIC,
-            dmg_sub_type=DamageSubType.PHYSIC,
-            hp_scaling=HpScaling.FLAT
-    ))
-    return d
-
-
-@pytest.fixture
-def q_stun_e() -> QueueComponent:
-    return QueueComponent(
-        source=ActionType.E,
-        actor=Actor.BLUE,
-        target=Actor.RED,
-        type_=EffectType.STATUS,
-        props=StatusProperties(type_=StatusType.STUN, duration=1.0)
-    )
-
-
-@pytest.fixture
-def q_vamp_aa() -> QueueComponent:
-    d = QueueComponent(
-        source=ActionType.AA,
-        actor=Actor.BLUE,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
-        props=DamageProperties(
-            scaling="200",
-            dmg_type=DamageType.BASIC,
-            dmg_sub_type=DamageSubType.PHYSIC,
-            hp_scaling=HpScaling.FLAT,
-            vamp=0.2
-    ))
-    return d
-
-
-@pytest.fixture
-def q_damage_q() -> QueueComponent:
-    d = QueueComponent(
-        source=ActionType.Q,
-        actor=Actor.BLUE,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
-        props=DamageProperties(
-            scaling="-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
-            dmg_type=DamageType.AOE,
-            dmg_sub_type=DamageSubType.PHYSIC,
-            hp_scaling=HpScaling.FLAT
-    ))
-    return d
-
-
-@pytest.fixture
-def q_damage_w() -> QueueComponent:
-    d = QueueComponent(
-        source=ActionType.W,
-        actor=Actor.BLUE,
-        target=Actor.RED,
-        type_=EffectType.DAMAGE,
-        props=DamageProperties(
-            scaling="20 + 0.3 * ap" ,
-            dmg_type=DamageType.DOT,
-            dmg_sub_type=DamageSubType.MAGIC,
-            hp_scaling=HpScaling.FLAT
-    ))
-    return d
-
-
-
-@pytest.fixture
-def q_heal_e() -> QueueComponent:
-    d = QueueComponent(
-        source=ActionType.E,
-        actor=Actor.BLUE,
-        target=Actor.RED,
-        type_=EffectType.HEAL,
-        props=HealProperties(
-            scaling="400 + 0.3 * ad" ,
-            hp_scaling=HpScaling.FLAT
-    ))
     return d
 
 

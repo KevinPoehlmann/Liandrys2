@@ -152,7 +152,7 @@ class Stat(str, Enum):
 
 
 class ActionType(str, Enum):
-    AA="aa"
+    BA="ba"  # basic attack
     Q="q"
     W="w"
     E="e"
@@ -388,7 +388,7 @@ class OriginKind(str, Enum):
 class Origin(BaseModel):
     """Where a result comes from, for the damage breakdown: champion parts by slot, everything else by name."""
     kind: OriginKind
-    name: str  # "Q", "passive", "AA", "Ignite", "Sheen", "health"
+    name: str  # "Q", "passive", "BA", "Ignite", "Sheen", "health"
     buff: str | None = None  # "hemorrhage", "tibbers_aura"
 
     class Config:
@@ -401,11 +401,6 @@ class CostResource(str, Enum):
     HEALTH="health"
     MANA="mana"
     ENERGY="energy"
-
-class ConditionType(str, Enum):
-    HIT="hit"
-    RANGE="range"
-    EFFECT="effect"
 
 class StatusType(str, Enum):
     AIRBORNE = "Airborne"
@@ -452,23 +447,6 @@ class StatusType(str, Enum):
     ROOT="Root" """
 
 
-
-class HpScaling(str, Enum):
-    FLAT="flat"
-    MAX_HP="max health"
-    MISSING_HP="missing health"
-    CURRENT_HP="current health"
-
-
-class Buff(str, Enum):
-    CAST = "Cast"
-    HIT = "Hit"
-    GET_HIT = "Get Hit"
-    STATS = "Stats"  
-
-class BuffActionType(str, Enum):
-    STACK="Stack"
-    EFFECT="Effect"
 
 class Comparison(str, Enum):
     GT="Greater than"
@@ -532,12 +510,6 @@ class Combo(BaseModel):
     pass
 
 
-class Condition(BaseModel):
-    key: Stat | ActionType
-    comparison: Comparison
-    value: float
-
-
 class EffectResult(BaseModel):
     source: ActionType
     actor: Actor
@@ -562,52 +534,23 @@ class EffectProperties(BaseModel):
     pass
 
 
-class DamageProperties(EffectProperties):
-    scaling: str
-    dmg_type: DamageType = DamageType.DEFAULT
-    dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.PHYSIC)
-    hp_scaling: HpScaling = HpScaling.FLAT
-    vamp: float = 0
-
-
-class HealProperties(EffectProperties):
-    scaling: str
-    hp_scaling: HpScaling = HpScaling.FLAT
-
-
-class ShieldProperties(EffectProperties):
-    scaling: str
-    duration: float
-    dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.TRUE)
-    hp_scaling: HpScaling = HpScaling.FLAT
-
-
-class StatusProperties(EffectProperties):
-    type_: StatusType
-    duration: float
-    strength: float = 0.0
-
-
 class ProcessedDamageProperties(EffectProperties):
     value: float
     flat_pen: float
     percent_pen: float
     dmg_type: DamageType
     dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.PHYSIC)
-    hp_scaling: HpScaling = HpScaling.FLAT
     vamp: float = 0
 
 
 class ProcessedHealProperties(EffectProperties):
     value: float
-    hp_scaling: HpScaling = HpScaling.FLAT
 
 
 class ProcessedShieldProperties(EffectProperties):
     value: float
     duration: int
     dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.TRUE)
-    hp_scaling: HpScaling = HpScaling.FLAT
 
 
 class ProcessedStatusProperties(EffectProperties):
@@ -651,32 +594,10 @@ class QueueComponent():
     origin: Origin | None = None
 
 
-@dataclass
-class DotState:
-    start: int
-    last_regular: int
-    end: int
-
-
 #Status
-
-@dataclass
-class EffectComp():
-    source: ActionType
-    target: Actor
-    type_: EffectType
-    duration: int = 0
-    interval: float = 0.0
-    delay: int = 0
-    speed: int = 0
-    props: EffectProperties | None = None
-
-
-
 
 @dataclass
 class ActionEffect():
     tick: int
-    effect_comps: list[EffectComp] = field(default_factory=list)
     rule_events: list = field(default_factory=list)
     windup_cancel: set = field(default_factory=set)

@@ -145,7 +145,6 @@ function addPassive() {
     name: '',
     description: '',
     static_cooldown: '',
-    effects: [],
     raw_stats: {},
     unique: false,
     changes: [],

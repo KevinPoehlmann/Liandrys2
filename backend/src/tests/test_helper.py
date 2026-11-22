@@ -2,7 +2,6 @@ import pytest
 
 from datetime import datetime
 
-from src.server.models.dataenums import HpScaling, Stat, EffectType, DamageSubType
 from src.server.loader.helper import (
     info_loader,
     patch_sort_key,
@@ -11,9 +10,6 @@ from src.server.loader.helper import (
     parse_formula_from_table,
     parse_formula_from_string,
     parse_formula_from_list,
-    parse_effect_formula,
-    find_stat,
-    find_label,
     wiki_release_to_datetime,
     wiki_to_datetime
 )
@@ -140,66 +136,6 @@ def test_parse_formula_from_string(string, scale, expected):
 def test_parse_formula_from_list(string, expected):
     result = parse_formula_from_list(string)
     assert result == expected
-
-
-
-@pytest.mark.parametrize(
-    "stat, expected_stat, hp_scaling, percent",
-    [
-        ("AP", Stat.AP, HpScaling.FLAT, False),
-        ("bonus AD", Stat.BONUS_AD, HpScaling.FLAT, False),
-        ("per 100 AP", Stat.AP, HpScaling.FLAT, True),
-        ("of target's maximum health", Stat.FLAT, HpScaling.MAX_HP, False),
-        (" of target's current health", Stat.FLAT, HpScaling.CURRENT_HP, False),
-        ("of target's missing health", Stat.FLAT, HpScaling.MISSING_HP, False),
-        ("Love and moonlight", Stat.ERROR, HpScaling.FLAT, False)
-    ]
-)
-def test_find_stat(stat, expected_stat, hp_scaling, percent):
-    result_stat, result_hp, result_percent = find_stat(stat)
-    assert result_stat == expected_stat
-    assert result_hp == hp_scaling
-    assert result_percent == percent
-
-
-@pytest.mark.parametrize(
-    "string, expected, expected_hp", [
-        ("80 / 115 / 150 / 185 / 220 ", "80.0 + (rank - 1) * 35.0", HpScaling.FLAT),
-        ("(+ 80% AP)", "(0.8) * ap", HpScaling.FLAT),
-        ("10 / 15 / 20% (+ 2.5% per 100 AP) of target's maximum health", "0.1 + (rank - 1) * 0.05 + (0.00025) * ap", HpScaling.MAX_HP),
-    ]
-)
-def test_parse_effect_formula(string, expected, expected_hp):
-    result, hp_scaling = parse_effect_formula(string)
-    assert result == expected
-    assert hp_scaling == expected_hp
-
-
-@pytest.mark.parametrize(
-    "label, effect_type, dmg_sub_type",
-    [
-        ("Shield Strength:", EffectType.SHIELD, DamageSubType.TRUE),
-        ("Total Magic Damage:", EffectType.DAMAGE, DamageSubType.MAGIC),
-        ("Heal:", EffectType.HEAL, DamageSubType.TRUE)
-    ]
-)
-def test_find_label(label, effect_type, dmg_sub_type):
-    result_effect_type, result_dmg_sub_type = find_label(label)
-    assert result_effect_type == effect_type
-    assert result_dmg_sub_type == dmg_sub_type
-
-
-
-@pytest.mark.parametrize(
-    "label",
-    [
-        ("Health Cost Reduction:"),
-        ("Bonus Armor:")
-    ]
-)
-def test_find_label_invalid(label):
-    with pytest.raises(ScrapeError):
-        find_label(label)
 
 
 

@@ -2,8 +2,8 @@ import pytest
 from collections import defaultdict
 
 from src.server.models.dataenums import (
-    Stat, ActionType, Actor, DamageSubType, DamageType, EffectType, HpScaling,
-    ProcessedDamageProperties, ProcessedStatusProperties, QueueComponent, StatusType
+    Stat, ActionType, Actor, DamageSubType, DamageType, EffectType,
+    ProcessedDamageProperties, QueueComponent, StatusType
 )
 from src.server.models.request import Action
 from src.server.simulation.character import soft_cap_movespeed
@@ -37,17 +37,6 @@ class TestCharacter():
     def test_get_stat(self, aatrox_with_items, stat, output):
         result = aatrox_with_items.get_stat(stat)
         assert round(result, 3) == output
-
-    @pytest.mark.parametrize("stacks, ad", [
-        (0, 120.45),
-        (5, 130.45),
-        (10, 140.45),
-    ])
-    def test_get_stat_applies_buff_with_current_stacks(self, aatrox_with_items, stacks, ad):
-        aatrox_with_items.get_stat(Stat.AD)
-        aatrox_with_items.stacks[ActionType.PASSIVE] = stacks
-        assert round(aatrox_with_items.get_stat(Stat.AD), 3) == ad
-        assert round(aatrox_with_items.get_stat(Stat.ARMOR), 3) == 117.832
 
     def test_get_attackspeed(self, aatrox_with_items):
         result = aatrox_with_items._get_attackspeed()
@@ -108,60 +97,34 @@ class TestCharacter():
         assert aatrox_with_items.status_effects == expected_stati
 
 
-    @pytest.mark.parametrize("formula, variables, output", [
-        ("20", {}, 20),
-        ("400 + 0.3 * ad", {}, 436.135),
-        ("-5 + rank * 15 + (0.525 + rank * 0.075) * ad", {"rank": 3}, 130.338)
-    ])
-    def test_evaluate_formula(self, aatrox_with_items, formula, variables, output):
-        result = aatrox_with_items._evaluate_formula(formula, variables)
-        assert round(result, 3) == output
-
-
-    @pytest.mark.parametrize("value, dmg_calc, output", [
-        (100, HpScaling.FLAT , 100),
-        (0.1, HpScaling.MAX_HP , 130.226),
-        (0.1, HpScaling.MISSING_HP , 40.226),
-        (0.1, HpScaling.CURRENT_HP , 90)
-    ])
-    def test_calculate_hp_scaling(self, aatrox_with_items, value, dmg_calc, output):
-        aatrox_with_items.current_hp = 900
-        result = aatrox_with_items._calculate_hp_scaling(value, dmg_calc)
-        assert round(result, 3) == output
-
-
     @pytest.mark.parametrize("processed_damage_props, output_res, output_raw, output_mit", [
         ({
             "val": 100,
             "flat_pen": 10,
             "perc_pen": 0.5,
             "dmg_type": DamageType.BASIC,
-            "dmg_sub_type": DamageSubType.PHYSIC,
-            "hp_scaling": HpScaling.FLAT
+            "dmg_sub_type": DamageSubType.PHYSIC
         }, 67.152, 100, 32.848),
         ({
-            "val": 0.1,
+            "val": 130.226,  # 10 % of 1302.26 maximum health
             "flat_pen": 18,
             "perc_pen": 0,
             "dmg_type": DamageType.BASIC,
-            "dmg_sub_type": DamageSubType.MAGIC,
-            "hp_scaling": HpScaling.MAX_HP
+            "dmg_sub_type": DamageSubType.MAGIC
         }, 108.22, 130.226, 22.006),
         ({
-            "val": 0.3,
+            "val": 120.678,  # 30 % of 402.26 missing health
             "flat_pen": 0,
             "perc_pen": 0,
             "dmg_type": DamageType.BASIC,
-            "dmg_sub_type": DamageSubType.TRUE,
-            "hp_scaling": HpScaling.MISSING_HP
+            "dmg_sub_type": DamageSubType.TRUE
         }, 120.678, 120.678, 0),
         ({
-            "val": 0.08,
+            "val": 72.0,  # 8 % of 900 current health
             "flat_pen": 0,
             "perc_pen": 0,
             "dmg_type": DamageType.BASIC,
-            "dmg_sub_type": DamageSubType.TRUE,
-            "hp_scaling": HpScaling.CURRENT_HP
+            "dmg_sub_type": DamageSubType.TRUE
         }, 72.0, 72.0, 0)
     ], indirect=["processed_damage_props"])
     def test_calculate_damage(self, aatrox_with_items, processed_damage_props, output_res, output_raw, output_mit):
@@ -277,14 +240,14 @@ class TestCharacter():
 
 
     @pytest.mark.parametrize("cooldown, status_effects, action, delay", [
-        (30, {}, ActionType.AA, 30),
-        (60, {}, ActionType.AA, 60),
-        (30, {StatusType.SILENCE: [(60, 0)]}, ActionType.AA, 30),
-        (30, {StatusType.STUN: [(60, 0)]}, ActionType.AA, 60),
-        (45, {StatusType.STUN: [(60, 0)]}, ActionType.AA, 60),
-        (75, {StatusType.STUN: [(60, 0)]}, ActionType.AA, 75),
-        (30, {StatusType.STUN: [(60, 0)], StatusType.DISARM: [(75, 0)]}, ActionType.AA, 75),
-        (30, {StatusType.AIRBORNE: [(60, 0)], StatusType.STUN: [(75, 0)]}, ActionType.AA, 75),
+        (30, {}, ActionType.BA, 30),
+        (60, {}, ActionType.BA, 60),
+        (30, {StatusType.SILENCE: [(60, 0)]}, ActionType.BA, 30),
+        (30, {StatusType.STUN: [(60, 0)]}, ActionType.BA, 60),
+        (45, {StatusType.STUN: [(60, 0)]}, ActionType.BA, 60),
+        (75, {StatusType.STUN: [(60, 0)]}, ActionType.BA, 75),
+        (30, {StatusType.STUN: [(60, 0)], StatusType.DISARM: [(75, 0)]}, ActionType.BA, 75),
+        (30, {StatusType.AIRBORNE: [(60, 0)], StatusType.STUN: [(75, 0)]}, ActionType.BA, 75),
         (30, {StatusType.STUN: [(60, 0)], StatusType.SILENCE: [(75, 0)]}, ActionType.Q, 75),
         (30, {StatusType.STUN: [(60, 0)], StatusType.DISARM: [(75, 0)]}, ActionType.Q, 60),
     ])
@@ -296,41 +259,14 @@ class TestCharacter():
 
 
     def test_basic_attack(self, aatrox_with_items, action_effect_aa, compare_objects):
-        result = aatrox_with_items._basic_attack(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), 0)
+        result = aatrox_with_items._basic_attack(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.BA), 0)
         assert compare_objects(result, action_effect_aa)
-        assert aatrox_with_items.cooldowns[ActionType.AA] == 34
+        assert aatrox_with_items.cooldowns[ActionType.BA] == 34
 
 
-    def test_do_ability(self, aatrox_with_items, action_effect_q, compare_objects):
-        aatrox_with_items.cooldowns[ActionType.Q] = 30
-        result = aatrox_with_items._do_ability(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), 30)
-        assert compare_objects(result, action_effect_q)
-        assert aatrox_with_items.cooldowns[ActionType.Q] == 93
-
-
-    @pytest.mark.parametrize("action, timer, resolve_fixture", [
-        (Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.AA), 0, "action_effect_aa"),
-        (Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q), 30, "action_effect_q")
-    ], indirect=["resolve_fixture"])
-    def test_do_action(self, aatrox_with_items, action, timer, resolve_fixture, compare_objects):
-        result = aatrox_with_items.do_action(action, timer)
-        assert compare_objects(result, resolve_fixture)
-
-
-    @pytest.mark.parametrize("resolve_fixture, output", [
-        ("q_damage_aa", 120.45),
-        ("q_damage_q", 130.338),
-        ("q_heal_e", 436.135)
-    ], indirect=["resolve_fixture"])
-    def test_evaluate(self, aatrox_with_items, resolve_fixture, output):
-        result = aatrox_with_items.evaluate([resolve_fixture])
-        assert len(result) == 1
-        assert round(result[0].props.value, 3) == output
-
-
-    def test_evaluate_status(self, aatrox_with_items, q_stun_e):
-        result = aatrox_with_items.evaluate([q_stun_e])
-        assert result[0].props == ProcessedStatusProperties(type_=StatusType.STUN, duration=31)
+    def test_do_action(self, aatrox_with_items, action_effect_aa, compare_objects):
+        result = aatrox_with_items.do_action(Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.BA), 0)
+        assert compare_objects(result, action_effect_aa)
 
 
     def test_take_effects_ignores_expired_shield(self, aatrox_with_items, q_processed_ad_flat):

@@ -50,21 +50,6 @@
       <textarea v-model="ability.description" rows="3" class="w-full px-2 py-1 border rounded"></textarea>
     </div>
 
-    <!-- Effects -->
-    <div>
-      <h3 class="font-semibold text-sm mt-6">Effects</h3>
-      <div class="space-y-4">
-        <Effect
-          v-for="(effect, i) in ability.effects"
-          :key="i"
-          v-model="ability.effects[i]"
-        />
-        <button @click="addEffect" class="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
-          + Add Effect
-        </button>
-      </div>
-    </div>
-
     <!-- Raw Stats -->
     <div>
       <h3 class="font-semibold text-sm mb-1">Raw Stats</h3>
@@ -79,7 +64,6 @@
 
 <script setup>
 import { toRefs, onMounted, ref } from 'vue'
-import Effect from './Effect.vue'
 import axios from 'axios'
 import { formatEnumLabel } from '@/utils/formatters'
 
@@ -101,10 +85,6 @@ onMounted(async () => {
 
 function imageUrl(image) {
   return `/images/${image?.group}/${image?.full}`
-}
-
-function addEffect() {
-  ability.value.effects = [...(ability.value.effects || []), { text: '', effect_components: [], conditions: [] }]
 }
 
 function removeRawStat(key) {

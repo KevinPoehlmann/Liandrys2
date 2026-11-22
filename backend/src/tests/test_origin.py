@@ -32,7 +32,7 @@ class TestOrigin():
         vayne = Character(load_champion("vayne"), 6, Rank(q=1, w=1, e=1, r=1), [])
         sim = Simulation(darius, vayne)
 
-        sim.do_combo([blue(ActionType.AA)])
+        sim.do_combo([blue(ActionType.BA)])
 
         assert origins(sim) == {
             (Actor.BLUE, origin(OriginKind.ATTACK, "BA")),

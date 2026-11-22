@@ -160,7 +160,7 @@ const getIcon = (action) => {
   const actor = action.actor === "blue" ? props.blueConfig : props.redConfig
   const upper = action.action_type.toUpperCase()
 
-  if (upper === 'AA') return autoAttack
+  if (upper === 'BA') return autoAttack
   if (['Q', 'W', 'E', 'R'].includes(upper)) {
     const spell = actor.champion?.[upper.toLowerCase()]
     return spell?.image ? `images/${spell.image.group}/${spell.image.full}` : NoIcon

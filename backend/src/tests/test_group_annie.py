@@ -121,7 +121,7 @@ class TestMoltenShield():
         vayne = Character(load_champion("vayne"), 6, Rank(q=1, w=0, e=0, r=0), [])
         sim = Simulation(annie(load_champion), vayne)
         e = Action(actor=Actor.BLUE, target=Actor.BLUE, action_type=ActionType.E)
-        aa = Action(actor=Actor.RED, target=Actor.BLUE, action_type=ActionType.AA)
+        aa = Action(actor=Actor.RED, target=Actor.BLUE, action_type=ActionType.BA)
         sim.do_combo([e, aa, aa])
         return sim
 
@@ -135,7 +135,7 @@ class TestMoltenShield():
 
 
     def test_reflect_once_per_cast_on_the_first_hit(self, attacked_by_vayne: Simulation):
-        [(first_hit, _), _] = hits(attacked_by_vayne, ActionType.AA, target=Actor.BLUE)
+        [(first_hit, _), _] = hits(attacked_by_vayne, ActionType.BA, target=Actor.BLUE)
 
         assert hits(attacked_by_vayne, ActionType.E) == [(first_hit, pytest.approx(magic(E_RANK_1_REFLECT, mr=VAYNE_MR * 0.9)))]
 
@@ -211,13 +211,13 @@ class TestTibbers():
             expected_hits.append(start + windup)
             start += attack_time
         assert ENRAGE_TICKS == sum(attack_ticks(attackspeed)[0] for attackspeed in (1.736, 1.536, 1.307, 1.043)) == 92
-        assert [tick for tick, _ in tibbers_hits(vs_darius, ActionType.AA)][:6] == expected_hits
+        assert [tick for tick, _ in tibbers_hits(vs_darius, ActionType.BA)][:6] == expected_hits
 
 
     def test_attacks_use_annies_magic_pen(self, vs_darius: Simulation):
         vs_darius.do_combo(combo(ActionType.R))
 
-        _, first_hit = tibbers_hits(vs_darius, ActionType.AA)[0]
+        _, first_hit = tibbers_hits(vs_darius, ActionType.BA)[0]
         assert first_hit == pytest.approx(magic(R_RANK_1_TIBBERS_ATTACK))
 
 
@@ -233,7 +233,7 @@ class TestTibbers():
     def test_tibbers_is_gone_after_45_seconds(self, vs_darius: Simulation):
         vs_darius.do_combo(combo(ActionType.R))
 
-        last_attack, _ = tibbers_hits(vs_darius, ActionType.AA)[-1]
+        last_attack, _ = tibbers_hits(vs_darius, ActionType.BA)[-1]
         assert last_attack <= SUMMON_TICK + to_ticks(45)
         assert vs_darius.actors[TIBBERS].expired
 
@@ -251,7 +251,7 @@ class TestTibbers():
         # Without the stun the second attack would use 1.536.
         second_time, second_windup = attack_ticks(1.736)
         _, third_windup = attack_ticks(1.536)
-        hits = [tick for tick, _ in tibbers_hits(sim, ActionType.AA)][:3]
+        hits = [tick for tick, _ in tibbers_hits(sim, ActionType.BA)][:3]
         assert hits == [SUMMON_TICK + first_windup, second_start + second_windup, second_start + second_time + third_windup]
 
 

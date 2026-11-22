@@ -120,7 +120,7 @@ class TestCleanse():
         sim = Simulation(annie, cleansing_vayne)
 
         # Annie's Q stuns Vayne at tick 11; Vayne cleanses at tick 16, during the stun, and attacks right away.
-        sim.do_combo([blue(ActionType.Q), blue(ActionType.W), red(ActionType.S1), red(ActionType.AA)])
+        sim.do_combo([blue(ActionType.Q), blue(ActionType.W), red(ActionType.S1), red(ActionType.BA)])
 
         [(attack, _)] = [(tick, result) for tick, result in results(sim, EffectType.DAMAGE, target=Actor.BLUE)]
         assert attack < STUN_LVL_6_END

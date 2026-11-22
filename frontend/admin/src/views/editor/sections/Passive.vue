@@ -40,8 +40,6 @@
       </button>
     </div>
 
-    <PassiveEffect :effects="passive.effects" />
-
     <!-- Changes List -->
     <div v-if="passive.changes?.length" class="bg-yellow-100 border border-yellow-400 p-4 rounded">
       <h3 class="font-semibold mb-2">Manual Patch Changes to Review:</h3>
@@ -54,7 +52,6 @@
 
 <script setup>
 import { ref, toRefs } from 'vue'
-import PassiveEffect from './PassiveEffect.vue'
 
 const props = defineProps({
   passive: Object,

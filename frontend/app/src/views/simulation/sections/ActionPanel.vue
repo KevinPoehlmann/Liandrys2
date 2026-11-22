@@ -2,8 +2,8 @@
   <div class="p-4 border rounded transition w-full col-span-2">
     <div class="flex gap-2 flex-wrap items-center">
       <!-- Auto Attack -->
-      <button @click="addAction('aa')" class="action-tile hover:border border-gray-300">
-        <img :src="autoAttack" class="tile-image" alt="AA" />
+      <button @click="addAction('ba')" class="action-tile hover:border border-gray-300">
+        <img :src="autoAttack" class="tile-image" alt="BA" />
       </button>
 
       <!-- Abilities with + / - buttons -->

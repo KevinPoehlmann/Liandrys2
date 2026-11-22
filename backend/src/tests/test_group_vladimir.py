@@ -231,9 +231,9 @@ class TestSanguinePool():
     def test_enemy_hits_miss_while_pooled(self, load_champion, darius):
         sim = Simulation(vladimir(load_champion), darius)
 
-        sim.do_combo([*combo(ActionType.W), red(ActionType.AA), red(ActionType.AA), red(ActionType.AA)])
+        sim.do_combo([*combo(ActionType.W), red(ActionType.BA), red(ActionType.BA), red(ActionType.BA)])
 
-        attacks = hits_on_vladimir(sim, ActionType.AA)
+        attacks = hits_on_vladimir(sim, ActionType.BA)
         assert attacks and all(tick >= POOL_TICKS for tick in attacks)
 
 
@@ -241,9 +241,9 @@ class TestSanguinePool():
         sim = Simulation(vladimir(load_champion), darius)
 
         # Darius' attack puts his bleed on Vladimir before the pool starts.
-        sim.do_combo([red(ActionType.AA), *combo(ActionType.W)])
+        sim.do_combo([red(ActionType.BA), *combo(ActionType.W)])
 
-        [attack] = hits_on_vladimir(sim, ActionType.AA)
+        [attack] = hits_on_vladimir(sim, ActionType.BA)
         bleed = hits_on_vladimir(sim, ActionType.PASSIVE)
         assert any(attack < tick < attack + POOL_TICKS for tick in bleed)
 
@@ -261,7 +261,7 @@ class TestSanguinePool():
             (event.tick, result.source) for event in sim.effect_list for result in event.result
             if result.actor == "blue.tibbers" and result.type_ == EffectType.DAMAGE
         ]
-        assert {source for _, source in tibbers} == {ActionType.AA, ActionType.PASSIVE}  # attacks and aura
+        assert {source for _, source in tibbers} == {ActionType.BA, ActionType.PASSIVE}  # attacks and aura
         assert all(tick >= pool_end for tick, _ in tibbers)
 
 

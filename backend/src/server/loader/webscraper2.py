@@ -10,8 +10,6 @@ from src.server.loader.helper import (
     RuneClass,
     parse_formula_from_table,
     parse_formula_from_string,
-    parse_effect_formula,
-    find_label,
     wiki_to_datetime,
     wiki_release_to_datetime,
     datetime_to_wiki
@@ -25,17 +23,10 @@ from src.server.models.dataenums import (
     RangeType,
     AttackspeedStats,
     AbilityStat,
-    ShieldProperties,
-    HealProperties,
-    DamageSubType,
-    DamageProperties,
-    EffectType,
-    HpScaling,
     ItemClass,
     Map,
     Stat
 )
-from src.server.models.effect import Effect, EffectComponent
 from src.server.models.image import Image
 from src.server.models.item import NewItem
 from src.server.models.json_validation import ChampionJson, SpellJson, PassiveJson, ItemJson, SummonerspellJson
@@ -205,7 +196,6 @@ def _scrape_passive(soup: BeautifulSoup, passive_json: PassiveJson, champion_nam
         description=description,
         static_cooldown=stats.pop("static cooldown", "0"),
         image=passive_json.image,
-        effects=[],
         raw_stats=stats,
         validated=False,
         changes=[]
@@ -230,8 +220,6 @@ def _scrape_ability(letter: str, soup: BeautifulSoup, spell_json: SpellJson, cha
     cost = stats.pop("cost", "0")
     recharge = stats.pop("recharge", "0")
 
-    effects = _scrape_effects(ability_block)
-
 
     ability = ChampionAbility(
         name=spell_json.name,
@@ -242,7 +230,6 @@ def _scrape_ability(letter: str, soup: BeautifulSoup, spell_json: SpellJson, cha
         raw_stats=stats,
         image=spell_json.image,
         maxrank=spell_json.maxrank,
-        effects=effects,
         validated=False,
         changes=[]
     )
@@ -297,132 +284,6 @@ def _scrape_ability_stats(block: Tag) -> dict[str, str]:
         stats[label] = formula
 
     return stats
-
-
-def _scrape_effects(block: Tag) -> list[Effect]:
-    paragraphs = block.find_all("div", class_="ability-info-row")
-    effects = []
-    for paragraph in paragraphs:
-        effect = _scrape_effect_paragraph(paragraph)
-        if effect:
-            effects.append(effect)
-    return effects
-
-
-def _scrape_effect_paragraph(paragraph: Tag) -> Effect:
-    just_text = paragraph.find("div", class_="ability-info-description no-stats")
-    if just_text:
-        text = _get_clean_text(just_text)
-        return Effect(text=text)
-    text = paragraph.find("div", class_="ability-info-description")
-    if text:
-        text = _get_clean_text(text)
-        effect = Effect(text=text)
-        stats = paragraph.find("div", class_="ability-info-stats")
-        if stats:
-            effect.effect_components = _scrape_effect_components(stats)
-        return effect
-    return Effect(text="No text found")
-
-
-
-
-def _scrape_effect_components(block: Tag) -> list[EffectComponent]:
-    stats = block.find_all("dl", class_="skill-tabs")
-    components = []
-    for stat in stats:
-        label_tag = stat.find("dt")
-        values = stat.find("dd")
-        if not label_tag or not values:
-            continue
-
-        label = label_tag.find("b")
-        if not label:
-            continue
-        text = values.find(string=True, recursive=False)
-        text = text.strip() if text else ""
-        
-        try:
-            effect_type, damage_subtype = find_label(_get_clean_text(label))
-        except ScrapeError as e:
-            patch_logger.warning(f"[CHAMPION] [SCRAPE] [?] Could not find label {label}: {e.reason}")
-            continue
-
-        formula, hp_scaling = parse_effect_formula(text)
-
-        spans = values.find_all("span", recursive=False)
-        for span in spans:
-            if span.has_attr("data-bot_values"):
-                top_values = span.get("data-top_values")
-                bot_values = span.get("data-bot_values")
-                try:
-                    formula += f" + {parse_formula_from_table(bot_str=bot_values, top_str=top_values)}"
-                except Exception as e:
-                    patch_logger.warning(f"[CHAMPION] [SCRAPE] [?] Could not parse formula from table: {span.get_text(strip=True)}")
-                    formula += f" + {span.get_text(strip=True)}"
-            else:
-                span_text = _get_clean_text(span)
-                span_formula, span_hp_scaling = parse_effect_formula(span_text)
-
-                if span_hp_scaling != hp_scaling:
-                    span_effect_component = _create_effect_component(
-                        effect_type=effect_type,
-                        formula=span_formula,
-                        hp_scaling=span_hp_scaling,
-                        damage_subtype=damage_subtype
-                    )
-                    if span_effect_component:
-                        components.append(span_effect_component)
-                    continue
-
-                formula += f" + {span_formula}"
-
-        if formula:
-            effect_component = _create_effect_component(
-                effect_type=effect_type,
-                formula=formula,
-                hp_scaling=hp_scaling,
-                damage_subtype=damage_subtype
-            )
-            if effect_component:
-                components.append(effect_component)
-        
-    return components
-
-
-def _create_effect_component(effect_type: EffectType, formula: str, hp_scaling: HpScaling, damage_subtype: DamageSubType) -> EffectComponent | None:
-    match effect_type:
-        case EffectType.DAMAGE:
-            effect_prop = DamageProperties(
-                scaling=formula,
-                dmg_sub_type=damage_subtype,
-                hp_scaling=hp_scaling
-            )
-        case EffectType.HEAL:
-            effect_prop = HealProperties(
-                scaling=formula,
-                hp_scaling=hp_scaling
-            )
-        case EffectType.SHIELD:
-            effect_prop = ShieldProperties(
-                scaling=formula,
-                duration=0,
-                dmg_sub_type=damage_subtype,
-                hp_scaling=hp_scaling
-            )
-        case _:
-            return None
-        
-    return EffectComponent(
-        type_=effect_type,
-        props=effect_prop,
-        duration=0.0,
-        interval=0.0,
-        delay=0.0,
-        speed=0,
-        comment="",
-    )
-
 
 
 def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewItem:   

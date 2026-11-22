@@ -1,26 +1,18 @@
 from collections import defaultdict
-from typing import Iterator, NamedTuple, cast
+from typing import Iterator, NamedTuple
 import math
 
-from src.server.models.ability import ChampionAbility
-from src.server.models.champion import Champion
+from src.server.models.ability import Ability
+from src.server.models.ability import Ability
 from src.server.models.dataenums import (
     ActionEffect,
     ActionType,
-    Buff,
+    Actor,
     CostResource,
-    BuffActionType,
-    Condition,
-    Comparison,
-    DamageProperties,
     DamageSubType,
     DamageType,
-    EffectComp,
-    EffectProperties,
     EffectResult,
     EffectType,
-    HealProperties,
-    HpScaling,
     Origin,
     OriginKind,
     ProcessedCostProperties,
@@ -29,38 +21,29 @@ from src.server.models.dataenums import (
     ProcessedShieldProperties,
     ProcessedStatusProperties,
     QueueComponent,
-    ShieldProperties,
+    ResourceType,
     RuleActionType,
     Stat,
     StatMode,
+    StatusType,
     Target,
     Trigger,
-    StatusProperties,
-    StatusType,
-    Actor,
-    ResourceType,
     TICK_SECONDS,
     to_ticks
 )
-from src.server.models.effect import EffectComponent
+from src.server.models.champion import Champion
 from src.server.models.item import Item
 from src.server.models.passive import Passive
 from src.server.models.pet import Pet
-from src.server.models.passive_effect import BuffProperties, BuffAction, StatProperties, StackProps, EffectProps
 from src.server.models.request import Rank, Action
 from src.server.models.rule import (
     Buff as BuffDefinition, DamageAction, DamageProps, Input, PayCostAction, PayCostProps, Rule, Stage, StatModifier
 )
-from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 from src.server.simulation.buff_instance import BuffInstance
 from src.server.simulation.events import RuleEvent
 from src.server.simulation.exceptions import SimulationError
 from src.server.simulation.formula import FormulaContext, evaluate_formula
-
-                    
-    
-
 
 MULTIPLICATIVE_STATS = {Stat.ARMOR_PEN_P, Stat.MAGIC_PEN_P, Stat.TENACITY_P}
 # Damage amplifications from several sources multiply (Hemoplague notes).
@@ -121,22 +104,20 @@ class Character():
         self._setup(lvl, items, ability_dict, scenario or {})
 
 
-    def _setup(self, level: int, items: list[Item], ability_dict: dict[ActionType, tuple[ChampionAbility, int]], scenario: dict[str, float]) -> None:
+    def _setup(self, level: int, items: list[Item], ability_dict: dict[ActionType, tuple[Ability, int]], scenario: dict[str, float]) -> None:
         self.current_tick: int = 0
         self.level: int = level
         self.items: list[Item] = items
         self.shields: list[ShieldInstance] = []
         self.status_effects: dict[StatusType, list[tuple[int, float]]] = defaultdict(list)
-        self.buffs: dict[Buff, list[BuffProperties]] = self._initialize_buffs()
-        self.stacks: dict[ActionType, int] = defaultdict(int)
 
         self.evaluating_stat: set = set()
         self.ignoring_conversions: bool = False
 
-        self.ability_dict: dict[ActionType, tuple[ChampionAbility, int]] = ability_dict
+        self.ability_dict: dict[ActionType, tuple[Ability, int]] = ability_dict
         self.scenario: dict[str, float] = self._scenario(scenario)
         self.cooldowns: dict[ActionType, int] = {
-            ActionType.AA: 0,
+            ActionType.BA: 0,
             ActionType.Q: 0,
             ActionType.W: 0,
             ActionType.E: 0,
@@ -149,6 +130,8 @@ class Character():
         self.active_buffs: dict[str, BuffInstance] = {}
         self.pending_cooldowns: dict[str, tuple[ActionType, int]] = {}
         self.locked_until: int = 0
+        # Slot -> (index of the next stage, tick of the previous cast) while a recast is possible.
+        self.recasts: dict[ActionType, tuple[int, int]] = {}
         self.lock_exceptions: set[ActionType] = set()
         self.current_hp: float = self.get_stat(Stat.HP)
         self.resource: CostResource = self._casting_resource()
@@ -157,13 +140,6 @@ class Character():
         self.damage_taken: float = 0
         self.healed: float = 0
         self.damage_shielded: float = 0
-
-
-    def _initialize_buffs(self) -> dict[Buff, list[BuffProperties]]:
-        buffs = defaultdict(list)
-        for effect in self.passive.effects:
-            buffs[effect.buff].append(effect.props)
-        return buffs
 
 
     def _collect_buff_definitions(self) -> dict[str, tuple[BuffDefinition, ActionType]]:
@@ -223,7 +199,17 @@ class Character():
             instance.end = end
             instance.rate = 1.0
         instance.stacks = min(instance.stacks + stacks, definition.max_stacks)
+        self._take_snapshots(instance)
         return instance
+
+    def _take_snapshots(self, instance: BuffInstance) -> None:
+        # Evaluated without the buff's own snapshot values, so `0.2 * ad` doesn't count itself on a refresh.
+        instance.snapshots = {}
+        context = instance.source.formula_context(instance.slot, stacks=instance.stacks)
+        instance.snapshots = {
+            index: self._evaluate_modifier(modifier, context)
+            for index, modifier in enumerate(instance.definition.stats) if modifier.snapshot
+        }
 
     @staticmethod
     def _buff_end(definition: BuffDefinition, context: FormulaContext, tick: int) -> int | None:
@@ -272,10 +258,10 @@ class Character():
         return rule.filter is None or rule.filter.source is None or source in rule.filter.source
 
     def reset_attack(self, tick: int) -> None:
-        self.cooldowns[ActionType.AA] = tick
+        self.cooldowns[ActionType.BA] = tick
 
     def origin(self, slot: ActionType, buff: str | None = None) -> Origin:
-        if slot == ActionType.AA:
+        if slot == ActionType.BA:
             return Origin(kind=OriginKind.ATTACK, name="BA", buff=buff)
         if slot == ActionType.PASSIVE:
             return Origin(kind=OriginKind.PASSIVE, name="passive", buff=buff)
@@ -413,29 +399,27 @@ class Character():
         return sum(values)
 
     def _modifier_values(self, stat: Stat) -> list[float]:
-        values = [
-            self._evaluate_formula(stat_property.scaling)
-            for stat_property in self.buffs[Buff.STATS]
-            if isinstance(stat_property, StatProperties)
-            and stat_property.stat == stat and self._evaluate_condition(stat_property.condition)
-        ]
-        values += [
-            self._evaluate_modifier(modifier, context)
-            for modifier, context in self._active_modifiers()
+        return [
+            fixed if fixed is not None else self._evaluate_modifier(modifier, context)
+            for modifier, context, fixed in self._active_modifiers()
             if modifier.stat == stat and not (modifier.conversion and self.ignoring_conversions)
         ]
-        return values
 
-    def _active_modifiers(self) -> Iterator[tuple[StatModifier, FormulaContext]]:
+    def _active_modifiers(self) -> Iterator[tuple[StatModifier, FormulaContext | None, float | None]]:
+        """Modifier, the context to evaluate it in, or its fixed value (snapshot)."""
         for modifier in self.passive.stats:
-            yield modifier, self.formula_context(ActionType.PASSIVE)
+            yield modifier, self.formula_context(ActionType.PASSIVE), None
         for slot, (ability, rank) in self.ability_dict.items():
             if rank > 0:
                 for modifier in ability.stats:
-                    yield modifier, self.formula_context(slot)
+                    yield modifier, self.formula_context(slot), None
         for instance in self.active_buffs.values():
-            for modifier in instance.definition.stats:
-                yield modifier, instance.source.formula_context(instance.slot, stacks=instance.stacks, elapsed=self.buff_elapsed(instance))
+            for index, modifier in enumerate(instance.definition.stats):
+                if modifier.snapshot:
+                    if index in instance.snapshots:
+                        yield modifier, None, instance.snapshots[index]
+                    continue
+                yield modifier, instance.source.formula_context(instance.slot, stacks=instance.stacks, elapsed=self.buff_elapsed(instance)), None
 
     def _evaluate_modifier(self, modifier: StatModifier, context: FormulaContext) -> float:
         if modifier.mode != StatMode.FLAT:
@@ -519,30 +503,8 @@ class Character():
 
 
         
-    def _evaluate_formula(self, formula: str, additional_keywords: dict = {}) -> float:
-        variables = {
-            stat.value: self.get_stat(stat) for stat in Stat
-        } | {
-            "level": self.level
-        } | {
-            stack_key: self.stacks[stack_key] for stack_key in ActionType
-        } | additional_keywords
-        return eval(formula, {}, variables)
-    
-
-    def _calculate_hp_scaling(self, value: float, hp_scaling: HpScaling) -> float:
-        match hp_scaling:
-            case HpScaling.MAX_HP:
-                return value * self.get_stat(Stat.HP)
-            case HpScaling.CURRENT_HP:
-                return value * self.current_hp
-            case HpScaling.MISSING_HP:
-                return value * (self.get_stat(Stat.HP) - self.current_hp)
-        return value
-
-
     def _calculate_damage(self, damage: ProcessedDamageProperties) -> tuple[float, float, float]:
-        value = self._calculate_hp_scaling(damage.value, damage.hp_scaling)
+        value = damage.value
         resistance = self._get_resistance(damage.dmg_sub_type)
         resistance -= (resistance * damage.percent_pen)
         resistance -= damage.flat_pen
@@ -552,41 +514,6 @@ class Character():
             # True damage isn't amplified (wiki: Hemoplague, probably an old state of the ability).
             result *= 1 + self.get_stat(Stat.DAMAGE_TAKEN_P)
         return result, value, value - result
-    
-
-    def _do_action_buff(self, action: BuffAction) -> EffectComponent | None:
-        match action.type_:
-            case BuffActionType.STACK:
-                assert isinstance(action.props, StackProps)
-                self.stacks[action.props.stack_key] += int(self._evaluate_formula(action.props.amount))
-            case BuffActionType.EFFECT:
-                assert isinstance(action.props, EffectProps)
-                return action.props.effect
-
-    def _evaluate_condition(self, condition: Condition | None) -> bool:
-        if condition is None:
-            return True
-        match condition.comparison:
-            case Comparison.GT:
-                return self._evaluate_formula(condition.key) > condition.value
-            case Comparison.LT:
-                return self._evaluate_formula(condition.key) < condition.value
-            case Comparison.EQ:
-                return self._evaluate_formula(condition.key) == condition.value
-
-
-    """ def _check_buffs(self, action_type: ActionType, buff: Buff) -> list[EffectComponent]: #TODO
-        if not self.buffs[buff]:
-            return []
-        effect_components = []
-        for action_property in self.buffs[buff]:
-            if action_type in action_property.trigger and self._evaluate_condition(action_property.condition):
-                for buff_action in action_property.actions:
-                    comp = self._do_action_buff(buff_action)
-                    if comp:
-                        effect_components.append(comp)
-        return effect_components """
-
     
 
     def _use_shields(self, damage: float, target: Actor) -> tuple[float, list[EffectResult]]:
@@ -619,7 +546,7 @@ class Character():
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedHealProperties), "Heal component must have ProcessedHealProperties"
-                raw_heal = self._calculate_hp_scaling(component.props.value, component.props.hp_scaling)
+                raw_heal = component.props.value
                 reduced = raw_heal * factor
                 heal = min(reduced, max(missing_hp - total_heal, 0))
                 total_heal += heal
@@ -650,8 +577,7 @@ class Character():
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedShieldProperties), "Shield component must have ProcessedShieldProperties"
-                value = self._calculate_hp_scaling(component.props.value, component.props.hp_scaling)
-                self.shields.append(ShieldInstance(component.props.duration + tick, value, component.source, component.actor, component.origin))
+                self.shields.append(ShieldInstance(component.props.duration + tick, component.props.value, component.source, component.actor, component.origin))
             except Exception as e:
                 raise SimulationError(
                     message=str(e),
@@ -749,7 +675,25 @@ class Character():
         return slot in self.ability_dict and getattr(self.ability_dict[slot][0], "usable_during_cc", False)
 
     def check_action_delay(self, action_type: ActionType, tick: int) -> int:
-        tick = max(tick, self.cooldowns[action_type])
+        # A pending recast ignores the cooldown, but only if it can start inside its window; otherwise it starts over.
+        recast = self._recast_window(action_type)
+        if recast is not None:
+            earliest, window_end = recast
+            ready = self._action_delay(action_type, max(tick, earliest))
+            if ready <= window_end:
+                return ready
+        return self._action_delay(action_type, max(tick, self.cooldowns[action_type]))
+
+    def _recast_window(self, slot: ActionType) -> tuple[int, int] | None:
+        if slot not in self.recasts:
+            return None
+        index, previous_cast = self.recasts[slot]
+        ability = self.ability_dict[slot][0]
+        stage, context = ability.stages[index], self.formula_context(slot)
+        earliest = previous_cast + to_ticks(evaluate_formula(stage.recast_delay, context))
+        return earliest, previous_cast + to_ticks(evaluate_formula(stage.recast_window, context))
+
+    def _action_delay(self, action_type: ActionType, tick: int) -> int:
         if action_type not in self.lock_exceptions:
             tick = max(tick, self.locked_until)
         self._remove_expired_status_effects(tick)
@@ -769,7 +713,7 @@ class Character():
         if stun_delays:
             tick = max(tick, max(stun_delays))
 
-        if action_type == ActionType.AA and StatusType.DISARM in self.status_effects:
+        if action_type == ActionType.BA and StatusType.DISARM in self.status_effects:
             disarm_delay = max(disarm[0] for disarm in self.status_effects[StatusType.DISARM])
             tick = max(tick, disarm_delay)
         
@@ -784,7 +728,7 @@ class Character():
 
 
     def do_action(self, action: Action, tick: int) -> ActionEffect:
-        if action.action_type == ActionType.AA:
+        if action.action_type == ActionType.BA:
             return self._basic_attack(action, tick)
         elif action.action_type in self.ability_dict:
             return self._do_ability(action, tick)
@@ -795,10 +739,10 @@ class Character():
 
     def _basic_attack(self, action: Action, tick: int) -> ActionEffect:
         attack_time = 1 / self._get_attackspeed()
-        self.cooldowns[ActionType.AA] = tick + to_ticks(attack_time)
+        self.cooldowns[ActionType.BA] = tick + to_ticks(attack_time)
         windup_ticks = to_ticks(attack_time * self._attack_windup())
         rule = self._basic_attack_rule(blinded=StatusType.BLIND in self.status_effects)
-        event = RuleEvent(rule=rule, slot=ActionType.AA, owner=action.actor, target=action.target)
+        event = RuleEvent(rule=rule, slot=ActionType.BA, owner=action.actor, target=action.target)
         return ActionEffect(tick=tick + windup_ticks, rule_events=[event], windup_cancel=self._windup_cancels())
 
     def _attack_windup(self) -> float:
@@ -822,52 +766,39 @@ class Character():
     
 
     def _do_ability(self, action: Action, tick: int) -> ActionEffect:
-        ability: ChampionAbility = self.ability_dict[action.action_type][0]
-        if not ability.validated:
-            raise NotImplementedError(f"Ability {action.action_type} is not implemented yet for {self.name}")
-        if ability.stages:
-            return self._cast_stage(action, ability, tick)
-        cooldown = self._evaluate_formula(ability.cooldown, {"rank": self.ability_dict[action.action_type][1]})
-        cooldown *= 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
-        cast_time = self._evaluate_formula(ability.cast_time,  {"rank": self.ability_dict[action.action_type][1]})
-        cast_ticks = to_ticks(cast_time)
-        cooldown_ticks = to_ticks(cooldown)
-        self.cooldowns[action.action_type] = tick + cooldown_ticks + cast_ticks
-        action_effect = ActionEffect(tick=tick + cast_ticks)
-        for effect in ability.effects:
-            for component in effect.effect_components:
-                effect_comp = EffectComp(
-                    source=action.action_type,
-                    target=action.target,
-                    type_=component.type_,
-                    duration=to_ticks(component.duration),
-                    interval=component.interval / TICK_SECONDS,
-                    delay=to_ticks(component.delay),
-                    speed=component.speed,
-                    props=component.props
-                )
-                action_effect.effect_comps.append(effect_comp)
-                """ action_effect.effect_comps.extend(self._check_buffs(action.action_type, Buff.CAST)) """
-        return action_effect
-    
-
-
-    def _cast_stage(self, action: Action, ability: ChampionAbility, tick: int) -> ActionEffect:
+        ability = self.ability_dict[action.action_type][0]
+        if not ability.validated or not ability.stages:
+            raise NotImplementedError(f"Ability {action.action_type} is not entered yet for {self.name}")
+        return self._cast_stage(action, ability, tick)
+    def _cast_stage(self, action: Action, ability: Ability, tick: int) -> ActionEffect:
         slot = action.action_type
         context = self.formula_context(slot)
         cast_ticks = to_ticks(evaluate_formula(ability.cast_time, context))
-        cooldown_ticks = self._cooldown_ticks(ability, slot)
-        cooldown_start = tick if ability.cooldown_starts_on_cast else tick + cast_ticks
-        self.cooldowns[slot] = cooldown_start + cooldown_ticks
-        if ability.cooldown_starts_after:
-            self._defer_cooldown(ability.cooldown_starts_after, slot, cooldown_ticks, tick + cast_ticks)
-        stage = ability.stages[0]
+        index = self._stage_index(slot, tick)
+        if index == 0:
+            # Only the first cast starts the cooldown; recasts live in their window (Riven Q, Wind Slash).
+            cooldown_ticks = self._cooldown_ticks(ability, slot)
+            cooldown_start = tick if ability.cooldown_starts_on_cast else tick + cast_ticks
+            self.cooldowns[slot] = cooldown_start + cooldown_ticks
+            if ability.cooldown_starts_after:
+                self._defer_cooldown(ability.cooldown_starts_after, slot, cooldown_ticks, tick + cast_ticks)
+        if index + 1 < len(ability.stages):
+            self.recasts[slot] = (index + 1, tick)
+        else:
+            self.recasts.pop(slot, None)
+        stage = ability.stages[index]
         outcome = self._outcome(action, stage)
         rule_events = self._cost_event(action) + [
             RuleEvent(rule=rule, slot=action.action_type, owner=action.actor, target=action.target)
             for rule in stage.rules if rule.outcome in (None, outcome)
         ]
         return ActionEffect(tick=tick + cast_ticks, rule_events=rule_events)
+
+    def _stage_index(self, slot: ActionType, tick: int) -> int:
+        recast = self._recast_window(slot)
+        if recast is not None and recast[0] <= tick <= recast[1]:
+            return self.recasts[slot][0]
+        return 0
 
     @staticmethod
     def _outcome(action: Action, stage: Stage) -> str | None:
@@ -878,7 +809,7 @@ class Character():
         return action.outcome
 
 
-    def _cooldown_ticks(self, ability: ChampionAbility, slot: ActionType) -> int:
+    def _cooldown_ticks(self, ability: Ability, slot: ActionType) -> int:
         return to_ticks(self.get_cooldown(slot))
 
     def get_cooldown(self, slot: ActionType) -> float:
@@ -901,76 +832,6 @@ class Character():
         self.pending_cooldowns[buff] = (slot, cooldown_ticks)
         self.cooldowns[slot] = buff_end + cooldown_ticks
 
-
-    def evaluate(self, queue_comps:list[QueueComponent]) -> list[QueueComponent]:
-        component_list = []
-        for component in queue_comps:
-            if component.type_ == EffectType.STATUS:
-                component_list.append(self._process_status(component))
-                continue
-            variables = {"rank": self.ability_dict[component.source][1]} if component.source in self.ability_dict else {}
-            assert isinstance(component.props, (DamageProperties, HealProperties, ShieldProperties)), \
-                "Component properties must be one of DamageProperties, HealProperties, ShieldProperties"
-            result = self._evaluate_formula(component.props.scaling, variables)
-
-            match component.type_:
-                case EffectType.DAMAGE:
-                    """ self._check_buffs(component.source, Buff.HIT) """
-                    assert isinstance(component.props, DamageProperties), "Damage component must have DamageProperties"
-                    flat_pen, percent_pen = self.get_penetration(component.props.dmg_sub_type)
-                    props=ProcessedDamageProperties(
-                        value=result,
-                        flat_pen=flat_pen,
-                        percent_pen=percent_pen,
-                        dmg_type=component.props.dmg_type,
-                        dmg_sub_type=component.props.dmg_sub_type,
-                        hp_scaling=component.props.hp_scaling,
-                        vamp=component.props.vamp
-                    )
-                case EffectType.HEAL:
-                    assert isinstance(component.props, HealProperties), "Heal component must have ProcessedHealProperties"
-                    props=ProcessedHealProperties(
-                        value=result,
-                        hp_scaling=component.props.hp_scaling
-                    )
-                case EffectType.SHIELD:
-                    assert isinstance(component.props, ShieldProperties), "Shield component must have ShieldProperties"
-                    props=ProcessedShieldProperties(
-                        value=result,
-                        duration=to_ticks(component.props.duration),
-                        dmg_sub_type=component.props.dmg_sub_type,
-                        hp_scaling=component.props.hp_scaling
-                    )
-                case _:
-                   raise ValueError(f"Unhandled EffectType: {component.type_}")  # Catch future issues early
-
-            queue_component = QueueComponent(
-                source=component.source,
-                actor=component.actor,
-                target=component.target,
-                type_=component.type_,
-                props=props
-            )
-            component_list.append(queue_component)
-        return component_list
-
-
-    def _process_status(self, component: QueueComponent) -> QueueComponent:
-        assert isinstance(component.props, StatusProperties), "Status component must have StatusProperties"
-        props = ProcessedStatusProperties(
-            type_=component.props.type_,
-            duration=to_ticks(component.props.duration),
-            strength=component.props.strength
-        )
-        return QueueComponent(
-            source=component.source,
-            actor=component.actor,
-            target=component.target,
-            type_=component.type_,
-            props=props
-        )
-
-        
 
     def take_effects(self, component_list: list[QueueComponent], tick: int) -> tuple[list[QueueComponent], list[EffectResult]]:
         damages = []

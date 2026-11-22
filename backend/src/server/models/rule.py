@@ -176,6 +176,7 @@ class StatModifier(StrictModel):
     formula: str
     mode: StatMode = StatMode.FLAT
     conversion: bool = False
+    snapshot: bool = False  # on a buff: evaluated once when the buff is applied (Riven R's bonus AD)
 
 
 class SlowedWhile(StrictModel):
@@ -224,7 +225,8 @@ class Input(StrictModel):
 
 
 class Stage(StrictModel):
-    recast_window: str = "0"
+    recast_window: str = "0"  # seconds after the previous stage's cast to cast this one, else the ability starts over
+    recast_delay: str = "0"  # earliest seconds after the previous stage's cast (Riven Q: 0.3125)
     outcomes: list[str] = []
     rules: list[Rule] = []
 

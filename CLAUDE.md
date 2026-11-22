@@ -34,15 +34,14 @@ frontend/admin/     admin UI (Vue 3 + Vite + Tailwind) :5174 -> proxies to :5001
 
 **Models:**
 - Every type has `New<Type>` (no id, what the loader writes), `<Type>` (with `_id`) and `Short<Type>` (projection for lists).
-- The old polymorphic `props` (EffectComponent, PassiveEffect, BuffAction) are resolved by custom `parse_obj` chains. **Always build those with `.parse_obj(...)`, never `Model(**data)`**, or `props` collapse to the empty base class. For the same reason, admin PUT routes take a raw `Request` + `parse_from_request` and GET routes return `JSONResponse(jsonable_encoder(...))`.
-- The new ability system (`models/rule.py`, see [docs/ability-system.md](docs/ability-system.md)) uses Pydantic 1.10's discriminated unions (`Literal` `type_` + `Field(discriminator="type_")`) and `extra = forbid`. It needs no `parse_obj` chain. The old effect models stay until the simulation is switched over.
+- The ability system (`models/rule.py`, see [docs/ability-system.md](docs/ability-system.md)) uses Pydantic 1.10's discriminated unions (`Literal` `type_` + `Field(discriminator="type_")`) and `extra = forbid`. The old polymorphic effect models are gone; a few `parse_obj` overrides (Champion, Item, Summonerspell) and the admin routes' raw `Request` + `parse_from_request` / `JSONResponse(jsonable_encoder(...))` are leftovers from them, to simplify with the Pydantic v2 migration.
 - Champion stats are flat fields (all present), item stats are `dict[Stat, float]` (sparse). This is deliberate.
 
-**Ability system:** an Ability has Effects, and each Effect has EffectComponents (Damage / Heal / Shield / Status, with `props` + `delay`/`duration`/`interval`/`speed`). A Passive has PassiveEffects keyed by `Buff` (Stats, Cast, Hit = on-hit, GetHit = when hit). Values are **formula strings** evaluated with `eval` in `Character._evaluate_formula`. Available variables: stat values, `level`, `rank`, stacks per `ActionType`.
+**Ability system:** abilities, passives and summoner spells hold `rules` (trigger → conditions → actions), `buffs`, `stats`, `inputs` and `stages`; see [docs/ability-system.md](docs/ability-system.md). Values are **formula strings** evaluated in `simulation/formula.py` (`evaluate_formula`, namespace with stats, `target_`/`owner_` prefixes, `stacks_<buff>`, `rank`, `level`, `cooldown`, `elapsed`, scenario inputs). An ability without `stages` isn't entered yet and raises NotImplementedError.
 
 **Game rules:** [docs/league-mechanics.md](docs/league-mechanics.md) collects the live League mechanics (mitigation order, crit, shields, CC, movement speed, ...) with what the simulation does today. Check it before building simulation logic.
 
-**Simulation:** one tick is 0.033 s like the game server (`TICK_SECONDS`, `TICKRATE` ≈ 30.3). Convert seconds only with `to_ticks` (rounds up to whole ticks and removes float noise). `Simulation.do_combo` walks the actions. `Character.do_action` produces `EffectComp`s. `_queue_status` schedules them by tick (delay, travel time, DoT ticks). `_process_queue`: the attacker `evaluate`s formulas, the defender `take_effects` (resistances, shields, heals, CC).
+**Simulation:** one tick is 0.033 s like the game server (`TICK_SECONDS`, `TICKRATE` ≈ 30.3). Convert seconds only with `to_ticks` (rounds up to whole ticks and removes float noise). `Simulation.do_combo` walks the actions. `Character.do_action` returns `RuleEvent`s that the simulation queues by tick (delay, travel time); buffs add `BuffTick`/`BuffEnd` events, pets `PetAttackDue`/`PetExpire`. `_process_tick` runs the rules into `QueueComponent`s, and each target `take_effects` (resistances, shields, heals, CC). The simulation owns time; the Character only reacts.
 
 ## Commands
 

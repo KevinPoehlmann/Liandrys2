@@ -86,13 +86,13 @@ class TestActorIds():
 
     @pytest.mark.parametrize("actor_id", ["blue", "red", "blue.tibbers", "red.ghoul#2", "blue.top.tibbers"])
     def test_valid_ids(self, actor_id):
-        assert Action(actor=actor_id, target="red", action_type=ActionType.AA).actor == actor_id
+        assert Action(actor=actor_id, target="red", action_type=ActionType.BA).actor == actor_id
 
 
     @pytest.mark.parametrize("actor_id", ["green", "Blue", "blue.", "blue.Tibbers", "blue#2"])
     def test_invalid_ids(self, actor_id):
         with pytest.raises(ValidationError):
-            Action(actor=actor_id, target="red", action_type=ActionType.AA)
+            Action(actor=actor_id, target="red", action_type=ActionType.BA)
 
 
     def test_team_is_the_first_part(self):

@@ -3,8 +3,6 @@ from pydantic import BaseModel
 from src.server.models.image import Image
 from src.server.models.rule import Buff, Input, Rule, StatModifier
 
-from src.server.models.passive_effect import PassiveEffect
-
 
 class Passive(BaseModel):
     name: str
@@ -14,19 +12,11 @@ class Passive(BaseModel):
     stats: list[StatModifier] = []
     buffs: list[Buff] = []
     inputs: list[Input] = []
-    effects: list[PassiveEffect] = []
+    assumptions: list[str] = []  # what we assumed where data was missing, shown to the user
     raw_stats: dict[str, str] = {}
     changes: list[str] = []
     validated: bool = False
 
-    @classmethod
-    def parse_obj(cls, obj: dict) -> "Passive":
-        if "effects" in obj:
-            obj["effects"] = [
-                PassiveEffect.parse_obj(ec)
-                for ec in obj["effects"]
-            ]
-        return super().parse_obj(obj)
 
 
 class ChampionPassive(Passive):

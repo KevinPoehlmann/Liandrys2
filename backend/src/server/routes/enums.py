@@ -2,10 +2,10 @@ from fastapi import APIRouter, HTTPException
 
 
 from src.server.models.dataenums import (
-    Buff, BuffActionType, Stat,
+    Stat,
     EffectType, RangeType, ResourceType, ActiveType,
     Map, ItemClass, DamageType, DamageSubType, StatusType,
-    HpScaling, ActionType, Comparison
+    ActionType, Comparison
 )
 
 
@@ -20,8 +20,6 @@ async def get_enums():
     return {
         "ActionType": enum_to_list(ActionType),
         "Comparison": enum_to_list(Comparison),
-        "Buff": enum_to_list(Buff),
-        "BuffActionType": enum_to_list(BuffActionType),
         "Stat": enum_to_list(Stat),
         "EffectType": enum_to_list(EffectType),
         "RangeType": enum_to_list(RangeType),
@@ -32,5 +30,4 @@ async def get_enums():
         "DamageType": enum_to_list(DamageType),
         "DamageSubType": enum_to_list(DamageSubType),
         "StatusType": enum_to_list(StatusType),
-        "HpScaling": enum_to_list(HpScaling),
     }

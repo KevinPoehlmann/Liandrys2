@@ -23,6 +23,7 @@ from src.server.loader.patchloader2 import (
     _load_champion,
     _load_item,
     _load_rune,
+    _load_rune_stat_shards,
     _load_summonerspell,
     _fetch_wiki_html,
     _load_image,
@@ -44,7 +45,7 @@ from src.server.loader.patchloader2 import (
 from src.server.loader.patchexceptions import PatcherError, LoadError
 from src.server.models.ability import Ability, ChampionAbility
 from src.server.models.champion import NewChampion
-from src.server.models.dataenums import RangeType
+from src.server.models.dataenums import RangeType, Stat
 from src.server.models.image import Image
 from src.server.models.item import NewItem
 from src.server.models.json_validation import PathJson
@@ -1054,3 +1055,17 @@ async def test_patch_summonerspells(mocker):
     mock_load.assert_called_once()
     mock_add.assert_called()
 
+
+
+@pytest.mark.asyncio
+async def test_load_rune_stat_shards_as_stat_modifiers(mocker, patch_with_hotfix):
+    mocker.patch("src.server.loader.patchloader2.db.exists_rune_by_name", new=AsyncMock(return_value=False))
+    mock_add = mocker.patch("src.server.loader.patchloader2.db.add_rune", new=AsyncMock())
+
+    await _load_rune_stat_shards(patch_with_hotfix)
+
+    stats = {call.args[0].name: call.args[0].passive.stats for call in mock_add.call_args_list}
+    [movement_speed] = stats["Flex Movementspeed"]
+    assert (movement_speed.stat, movement_speed.formula) == (Stat.MOVESPEED_P, "0.02")  # 2 %, stored as a fraction
+    [scaling_health] = stats["Defense Scaling Health"]
+    assert (scaling_health.stat, scaling_health.formula) == (Stat.HP, "10 * level")

@@ -32,12 +32,12 @@ from src.server.models.json_validation import (
     SummonerspellJson
 )
 from src.server.models.champion import NewChampion
-from src.server.models.dataenums import Buff, Stat
+from src.server.models.dataenums import Stat
 from src.server.models.image import Image
 from src.server.models.item import NewItem
 from src.server.models.patch import NewPatch, Patch
 from src.server.models.passive import Passive
-from src.server.models.passive_effect import PassiveEffect, StatProperties
+from src.server.models.rule import StatModifier
 from src.server.models.rune import NewRune
 from src.server.models.summonerspell import NewSummonerspell
 
@@ -451,15 +451,7 @@ async def _load_rune_stat_shards(patch: NewPatch) -> None:
             slot=shard.slot,
             passive=Passive(
                 name=shard.name,
-                effects=[
-                    PassiveEffect(
-                        buff=Buff.STATS,
-                        props=StatProperties(
-                            stat=Stat.from_str(shard.stat.stat),
-                            scaling=shard.stat.scaling
-                        )
-                    )
-                ],
+                stats=[StatModifier(stat=shard.stat.stat, formula=shard.stat.scaling)],
             ),
             image=Image(
                 full=shard.image,

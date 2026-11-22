@@ -33,10 +33,9 @@
     "name": "Runic Blade",
     "description": "Innate: Riven's ability casts generate a stack of Charge for 6 seconds, refreshing on subsequent casts and stacking up to 3 times. Riven's basic attacks are empowered to each consume a stack to deal bonus physical damage equal to 30% – 60% (based on level) AD, reduced to「 50% 」「 15% – 30% (based on level) AD 」against structures.\n\n\n\nThe bonus damage is affected by  critical strike modifiers and applies  life steal at 100% effectiveness.",
     "static_cooldown": "0",
-    "effects": [],
     "raw_stats": {},
     "changes": [],
-    "validated": false,
+    "validated": true,
     "image": {
       "full": "RivenRunicBlades.png",
       "group": "passive",
@@ -45,64 +44,114 @@
       "y": 96,
       "h": 48,
       "w": 48
-    }
+    },
+    "inputs": [],
+    "stats": [],
+    "assumptions": [],
+    "rules": [
+      {
+        "trigger": "on_cast",
+        "filter": {
+          "source": [
+            "q",
+            "w",
+            "e",
+            "r"
+          ]
+        },
+        "outcome": null,
+        "conditions": [],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "runic_blade",
+              "target": "self",
+              "stacks": "1"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "cooldown": "0"
+      },
+      {
+        "trigger": "on_hit",
+        "filter": null,
+        "outcome": null,
+        "conditions": [
+          {
+            "actor": "self",
+            "key": "stacks_runic_blade",
+            "comparison": "Greater than",
+            "value": "0"
+          }
+        ],
+        "actions": [
+          {
+            "type_": "Damage",
+            "props": {
+              "target": "target",
+              "scaling": "(0.3 + 0.15 * (level - 1) / 17) * ad",
+              "dmg_type": [
+                "Proc damage"
+              ],
+              "dmg_sub_type": "Physical",
+              "vamp": 0.0
+            }
+          },
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "runic_blade",
+              "target": "self",
+              "stacks": "0"
+            }
+          },
+          {
+            "type_": "RemoveBuff",
+            "props": {
+              "buff": "runic_blade",
+              "target": "self",
+              "stacks": "1"
+            }
+          }
+        ],
+        "delay": "0",
+        "speed": "0",
+        "cooldown": "0"
+      }
+    ],
+    "buffs": [
+      {
+        "name": "runic_blade",
+        "duration": "6",
+        "max_stacks": 3,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "stats": [],
+        "rules": []
+      }
+    ]
   },
   "q": {
     "name": "Broken Wings",
     "description": "Riven lashes out in a series of strikes. This ability can be reactivated three times in a short time frame with the third hit knocking back nearby enemies.",
     "cost": "0",
-    "cooldown": "13.0",
-    "cast_time": "0",
+    "cooldown": "13",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Riven can activate Broken Wings three times before the ability goes on cooldown, with a 0.3125-second static cooldown between casts. If Riven does not recast the ability within 4 seconds of the previous cast, it goes on cooldown.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Riven slashes with her sword for each of the three casts, dealing physical damage to enemies struck within an area,  resetting her basic attack timer, and ordering her to basic attack the target of Broken Wings if there are any.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "45.0 + (rank - 1) * 30.0 + (0.65 + (rank - 1) * 0.04999999999999999) * bonus ad",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Physical",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "First Cast: Riven  dashes 225 units in the direction she is currently facing, or up to 225 units towards the target enemy, striking enemies in the target area 100 units away. This cast cannot cross terrain.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Second Cast: Riven mimics the first cast's effects.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Third Cast: Riven mimics the first cast's effects in a larger area while also  knocking back enemies hit 75 units over 0.5 seconds. This cast can cross terrain.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "none",
       "effect radius": "150.0 + (rank - 1) * 50.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "RivenTriCleave.png",
@@ -112,44 +161,178 @@
       "y": 96,
       "h": 48,
       "w": 48
-    }
+    },
+    "cooldown_starts_on_cast": true,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
+                  "dmg_type": [
+                    "Ability damage",
+                    "Area damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "Lock",
+                "props": {
+                  "duration": "0.25 * (1 - riven_q_cancel)",
+                  "exceptions": []
+                }
+              },
+              {
+                "type_": "ResetAttack",
+                "props": {}
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      },
+      {
+        "recast_window": "4",
+        "recast_delay": "0.3125",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
+                  "dmg_type": [
+                    "Ability damage",
+                    "Area damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "Lock",
+                "props": {
+                  "duration": "0.25 * (1 - riven_q_cancel)",
+                  "exceptions": []
+                }
+              },
+              {
+                "type_": "ResetAttack",
+                "props": {}
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      },
+      {
+        "recast_window": "4",
+        "recast_delay": "0.3125",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
+                  "dmg_type": [
+                    "Ability damage",
+                    "Area damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Airborne",
+                  "duration": "0.5",
+                  "strength": "0"
+                }
+              },
+              {
+                "type_": "Lock",
+                "props": {
+                  "duration": "0.25 * (1 - riven_q_cancel)",
+                  "exceptions": []
+                }
+              },
+              {
+                "type_": "ResetAttack",
+                "props": {}
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "inputs": [
+      {
+        "name": "riven_q_cancel",
+        "default": 0,
+        "min": 0,
+        "max": 1,
+        "description": "Cancel Broken Wings' animation with a move command (1) or not (0)"
+      }
+    ],
+    "assumptions": [
+      "Each cast locks Riven for 0.25 s until it hits (cast time from CommunityDragon; the wiki lists none).",
+      "Without animation cancel the animation locks her 0.25 s longer (0.5 s in total, community estimate); with cancel she acts right after the hit.",
+      "The third cast locks as long as the first two (the wiki only says longer, without a number)."
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "pets": [],
+    "cooldown_starts_after": null
   },
   "w": {
     "name": "Ki Burst",
     "description": "Riven emits a Ki Burst, damaging and stunning nearby enemies.",
     "cost": "0",
-    "cooldown": "11.0 + (rank - 1) * -1.0",
+    "cooldown": "by_rank(11, 10, 9, 8, 7)",
     "cast_time": "0",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Riven emits a flash of runic energy from the start of the cast time, dealing physical damage to nearby enemies and  stunning them for 0.75 seconds.",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "65.0 + (rank - 1) * 30.0 + (1.0) * bonus ad",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Physical",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "effect radius": "300.0 + (rank - 1) * 60.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "RivenMartyr.png",
@@ -159,48 +342,77 @@
       "y": 96,
       "h": 48,
       "w": 48
-    }
+    },
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "by_rank(65, 95, 125, 155, 185) + bonus_ad",
+                  "dmg_type": [
+                    "Ability damage",
+                    "Area damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              },
+              {
+                "type_": "Status",
+                "props": {
+                  "target": "target",
+                  "status": "Stun",
+                  "duration": "0.75",
+                  "strength": "0"
+                }
+              },
+              {
+                "type_": "Lock",
+                "props": {
+                  "duration": "0.25",
+                  "exceptions": []
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "inputs": [],
+    "assumptions": [],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "pets": [],
+    "cooldown_starts_after": null
   },
   "e": {
     "name": "Valor",
     "description": "Riven steps forward a short distance and blocks incoming damage.",
     "cost": "0",
-    "cooldown": "10.0 + (rank - 1) * -1.0",
+    "cooldown": "by_rank(10, 9, 8, 7, 6)",
     "cast_time": "0",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Riven  dashes in the target direction, though not through terrain, while granting herself a  shield for 1.5 seconds.",
-        "effect_components": [
-          {
-            "type_": "Shield",
-            "props": {
-              "scaling": "70.0 + (rank - 1) * 25.0 + (1.1) * bonus ad",
-              "duration": 0.0,
-              "dmg_sub_type": "True",
-              "hp_scaling": "flat"
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      },
-      {
-        "text": "Riven can cast any of her abilities during the dash. Valor will cast at max range if cast beyond that.",
-        "effect_components": [],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "none",
       "range": "250.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 5,
     "image": {
       "full": "RivenFeint.png",
@@ -210,43 +422,51 @@
       "y": 96,
       "h": 48,
       "w": 48
-    }
+    },
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Shield",
+                "props": {
+                  "target": "self",
+                  "scaling": "by_rank(70, 95, 120, 145, 170) + 1.1 * bonus_ad",
+                  "duration": "1.5",
+                  "dmg_sub_type": "True"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "inputs": [],
+    "assumptions": [],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "pets": [],
+    "cooldown_starts_after": null
   },
   "r": {
     "name": "Blade of the Exile",
     "description": "Riven empowers her keepsake weapon with energy, and gains Attack Damage and Range. During this time, she also gains the ability to use Wind Slash, a powerful ranged attack, once.",
     "cost": "0",
-    "cooldown": "120.0 + (rank - 1) * -30.0",
-    "cast_time": "0",
+    "cooldown": "by_rank(120, 90, 60)",
+    "cast_time": "0.25",
     "recharge": "0",
-    "effects": [
-      {
-        "text": "Active: Riven empowers her blade for 15 seconds, gaining 25% AD  bonus attack damage,  75 bonus attack range, and increased range on  Broken Wings and  Ki Burst. After 0.5 seconds, she can cast  Wind Slash within the duration.",
-        "effect_components": [],
-        "conditions": []
-      },
-      {
-        "text": "Active: Riven unleashes a wave of energy in a cone in the target direction that deals physical damage to enemies hit, increased by 0% – 200% (based on target's missing health).",
-        "effect_components": [
-          {
-            "type_": "Damage",
-            "props": {
-              "scaling": "100.0 + (rank - 1) * 50.0 + (0.6) * bonus ad",
-              "dmg_type": "Default damage",
-              "dmg_sub_type": "Physical",
-              "hp_scaling": "flat",
-              "vamp": 0.0
-            },
-            "duration": 0.0,
-            "interval": 0.0,
-            "delay": 0.0,
-            "speed": 0,
-            "comment": ""
-          }
-        ],
-        "conditions": []
-      }
-    ],
     "raw_stats": {
       "cast time": "0.25",
       "target range": "1100.0",
@@ -255,7 +475,7 @@
       "speed": "1600.0"
     },
     "changes": [],
-    "validated": false,
+    "validated": true,
     "maxrank": 3,
     "image": {
       "full": "RivenFengShuiEngine.png",
@@ -265,9 +485,98 @@
       "y": 96,
       "h": 48,
       "w": 48
-    }
+    },
+    "cooldown_starts_after": "blade_of_the_exile",
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "blade_of_the_exile",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0.25",
+            "speed": "0",
+            "cooldown": "0"
+          }
+        ]
+      },
+      {
+        "recast_window": "15",
+        "recast_delay": "0.5",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "(by_rank(100, 150, 200) + 0.55 * bonus_ad) * (1 + min(2, 8 / 3 * target_missing_hp_percent))",
+                  "dmg_type": [
+                    "Ability damage",
+                    "Area damage"
+                  ],
+                  "dmg_sub_type": "Physical",
+                  "vamp": 0.0
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "1600",
+            "cooldown": "0"
+          }
+        ]
+      }
+    ],
+    "buffs": [
+      {
+        "name": "blade_of_the_exile",
+        "duration": "15",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "stats": [
+          {
+            "stat": "ad",
+            "formula": "0.2 * ad",
+            "mode": "flat",
+            "conversion": false,
+            "snapshot": true
+          }
+        ],
+        "rules": []
+      }
+    ],
+    "inputs": [],
+    "assumptions": [],
+    "rules": [],
+    "stats": [],
+    "pets": []
   },
-  "validated": false,
+  "validated": true,
   "changes": [],
   "image": {
     "full": "Riven.png",

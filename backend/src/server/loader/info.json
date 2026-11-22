@@ -134,7 +134,7 @@
             "slot": 1,
             "stat": {
                 "stat": "move speed percent",
-                "scaling": "0.2"
+                "scaling": "0.02"
             },
             "image": "statmodsmovementspeedicon.png"
         },

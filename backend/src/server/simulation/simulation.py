@@ -8,8 +8,6 @@ from src.server.models.dataenums import (
     Actor,
     Comparison,
     DamageType,
-    DotState,
-    EffectComp,
     EffectResult,
     EffectType,
     Origin,
@@ -38,7 +36,7 @@ from src.server.simulation.exceptions import SimulationError
 from src.server.simulation.formula import FormulaContext, evaluate_formula
 from src.server.simulation.pet import PetCharacter
 
-QueueEntry = QueueComponent | RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
+QueueEntry = RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
 
 # Close enough for any melee attack; projectiles still need travel time (Vladimir's E lands after a Hemoplague cast at its release).
 DEFAULT_DISTANCE = 100
@@ -54,7 +52,6 @@ class Simulation():
         self.tick: int = 0
         self.distance: int = distance
         self.queue: dict[int, list[QueueEntry]] = defaultdict(list)
-        self.dots: dict[tuple[ActionType, Actor], DotState] = {}
         self.effect_list: list[TickEvent] = []
         self.last_action_tick: int = 0
         self.deaths: dict[Actor, int] = {}
@@ -138,10 +135,9 @@ class Simulation():
         character = self.actors[action.actor]
         action_effect = character.do_action(action, self.tick)
         self.tick = action_effect.tick
-        self._queue_status(action_effect.effect_comps, action.actor)
         for rule_event in action_effect.rule_events:
             self._queue_rule(rule_event, self.tick)
-        trigger = Trigger.ON_ATTACK if action.action_type == ActionType.AA else Trigger.ON_CAST
+        trigger = Trigger.ON_ATTACK if action.action_type == ActionType.BA else Trigger.ON_CAST
         self._fire(trigger, action.actor, action.target, action.action_type, self.tick)
         if action_effect.windup_cancel:
             # Everything else still waits for the windup; the cancelling slots may start right away.
@@ -160,8 +156,8 @@ class Simulation():
         for result in results:
             if result.type_ != EffectType.DAMAGE:
                 continue
-            if result.source == ActionType.AA:
-                self._fire(Trigger.ON_HIT, result.actor, result.target, ActionType.AA, tick)
+            if result.source == ActionType.BA:
+                self._fire(Trigger.ON_HIT, result.actor, result.target, ActionType.BA, tick)
             # Damage absorbed by a shield still counts as taken; an attack without damage (blind) does not.
             if result.raw > 0:
                 self._fire(Trigger.ON_DAMAGE_TAKEN, result.target, result.actor, result.source, tick)
@@ -460,16 +456,16 @@ class Simulation():
         pet = self._pet(pet_id)
         if pet.expired:
             return
-        ready = pet.check_action_delay(ActionType.AA, tick)
+        ready = pet.check_action_delay(ActionType.BA, tick)
         if ready > tick:
             self.queue.setdefault(ready, []).append(PetAttackDue(pet=pet_id))
             return
         target = self._enemy_of(pet_id)
-        action_effect = pet.do_action(Action(actor=pet_id, target=target, action_type=ActionType.AA), tick)
+        action_effect = pet.do_action(Action(actor=pet_id, target=target, action_type=ActionType.BA), tick)
         for rule_event in action_effect.rule_events:
             self._queue_rule(rule_event, action_effect.tick)
-        self._fire(Trigger.ON_ATTACK, pet_id, target, ActionType.AA, action_effect.tick)
-        self.queue.setdefault(pet.cooldowns[ActionType.AA], []).append(PetAttackDue(pet=pet_id))
+        self._fire(Trigger.ON_ATTACK, pet_id, target, ActionType.BA, action_effect.tick)
+        self.queue.setdefault(pet.cooldowns[ActionType.BA], []).append(PetAttackDue(pet=pet_id))
 
 
     def _expire_pet(self, pet_id: Actor, tick: int) -> None:
@@ -480,21 +476,6 @@ class Simulation():
             for name, instance in list(character.active_buffs.items()):
                 if character is pet or instance.source is pet:
                     character.remove_buff(name, tick)
-
-
-    def _queue_status(self, effect_comps: list[EffectComp], actor: Actor) -> None:
-        for effect_component in effect_comps:
-            if effect_component.duration > 0:
-                self._apply_dot(effect_component, actor)
-            else:
-                status_time = self.tick + self._calculate_delay(effect_component) + effect_component.duration
-                self.queue.setdefault(status_time, []).append(QueueComponent(
-                    source=effect_component.source,
-                    actor=actor,
-                    target=effect_component.target,
-                    type_=effect_component.type_,
-                    props=effect_component.props
-                    ))
 
 
     def _process_queue(self) -> None:
@@ -521,9 +502,8 @@ class Simulation():
         interval_events = [event for entry in entries if isinstance(entry, BuffTick) for event in self._interval_events(entry)]
         for event in [entry for entry in entries if isinstance(entry, RuleEvent)] + interval_events:
             processed.extend(self._run_rule(event, q_tick))
-        raw = [entry for entry in entries if isinstance(entry, QueueComponent)]
-        if raw or processed:
-            self._apply_components(raw, processed, q_tick)
+        if processed:
+            self._apply_components(processed, q_tick)
         for expire in [entry for entry in entries if isinstance(entry, PetExpire)]:
             self._expire_pet(expire.pet, q_tick)
         # Like interval rules, an attack that starts on a buff's end tick still gets the buff (Tibbers' 5th enraged attack).
@@ -534,11 +514,8 @@ class Simulation():
             self._rescale_slowed_buffs(end.bearer, q_tick)
 
 
-    def _apply_components(self, raw: list[QueueComponent], processed: list[QueueComponent], q_tick: int) -> None:
+    def _apply_components(self, processed: list[QueueComponent], q_tick: int) -> None:
         evaluated_entries = processed
-        for actor, character in self.actors.items():
-            evaluated_entries += character.evaluate([entry for entry in raw if entry.actor == actor])
-
         effect_results = []
         while evaluated_entries:
             # Damage can cause follow-up effects in the same tick (vamp heals), so repeat until nothing is left.
@@ -562,62 +539,3 @@ class Simulation():
         for actor, character in self.actors.items():
             if character.current_hp <= 0 and actor not in self.deaths:
                 self.deaths[actor] = tick
-
-
-    def _apply_dot(self, effect_comp: EffectComp, actor: Actor) -> None:
-        if effect_comp.interval <= 0:
-            #TODO: Log warning about invalid dot interval
-            return
-
-        interval_ticks = effect_comp.interval * TICKRATE
-        existing_dot = self._find_existing_dot(effect_comp)
-        i = math.floor((existing_dot.last_regular - existing_dot.start) / (interval_ticks)) + 1
-
-        while existing_dot.start + math.ceil(i * interval_ticks - 1e-9) <= existing_dot.end:
-            existing_dot.last_regular = existing_dot.start + math.ceil(i * interval_ticks - 1e-9)
-            
-            self.queue.setdefault(existing_dot.last_regular, []).append(QueueComponent(
-                source=effect_comp.source,
-                actor=actor,
-                target=effect_comp.target,
-                type_=effect_comp.type_,
-                props=effect_comp.props
-            ))
-            i += 1
-        if existing_dot.last_regular != existing_dot.end:
-            self.queue.setdefault(existing_dot.end, []).append(QueueComponent(
-                source=effect_comp.source,
-                actor=actor,
-                target=effect_comp.target,
-                type_=effect_comp.type_,
-                props=effect_comp.props
-            ))
-
-
-    def _find_existing_dot(self, effect_comp: EffectComp) -> DotState:
-        existing_dot = self.dots.get((effect_comp.source, effect_comp.target))
-        if existing_dot and existing_dot.end > self.tick:
-            if existing_dot.end != existing_dot.last_regular:
-                self._remove_dot_end(effect_comp.source, effect_comp.target, existing_dot.end)
-            existing_dot.end = self.tick + self._calculate_delay(effect_comp) + effect_comp.duration
-        else:
-            existing_dot = DotState(
-                start = self.tick + self._calculate_delay(effect_comp),
-                last_regular = self.tick + self._calculate_delay(effect_comp),
-                end = self.tick + self._calculate_delay(effect_comp) + effect_comp.duration
-            )
-            self.dots[(effect_comp.source, effect_comp.target)] = existing_dot
-        return existing_dot
-
-
-    def _remove_dot_end(self, source: ActionType, target: Actor, tick: int) -> None:
-        if tick not in self.queue:
-            return
-        self.queue[tick] = [qc for qc in self.queue[tick] if not (qc.source == source and qc.target == target)]
-        if not self.queue[tick]:
-            del self.queue[tick]
-
-
-    def _calculate_delay(self, effect_comp: EffectComp) -> int:
-        travel_time = to_ticks(self.distance / effect_comp.speed) if effect_comp.speed > 0 else 0
-        return effect_comp.delay + travel_time

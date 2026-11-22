@@ -60,7 +60,7 @@ def vs_annie_lvl_1(vayne, load_champion) -> Simulation:
 class TestVayne():
 
     def test_q_empowers_next_attack(self, vs_darius: Simulation):
-        vs_darius.do_combo(combo(ActionType.AA, ActionType.Q, ActionType.AA))
+        vs_darius.do_combo(combo(ActionType.BA, ActionType.Q, ActionType.BA))
 
         expected = physical(2 * VAYNE_AD) + physical(Q_RANK_3 * VAYNE_AD)
         assert vs_darius.actors[Actor.RED].damage_taken == pytest.approx(expected)
@@ -68,7 +68,7 @@ class TestVayne():
 
 
     def test_w_procs_on_third_hit(self, vs_darius: Simulation):
-        vs_darius.do_combo(combo(ActionType.AA, ActionType.Q, ActionType.AA, ActionType.AA))
+        vs_darius.do_combo(combo(ActionType.BA, ActionType.Q, ActionType.BA, ActionType.BA))
 
         w_proc = W_RANK_1_PERCENT * DARIUS_MAX_HP
         expected = physical(3 * VAYNE_AD) + physical(Q_RANK_3 * VAYNE_AD) + w_proc
@@ -77,7 +77,7 @@ class TestVayne():
 
 
     def test_w_stacks_reset_after_proc(self, vs_darius: Simulation):
-        vs_darius.do_combo(combo(*[ActionType.AA] * 6))
+        vs_darius.do_combo(combo(*[ActionType.BA] * 6))
 
         w_proc = W_RANK_1_PERCENT * DARIUS_MAX_HP
         assert true_damage_hits(vs_darius) == [pytest.approx(w_proc)] * 2
@@ -85,7 +85,7 @@ class TestVayne():
 
 
     def test_w_proc_has_minimum_damage(self, vs_annie_lvl_1: Simulation):
-        vs_annie_lvl_1.do_combo(combo(ActionType.AA, ActionType.AA, ActionType.AA))
+        vs_annie_lvl_1.do_combo(combo(ActionType.BA, ActionType.BA, ActionType.BA))
 
         # 6% of Annie's 560 max HP is 33.6, below the minimum.
         expected = physical(3 * VAYNE_AD, ANNIE_ARMOR_LVL_1) + W_RANK_1_MINIMUM
@@ -94,7 +94,7 @@ class TestVayne():
 
 
     def test_e_applies_silver_bolts(self, vs_darius: Simulation):
-        vs_darius.do_combo(combo(ActionType.E, ActionType.AA, ActionType.AA))
+        vs_darius.do_combo(combo(ActionType.E, ActionType.BA, ActionType.BA))
 
         w_proc = W_RANK_1_PERCENT * DARIUS_MAX_HP
         expected = physical(E_RANK_1) + physical(2 * VAYNE_AD) + w_proc
@@ -103,7 +103,7 @@ class TestVayne():
 
 
     def test_final_hour_grants_bonus_ad(self, vs_darius: Simulation):
-        vs_darius.do_combo(combo(ActionType.R, ActionType.AA))
+        vs_darius.do_combo(combo(ActionType.R, ActionType.BA))
 
         expected = physical(VAYNE_AD + R_RANK_1_AD)
         assert vs_darius.actors[Actor.RED].damage_taken == pytest.approx(expected)
@@ -164,7 +164,7 @@ class TestVayneTerrain():
 class TestVayneTiming():
 
     def test_q_cooldown_starts_when_tumble_is_consumed(self, vs_darius: Simulation):
-        vs_darius.do_combo(combo(ActionType.Q, ActionType.AA))
+        vs_darius.do_combo(combo(ActionType.Q, ActionType.BA))
 
         hit_tick = first_hit_tick(vs_darius, ActionType.Q)
         assert vs_darius.actors[Actor.BLUE].cooldowns[ActionType.Q] == hit_tick + Q_RANK_3_COOLDOWN_TICKS
@@ -186,7 +186,7 @@ class TestVayneTiming():
 
     def test_final_hour_stealth_starts_on_q_and_ends_on_attack(self, vs_darius: Simulation):
         vayne = vs_darius.actors[Actor.BLUE]
-        r, q, aa = combo(ActionType.R, ActionType.Q, ActionType.AA)
+        r, q, aa = combo(ActionType.R, ActionType.Q, ActionType.BA)
 
         vs_darius.do_action(r)
         vs_darius.do_action(q)

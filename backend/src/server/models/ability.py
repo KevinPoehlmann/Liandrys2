@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-from src.server.models.effect import Effect
 from src.server.models.image import Image
 from src.server.models.pet import Pet
 from src.server.models.rule import Buff, Input, Rule, Stage, StatModifier
@@ -30,19 +29,11 @@ class Ability(BaseModel):
     buffs: list[Buff] = []
     inputs: list[Input] = []
     pets: list[Pet] = []
-    effects: list[Effect] = []
+    assumptions: list[str] = []  # what we assumed where data was missing, shown to the user
     raw_stats: dict[str, str] = {}
     changes: list[str] = []
     validated: bool = False
 
-    @classmethod
-    def parse_obj(cls, obj: dict) -> "Ability":
-        if "effects" in obj:
-            obj["effects"] = [
-                Effect.parse_obj(ec)
-                for ec in obj["effects"]
-            ]
-        return super().parse_obj(obj)
 
 
 

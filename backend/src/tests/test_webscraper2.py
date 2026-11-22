@@ -11,10 +11,6 @@ from src.server.loader.webscraper2 import (
     _scrape_passive_description,
     _scrape_ability,            
     _scrape_ability_stats,      
-    _scrape_effects,            
-    _scrape_effect_paragraph,   
-    _scrape_effect_components,  
-    _create_effect_component,   
     scrape_item,                
     _scrape_item_class,         
     _scrape_item_elements,      
@@ -42,8 +38,7 @@ from src.server.loader.webscraper2 import (
 )
 from src.server.models.ability import ChampionAbility, Ability, ItemActive
 from src.server.models.champion import NewChampion, Champion
-from src.server.models.dataenums import RangeType, Stat, ItemClass, EffectType, DamageSubType, DamageProperties, HpScaling
-from src.server.models.effect import Effect
+from src.server.models.dataenums import RangeType, Stat, ItemClass
 from src.server.models.item import NewItem
 from src.server.models.rune import NewRune
 from src.server.models.json_validation import PassiveJson, Image, SpellJson, ChampionJson, StatsJson, ItemJson, SummonerspellJson, GoldJson, RuneJson
@@ -117,7 +112,6 @@ def test_scrape_champion_malzahar(load_html):
     assert result.name == "Malzahar"
     assert result.q.name == "Call of the Void"
     assert result.r.name == "Nether Grasp"
-    assert len(result.r.effects) > 0
     assert result.r.cooldown != "0"
 
 
@@ -216,7 +210,6 @@ def test_scrape_ability_malzahar(load_soup):
     assert ability.name == "Nether Grasp"
     assert ability.cooldown == "140.0 + (rank - 1) * -30.0"
     assert ability.description.startswith("Malzahar suppresses")  # or similar
-    assert len(ability.effects) == 4
     assert "cooldown" not in ability.raw_stats
 
 
@@ -229,40 +222,6 @@ def test_scrape_ability_stats_void(load_soup):
     assert all(key in stat_dict for key in expected_keys)
     assert stat_dict["cost"] == "40.0 + (rank - 1) * 5.0"
     assert stat_dict["cast time"] == "none"
-
-
-def test_scrape_effects_nether(load_soup):
-    soup = load_soup("malzahar")
-    ability_block = soup.find("div", class_="skill skill_r")
-    result = _scrape_effects(ability_block)
-    assert len(result) == 4
-    assert isinstance(result[0], Effect)
-    assert result[0].text.startswith("Active: Malzahar")
-
-
-def test_scrape_effect_paragraph_nether(load_soup):
-    soup = load_soup("malzahar")
-    ability_block = soup.find("div", class_="skill skill_r")
-    paragraphs = ability_block.find_all("div", class_="ability-info-row")
-    result = _scrape_effect_paragraph(paragraphs[2])
-    assert isinstance(result, Effect)
-    assert result.text.startswith("Additionally, a Null Zone")
-    assert len(result.effect_components) == 1
-    assert result.effect_components[0].type_ == EffectType.DAMAGE
-
-
-def test_scrape_effect_components_nether(load_soup):
-    soup = load_soup("malzahar")
-    ability_block = soup.find("div", class_="skill skill_r")
-    paragraphs = ability_block.find_all("div", class_="ability-info-row")
-    stats = paragraphs[2].find("div", class_="ability-info-stats")
-    result = _scrape_effect_components(stats)
-    assert len(result) == 1
-    assert result[0].type_ == EffectType.DAMAGE
-    assert isinstance(result[0].props, DamageProperties)
-    assert result[0].props.dmg_sub_type == DamageSubType.MAGIC
-    assert result[0].props.hp_scaling == HpScaling.MAX_HP
-
 
 
 def test_scrape_item_titanic(load_html):
