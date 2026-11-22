@@ -228,7 +228,8 @@ def action_effect_aa(aatrox_with_items) -> ActionEffect:
         target=Target.TARGET,
         scaling="ad",
         dmg_type=[DamageType.BASIC],
-        dmg_sub_type=DamageSubType.PHYSIC
+        dmg_sub_type=DamageSubType.PHYSIC,
+        can_crit=True
     ))
     rule = Rule(actions=[damage], speed=str(aatrox_with_items.champion.missile_speed))
     return ActionEffect(

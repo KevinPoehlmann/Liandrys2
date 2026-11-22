@@ -120,6 +120,27 @@ class TestLifeSteal():
             LIFE_STEAL * (attack + on_hit_damage))
 
 
+    @pytest.mark.parametrize("champion, rank, slot, bonus_ratio, ad, armor", [
+        # Both empowered attacks add their bonus to the attack itself (basic and ability damage), so life steal counts it.
+        ("vayne", Rank(q=3, w=0, e=0, r=0), ActionType.Q, 0.95, VAYNE_AD, DARIUS_ARMOR),
+        ("darius", Rank(q=0, w=1, e=0, r=0), ActionType.W, 0.4, 64 + 5 * GROWTH_LVL_6 + BOTRK_AD, 23 + 4.6 * GROWTH_LVL_6),
+    ])
+    def test_empowered_attack_bonus_heals_too(self, load_champion, load_item, champion, rank, slot, bonus_ratio, ad, armor):
+        attacker = Character(load_champion(champion), 6, rank, [load_item("blade_of_the_ruined_king")])
+        attacker.current_hp = 100
+        target = Character(load_champion("vayne" if champion == "darius" else "darius"), 6, Rank(q=1, w=1, e=1, r=1), [])
+        sim = Simulation(attacker, target)
+
+        sim.do_combo([blue(slot), blue(ActionType.BA)])
+
+        hit = next(event.tick for event in sim.effect_list for result in event.result
+                   if result.origin.kind == OriginKind.ABILITY and result.origin.name == slot.value.upper()
+                   and result.type_ == EffectType.DAMAGE)
+        mists_edge = sum(value for tick, value in results(sim, MISTS_EDGE, EffectType.DAMAGE) if tick == hit)
+        expected = LIFE_STEAL * (physical(ad, armor) + physical(bonus_ratio * ad, armor) + mists_edge)
+        assert sum(value for tick, value in results(sim, LIFE_STEAL_HEAL, EffectType.HEAL) if tick == hit) == pytest.approx(expected)
+
+
     def test_thornmails_grievous_wounds_already_reduce_the_first_attack(self, riven, load_champion, load_item):
         thorny_darius = Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), [load_item("thornmail")])
         riven.current_hp = 100

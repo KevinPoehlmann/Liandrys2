@@ -72,7 +72,7 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 **Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Sheen, Thornmail, Blade of the Ruined King (replaces Kraken Slayer: current-health on-hit, life steal, melee/ranged), The Collector, Black Cleaver, Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
 
 - [x] Champions: Annie (+Tibbers), Darius, Vayne, Vladimir, Riven, Veigar
-- [ ] Items: Sheen, Thornmail, Blade of the Ruined King done; The Collector, Black Cleaver open
+- [ ] Items: Sheen, Thornmail, Blade of the Ruined King, The Collector done; Black Cleaver open
 - [ ] Runes: Conqueror, Electrocute
 
 ## Phase 3: Admin side complete
@@ -97,6 +97,7 @@ The loader is parked until it's needed again. Do this before data entry.
 ## Phase 5: User side V1
 
 - [ ] Pass runes, summoner spells, item passives/actives and distance from the route into the simulation
+- [ ] Crits in the UI: pick crit/no crit per attack below a threshold (e.g. 5 attacks) and show how likely that number of crits is (pseudo-random algorithm, docs/league-mechanics.md); expected value above (`Action.crit` = None)
 - [ ] Item groups from `limitations` ("Limited to 1 Spellblade item"): reject two items of one group when picking items
 - [ ] Scenario inputs in the UI: stack configuration (placeholder today, e.g. Veigar Q kills) and checkboxes like "wall behind the target" (Vayne E `terrain`)
 - [ ] Ability points: lowering the level should drop excess points
@@ -146,5 +147,5 @@ Ideas collected for later; mostly frontend.
 - Decide: champion stats `int` vs `float` (Pydantic v1 silently truncates floats in `int` fields)
 - Manual effect data lives per patch: fixes in older patches don't reach newer ones
 - Roles (live patch): top laners reach level 20 (formulas already expect 20 values; the user UI still caps at 18), and each role brings small perks that the request has to ask for
-- Mechanics gaps from [docs/league-mechanics.md](docs/league-mechanics.md) (each ⚠ there), build when a test group member or item needs it: resistance reduction with negative resistances, base/bonus resistance split, damage amplification/reduction, crit (user choice below a threshold, expected value above), attack speed cap/floor and `windup_modifier` (check the loader's `/ 100`), attack reset cancelling a windup, ultimate haste and haste cap, heal and shield power, Grievous Wounds, life steal/omnivamp stats, shield types and spell shields, tenacity groups and tenacity from buffs, missing CC types (root, polymorph, charm, flee), multiplicative movement speed bonuses and slow resist, effects before the end of a cast time, channels, pets
+- Mechanics gaps from [docs/league-mechanics.md](docs/league-mechanics.md) (each ⚠ there), build when a test group member or item needs it: resistance reduction with negative resistances, base/bonus resistance split, damage amplification/reduction, bonus crit damage, attack speed cap/floor and `windup_modifier` (check the loader's `/ 100`), attack reset cancelling a windup, ultimate haste and haste cap, heal and shield power, Grievous Wounds, life steal/omnivamp stats, shield types and spell shields, tenacity groups and tenacity from buffs, missing CC types (root, polymorph, charm, flee), multiplicative movement speed bonuses and slow resist, effects before the end of a cast time, channels, pets
 - ARAM mode: per-champion modifiers (damage dealt/received, healing, shielding) applied by the simulation; items already have `maps`. Per-map ability values (e.g. Arena Aatrox R) are not planned for V1

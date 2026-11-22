@@ -7,6 +7,7 @@ from src.server.models.dataenums import (
     ActionType,
     Actor,
     Comparison,
+    DamageSubType,
     DamageType,
     EffectResult,
     EffectType,
@@ -28,7 +29,7 @@ from src.server.models.request import V1Response, Action
 from src.server.models.rule import (
     ApplyBuffAction, Condition, DamageAction, DamageProps, HealAction, HealProps, RemoveBuffAction,
     ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps, SummonAction,
-    CleanseAction, LockAction, PayCostAction
+    CleanseAction, ExecuteAction, LockAction, PayCostAction
 )
 from src.server.simulation.character import Character
 from src.server.simulation.buff_instance import BuffInstance
@@ -41,6 +42,7 @@ QueueEntry = RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
 
 # Close enough for any melee attack; projectiles still need travel time (Vladimir's E lands after a Hemoplague cast at its release).
 DEFAULT_DISTANCE = 100
+CRIT_DAMAGE = 2.0
 
 
 def travel_time(distance: float, speed: float, acceleration: float = 0, max_speed: float = 0) -> float:
@@ -165,15 +167,18 @@ class Simulation():
             self.tick = start
 
 
-    def _fire(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType, tick: int) -> None:
-        for event in self._triggered_events(trigger, actor, counterpart, source):
+    def _fire(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType, tick: int,
+              values: dict[str, float] | None = None) -> None:
+        for event in self._triggered_events(trigger, actor, counterpart, source, values=values):
             self._queue_rule(event, tick)
 
 
-    def _triggered_events(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType) -> list[RuleEvent]:
+    def _triggered_events(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType,
+                          crit: bool | None = None, values: dict[str, float] | None = None) -> list[RuleEvent]:
         # Rules are collected before any of them runs, so a buff created by this event can't react to it.
         return [
-            RuleEvent(rule=rule, slot=slot, owner=self._actor_of(owner), target=counterpart, bearer=actor if buff else None, buff=buff)
+            RuleEvent(rule=rule, slot=slot, owner=self._actor_of(owner), target=counterpart, bearer=actor if buff else None,
+                      buff=buff, crit=crit, values=values or {})
             for rule, slot, owner, buff in self.actors[actor].triggered_rules(trigger, source)
         ]
 
@@ -185,7 +190,7 @@ class Simulation():
         target = next((component.target for component in components if component.type_ == EffectType.DAMAGE), None)
         if target is None:
             return []
-        events = (self._triggered_events(Trigger.ON_HIT, attack.owner, target, ActionType.BA)
+        events = (self._triggered_events(Trigger.ON_HIT, attack.owner, target, ActionType.BA, crit=attack.crit)
                   + self._triggered_events(Trigger.ON_GET_HIT, target, attack.owner, ActionType.BA))
         on_hit = []
         for event in events:
@@ -202,7 +207,9 @@ class Simulation():
                 continue
             # Damage absorbed by a shield still counts as taken; an attack without damage (blind) does not.
             if result.raw > 0:
-                self._fire(Trigger.ON_DAMAGE_TAKEN, result.target, result.actor, result.source, tick)
+                values = {"damage": result.raw - result.mitigated, "health_damage": result.value}
+                self._fire(Trigger.ON_DAMAGE_TAKEN, result.target, result.actor, result.source, tick, values)
+                self._fire(Trigger.ON_DAMAGE_DEALT, result.actor, result.target, result.source, tick, values)
 
 
     def _fire_stack(self, buff: str, buff_rules: list[Rule], slot: ActionType, owner: Actor, bearer: Actor, tick: int) -> None:
@@ -293,6 +300,12 @@ class Simulation():
                 bearer = self._resolve_target(props.target, event)
                 self.actors[bearer].cleanse(props.statuses, props.buff_tags, tick)
                 self._rescale_slowed_buffs(bearer, tick)
+            case ExecuteAction(props=props):
+                target = self._resolve_target(props.target, event)
+                execute = ProcessedDamageProperties(value=0, flat_pen=0, percent_pen=0, dmg_type=DamageType.DEFAULT,
+                                                    dmg_sub_type=DamageSubType.TRUE, execute=True)
+                return [QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE,
+                                       props=execute, origin=self._origin(event))]
             case LockAction(props=props):
                 duration = to_ticks(evaluate_formula(props.duration, self._context(event, event.target)))
                 owner.lock(tick + duration, set(props.exceptions))
@@ -315,7 +328,8 @@ class Simulation():
         bearer = self.actors[event.bearer] if event.bearer else None
         instance = bearer.active_buffs.get(event.buff) if bearer and event.buff else None
         stacks, elapsed = (instance.stacks, bearer.buff_elapsed(instance)) if instance else (0, 0.0)
-        return self.actors[event.owner].formula_context(event.slot, target=self.actors[target], stacks=stacks, elapsed=elapsed)
+        context = self.actors[event.owner].formula_context(event.slot, target=self.actors[target], stacks=stacks, elapsed=elapsed)
+        return replace(context, event_values=event.values)
 
 
     def _schedule_interval(self, bearer: Actor, instance: BuffInstance) -> None:
@@ -360,6 +374,14 @@ class Simulation():
 
 
     @staticmethod
+    def _crit_factor(crit: bool | None, owner: Character) -> float:
+        # Crits deal 200 % (since V26.01); without a choice the expected value is used.
+        if crit is not None:
+            return CRIT_DAMAGE if crit else 1
+        return 1 + min(owner.get_stat(Stat.CRIT_P), 1) * (CRIT_DAMAGE - 1)
+
+
+    @staticmethod
     def _life_steal(props: DamageProps, owner: Character) -> float:
         # Life steal heals from basic damage and on-hit damage, not from abilities or reactive damage (Thornmail).
         if {DamageType.BASIC, DamageType.ON_HIT} & set(props.dmg_type):
@@ -370,8 +392,11 @@ class Simulation():
     def _damage(self, props: DamageProps, event: RuleEvent) -> QueueComponent:
         target, context = self._target_and_context(props.target, event)
         flat_pen, percent_pen = self.actors[event.owner].get_penetration(props.dmg_sub_type)
+        value = evaluate_formula(props.scaling, context)
+        if props.can_crit:
+            value *= self._crit_factor(event.crit, self.actors[event.owner])
         processed = ProcessedDamageProperties(
-            value=evaluate_formula(props.scaling, context),
+            value=value,
             flat_pen=flat_pen,
             percent_pen=percent_pen,
             dmg_type=props.dmg_type[0] if props.dmg_type else DamageType.DEFAULT,

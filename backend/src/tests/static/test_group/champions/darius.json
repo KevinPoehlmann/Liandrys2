@@ -338,7 +338,8 @@
                     "Ability damage"
                   ],
                   "dmg_sub_type": "Physical",
-                  "vamp": 0.0
+                  "vamp": 0.0,
+                  "can_crit": true
                 }
               },
               {

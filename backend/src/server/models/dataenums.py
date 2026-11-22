@@ -489,6 +489,7 @@ class RuleActionType(str, Enum):
     PAY_COST = "PayCost"
     CLEANSE = "Cleanse"
     LOCK = "Lock"
+    EXECUTE = "Execute"
     CUSTOM = "Custom"
 
 class StatMode(str, Enum):
@@ -545,6 +546,7 @@ class ProcessedDamageProperties(EffectProperties):
     dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.PHYSIC)
     vamp: float = 0
     life_steal: float = 0
+    execute: bool = False  # takes all remaining health, past shields (The Collector)
 
 
 class ProcessedHealProperties(EffectProperties):

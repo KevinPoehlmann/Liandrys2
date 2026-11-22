@@ -90,7 +90,7 @@ The game's trigger categories:
 - **Attacks that apply on-hit *and* spell effects:** Darius W, Vayne Q, Blitzcrank R passive, Camille Q, Garen Q, Jax W, Nasus Q, Trundle Q, Volibear Q, … (Attack_effects/Abilities).
 - Rageblade's phantom hit repeats on-hit effects, not on-attack effects.
 
-**Simulation:** triggers `on_start`, `on_cast`, `on_attack`, `on_hit`, `on_damage_taken` (also when a shield absorbs everything), `on_stack`, `on_interval` work; `on_get_hit` fires together with `on_hit`, from the side of the one hit (the attacker is its `target`); `on_damage_dealt` exists in the model but is not fired yet. `on_cast` fires at the start of the cast time (Spellblade is granted then, and stays if the cast is cancelled). ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
+**Simulation:** triggers `on_start`, `on_cast`, `on_attack`, `on_hit`, `on_damage_taken` (also when a shield absorbs everything), `on_stack`, `on_interval` work; `on_get_hit` fires together with `on_hit`, from the side of the one hit (the attacker is its `target`); `on_damage_dealt` fires for every damage above 0, from the side of the one who dealt it. `on_cast` fires at the start of the cast time (Spellblade is granted then, and stays if the cast is cancelled). ⚠ No on-spell, on-cc, on-crit, on-death, on-heal/shield. ⚠ The trigger filter only knows slots, not damage tags (needed for spell effects and for "physical damage only" like Black Cleaver).
 
 ## Basic attacks and attack speed
 Pages: Basic_attack, Attack_speed, Attack_effects
@@ -117,7 +117,7 @@ Pages: Critical_strike
 - Crits are pseudo-random (failure streak, capped at 5), not independent rolls. Expected value per attack: `1 + chance × (critMultiplier − 1)`.
 - Some abilities always crit (Ashe Q, Jhin 4th shot, …), some never (Fiora's first passive attack, …). Ability damage that scales with crit chance is not a crit.
 
-**Simulation:** ⚠ not modeled. Plan (user idea, details open): both variants. Below a threshold of basic attacks (e.g. 5) the user picks per attack whether it crits, and the UI shows how likely that number of crits is; from the threshold on, the expected value is the default.
+**Simulation:** ✓ `Action.crit` picks a crit per attack (True/False); without a choice the expected value is used. Only damage with `can_crit` crits (the attack itself, Darius W's bonus; not Vayne Q's bonus, not on-hit damage). ⚠ The UI threshold (pick below e.g. 5 attacks, expected value above) and the probability of k crits with the pseudo-random algorithm are Phase 5. ⚠ No bonus crit damage (Infinity Edge) yet.
 
 ## Ability haste and cooldowns
 Pages: Haste (redirect from Ability_haste)

@@ -84,6 +84,7 @@ class FormulaContext:
     elapsed: float = 0.0
     slot: ActionType | None = None
     scenario: dict[str, float] = field(default_factory=dict)
+    event_values: dict[str, float] = field(default_factory=dict)
 
 
 class FormulaNamespace(Mapping[str, float]):
@@ -101,7 +102,7 @@ class FormulaNamespace(Mapping[str, float]):
             "rank": context.rank,
             "stacks": context.stacks,
             "elapsed": context.elapsed,
-        } | ranks | context.scenario
+        } | ranks | context.scenario | context.event_values
 
     def __getitem__(self, name: str) -> float:
         if name in self._fixed:

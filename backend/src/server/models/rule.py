@@ -28,6 +28,10 @@ class DamageProps(StrictModel):
     dmg_type: list[DamageType] = [DamageType.ABILITY]
     dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
     vamp: float = 0.0
+    can_crit: bool = False  # crits with the attack it belongs to (Crippling Strike yes, Tumble no)
+
+class ExecuteProps(StrictModel):
+    target: Target
 
 class HealProps(StrictModel):
     target: Target
@@ -134,6 +138,10 @@ class LockAction(StrictModel):
     type_: Literal[RuleActionType.LOCK]
     props: LockProps
 
+class ExecuteAction(StrictModel):
+    type_: Literal[RuleActionType.EXECUTE]
+    props: ExecuteProps
+
 class CustomAction(StrictModel):
     type_: Literal[RuleActionType.CUSTOM]
     props: CustomProps
@@ -143,7 +151,7 @@ class CustomAction(StrictModel):
 RuleAction = Annotated[
     Union[
         DamageAction, HealAction, ShieldAction, StatusAction, ApplyBuffAction,
-        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, PayCostAction, LockAction, CleanseAction, CustomAction
+        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, PayCostAction, LockAction, CleanseAction, ExecuteAction, CustomAction
     ],
     Field(discriminator="type_")
 ]

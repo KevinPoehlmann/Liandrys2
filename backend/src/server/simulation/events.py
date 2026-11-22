@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from src.server.models.dataenums import ActionType, Actor
 from src.server.models.rule import Rule
@@ -13,6 +13,8 @@ class RuleEvent:
     target: Actor
     bearer: Actor | None = None
     buff: str | None = None
+    crit: bool | None = None  # an attack's crit choice, shared by its on-hit rules
+    values: dict[str, float] = field(default_factory=dict)  # `damage`/`health_damage` in damage-triggered rules
 
 
 @dataclass

@@ -14,6 +14,7 @@ class Action(BaseModel):
     target: Actor
     action_type: ActionType
     outcome: str | None = None
+    crit: bool | None = None  # for attacks: True/False picks it, None uses the expected value
 
 
 

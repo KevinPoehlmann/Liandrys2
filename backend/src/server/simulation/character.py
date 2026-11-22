@@ -628,8 +628,12 @@ class Character():
         for component in components:
             try:
                 assert isinstance(component.props, ProcessedDamageProperties), "Damage component must have ProcessedDamageProperties"
-                damage, raw_dmg, mitigated = self._calculate_damage(component.props)
-                health_damage, shield_results = self._use_shields(damage, component.target)
+                if component.props.execute:
+                    damage = raw_dmg = health_damage = max(self.current_hp, 0)
+                    mitigated, shield_results = 0, []
+                else:
+                    damage, raw_dmg, mitigated = self._calculate_damage(component.props)
+                    health_damage, shield_results = self._use_shields(damage, component.target)
                 total_damage += health_damage
                 results.append(EffectResult(
                     source=component.source,
@@ -782,7 +786,7 @@ class Character():
         self.cooldowns[ActionType.BA] = tick + to_ticks(attack_time)
         windup_ticks = to_ticks(attack_time * self._attack_windup())
         rule = self._basic_attack_rule(blinded=StatusType.BLIND in self.status_effects)
-        event = RuleEvent(rule=rule, slot=ActionType.BA, owner=action.actor, target=action.target)
+        event = RuleEvent(rule=rule, slot=ActionType.BA, owner=action.actor, target=action.target, crit=action.crit)
         return ActionEffect(tick=tick + windup_ticks, rule_events=[event], windup_cancel=self._windup_cancels())
 
     def _attack_windup(self) -> float:
@@ -800,7 +804,8 @@ class Character():
             target=Target.TARGET,
             scaling="0" if blinded else "ad",
             dmg_type=[DamageType.BASIC],
-            dmg_sub_type=DamageSubType.PHYSIC
+            dmg_sub_type=DamageSubType.PHYSIC,
+            can_crit=True
         ))
         return Rule(actions=[damage], speed=str(self.champion.missile_speed))
     
