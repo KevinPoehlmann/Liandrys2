@@ -37,7 +37,7 @@ from src.server.simulation.components import (
     QueueComponent
 )
 from src.server.simulation.events import BuffEnd, BuffTick, PetAttackDue, PetExpire, RuleEvent
-from src.server.simulation.exceptions import SimulationError
+from src.server.simulation.exceptions import ComboError, DataError, describe, located
 from src.server.simulation.formula import FormulaContext, evaluate_formula
 from src.server.simulation.pet import PetCharacter
 
@@ -66,6 +66,8 @@ def travel_time(distance: float, speed: float, acceleration: float = 0, max_spee
 
 # Effects without an end (none known yet) would keep the simulation running forever.
 MAX_SECONDS_AFTER_LAST_ACTION = 60
+# Rules that trigger each other without a delay never leave their tick; real chains stay far below this.
+MAX_RULE_EVENTS_PER_TICK = 1000
 
 
 
@@ -82,6 +84,7 @@ class Simulation():
         # (owner, rule, cast instance, target) -> tick from which the rule may trigger again for that cast (cast_cooldown)
         self.cast_gates: dict[tuple, float] = {}
         self.attack_factors: dict[int, float] = {}  # cast instance of an Attack action -> its on_hit_factor
+        self.rule_events_in_tick: tuple[int, int] = (0, 0)  # (tick, rule events run in it so far)
         self.actors: dict[Actor, Character] = {
             Actor.BLUE: blue,
             Actor.RED: red
@@ -108,16 +111,18 @@ class Simulation():
         try:
             self._process_queue()
             action = action.copy(update={"action_type": self.actors[action.actor].resolve_slot(action.action_type)})
+            self._check_slot(action)
             self._wait_until_ready(action)
             self._cast(action)
-        except Exception as e:
-            raise SimulationError(
-                message=str(e),
-                action_index=index,
-                action_type=action.action_type,
-                actor=action.actor,
-                phase="cast"
-            ) from e
+        except Exception as error:
+            raise located(error, phase="cast", action_index=index, action_type=action.action_type, actor=action.actor,
+                          champion=self.actors[action.actor].name)
+
+
+    def _check_slot(self, action: Action) -> None:
+        character = self.actors[action.actor]
+        if action.action_type != ActionType.BA and action.action_type not in character.ability_dict | character.item_slots:
+            raise ComboError(f"{character.name} has nothing in slot {action.action_type.value}")
 
 
     def _wait_until_ready(self, action: Action) -> None:
@@ -132,7 +137,7 @@ class Simulation():
             self._process_tick(q_tick)
             ready = max(earliest, self._ready_tick(character, action.action_type))
         if math.isinf(ready):
-            raise ValueError(f"{action.action_type} can never be used: a buff without an end blocks it or its cooldown waits for one")
+            raise ComboError(f"{action.action_type.value} can never be used: a buff without an end blocks it or its cooldown waits for one")
         self.tick = ready
 
 
@@ -364,6 +369,7 @@ class Simulation():
                 self._rescale_slowed_buffs(bearer, tick)
                 self._fire_stack(props.buff, instance.definition.rules, instance.slot, self._actor_of(instance.source), bearer, tick, event.cast)
             case RemoveBuffAction(props=props):
+                self._check_buff_known(props.buff)
                 bearer = self.actors[self._resolve_target(props.target, event)]
                 if props.stacks is None:
                     bearer.remove_buff(props.buff, tick)
@@ -406,6 +412,12 @@ class Simulation():
             case _:
                 raise NotImplementedError(f"Action '{action.type_}' is not supported yet")
         return []
+
+
+    def _check_buff_known(self, name: str) -> None:
+        # Removing a buff that isn't active is fine; one that nobody defines is a typo.
+        if not any(name in character.buff_definitions for character in self.actors.values()):
+            raise DataError(f"Unknown buff '{name}'")
 
 
     def _target_and_context(self, target: Target, event: RuleEvent) -> tuple[Actor, FormulaContext]:
@@ -554,11 +566,11 @@ class Simulation():
             case Target.BEARER if event.bearer is not None:
                 return event.bearer
             case Target.BEARER:
-                raise ValueError(f"Target '{target}' is only available inside buff rules")
+                raise DataError(f"Target '{target.value}' is only available inside buff rules")
             case Target.PET:
                 pet = self._pet_of(event.owner)
                 if pet is None:
-                    raise ValueError(f"{event.owner} has no pet")
+                    raise DataError(f"{event.owner} has no pet")
                 return pet
             case Target.OWNER:
                 return self._owner_of(event.owner)
@@ -618,13 +630,13 @@ class Simulation():
     def _pet(self, actor: Actor) -> PetCharacter:
         pet = self.actors[actor]
         if not isinstance(pet, PetCharacter):
-            raise ValueError(f"{actor} is not a pet")
+            raise DataError(f"{actor} is not a pet")
         return pet
 
 
     def _summon(self, name: str, owner: Actor, tick: int, cast: int | None = None) -> None:
         owner_character = self.actors[owner]
-        definition, slot = owner_character.pet_definitions[name]
+        definition, slot = owner_character.pet_definition(name)
         pet = PetCharacter(definition, owner_character, slot)
         pet.current_tick = tick
         pet_id = self._new_pet_id(owner, name)
@@ -690,15 +702,29 @@ class Simulation():
 
 
     def _process_tick(self, q_tick: int) -> None:
+        try:
+            self._run_tick(q_tick)
+        except Exception as error:
+            raise located(error, phase="effect", tick=q_tick)
+
+
+    def _run_tick(self, q_tick: int) -> None:
         self._set_clock(q_tick)
         entries = self.queue.pop(q_tick)
         processed = []
         # Interval rules run before buff ends, so the tick at the end still sees the stacks.
         interval_events = [event for entry in entries if isinstance(entry, BuffTick) for event in self._interval_events(entry)]
-        for event in [entry for entry in entries if isinstance(entry, RuleEvent)] + interval_events:
-            components = self._run_rule(event, q_tick)
-            processed.extend(components)
-            processed.extend(self._on_hit_components(event, components, q_tick))
+        rule_events = [entry for entry in entries if isinstance(entry, RuleEvent)] + interval_events
+        self._count_rule_events(rule_events, q_tick)
+        for event in rule_events:
+            try:
+                components = self._run_rule(event, q_tick)
+                processed.extend(components)
+                processed.extend(self._on_hit_components(event, components, q_tick))
+            except Exception as error:
+                owner = self.actors[event.owner]
+                raise located(error, phase="effect", tick=q_tick, origin=self._origin(event), champion=owner.name,
+                              rule=owner.rule_position(event.rule))
         if processed:
             self._apply_components(processed, q_tick)
         for expire in [entry for entry in entries if isinstance(entry, PetExpire)]:
@@ -709,6 +735,15 @@ class Simulation():
         for end in [entry for entry in entries if isinstance(entry, BuffEnd)]:
             self.actors[end.bearer].expire_buff(end.buff, end.end)
             self._rescale_slowed_buffs(end.bearer, q_tick)
+
+
+    def _count_rule_events(self, events: list[RuleEvent], q_tick: int) -> None:
+        tick, count = self.rule_events_in_tick
+        count = len(events) + (count if tick == q_tick else 0)
+        self.rule_events_in_tick = (q_tick, count)
+        if count > MAX_RULE_EVENTS_PER_TICK:
+            origins = sorted({describe(self._origin(event)) for event in events})
+            raise DataError(f"rules keep triggering each other without a delay: {'; '.join(origins)}")
 
 
     def _apply_components(self, processed: list[QueueComponent], q_tick: int) -> None:

@@ -18,6 +18,7 @@ backend/            FastAPI, one codebase, two apps
   src/admin.py      admin API  :5001  (also mounts the `admin` routers under /admin, /enum, /logs)
   src/server/
     database.py     Motor/MongoDB access, one collection per type, all queries
+    errors.py       error responses {detail, code, error_id}; tracebacks to alerts.log, failed simulations with their request to simulation.log
     loader/         patchloader2.py (orchestration) + webscraper2.py (wiki scraping) + helper.py
     models/         Pydantic v1 models (see below); enums.py is the import-free bottom layer (enums ← models ← simulation ← routes), result.py the response format
     routes/         every module exposes `router` (read) and `admin` (write)
@@ -38,7 +39,7 @@ frontend/admin/     admin UI (Vue 3 + Vite + Tailwind) :5174 -> proxies to :5001
 - The ability system (`models/rule.py`, see [docs/ability-system.md](docs/ability-system.md)) uses Pydantic 1.10's discriminated unions (`Literal` `type_` + `Field(discriminator="type_")`) and `extra = forbid`. Nested models need no `parse_obj` overrides; the routes take and return the models directly (tests in `tests/test_routes.py`). Hand-entered containers (Ability, Passive, Pet) still ignore unknown fields; they become `extra = forbid` with the loader update, since old DB documents still carry `effects`.
 - Champion stats are flat fields (all present), item stats are `dict[Stat, float]` (sparse). This is deliberate.
 
-**Ability system:** abilities, passives and summoner spells hold `rules` (trigger → conditions → actions), `buffs`, `stats`, `inputs` and `stages`; see [docs/ability-system.md](docs/ability-system.md). Values are **formula strings** evaluated in `simulation/formula.py` (`evaluate_formula`, namespace with stats, `target_`/`owner_` prefixes, `stacks_<buff>`, `rank`, `level`, `cooldown`, `elapsed`, scenario inputs). An ability without `stages` isn't entered yet and raises NotImplementedError.
+**Ability system:** abilities, passives and summoner spells hold `rules` (trigger → conditions → actions), `buffs`, `stats`, `inputs` and `stages`; see [docs/ability-system.md](docs/ability-system.md). Values are **formula strings** evaluated in `simulation/formula.py` (`evaluate_formula`, namespace with stats, `target_`/`owner_` prefixes, `stacks_<buff>`, `rank`, `level`, `cooldown`, `elapsed`, scenario inputs). An ability without `stages` isn't entered yet and raises `NotEnteredError`. Simulation errors are typed (`simulation/exceptions.py`: `ComboError`, `DataError`, `NotEnteredError`, `NotSupportedError`) and `located` adds where they happened.
 
 **Game rules:** [docs/league-mechanics.md](docs/league-mechanics.md) collects the live League mechanics (mitigation order, crit, shields, CC, movement speed, ...) with what the simulation does today. Check it before building simulation logic.
 

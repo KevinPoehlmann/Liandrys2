@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 from src.server.models.enums import ActionType, Stat
-from src.server.simulation.exceptions import SimulationError
+from src.server.simulation.exceptions import DataError
 
 
 # Top laners can reach level 20 on newer patches, so tables always cover 20 levels.
@@ -14,7 +14,7 @@ OWNER_PREFIX = "owner_"
 STACKS_PREFIX = "stacks_"
 
 
-class FormulaError(SimulationError):
+class FormulaError(DataError):
     pass
 
 

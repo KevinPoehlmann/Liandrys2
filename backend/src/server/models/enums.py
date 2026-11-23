@@ -504,3 +504,12 @@ class RuleActionType(str, Enum):
 class StatMode(str, Enum):
     FLAT = "flat"
     PERCENT = "percent"
+
+
+class ErrorCode(str, Enum):
+    """What kind of failure an error response is, so the UI can react without parsing messages."""
+    INVALID_COMBO = "invalid_combo"  # the request can't be simulated (not enough mana, item without an active)
+    INVALID_DATA = "invalid_data"  # the entered data is broken (formula, unknown buff)
+    NOT_ENTERED = "not_entered"  # an ability without data yet
+    NOT_SUPPORTED = "not_supported"  # the simulation can't do this yet
+    INTERNAL = "internal"  # a bug

@@ -6,6 +6,7 @@ from src.server.models.enums import ActionType, Actor, DamageSubType, EffectType
 from src.server.models.request import Action, Rank
 from src.server.models.rune import Rune
 from src.server.simulation.character import Character
+from src.server.simulation.exceptions import DataError
 from src.server.simulation.simulation import Simulation
 
 
@@ -74,7 +75,7 @@ class TestAdaptiveForce():
         champion.adaptive_type = None
         riven = Character(champion, 6, Rank(q=1, w=1, e=1, r=1), [], runes=shards())
 
-        with pytest.raises(ValueError, match="adaptive type"):
+        with pytest.raises(DataError, match="adaptive type"):
             riven.get_stat(Stat.AD)
 
 

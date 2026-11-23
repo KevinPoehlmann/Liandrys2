@@ -2,6 +2,8 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from src.server.errors import add_error_handlers
+
 
 from src.server.routes.patch import router as patchesRouter, admin as patchesAdmin
 from src.server.routes.enums import router as enumsRouter
@@ -54,6 +56,7 @@ def add_static_files(app: FastAPI) -> None:
 def start_application() -> FastAPI:
     app = FastAPI()
     add_middleware(app)
+    add_error_handlers(app)
     include_routers(app)
     add_static_files(app)
     return app

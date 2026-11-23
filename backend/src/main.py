@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from src.server.errors import add_error_handlers
+
 
 from src.server.database import setup_indexes
 from src.server.routes.patch import router as patchesRouter
@@ -52,6 +54,7 @@ async def lifespan(app: FastAPI):
 def start_application() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     add_middleware(app)
+    add_error_handlers(app)
     include_routers(app)
     add_static_files(app)
 

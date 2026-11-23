@@ -79,15 +79,29 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 - [x] Items: Sheen, Thornmail, Blade of the Ruined King, The Collector, Hextech Gunblade
 - [x] Runes: Conqueror, Electrocute (runes and stat shards in the simulation, adaptive force, cast instances)
 
+Error handling (the base for the Phase 4 data checks and the Phase 5 error display):
+- [x] Rules that trigger each other without a delay never leave their tick (the request hangs): stop after `MAX_RULE_EVENTS_PER_TICK` with the rules involved
+- [x] Errors in queued effects (projectiles, DoT ticks, rules after the last action) name the tick and the rule's origin (`phase="effect"`) instead of the action running at that moment, or a 500
+- [x] Exception types with context: champion, container, stage and rule number, formula ("Veigar ability 'Q', stage 1, rule 1: Unknown variable in formula …"). Typed errors (`ComboError`, `DataError`, `NotEnteredError`, `NotSupportedError`) set the response `code`; unknown buff and pet names are a `DataError` instead of a bare `KeyError`
+- [x] Backend safety net: error responses are `{detail, code, error_id}` (`code`: `invalid_combo | invalid_data | not_entered | not_supported | internal`). Unexpected errors in any route log their traceback with the id to `alerts.log`; failed simulations log the whole request to `simulation.log`, so they can be replayed as a test
+
 ## Phase 3: Loader with little manual work per patch
 
 Comes before the admin phase: the loader decides which named values exist per ability (the editor offers them for selection), and a fresh load into the new format is cheaper than migrating the old documents, which hold no valuable manual data yet.
 
+The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Structure comes from manual entry (Phase 4) or AI drafts (Phase 5½).
+
+- [ ] **Decide:** the loader stores everything it scrapes in its own raw models, so nothing gets lost. The finished objects (`Champion`, `Ability`, …) are built from the raw data and keep only what the simulation needs. Open: are the numbers copied into the finished objects (a build step reruns every patch) or referenced by name and resolved at simulation time? Either way the hand-made structure must survive a new patch
+  - Leaning (to discuss at the start of this phase): **reference by name**. The formula namespace is built for it (`BaseDamage` resolved at simulation time like `by_rank(...)`), a new patch needs no build step, and "manual effect data lives per patch" (backlog) shrinks because the structure changes less often. Risk: Riot renames a value; the Phase 4 data checks catch that
+- [ ] Named values per ability with stable names (`BaseDamage`, `ADRatio`, …), so rules can reference them. The rule editor (Phase 4) offers them for selection, and AI drafts (Phase 5½) depend on them
+- [ ] Store each ability's description text (tooltip / wiki text): shown in the editor for manual entry, and the input for AI drafts (Phase 5½)
+
 - [ ] Scrape each champion's adaptive type (physical/magic) from the wiki into `Champion.adaptive_type`; until then it is entered by hand (fixtures have it)
-- [ ] **Automatic stat patching:** re-scrape changed objects, take numbers/stats from the wiki, keep only the manual effects and mark them unvalidated
+- [ ] **Automatic stat patching:** re-scrape changed objects, take numbers/stats from the wiki, keep only the manual effects and mark them unvalidated. Reword once the copy/reference decision above is made: with references, the structure only needs a new check when a named value disappears or is renamed
 - [ ] Error handling refactor: dead `urllib` excepts, `_retry` swallowing non-HTTP errors, `gather` without `return_exceptions` (orphaned tasks), blocking `requests.get` inside `async` functions, `image` unbound in `_load_rune`
+- [ ] The patchloader tests write into the real `src/logs` (e.g. `liandrys_all.log`); mock the loggers like `tests/test_errors.py` does
 - [ ] Re-download the 12 zero-byte images
-- [ ] CommunityDragon as a data source. Checked for Riven (`raw.communitydragon.org/latest/game/data/characters/<name>/<name>.bin.json`): it has clean numbers per spell (`spellCastTime`/`castFrame` matching the wiki's cast times, cooldowns per rank, missile speeds, `DataValues` like `BaseDamage`/`ADRatio` per rank). `spellTotalTime` looks like a default (1.0 s on many spells), so real animation lengths would need the animation files. Probably more robust than scraping wiki HTML; the wiki's raw templates (`?action=raw`) are the other option.
+- [ ] CommunityDragon as a data source. Checked for Riven (`raw.communitydragon.org/latest/game/data/characters/<name>/<name>.bin.json`): it has clean numbers per spell (`spellCastTime`/`castFrame` matching the wiki's cast times, cooldowns per rank, missile speeds, `DataValues` like `BaseDamage`/`ADRatio` per rank). `spellTotalTime` looks like a default (1.0 s on many spells), so real animation lengths would need the animation files. Probably more robust than scraping wiki HTML; the wiki's raw templates (`?action=raw`) are the other option. Its `DataValues` are exactly the stable named values above (the wiki HTML has no such names), which argues for CommunityDragon as the main source rather than an add-on.
 - [ ] Dash and leap travel times (Nidalee's Pounce lands at the cast today), e.g. from CommunityDragon's spell data or other sources
 - [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions. Then `Lock` can tell an animation from a cast time: item actives can't be used during a cast time, but during a pure animation (wiki)
 - [ ] Fresh load into the new format
@@ -111,6 +125,9 @@ Comes before the admin phase: the loader decides which named values exist per ab
 - [ ] Scenario inputs in the UI: stack configuration (placeholder today, e.g. Veigar Q kills) and checkboxes like "wall behind the target" (Vayne E `terrain`)
 - [ ] Ability points: lowering the level should drop excess points
 - [ ] Ignore outdated simulation responses (race when clicking fast)
+- [ ] Error display: show what doesn't work instead of a blank page. A `getJson(url, what)` wrapper in `utils/fetch.ts` for every fetch (today `onMounted`/`loadPatchData` check neither `res.ok` nor errors), an error bar naming the function ("could not load items for patch 25.1", error id), reactions per `code` (e.g. "Veigar Q isn't entered yet"), and `app.config.errorHandler` as the last net for render errors
+- [ ] Decide how much of an error the user sees per `code`. Today `detail` carries the full message, internals included (fine in dev mode)
+- [ ] Look over the simulation with the UI in hand. Open question: one timeline for both champions (today: the next action waits for the previous cast, so Red can't act during Blue's cast) or one per champion (defender actions like shields or Zhonya at the same time). Decides the `Action` format and whether the combo UI has one lane or two; `windup_cancel` resetting `self.tick` is already a workaround for per-champion timing
 
 ## Phase 5½ (optional): AI drafts for data entry
 
@@ -139,6 +156,7 @@ Ideas collected for later; mostly frontend.
 - Quick rune pages: first by hand in the admin editor or "recently used" in the browser; later aggregated from the Riot Match-V5 API, which would also give positions for a position filter (needs a production API key, rate limits, a collector job). Riot offers no recommended pages through the API
 - Import from a past game: Riot ID → match list → pick a match and a minute → champions, levels, runes, summoner spells, items and ability points of both sides are filled in. Sources: Match-V5 match details (champion, runes, summoners) and timeline (per-minute frames with level; item purchase/sell/undo/destroy and skill level-up events, replayed up to the chosen time). Not in the data: stacks (Veigar Q, Mejai's), so they stay manual. Needs the same production API key as the rune pages, and data for the match's patch (older patches may be missing or unvalidated)
 - Build comparison: run the imported state and one or more variants ("Item X instead of Y") side by side in the chart, so you can see which item would have been better at that point
+- Tooltips: hovering an ability, item, rune or summoner spell shows its description and values (from the raw data, see Phase 3)
 - About page: what the app does, how to use it, how the simulation works and its limits; also the home of the Riot disclaimer
 - Feedback / bug report page (once things run roughly): pick champion (or item/rune) + ability, the patch is filled in automatically. Before submitting, show the open reports for that selection with a "same problem" (+1) button, so duplicates become votes instead of new reports. Admin UI gets a list to work through (open / fixed / rejected). Note: this is the first write endpoint on the user API, so it needs spam protection (rate limit, maybe a captcha) and its own collection with insert rights only (fits the separate Mongo users in the backlog)
 - Production: disclaimer "not affiliated with Riot Games", register the project in the Riot Developer Portal

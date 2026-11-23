@@ -45,7 +45,7 @@ from src.server.simulation.components import (
     QueueComponent
 )
 from src.server.simulation.events import ActionEffect, RuleEvent
-from src.server.simulation.exceptions import SimulationError
+from src.server.simulation.exceptions import ComboError, DataError, NotEnteredError, located
 from src.server.simulation.formula import FormulaContext, evaluate_formula
 
 MULTIPLICATIVE_STATS = {Stat.ARMOR_PEN_P, Stat.MAGIC_PEN_P, Stat.TENACITY_P}
@@ -213,7 +213,7 @@ class Character():
         for container, slot in containers:
             for buff in container.buffs:
                 if buff.name in definitions:
-                    raise ValueError(f"Buff '{buff.name}' is defined twice for {self.name}")
+                    raise DataError(f"Buff '{buff.name}' is defined twice for {self.name}")
                 definitions[buff.name] = (buff, slot)
         return definitions
 
@@ -222,7 +222,7 @@ class Character():
         inputs = {declared.name: declared for declared in self._declared_inputs()}
         unknown = set(given) - set(inputs)
         if unknown:
-            raise ValueError(f"Unknown scenario inputs for {self.name}: {sorted(unknown)}")
+            raise ComboError(f"Unknown scenario inputs for {self.name}: {sorted(unknown)}")
         for name, value in given.items():
             self._check_input(inputs[name], value)
         return {name: given.get(name, declared.default) for name, declared in inputs.items()}
@@ -230,16 +230,16 @@ class Character():
     @staticmethod
     def _check_input(declared: Input, value: float | list[float]) -> None:
         if declared.many != isinstance(value, list):
-            raise ValueError(f"Input '{declared.name}' takes {'a list of values' if declared.many else 'one value'}, got {value}")
+            raise ComboError(f"Input '{declared.name}' takes {'a list of values' if declared.many else 'one value'}, got {value}")
         for single in value if isinstance(value, list) else [value]:
             if (declared.min is not None and single < declared.min) or (declared.max is not None and single > declared.max):
-                raise ValueError(f"Input '{declared.name}' must be between {declared.min} and {declared.max}, got {single}")
+                raise ComboError(f"Input '{declared.name}' must be between {declared.min} and {declared.max}, got {single}")
 
     def _cast_params(self, ability: Ability, action: Action) -> dict[str, float]:
         declared = {i.name: i for i in ability.inputs if i.per_cast}
         unknown = set(action.params) - set(declared)
         if unknown:
-            raise ValueError(f"Unknown parameters for {action.action_type}: {sorted(unknown)}, it takes {sorted(declared)}")
+            raise ComboError(f"Unknown parameters for {action.action_type}: {sorted(unknown)}, it takes {sorted(declared)}")
         for name, value in action.params.items():
             self._check_input(declared[name], value)
         return dict(action.params)
@@ -266,9 +266,38 @@ class Character():
         return (self.current_tick - instance.start) * TICK_SECONDS
 
 
+    def buff_definition(self, name: str) -> tuple[BuffDefinition, ActionType]:
+        if name not in self.buff_definitions:
+            raise DataError(f"Unknown buff '{name}' for {self.name}, known: {sorted(self.buff_definitions)}")
+        return self.buff_definitions[name]
+
+    def pet_definition(self, name: str) -> tuple[Pet, ActionType]:
+        if name not in self.pet_definitions:
+            raise DataError(f"Unknown pet '{name}' for {self.name}, known: {sorted(self.pet_definitions)}")
+        return self.pet_definitions[name]
+
+    def rule_position(self, rule: Rule) -> str | None:
+        """Where a rule sits in its container, for error messages: "rule 2", "stage 1, rule 2", "buff 'hemorrhage', rule 1"."""
+        for label, rules in self._rule_lists():
+            for number, candidate in enumerate(rules, 1):
+                if candidate is rule:
+                    return f"{label}rule {number}"
+        return None
+
+    def _rule_lists(self) -> Iterator[tuple[str, list[Rule]]]:
+        yield "", self.passive.rules
+        for ability, _ in self.ability_dict.values():
+            yield "", ability.rules
+            for number, stage in enumerate(ability.stages, 1):
+                yield f"stage {number}, ", stage.rules
+        for passive, _ in self.equipment_passives:
+            yield "", passive.rules
+        for definition, _ in self.buff_definitions.values():
+            yield f"buff '{definition.name}', ", definition.rules
+
     def apply_buff(self, name: str, source: "Character", stacks: int, tick: int, cast: int | None = None,
                    values: dict[str, float] | None = None) -> BuffInstance:
-        definition, slot = source.buff_definitions[name]
+        definition, slot = source.buff_definition(name)
         # Duration and interval see the applying cast's parameters, e.g. how long Tides of Blood is charged.
         end = self._buff_end(definition, replace(source.formula_context(slot), event_values=values or {}), tick)
         instance = self.active_buffs.get(name)
@@ -393,7 +422,7 @@ class Character():
         if resource == CostResource.HEALTH:
             return self.current_hp, self.get_stat(Stat.HP), self._regen_per_tick(Stat.HP_REG, Stat.HP_REG_P)
         if resource != self.resource:
-            raise ValueError(f"{self.name} has no {resource.value} (uses {self.resource.value})")
+            raise DataError(f"{self.name} has no {resource.value} (uses {self.resource.value})")
         return self.current_resource, self._max_resource(), self._regen_per_tick(Stat.MANA_REG, Stat.MANA_REG_P)
 
     def _regen_per_tick(self, stat: Stat, base_percent: Stat) -> float:
@@ -442,7 +471,7 @@ class Character():
         resource, amount = cost
         value, maximum, gain = self._pool(resource)
         if not self._enough(resource, amount, maximum) or (gain <= 0 and not self._enough(resource, amount, value)):
-            raise ValueError(f"{slot.value} costs {amount:.0f} {resource.value}, {self.name} can never have that much")
+            raise ComboError(f"{slot.value} costs {amount:.0f} {resource.value}, {self.name} can never have that much")
         regen_tick = self.last_regen_tick + REGEN_TICKS
         while regen_tick <= tick:
             value, regen_tick = min(maximum, value + gain), regen_tick + REGEN_TICKS
@@ -453,7 +482,7 @@ class Character():
     def pay_cost(self, resource: CostResource, amount: float, source: ActionType, actor: Actor, origin: Origin | None = None) -> EffectResult:
         value, _, _ = self._pool(resource)
         if amount > 0 and not self._enough(resource, amount, value):
-            raise ValueError(f"Not enough {resource.value} for {source.value}: it costs {amount:.0f}, {self.name} has {value:.0f}")
+            raise ComboError(f"Not enough {resource.value} for {source.value}: it costs {amount:.0f}, {self.name} has {value:.0f}")
         self._change_pool(resource, -amount)
         return EffectResult(source=source, actor=actor, target=actor, type_=EffectType.COST, value=amount, resource=resource, origin=origin)
 
@@ -514,7 +543,7 @@ class Character():
         if ad != ap:
             return Stat.AD if ad > ap else Stat.AP
         if self.champion.adaptive_type is None:
-            raise ValueError(f"{self.name} has no adaptive type, so adaptive force can't choose between AD and AP")
+            raise DataError(f"{self.name} has no adaptive type, so adaptive force can't choose between AD and AP")
         return Stat.AD if self.champion.adaptive_type == AdaptiveType.PHYSICAL else Stat.AP
 
     def _adaptive_basis(self, stat: Stat) -> float:
@@ -687,13 +716,8 @@ class Character():
                     overheal=reduced - heal,
                     origin=component.origin
                 ))
-            except Exception as e:
-                raise SimulationError(
-                    message=str(e),
-                    action_type=component.source,
-                    actor=component.actor,
-                    phase="heal application"
-                ) from e
+            except Exception as error:
+                raise located(error, action_type=component.source, actor=component.actor, origin=component.origin)
         self.healed += total_heal
         self.current_hp += total_heal
         return results
@@ -705,13 +729,8 @@ class Character():
             try:
                 assert isinstance(component.props, ProcessedShieldProperties), "Shield component must have ProcessedShieldProperties"
                 self.shields.append(ShieldInstance(component.props.duration + tick, component.props.value, component.source, component.actor, component.origin))
-            except Exception as e:
-                raise SimulationError(
-                    message=str(e),
-                    action_type=component.source,
-                    actor=component.actor,
-                    phase="shield application"
-                ) from e
+            except Exception as error:
+                raise located(error, action_type=component.source, actor=component.actor, origin=component.origin)
         self.shields.sort(key=lambda shield: (shield[0], shield[1]))
     
 
@@ -773,13 +792,8 @@ class Character():
                         props=ProcessedHealProperties(value=damage * component.props.life_steal),
                         origin=Origin(kind=OriginKind.VAMP, name="life steal")
                     ))
-            except Exception as e:
-                raise SimulationError(
-                    message=str(e),
-                    action_type=component.source,
-                    actor=component.actor,
-                    phase="damage application"
-                ) from e
+            except Exception as error:
+                raise located(error, action_type=component.source, actor=component.actor, origin=component.origin)
         self.damage_taken += total_damage
         self.current_hp -= total_damage
         return vamps, results
@@ -806,13 +820,8 @@ class Character():
                     duration = self._apply_tenacity(duration)
                 expiration = tick + duration
                 self.status_effects[component.props.type_].append((expiration, component.props.strength))
-            except Exception as e:
-                raise SimulationError(
-                    message=str(e),
-                    action_type=component.source,
-                    actor=component.actor,
-                    phase="status application"
-                ) from e
+            except Exception as error:
+                raise located(error, action_type=component.source, actor=component.actor, origin=component.origin)
 
 
     def _apply_tenacity(self, duration: int) -> int:
@@ -888,7 +897,7 @@ class Character():
         elif action.action_type in self.ability_dict:
             return self._do_ability(action, tick)
         elif action.action_type in self.item_slots:
-            raise ValueError(f"{self.item_slots[action.action_type].name} has no active")
+            raise ComboError(f"{self.item_slots[action.action_type].name} has no active")
         else:
             raise NotImplementedError(f"ActionType '{action.action_type}' not implemented in do_action()")
 
@@ -927,7 +936,7 @@ class Character():
     def _do_ability(self, action: Action, tick: int) -> ActionEffect:
         ability = self.ability_dict[action.action_type][0]
         if not ability.validated or not ability.stages:
-            raise NotImplementedError(f"Ability {action.action_type} is not entered yet for {self.name}")
+            raise NotEnteredError(f"{self.name} {action.action_type.value.upper()} is not entered yet")
         return self._cast_stage(action, ability, tick)
     def _cast_stage(self, action: Action, ability: Ability, tick: int) -> ActionEffect:
         slot = action.action_type
@@ -965,7 +974,7 @@ class Character():
         if action.outcome is None:
             return stage.outcomes[0] if stage.outcomes else None
         if action.outcome not in stage.outcomes:
-            raise ValueError(f"Outcome '{action.outcome}' is not possible for {action.action_type}, choose one of {stage.outcomes}")
+            raise ComboError(f"Outcome '{action.outcome}' is not possible for {action.action_type}, choose one of {stage.outcomes}")
         return action.outcome
 
 
@@ -974,7 +983,7 @@ class Character():
 
     def get_cooldown(self, slot: ActionType) -> float:
         if slot not in self.ability_dict:
-            raise ValueError(f"{slot} has no cooldown")
+            raise DataError(f"{slot.value} has no cooldown")
         ability = self.ability_dict[slot][0]
         cooldown = evaluate_formula(ability.cooldown, self.formula_context(slot))
         if slot in SUMMONER_SLOTS:
@@ -987,7 +996,7 @@ class Character():
 
     def _defer_cooldown(self, buff: str, slot: ActionType, cooldown_ticks: int, cast_end: int) -> None:
         # Until the buff is gone the cooldown can't start; its latest possible start is the end of the buff's full duration.
-        definition, buff_slot = self.buff_definitions[buff]
+        definition, buff_slot = self.buff_definition(buff)
         buff_end = self._buff_end(definition, self.formula_context(buff_slot), cast_end)
         self.pending_cooldowns[buff] = (slot, cooldown_ticks)
         # Without a duration (Purge at rank 5) the cooldown waits until the buff is removed.
