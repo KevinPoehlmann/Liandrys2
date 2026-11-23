@@ -78,7 +78,7 @@ The game's trigger categories:
 |---|---|---|
 | on-attack | the windup completes (some: when the attack starts) | Kayle passive waves, Rageblade, Runaan's |
 | on-cast | an ability is cast, **some at the start of the cast time, others at the end** | Annie passive, Lucian passive, Sheen gaining its buff |
-| on-hit | together with the attack's damage (on-hit formulas see the target before the hit) | BotRK, Sheen proc, Thornmail (on being hit) |
+| on-hit | together with the attack's damage (on-hit formulas see the target before the hit); any basic damage applies on-hit unless it is an on-hit effect itself | BotRK, Sheen proc, Thornmail (on being hit), Urgot W, Ezreal Q |
 | on-damage | any damage instance lands (also blocked damage; not if invulnerable, dodged or blinded) | Darius bleed, Conqueror, Black Cleaver, Liandry's |
 | on-spell | an ability lands ("on-hit for abilities") | Luden's |
 | on-cc / on-immobilization | a CC is applied | Aftershock, Volibear Q |

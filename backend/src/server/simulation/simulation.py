@@ -18,6 +18,7 @@ from src.server.models.dataenums import (
     ProcessedShieldProperties,
     ProcessedStatusProperties,
     QueueComponent,
+    RuleActionType,
     Stat,
     StatusType,
     Target,
@@ -30,7 +31,7 @@ from src.server.models.request import V1Response, Action
 from src.server.models.rule import (
     ApplyBuffAction, Condition, DamageAction, DamageProps, HealAction, HealProps, RemoveBuffAction,
     ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps, SummonAction,
-    CleanseAction, ExecuteAction, LockAction, PayCostAction
+    AttackAction, AttackProps, CleanseAction, ExecuteAction, LockAction, PayCostAction
 )
 from src.server.simulation.character import SUMMONER_SLOTS, Character
 from src.server.simulation.buff_instance import BuffInstance
@@ -79,6 +80,7 @@ class Simulation():
         self.casts: int = 0
         # (owner, rule, cast instance, target) -> tick from which the rule may trigger again for that cast (cast_cooldown)
         self.cast_gates: dict[tuple, float] = {}
+        self.attack_factors: dict[int, float] = {}  # cast instance of an Attack action -> its on_hit_factor
         self.actors: dict[Actor, Character] = {
             Actor.BLUE: blue,
             Actor.RED: red
@@ -118,13 +120,16 @@ class Simulation():
     def _wait_until_ready(self, action: Action) -> None:
         character = self.actors[action.actor]
         self._process_queue()
-        ready = self._ready_tick(character, action.action_type)
+        earliest = self.tick + to_ticks(action.delay)
+        ready = max(earliest, self._ready_tick(character, action.action_type))
         # Events before the action can still change when it is ready, e.g. the hit that consumes Tumble starts Q's cooldown.
         while self.queue and min(self.queue) <= ready:
             q_tick = min(self.queue)
             self.tick = max(self.tick, q_tick)
             self._process_tick(q_tick)
-            ready = self._ready_tick(character, action.action_type)
+            ready = max(earliest, self._ready_tick(character, action.action_type))
+        if math.isinf(ready):
+            raise ValueError(f"{action.action_type} can never be used: a buff without an end blocks it or its cooldown waits for one")
         self.tick = ready
 
 
@@ -181,36 +186,40 @@ class Simulation():
 
 
     def _fire(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType, tick: int,
-              values: dict[str, float] | None = None, cast: int | None = None) -> None:
-        for event in self._triggered_events(trigger, actor, counterpart, source, values=values, cast=cast):
+              values: dict[str, float] | None = None, cast: int | None = None, damage_factor: float = 1) -> None:
+        for event in self._triggered_events(trigger, actor, counterpart, source, values=values, cast=cast, damage_factor=damage_factor):
             self._queue_rule(event, tick)
 
 
     def _triggered_events(self, trigger: Trigger, actor: Actor, counterpart: Actor, source: ActionType,
-                          crit: bool | None = None, values: dict[str, float] | None = None, cast: int | None = None) -> list[RuleEvent]:
+                          crit: bool | None = None, values: dict[str, float] | None = None, cast: int | None = None,
+                          damage_factor: float = 1) -> list[RuleEvent]:
         # Rules are collected before any of them runs, so a buff created by this event can't react to it.
         return [
             RuleEvent(rule=rule, slot=slot, owner=self._actor_of(owner), target=counterpart, bearer=actor if buff else None,
-                      buff=buff, crit=crit, values=values or {}, cast=cast)
+                      buff=buff, crit=crit, values=values or {}, cast=cast, damage_factor=damage_factor)
             for rule, slot, owner, buff in self.actors[actor].triggered_rules(trigger, source)
         ]
 
 
-    def _on_hit_components(self, attack: RuleEvent, components: list[QueueComponent], tick: int) -> list[QueueComponent]:
-        # On-hit effects run together with the attack, so their formulas see the target before its damage (Mist's Edge).
-        if attack.slot != ActionType.BA or attack.buff is not None:
+    def _on_hit_components(self, event: RuleEvent, components: list[QueueComponent], tick: int) -> list[QueueComponent]:
+        # Basic damage applies on-hit effects (attacks, Purge's shots, later Ezreal Q), unless it is an on-hit effect itself
+        # (Crippling Strike). They run together with the hit, so their formulas see the target before its damage (Mist's Edge).
+        if event.rule.trigger in (Trigger.ON_HIT, Trigger.ON_GET_HIT):
             return []
-        target = next((component.target for component in components if component.type_ == EffectType.DAMAGE), None)
-        if target is None:
-            return []
-        events = (self._triggered_events(Trigger.ON_HIT, attack.owner, target, ActionType.BA, crit=attack.crit, cast=attack.cast)
-                  + self._triggered_events(Trigger.ON_GET_HIT, target, attack.owner, ActionType.BA, cast=attack.cast))
+        hits = {(component.target, component.cast) for component in components
+                if component.type_ == EffectType.DAMAGE and DamageType.BASIC in component.props.tags}
         on_hit = []
-        for event in events:
-            if self._delay_ticks(event) == 0:
-                on_hit.extend(self._run_rule(event, tick))
-            else:
-                self._queue_rule(event, tick)
+        for target, cast in hits:
+            factor = self.attack_factors.get(cast, 1)
+            events = (self._triggered_events(Trigger.ON_HIT, event.owner, target, ActionType.BA, crit=event.crit, cast=cast,
+                                             damage_factor=factor)
+                      + self._triggered_events(Trigger.ON_GET_HIT, target, event.owner, ActionType.BA, cast=cast))
+            for triggered in events:
+                if self._delay_ticks(triggered) == 0:
+                    on_hit.extend(self._run_rule(triggered, tick))
+                else:
+                    self._queue_rule(triggered, tick)
         return on_hit
 
 
@@ -361,6 +370,8 @@ class Simulation():
                 bearer = self._resolve_target(props.target, event)
                 self.actors[bearer].cleanse(props.statuses, props.buff_tags, tick)
                 self._rescale_slowed_buffs(bearer, tick)
+            case AttackAction(props=props):
+                self._attack(props, event, tick)
             case ExecuteAction(props=props):
                 target = self._resolve_target(props.target, event)
                 execute = ProcessedDamageProperties(value=0, flat_pen=0, percent_pen=0, dmg_type=DamageType.DEFAULT,
@@ -406,15 +417,14 @@ class Simulation():
         interval = evaluate_formula(instance.definition.interval, instance.source.formula_context(instance.slot))
         if interval <= 0:
             return None
-        if instance.end is None:
-            raise NotImplementedError(f"Buff '{instance.definition.name}' has an interval but no duration")
-        # The rhythm is set by the first stack, refreshes keep it.
+        # The rhythm is set by the first stack, refreshes keep it. Without a duration it ticks until removed;
+        # only the next tick is ever queued, and the simulation's end cap stops it.
         definition, last = instance.definition, instance.last_interval
         k = 0 if definition.tick_on_apply else 1
         while last is not None and instance.start + to_ticks(k * interval) <= last:
             k += 1
         rhythm_tick = instance.start + to_ticks(k * interval)
-        if rhythm_tick <= instance.end:
+        if instance.end is None or rhythm_tick <= instance.end:
             return rhythm_tick
         ticks_at_end = definition.tick_on_end and (last is None or instance.end > last)
         return instance.end if ticks_at_end else None
@@ -433,6 +443,23 @@ class Simulation():
                       buff=buff_tick.buff, cast=instance.cast)
             for rule in instance.definition.rules if rule.trigger == Trigger.ON_INTERVAL
         ]
+
+
+    def _attack(self, props: AttackProps, event: RuleEvent, tick: int) -> None:
+        # Like a basic attack: it starts now, launches after its windup (on-attack) and flies with the attack missile.
+        owner, context = self.actors[event.owner], self._context(event, event.target)
+        cast = self._new_cast()
+        self.attack_factors[cast] = evaluate_formula(props.on_hit_factor, context)
+        attack_speed = evaluate_formula(props.attack_speed, context) if props.attack_speed else owner.get_stat(Stat.ATTACKSPEED_P)
+        windup = owner.attack_windup() / attack_speed
+        damage = DamageAction(type_=RuleActionType.DAMAGE, props=DamageProps(
+            target=props.target, scaling=props.scaling, dmg_type=[DamageType.BASIC],
+            dmg_sub_type=DamageSubType.PHYSIC, can_crit=props.can_crit))
+        hit = Rule(actions=[damage], delay=str(windup), speed=str(owner.champion.missile_speed))
+        self._queue_rule(replace(event, rule=hit, cast=cast), tick)
+        target = self._resolve_target(props.target, event)
+        self._fire(Trigger.ON_ATTACK, event.owner, target, ActionType.BA, tick + to_ticks(windup), cast=cast,
+                   damage_factor=self.attack_factors[cast])
 
 
     @staticmethod
@@ -454,7 +481,7 @@ class Simulation():
     def _damage(self, props: DamageProps, event: RuleEvent) -> QueueComponent:
         target, context = self._target_and_context(props.target, event)
         flat_pen, percent_pen = self.actors[event.owner].get_penetration(props.dmg_sub_type)
-        value = evaluate_formula(props.scaling, context)
+        value = evaluate_formula(props.scaling, context) * event.damage_factor
         if props.can_crit:
             value *= self._crit_factor(event.crit, self.actors[event.owner])
         processed = ProcessedDamageProperties(

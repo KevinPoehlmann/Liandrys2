@@ -70,9 +70,10 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 - [ ] Remove dead code: `ItemStat`, `Mythic`, `Combo`, the unused `MultiValueEnum` import (then `aenum` can leave `requirements.txt`)
 - [ ] Rename `dataenums.py` → `enums.py` once it only holds enums and constants. It stays the import-free bottom layer: enums ← models ← simulation ← routes
 
-**Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Sheen, Thornmail, Blade of the Ruined King (replaces Kraken Slayer: current-health on-hit, life steal, melee/ranged), The Collector, Hextech Gunblade (replaces Black Cleaver: item actives, omnivamp), Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
+**Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Urgot (W: toggle, attacks made by an ability, on-hit at 50 %), Nidalee (forms, abilities replaced by a buff, rank from R), Sheen, Thornmail, Blade of the Ruined King (replaces Kraken Slayer: current-health on-hit, life steal, melee/ranged), The Collector, Hextech Gunblade (replaces Black Cleaver: item actives, omnivamp), Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
 
-- [x] Champions: Annie (+Tibbers), Darius, Vayne, Vladimir, Riven, Veigar
+- [x] Champions: Annie (+Tibbers), Darius, Vayne, Vladimir, Riven, Veigar, Urgot (W)
+- [ ] Nidalee: forms (`extra_abilities`, `Buff.replaces`, `ToggleBuff`, `counts_as_cast`, `Buff.range_type`), then Hunted (`ModifyCooldown`, `distance`)
 - [x] Items: Sheen, Thornmail, Blade of the Ruined King, The Collector, Hextech Gunblade
 - [x] Runes: Conqueror, Electrocute (runes and stat shards in the simulation, adaptive force, cast instances)
 

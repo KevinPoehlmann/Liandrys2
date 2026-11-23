@@ -509,6 +509,7 @@ class RuleActionType(str, Enum):
     CLEANSE = "Cleanse"
     LOCK = "Lock"
     EXECUTE = "Execute"
+    ATTACK = "Attack"
     CUSTOM = "Custom"
 
 class StatMode(str, Enum):

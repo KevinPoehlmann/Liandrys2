@@ -790,11 +790,15 @@ class Character():
         ability = self.ability_dict[slot][0]
         stage, context = ability.stages[index], self.formula_context(slot)
         earliest = previous_cast + to_ticks(evaluate_formula(stage.recast_delay, context))
-        return earliest, previous_cast + to_ticks(evaluate_formula(stage.recast_window, context))
+        window = evaluate_formula(stage.recast_window, context)
+        return earliest, math.inf if math.isinf(window) else previous_cast + to_ticks(window)
 
     def _action_delay(self, action_type: ActionType, tick: int) -> int:
         if action_type not in self.lock_exceptions:
             tick = max(tick, self.locked_until)
+        for instance in self.active_buffs.values():
+            if action_type in instance.definition.blocks:
+                tick = max(tick, math.inf if instance.end is None else instance.end)
         self._remove_expired_status_effects(tick)
 
         if StatusType.STASIS in self.status_effects:
@@ -841,12 +845,12 @@ class Character():
     def _basic_attack(self, action: Action, tick: int) -> ActionEffect:
         attack_time = 1 / self._get_attackspeed()
         self.cooldowns[ActionType.BA] = tick + to_ticks(attack_time)
-        windup_ticks = to_ticks(attack_time * self._attack_windup())
+        windup_ticks = to_ticks(attack_time * self.attack_windup())
         rule = self._basic_attack_rule(blinded=StatusType.BLIND in self.status_effects)
         event = RuleEvent(rule=rule, slot=ActionType.BA, owner=action.actor, target=action.target, crit=action.crit)
         return ActionEffect(tick=tick + windup_ticks, rule_events=[event], windup_cancel=self._windup_cancels())
 
-    def _attack_windup(self) -> float:
+    def attack_windup(self) -> float:
         return self.champion.attack_windup
 
     def _windup_cancels(self) -> set[ActionType]:
@@ -931,10 +935,9 @@ class Character():
         # Until the buff is gone the cooldown can't start; its latest possible start is the end of the buff's full duration.
         definition, buff_slot = self.buff_definitions[buff]
         buff_end = self._buff_end(definition, self.formula_context(buff_slot), cast_end)
-        if buff_end is None:
-            raise ValueError(f"cooldown_starts_after needs a buff with a duration, '{buff}' has none")
         self.pending_cooldowns[buff] = (slot, cooldown_ticks)
-        self.cooldowns[slot] = buff_end + cooldown_ticks
+        # Without a duration (Purge at rank 5) the cooldown waits until the buff is removed.
+        self.cooldowns[slot] = math.inf if buff_end is None else buff_end + cooldown_ticks
 
 
     def take_effects(self, component_list: list[QueueComponent], tick: int) -> tuple[list[QueueComponent], list[EffectResult]]:

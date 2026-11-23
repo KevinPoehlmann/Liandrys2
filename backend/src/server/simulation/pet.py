@@ -50,7 +50,7 @@ class PetCharacter(Character):
         # Tibbers uses Annie's penetration (checked in game).
         return self.owner.get_penetration(dmg_sub_type)
 
-    def _attack_windup(self) -> float:
+    def attack_windup(self) -> float:
         return self.definition.attack.windup
 
     def _basic_attack_rule(self, blinded: bool) -> Rule:

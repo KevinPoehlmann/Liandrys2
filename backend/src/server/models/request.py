@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from src.server.models.dataenums import ActionType, Actor, TickEvent
 
 
@@ -15,6 +15,7 @@ class Action(BaseModel):
     action_type: ActionType
     outcome: str | None = None
     crit: bool | None = None  # for attacks: True/False picks it, None uses the expected value
+    delay: float = Field(0, ge=0)  # seconds to wait after the previous action before this one may start (Urgot's Purge)
 
 
 

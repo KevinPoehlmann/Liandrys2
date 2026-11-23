@@ -15,6 +15,7 @@ class RuleEvent:
     buff: str | None = None
     crit: bool | None = None  # an attack's crit choice, shared by its on-hit rules
     cast: int | None = None  # the cast instance; everything that follows from a cast shares it (on-hit, DoT ticks)
+    damage_factor: float = 1  # on-hit and on-attack rules of an Attack action (Purge: 0.5)
     values: dict[str, float] = field(default_factory=dict)  # `damage`/`health_damage` in damage-triggered rules
 
 

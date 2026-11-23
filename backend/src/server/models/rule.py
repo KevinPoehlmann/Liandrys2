@@ -33,6 +33,14 @@ class DamageProps(StrictModel):
 class ExecuteProps(StrictModel):
     target: Target
 
+class AttackProps(StrictModel):
+    """An attack an ability makes on its own (Urgot's Purge): its own cast instance, on-attack and on-hit effects, basic damage."""
+    target: Target
+    scaling: str
+    can_crit: bool = False
+    on_hit_factor: str = "1"  # on-hit and on-attack damage of this attack (Purge: 50 %)
+    attack_speed: str | None = None  # sets the windup; None = the champion's attack speed (Purge: fixed 3.0)
+
 class HealProps(StrictModel):
     target: Target
     scaling: str
@@ -142,6 +150,10 @@ class ExecuteAction(StrictModel):
     type_: Literal[RuleActionType.EXECUTE]
     props: ExecuteProps
 
+class AttackAction(StrictModel):
+    type_: Literal[RuleActionType.ATTACK]
+    props: AttackProps
+
 class CustomAction(StrictModel):
     type_: Literal[RuleActionType.CUSTOM]
     props: CustomProps
@@ -151,7 +163,7 @@ class CustomAction(StrictModel):
 RuleAction = Annotated[
     Union[
         DamageAction, HealAction, ShieldAction, StatusAction, ApplyBuffAction,
-        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, PayCostAction, LockAction, CleanseAction, ExecuteAction, CustomAction
+        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, PayCostAction, LockAction, CleanseAction, ExecuteAction, AttackAction, CustomAction
     ],
     Field(discriminator="type_")
 ]
@@ -209,6 +221,7 @@ class Buff(StrictModel):
     windup_cancel: list[ActionType] = []
     slowed_while: list[SlowedWhile] = []
     tags: list[str] = []  # e.g. "summoner_debuff", for Cleanse
+    blocks: list[ActionType] = []  # slots its bearer can't use while it is active; they wait (no attacks during Purge)
     stats: list[StatModifier] = []
     rules: list[Rule] = []
 
