@@ -286,10 +286,15 @@ class TestTidesOfBlood():
         assert results(sim, ActionType.E, EffectType.COST) == [(tick, pytest.approx(E_COST_STEP)) for tick in cost_ticks]
 
 
-    def test_half_charge(self, load_champion, darius):
-        sim = Simulation(vladimir(load_champion, tides_charge=0.5), darius)
-
-        sim.do_combo(combo(ActionType.E))
+    @pytest.mark.parametrize("per_cast", [False, True])
+    def test_half_charge(self, load_champion, darius, per_cast):
+        # The charge is a per-cast parameter; the scenario value is the default for every cast.
+        if per_cast:
+            sim = Simulation(vladimir(load_champion), darius)
+            sim.do_combo([Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.E, params={"tides_charge": 0.5})])
+        else:
+            sim = Simulation(vladimir(load_champion, tides_charge=0.5), darius)
+            sim.do_combo(combo(ActionType.E))
 
         half = E_RANK_1_MIN + (E_RANK_1_MAX - E_RANK_1_MIN) * 0.5
         assert results(sim, ActionType.E, EffectType.DAMAGE) == [(to_ticks(0.5) + E_TRAVEL_TICKS, pytest.approx(magic(half)))]

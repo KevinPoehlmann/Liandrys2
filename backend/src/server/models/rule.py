@@ -8,6 +8,7 @@ from src.server.models.dataenums import (
     CostResource,
     DamageSubType,
     DamageType,
+    RangeType,
     RuleActionType,
     Stat,
     StatMode,
@@ -31,6 +32,11 @@ class DamageProps(StrictModel):
     can_crit: bool = False  # crits with the attack it belongs to (Crippling Strike yes, Tumble no)
 
 class ExecuteProps(StrictModel):
+    target: Target
+
+class ToggleBuffProps(StrictModel):
+    """Applies the buff, or removes it if it is active (Nidalee's form swap)."""
+    buff: str
     target: Target
 
 class AttackProps(StrictModel):
@@ -71,9 +77,10 @@ class ResetAttackProps(StrictModel):
     pass
 
 class ModifyCooldownProps(StrictModel):
-    slot: ActionType
-    amount: str = "0"
+    slot: ActionType | None = None  # None: the rule's own ability (Pounce)
+    amount: str = "0"  # seconds off the remaining cooldown
     reset: bool = False
+    at_most: str | None = None  # the remaining cooldown becomes at most this (Pounce on a Hunted target)
 
 class SummonProps(StrictModel):
     pet: str
@@ -154,6 +161,10 @@ class AttackAction(StrictModel):
     type_: Literal[RuleActionType.ATTACK]
     props: AttackProps
 
+class ToggleBuffAction(StrictModel):
+    type_: Literal[RuleActionType.TOGGLE_BUFF]
+    props: ToggleBuffProps
+
 class CustomAction(StrictModel):
     type_: Literal[RuleActionType.CUSTOM]
     props: CustomProps
@@ -163,7 +174,7 @@ class CustomAction(StrictModel):
 RuleAction = Annotated[
     Union[
         DamageAction, HealAction, ShieldAction, StatusAction, ApplyBuffAction,
-        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, PayCostAction, LockAction, CleanseAction, ExecuteAction, AttackAction, CustomAction
+        RemoveBuffAction, ResetAttackAction, ModifyCooldownAction, SummonAction, PayCostAction, LockAction, CleanseAction, ExecuteAction, AttackAction, ToggleBuffAction, CustomAction
     ],
     Field(discriminator="type_")
 ]
@@ -193,6 +204,7 @@ class Rule(StrictModel):
     cooldown: str = "0"
     # Seconds before the same cast instance can trigger this rule again on the same target; "inf" = once (Electrocute).
     cast_cooldown: str | None = None
+    for_each: str | None = None  # a `many` input: the rule runs once per value, which formulas read as `each`
 
 
 class StatModifier(StrictModel):
@@ -222,6 +234,8 @@ class Buff(StrictModel):
     slowed_while: list[SlowedWhile] = []
     tags: list[str] = []  # e.g. "summoner_debuff", for Cleanse
     blocks: list[ActionType] = []  # slots its bearer can't use while it is active; they wait (no attacks during Purge)
+    replaces: dict[ActionType, str] = {}  # slot -> key of an extra ability its bearer uses instead (cougar form)
+    range_type: RangeType | None = None  # overrides melee/ranged while active (cougar form is melee)
     stats: list[StatModifier] = []
     rules: list[Rule] = []
 
@@ -236,10 +250,12 @@ class Buff(StrictModel):
 class Input(StrictModel):
     """A value the user chooses for the scenario, e.g. Annie's Pyromania stacks at the start."""
     name: str
-    default: float = 0
+    default: float | list[float] = 0
     min: float | None = None
     max: float | None = None
     description: str = ""
+    per_cast: bool = False  # chosen per cast in Action.params (Riven Q cancel, Tides of Blood charge); the default otherwise
+    many: bool = False  # a list of values, used by Rule.for_each (traps placed before the fight)
 
     @validator("name")
     def name_is_identifier(cls, name: str) -> str:

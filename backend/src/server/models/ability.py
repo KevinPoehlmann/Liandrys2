@@ -5,6 +5,7 @@ from src.server.models.pet import Pet
 from src.server.models.rule import Buff, Input, Rule, Stage, StatModifier
 
 from src.server.models.dataenums import (
+    ActionType,
     ActiveType,
     CostResource
 )
@@ -23,6 +24,7 @@ class Ability(BaseModel):
     cooldown_starts_after: str | None = None
     cooldown_starts_on_cast: bool = False
     usable_during_cc: bool = False  # Cleanse: only suppression and stasis block it
+    counts_as_cast: bool = True  # False: no on-cast effects (Nidalee's form swap doesn't grant Spellblade)
     stages: list[Stage] = []
     rules: list[Rule] = []
     stats: list[StatModifier] = []
@@ -40,6 +42,12 @@ class Ability(BaseModel):
 class ChampionAbility(Ability):
     maxrank: int
     image: Image
+
+
+class ExtraAbility(ChampionAbility):
+    """An ability a buff puts on Q/W/E/R (Nidalee's cougar form, later Hwei's subcasts)."""
+    key: str  # what Buff.replaces points to, e.g. "takedown"
+    rank_from: ActionType  # whose ability points it uses (Nidalee's cougar abilities: R)
 
 
 class ItemActive(Ability):

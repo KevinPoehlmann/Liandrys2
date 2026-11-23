@@ -53,7 +53,7 @@ Building blocks that are missing (each one gets a champion/item from the test gr
 - [x] Named stack counters with max, duration and reset: Conqueror, BotRK's Clawing Shadows, Vayne W, Electrocute
 - [x] Conditions with an actor (self/target/bearer): executes, "below 30% HP" (range conditions come with distance, Phase 5)
 - [x] Recasts (Riven), auto-attack resets (Riven Q, Vayne Q)
-- [ ] Cooldown reduction on hit (`ModifyCooldown` is in the model but not built; no test group member needs it, additive)
+- [x] ~~Cooldown reduction on hit~~ (`ModifyCooldown` is built with Nidalee; on-hit reductions use it in a rule)
 - [x] ~~Non-linear rank values~~ (`by_rank(...)` lists every rank; the scraper no longer builds effects)
 - [x] ~~`extra = "forbid"` on the effect models~~ (the rule models have it; the old effect models are gone)
 - [x] Pets (actor ids like `blue.tibbers`, Tibbers)
@@ -73,7 +73,8 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 **Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Urgot (W: toggle, attacks made by an ability, on-hit at 50 %), Nidalee (forms, abilities replaced by a buff, rank from R), Sheen, Thornmail, Blade of the Ruined King (replaces Kraken Slayer: current-health on-hit, life steal, melee/ranged), The Collector, Hextech Gunblade (replaces Black Cleaver: item actives, omnivamp), Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
 
 - [x] Champions: Annie (+Tibbers), Darius, Vayne, Vladimir, Riven, Veigar, Urgot (W)
-- [ ] Nidalee: forms (`extra_abilities`, `Buff.replaces`, `ToggleBuff`, `counts_as_cast`, `Buff.range_type`), then Hunted (`ModifyCooldown`, `distance`)
+- [x] Nidalee forms (`extra_abilities`, `Buff.replaces`, `ToggleBuff`, `counts_as_cast`, `Buff.range_type`)
+- [x] Nidalee Hunt (`ModifyCooldown`, `distance`)
 - [x] Items: Sheen, Thornmail, Blade of the Ruined King, The Collector, Hextech Gunblade
 - [x] Runes: Conqueror, Electrocute (runes and stat shards in the simulation, adaptive force, cast instances)
 
@@ -95,6 +96,7 @@ The loader is parked until it's needed again. Do this before data entry.
 - [ ] Error handling refactor: dead `urllib` excepts, `_retry` swallowing non-HTTP errors, `gather` without `return_exceptions` (orphaned tasks), blocking `requests.get` inside `async` functions, `image` unbound in `_load_rune`
 - [ ] Re-download the 12 zero-byte images
 - [ ] CommunityDragon as a data source. Checked for Riven (`raw.communitydragon.org/latest/game/data/characters/<name>/<name>.bin.json`): it has clean numbers per spell (`spellCastTime`/`castFrame` matching the wiki's cast times, cooldowns per rank, missile speeds, `DataValues` like `BaseDamage`/`ADRatio` per rank). `spellTotalTime` looks like a default (1.0 s on many spells), so real animation lengths would need the animation files. Probably more robust than scraping wiki HTML; the wiki's raw templates (`?action=raw`) are the other option.
+- [ ] Dash and leap travel times (Nidalee's Pounce lands at the cast today), e.g. from CommunityDragon's spell data or other sources
 - [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions. Then `Lock` can tell an animation from a cast time: item actives can't be used during a cast time, but during a pure animation (wiki)
 - [ ] `extra = forbid` for the hand-entered containers (Ability, Passive, Pet) so typos fail; needs a fresh load or an `$unset` of the old `effects` in the DB first
 

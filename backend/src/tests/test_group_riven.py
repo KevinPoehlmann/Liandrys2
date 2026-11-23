@@ -192,3 +192,16 @@ class TestBladeOfTheExile():
         missing_percent = (DARIUS_MAX_HP * missing - regenerated_health(sim, Actor.RED, until=hit_tick)) / DARIUS_MAX_HP
         multiplier = 1 + min(2, 8 / 3 * missing_percent)
         assert hits(sim, ActionType.R) == [(hit_tick, pytest.approx(physical(WIND_SLASH_RANK_1 * multiplier)))]
+
+
+class TestPerCastParameters():
+
+    def test_cancel_only_the_first_cast(self, load_champion, darius):
+        sim = Simulation(riven(load_champion), darius)
+        canceled = Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.Q, params={"riven_q_cancel": 1})
+
+        sim.do_combo([canceled] + combo(ActionType.BA, ActionType.Q, ActionType.BA))
+
+        # Canceled: the attack follows the hit at once; the second cast keeps its 0.25 s lock.
+        assert ticks(sim, ActionType.Q) == [8, 24]
+        assert ticks(sim, ActionType.BA) == [16, 40]

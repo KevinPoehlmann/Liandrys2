@@ -31,7 +31,8 @@ from src.server.models.request import V1Response, Action
 from src.server.models.rule import (
     ApplyBuffAction, Condition, DamageAction, DamageProps, HealAction, HealProps, RemoveBuffAction,
     ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps, SummonAction,
-    AttackAction, AttackProps, CleanseAction, ExecuteAction, LockAction, PayCostAction
+    AttackAction, AttackProps, CleanseAction, ExecuteAction, LockAction, PayCostAction,
+    ApplyBuffProps, ModifyCooldownAction, RemoveBuffProps, ToggleBuffAction
 )
 from src.server.simulation.character import SUMMONER_SLOTS, Character
 from src.server.simulation.buff_instance import BuffInstance
@@ -105,6 +106,8 @@ class Simulation():
 
     def do_action(self, action: Action, index: int | None = None) -> None:
         try:
+            self._process_queue()
+            action = action.copy(update={"action_type": self.actors[action.actor].resolve_slot(action.action_type)})
             self._wait_until_ready(action)
             self._cast(action)
         except Exception as e:
@@ -164,7 +167,7 @@ class Simulation():
         character = self.actors[action.actor]
         is_attack = action.action_type == ActionType.BA
         cast = self._new_cast()
-        if not is_attack:
+        if not is_attack and character.counts_as_cast(action.action_type):
             # The cast event comes at the start of the cast time (Spellblade, Riven's Runic Blade).
             self._fire(Trigger.ON_CAST, action.actor, action.target, action.action_type, start, cast=cast)
         action_effect = character.do_action(action, self.tick)
@@ -293,6 +296,10 @@ class Simulation():
 
 
     def _queue_rule(self, event: RuleEvent, tick: int) -> None:
+        if event.rule.for_each and "each" not in event.values:
+            for value in self.actors[event.owner].scenario.get(event.rule.for_each, []):
+                self._queue_rule(replace(event, values=event.values | {"each": value}), tick)
+            return
         self.queue.setdefault(tick + self._delay_ticks(event), []).append(event)
 
 
@@ -348,7 +355,7 @@ class Simulation():
             case ApplyBuffAction(props=props):
                 bearer = self._resolve_target(props.target, event)
                 stacks = int(evaluate_formula(props.stacks, owner.formula_context(event.slot)))
-                instance = self.actors[bearer].apply_buff(props.buff, owner, stacks, tick, event.cast)
+                instance = self.actors[bearer].apply_buff(props.buff, owner, stacks, tick, event.cast, event.values)
                 if instance.end is not None:
                     self.queue.setdefault(instance.end, []).append(BuffEnd(bearer=bearer, buff=props.buff, end=instance.end))
                 self._schedule_interval(bearer, instance)
@@ -372,6 +379,13 @@ class Simulation():
                 self._rescale_slowed_buffs(bearer, tick)
             case AttackAction(props=props):
                 self._attack(props, event, tick)
+            case ToggleBuffAction(props=props):
+                bearer = self._resolve_target(props.target, event)
+                if props.buff in self.actors[bearer].active_buffs:
+                    return self._run_action(RemoveBuffAction(type_=RuleActionType.REMOVE_BUFF,
+                                                             props=RemoveBuffProps(buff=props.buff, target=props.target)), event, tick)
+                return self._run_action(ApplyBuffAction(type_=RuleActionType.APPLY_BUFF,
+                                                        props=ApplyBuffProps(buff=props.buff, target=props.target)), event, tick)
             case ExecuteAction(props=props):
                 target = self._resolve_target(props.target, event)
                 execute = ProcessedDamageProperties(value=0, flat_pen=0, percent_pen=0, dmg_type=DamageType.DEFAULT,
@@ -383,6 +397,10 @@ class Simulation():
                 owner.lock(tick + duration, set(props.exceptions))
             case ResetAttackAction():
                 owner.reset_attack(tick)
+            case ModifyCooldownAction(props=props):
+                context = self._context(event, event.target)
+                at_most = evaluate_formula(props.at_most, context) if props.at_most else None
+                owner.modify_cooldown(props.slot or event.slot, tick, evaluate_formula(props.amount, context), props.reset, at_most)
             case SummonAction(props=props):
                 self._summon(props.pet, event.owner, tick, event.cast)
             case _:
@@ -401,7 +419,7 @@ class Simulation():
         instance = bearer.active_buffs.get(event.buff) if bearer and event.buff else None
         stacks, elapsed = (instance.stacks, bearer.buff_elapsed(instance)) if instance else (0, 0.0)
         context = self.actors[event.owner].formula_context(event.slot, target=self.actors[target], stacks=stacks, elapsed=elapsed)
-        return replace(context, event_values=event.values)
+        return replace(context, event_values=event.values, distance=self.distance)
 
 
     def _schedule_interval(self, bearer: Actor, instance: BuffInstance) -> None:
@@ -414,7 +432,8 @@ class Simulation():
 
     @staticmethod
     def _next_interval(instance: BuffInstance) -> int | None:
-        interval = evaluate_formula(instance.definition.interval, instance.source.formula_context(instance.slot))
+        context = replace(instance.source.formula_context(instance.slot), event_values=instance.values)
+        interval = evaluate_formula(instance.definition.interval, context)
         if interval <= 0:
             return None
         # The rhythm is set by the first stack, refreshes keep it. Without a duration it ticks until removed;
@@ -440,7 +459,7 @@ class Simulation():
         owner = self._actor_of(instance.source)
         return [
             RuleEvent(rule=rule, slot=instance.slot, owner=owner, target=buff_tick.bearer, bearer=buff_tick.bearer,
-                      buff=buff_tick.buff, cast=instance.cast)
+                      buff=buff_tick.buff, cast=instance.cast, values=instance.values)
             for rule in instance.definition.rules if rule.trigger == Trigger.ON_INTERVAL
         ]
 

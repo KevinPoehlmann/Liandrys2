@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dataclasses import replace
 from typing import Iterator, NamedTuple
 import math
 
@@ -58,7 +59,8 @@ CASTING_RESOURCES = {ResourceType.MANA: CostResource.MANA, ResourceType.ENERGY: 
 
 SUMMONER_SLOTS = (ActionType.S1, ActionType.S2)
 RUNE_SLOTS = tuple(ActionType(f"rune{n}") for n in range(1, 10))
-CHAMPION_SLOTS = {ActionType.PASSIVE, ActionType.Q, ActionType.W, ActionType.E, ActionType.R}
+EXTRA_SLOTS = tuple(ActionType(f"x{n}") for n in range(1, 10))
+CHAMPION_SLOTS = {ActionType.PASSIVE, ActionType.Q, ActionType.W, ActionType.E, ActionType.R, *EXTRA_SLOTS}
 ADAPTIVE_AD_RATIO = 0.6  # one adaptive force is 0.6 bonus AD or 1 AP
 ITEM_SLOTS = (ActionType.I1, ActionType.I2, ActionType.I3, ActionType.I4, ActionType.I5, ActionType.I6)
 
@@ -105,6 +107,9 @@ class Character():
             ActionType.E: (champion.e, rank.e),
             ActionType.R: (champion.r, rank.r)
         }
+        extras = dict(zip(EXTRA_SLOTS, champion.extra_abilities))
+        ability_dict |= {slot: (ability, getattr(rank, ability.rank_from.value)) for slot, ability in extras.items()}
+        self.extra_slots: dict[str, ActionType] = {ability.key: slot for slot, ability in extras.items()}
         # Summoner spells run like abilities in the slots S1 and S2, always at rank 1.
         spells = dict(zip(SUMMONER_SLOTS, summonerspells or []))
         ability_dict |= {slot: (spell.ability, 1) for slot, spell in spells.items()}
@@ -143,6 +148,11 @@ class Character():
             pet.name: (pet, slot) for slot, (ability, _) in self.ability_dict.items() for pet in ability.pets
         }
         self.buff_definitions: dict[str, tuple[BuffDefinition, ActionType]] = self._collect_buff_definitions()
+        # The key an extra ability sits on (Takedown on Q), for its origin.
+        self.extra_homes: dict[ActionType, ActionType] = {
+            self.extra_slots[key]: slot
+            for definition, _ in self.buff_definitions.values() for slot, key in definition.replaces.items()
+        }
         self.active_buffs: dict[str, BuffInstance] = {}
         self.pending_cooldowns: dict[str, tuple[ActionType, int]] = {}
         self.locked_until: int = 0
@@ -160,7 +170,27 @@ class Character():
 
     @property
     def is_ranged(self) -> bool:
-        return self.champion.range_type == RangeType.RANGED
+        overrides = [instance.definition.range_type for instance in self.active_buffs.values() if instance.definition.range_type]
+        return (overrides[-1] if overrides else self.champion.range_type) == RangeType.RANGED
+
+    def resolve_slot(self, slot: ActionType) -> ActionType:
+        """The slot a key press uses now: an own buff can put an extra ability on it (Q is Takedown in cougar form)."""
+        for instance in self.active_buffs.values():
+            if instance.source is self and slot in instance.definition.replaces:
+                return self.extra_slots[instance.definition.replaces[slot]]
+        return slot
+
+    def modify_cooldown(self, slot: ActionType, tick: int, amount: float, reset: bool, at_most: float | None) -> None:
+        ready = self.cooldowns[slot]
+        if reset:
+            ready = tick
+        ready = max(tick, ready - to_ticks(amount)) if amount else ready
+        if at_most is not None:
+            ready = min(ready, tick + to_ticks(at_most))
+        self.cooldowns[slot] = ready
+
+    def counts_as_cast(self, slot: ActionType) -> bool:
+        return slot not in self.ability_dict or self.ability_dict[slot][0].counts_as_cast
 
     def _item_passives(self) -> list[tuple[Passive, ActionType]]:
         # A unique passive is a shared named effect (Spellblade): several items give it only once.
@@ -195,10 +225,25 @@ class Character():
         if unknown:
             raise ValueError(f"Unknown scenario inputs for {self.name}: {sorted(unknown)}")
         for name, value in given.items():
-            declared = inputs[name]
-            if (declared.min is not None and value < declared.min) or (declared.max is not None and value > declared.max):
-                raise ValueError(f"Scenario input '{name}' must be between {declared.min} and {declared.max}, got {value}")
+            self._check_input(inputs[name], value)
         return {name: given.get(name, declared.default) for name, declared in inputs.items()}
+
+    @staticmethod
+    def _check_input(declared: Input, value: float | list[float]) -> None:
+        if declared.many != isinstance(value, list):
+            raise ValueError(f"Input '{declared.name}' takes {'a list of values' if declared.many else 'one value'}, got {value}")
+        for single in value if isinstance(value, list) else [value]:
+            if (declared.min is not None and single < declared.min) or (declared.max is not None and single > declared.max):
+                raise ValueError(f"Input '{declared.name}' must be between {declared.min} and {declared.max}, got {single}")
+
+    def _cast_params(self, ability: Ability, action: Action) -> dict[str, float]:
+        declared = {i.name: i for i in ability.inputs if i.per_cast}
+        unknown = set(action.params) - set(declared)
+        if unknown:
+            raise ValueError(f"Unknown parameters for {action.action_type}: {sorted(unknown)}, it takes {sorted(declared)}")
+        for name, value in action.params.items():
+            self._check_input(declared[name], value)
+        return dict(action.params)
 
     def _declared_inputs(self) -> list[Input]:
         containers = [self.passive] + [ability for ability, _ in self.ability_dict.values()]
@@ -222,9 +267,11 @@ class Character():
         return (self.current_tick - instance.start) * TICK_SECONDS
 
 
-    def apply_buff(self, name: str, source: "Character", stacks: int, tick: int, cast: int | None = None) -> BuffInstance:
+    def apply_buff(self, name: str, source: "Character", stacks: int, tick: int, cast: int | None = None,
+                   values: dict[str, float] | None = None) -> BuffInstance:
         definition, slot = source.buff_definitions[name]
-        end = self._buff_end(definition, source.formula_context(slot), tick)
+        # Duration and interval see the applying cast's parameters, e.g. how long Tides of Blood is charged.
+        end = self._buff_end(definition, replace(source.formula_context(slot), event_values=values or {}), tick)
         instance = self.active_buffs.get(name)
         if instance is None:
             instance = BuffInstance(definition, source, slot, 0, tick, end)
@@ -237,6 +284,8 @@ class Character():
             instance.stacks = min(instance.stacks, definition.max_stacks)
         if cast is not None:
             instance.cast = cast
+        if values:
+            instance.values = values
         self._take_snapshots(instance)
         return instance
 
@@ -312,6 +361,10 @@ class Character():
             return Origin(kind=OriginKind.ITEM, name=item.name, buff=part)
         if slot in self.rune_slots:
             return Origin(kind=OriginKind.RUNE, name=self.rune_slots[slot].name, buff=buff)
+        if slot in EXTRA_SLOTS:
+            # Named by the key it sits on, like every ability; the third part tells it apart (ability / Q / takedown).
+            home = self.extra_homes.get(slot, slot)
+            return Origin(kind=OriginKind.ABILITY, name=home.value.upper(), buff=buff or self.ability_dict[slot][0].key)
         return Origin(kind=OriginKind.ABILITY, name=slot.value.upper(), buff=buff)
 
     def _healing_factor(self, tick: int) -> float:
@@ -820,7 +873,7 @@ class Character():
             disarm_delay = max(disarm[0] for disarm in self.status_effects[StatusType.DISARM])
             tick = max(tick, disarm_delay)
         
-        if action_type in SLOT_COOLDOWN_REDUCTION:  # summoner spells can be used while silenced
+        if action_type in SLOT_COOLDOWN_REDUCTION or action_type in EXTRA_SLOTS:  # summoner spells can be used while silenced
             silences = {StatusType.BERSERK, StatusType.SILENCE, StatusType.TAUNT}
             silence_delay = [max(effect[0] for effect in self.status_effects[silence]) for silence in silences if silence in self.status_effects]
             if silence_delay:
@@ -868,7 +921,8 @@ class Character():
             dmg_sub_type=DamageSubType.PHYSIC,
             can_crit=True
         ))
-        return Rule(actions=[damage], speed=str(self.champion.missile_speed))
+        # Melee attacks hit at the end of the windup; the cougar form makes Nidalee melee.
+        return Rule(actions=[damage], speed=str(self.champion.missile_speed) if self.is_ranged else "0")
     
 
     def _do_ability(self, action: Action, tick: int) -> ActionEffect:
@@ -894,8 +948,9 @@ class Character():
             self.recasts.pop(slot, None)
         stage = ability.stages[index]
         outcome = self._outcome(action, stage)
+        params = self._cast_params(ability, action)
         rule_events = self._cost_event(action) + [
-            RuleEvent(rule=rule, slot=action.action_type, owner=action.actor, target=action.target)
+            RuleEvent(rule=rule, slot=action.action_type, owner=action.actor, target=action.target, values=params)
             for rule in stage.rules if rule.outcome in (None, outcome)
         ]
         return ActionEffect(tick=tick + cast_ticks, rule_events=rule_events)
@@ -928,7 +983,7 @@ class Character():
         if slot in ITEM_SLOTS:
             return cooldown  # only item haste would shorten it, and nothing gives that today
         haste = 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
-        reduction = 1 - self.get_stat(SLOT_COOLDOWN_REDUCTION[slot])
+        reduction = 1 - (self.get_stat(SLOT_COOLDOWN_REDUCTION[slot]) if slot in SLOT_COOLDOWN_REDUCTION else 0)
         return cooldown * haste * reduction
 
     def _defer_cooldown(self, buff: str, slot: ActionType, cooldown_ticks: int, cast_end: int) -> None:

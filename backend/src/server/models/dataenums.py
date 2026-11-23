@@ -166,6 +166,16 @@ class ActionType(str, Enum):
     I4="i4"
     I5="i5"
     I6="i6"
+    # Extra champion abilities (Nidalee's cougar form) in the order of Champion.extra_abilities; a buff maps Q/W/E/R to them.
+    X1="x1"
+    X2="x2"
+    X3="x3"
+    X4="x4"
+    X5="x5"
+    X6="x6"
+    X7="x7"
+    X8="x8"
+    X9="x9"
     # Runes and stat shards have no actions; their slots only name the container for formulas, buffs and origins.
     RUNE1="rune1"
     RUNE2="rune2"
@@ -510,6 +520,7 @@ class RuleActionType(str, Enum):
     LOCK = "Lock"
     EXECUTE = "Execute"
     ATTACK = "Attack"
+    TOGGLE_BUFF = "ToggleBuff"
     CUSTOM = "Custom"
 
 class StatMode(str, Enum):

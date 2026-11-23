@@ -16,6 +16,7 @@ class Action(BaseModel):
     outcome: str | None = None
     crit: bool | None = None  # for attacks: True/False picks it, None uses the expected value
     delay: float = Field(0, ge=0)  # seconds to wait after the previous action before this one may start (Urgot's Purge)
+    params: dict[str, float] = {}  # values of the ability's per-cast inputs (Bushwhack's step-in time)
 
 
 

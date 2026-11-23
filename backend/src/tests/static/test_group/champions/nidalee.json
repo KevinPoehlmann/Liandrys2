@@ -1,0 +1,994 @@
+{
+  "key": "76",
+  "name": "Nidalee",
+  "champion_id": "Nidalee",
+  "patch": "15.12.1",
+  "hotfix": "2025-06-12T00:00:00",
+  "last_changed": "26.21.1",
+  "range_type": "Ranged",
+  "adaptive_type": "magic",
+  "resource_type": "Mana",
+  "hp": 610.0,
+  "hp_per_lvl": 109,
+  "ad": 58.0,
+  "ad_per_lvl": 3.5,
+  "mana": 295.0,
+  "mana_per_lvl": 45.0,
+  "movementspeed": 335,
+  "armor": 32,
+  "armor_per_lvl": 5.0,
+  "mr": 30.0,
+  "mr_per_lvl": 1.45,
+  "attackrange": 525,
+  "hp_regen": 6.0,
+  "hp_regen_per_lvl": 0.6,
+  "mana_regen": 6.0,
+  "mana_regen_per_lvl": 0.8,
+  "attackspeed": 0.638,
+  "attackspeed_ratio": 0.638,
+  "attackspeed_per_lvl": 0.0322,
+  "attack_windup": 0.15,
+  "windup_modifier": 1.0,
+  "missile_speed": 2500,
+  "passive": {
+    "name": "Prowl",
+    "description": "Innate: Riven's ability casts generate a stack of Charge for 6 seconds, refreshing on subsequent casts and stacking up to 3 times. Riven's basic attacks are empowered to each consume a stack to deal bonus physical damage equal to 30% – 60% (based on level) AD, reduced to「 50% 」「 15% – 30% (based on level) AD 」against structures.\n\n\n\nThe bonus damage is affected by  critical strike modifiers and applies  life steal at 100% effectiveness.",
+    "static_cooldown": "0",
+    "raw_stats": {},
+    "changes": [],
+    "validated": true,
+    "image": {
+      "full": "RivenRunicBlades.png",
+      "group": "passive",
+      "sprite": "passive3.png",
+      "x": 48,
+      "y": 96,
+      "h": 48,
+      "w": 48
+    },
+    "inputs": [],
+    "stats": [],
+    "assumptions": [],
+    "rules": [],
+    "buffs": [
+      {
+        "name": "hunted",
+        "duration": "4",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "blocks": [],
+        "replaces": {},
+        "range_type": null,
+        "stats": [],
+        "rules": []
+      },
+      {
+        "name": "hunted_takedown",
+        "duration": "4",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "blocks": [],
+        "replaces": {},
+        "range_type": null,
+        "stats": [],
+        "rules": []
+      },
+      {
+        "name": "hunted_pounce",
+        "duration": "4",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "blocks": [],
+        "replaces": {},
+        "range_type": null,
+        "stats": [],
+        "rules": []
+      }
+    ]
+  },
+  "q": {
+    "name": "Javelin Toss",
+    "description": "",
+    "maxrank": 5,
+    "image": {
+      "full": "RivenTriCleave.png",
+      "group": "spell",
+      "sprite": "spell11.png",
+      "x": 96,
+      "y": 96,
+      "h": 48,
+      "w": 48
+    },
+    "validated": true,
+    "cost": "by_rank(50, 55, 60, 65, 70)",
+    "cost_resource": "mana",
+    "cooldown": "6",
+    "cast_time": "0.25",
+    "recharge": "0",
+    "cooldown_starts_after": null,
+    "cooldown_starts_on_cast": false,
+    "usable_during_cc": false,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "target",
+                  "scaling": "(by_rank(70, 90, 110, 130, 150) + 0.5 * ap) * (1 + 0.45 * min(5, floor(max(0, distance - 525) / 155)))",
+                  "dmg_type": [
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0,
+                  "can_crit": false
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "hunted",
+                  "target": "target",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "hunted_takedown",
+                  "target": "target",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "hunted_pounce",
+                  "target": "target",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "1300",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "stacks_cougar",
+                "comparison": "Equal",
+                "value": "0"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "ModifyCooldown",
+                "props": {
+                  "slot": "r",
+                  "reset": true
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "1300",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [],
+    "inputs": [],
+    "pets": [],
+    "assumptions": [
+      "+45 % per 155 units of distance (wiki), counted from 525 units (her attack range) up to 1300."
+    ],
+    "raw_stats": {},
+    "changes": []
+  },
+  "w": {
+    "name": "Bushwhack",
+    "description": "",
+    "maxrank": 5,
+    "image": {
+      "full": "RivenTriCleave.png",
+      "group": "spell",
+      "sprite": "spell11.png",
+      "x": 96,
+      "y": 96,
+      "h": 48,
+      "w": 48
+    },
+    "validated": true,
+    "cost": "by_rank(30, 35, 40, 45, 50)",
+    "cost_resource": "mana",
+    "cooldown": "by_rank(13, 12, 11, 10, 9)",
+    "cast_time": "0.25",
+    "recharge": "0",
+    "cooldown_starts_after": null,
+    "cooldown_starts_on_cast": false,
+    "usable_during_cc": false,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [
+          "hit",
+          "miss"
+        ],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": "hit",
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "bushwhack",
+                  "target": "target",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "hunted",
+                  "target": "target",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "hunted_takedown",
+                  "target": "target",
+                  "stacks": "1"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "hunted_pounce",
+                  "target": "target",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "bushwhack_step_in",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          },
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": "hit",
+            "conditions": [
+              {
+                "actor": "self",
+                "key": "stacks_cougar",
+                "comparison": "Equal",
+                "value": "0"
+              }
+            ],
+            "actions": [
+              {
+                "type_": "ModifyCooldown",
+                "props": {
+                  "slot": "r",
+                  "reset": true
+                }
+              }
+            ],
+            "delay": "bushwhack_step_in",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          }
+        ]
+      }
+    ],
+    "rules": [
+      {
+        "trigger": "on_start",
+        "filter": null,
+        "outcome": null,
+        "conditions": [],
+        "actions": [
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "bushwhack",
+              "target": "target",
+              "stacks": "1"
+            }
+          },
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "hunted",
+              "target": "target",
+              "stacks": "1"
+            }
+          },
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "hunted_takedown",
+              "target": "target",
+              "stacks": "1"
+            }
+          },
+          {
+            "type_": "ApplyBuff",
+            "props": {
+              "buff": "hunted_pounce",
+              "target": "target",
+              "stacks": "1"
+            }
+          }
+        ],
+        "delay": "each",
+        "speed": "0",
+        "acceleration": "0",
+        "max_speed": "0",
+        "cooldown": "0",
+        "cast_cooldown": null,
+        "for_each": "bushwhack_preplaced"
+      },
+      {
+        "trigger": "on_start",
+        "filter": null,
+        "outcome": null,
+        "conditions": [
+          {
+            "actor": "self",
+            "key": "stacks_cougar",
+            "comparison": "Equal",
+            "value": "0"
+          }
+        ],
+        "actions": [
+          {
+            "type_": "ModifyCooldown",
+            "props": {
+              "slot": "r",
+              "reset": true
+            }
+          }
+        ],
+        "delay": "each",
+        "speed": "0",
+        "acceleration": "0",
+        "max_speed": "0",
+        "cooldown": "0",
+        "cast_cooldown": null,
+        "for_each": "bushwhack_preplaced"
+      }
+    ],
+    "stats": [],
+    "buffs": [
+      {
+        "name": "bushwhack",
+        "duration": "4",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "1",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "blocks": [],
+        "replaces": {},
+        "range_type": null,
+        "stats": [],
+        "rules": [
+          {
+            "trigger": "on_interval",
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Damage",
+                "props": {
+                  "target": "bearer",
+                  "scaling": "by_rank(10, 20, 30, 40, 50) + 0.05 * ap",
+                  "dmg_type": [
+                    "Ability damage"
+                  ],
+                  "dmg_sub_type": "Magic",
+                  "vamp": 0.0,
+                  "can_crit": false
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          }
+        ]
+      }
+    ],
+    "inputs": [
+      {
+        "name": "bushwhack_step_in",
+        "default": 1.5,
+        "min": 1.5,
+        "max": null,
+        "per_cast": true,
+        "many": false,
+        "description": "Seconds after the cast until the target steps into the trap (armed after 1.5 s)"
+      },
+      {
+        "name": "bushwhack_preplaced",
+        "default": [],
+        "min": 0,
+        "max": null,
+        "per_cast": false,
+        "many": true,
+        "description": "Seconds after the start at which the target steps into traps placed before the fight"
+      }
+    ],
+    "pets": [],
+    "assumptions": [],
+    "raw_stats": {},
+    "changes": []
+  },
+  "e": {
+    "name": "Primal Surge",
+    "description": "",
+    "maxrank": 5,
+    "image": {
+      "full": "RivenTriCleave.png",
+      "group": "spell",
+      "sprite": "spell11.png",
+      "x": 96,
+      "y": 96,
+      "h": 48,
+      "w": 48
+    },
+    "validated": true,
+    "cost": "by_rank(50, 55, 60, 65, 70)",
+    "cost_resource": "mana",
+    "cooldown": "12",
+    "cast_time": "0.25",
+    "recharge": "0",
+    "cooldown_starts_after": null,
+    "cooldown_starts_on_cast": false,
+    "usable_during_cc": false,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "Heal",
+                "props": {
+                  "target": "self",
+                  "scaling": "(by_rank(50, 75, 100, 125, 150) + 0.35 * ap) * (1 + missing_hp_percent)"
+                }
+              },
+              {
+                "type_": "ApplyBuff",
+                "props": {
+                  "buff": "primal_surge",
+                  "target": "self",
+                  "stacks": "1"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [
+      {
+        "name": "primal_surge",
+        "duration": "7",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "blocks": [],
+        "replaces": {},
+        "range_type": null,
+        "stats": [
+          {
+            "stat": "attackspeed",
+            "formula": "by_rank(0.2, 0.3, 0.4, 0.5, 0.6)",
+            "mode": "flat",
+            "conversion": false,
+            "snapshot": false
+          }
+        ],
+        "rules": []
+      }
+    ],
+    "inputs": [],
+    "pets": [],
+    "assumptions": [],
+    "raw_stats": {},
+    "changes": []
+  },
+  "r": {
+    "name": "Aspect of the Cougar",
+    "description": "",
+    "maxrank": 4,
+    "image": {
+      "full": "RivenTriCleave.png",
+      "group": "spell",
+      "sprite": "spell11.png",
+      "x": 96,
+      "y": 96,
+      "h": 48,
+      "w": 48
+    },
+    "validated": true,
+    "cost": "0",
+    "cost_resource": "none",
+    "cooldown": "3",
+    "cast_time": "0",
+    "recharge": "0",
+    "cooldown_starts_after": null,
+    "cooldown_starts_on_cast": false,
+    "usable_during_cc": false,
+    "stages": [
+      {
+        "recast_window": "0",
+        "recast_delay": "0",
+        "outcomes": [],
+        "rules": [
+          {
+            "trigger": null,
+            "filter": null,
+            "outcome": null,
+            "conditions": [],
+            "actions": [
+              {
+                "type_": "RemoveBuff",
+                "props": {
+                  "buff": "takedown",
+                  "target": "self",
+                  "stacks": null
+                }
+              },
+              {
+                "type_": "ToggleBuff",
+                "props": {
+                  "buff": "cougar",
+                  "target": "self"
+                }
+              }
+            ],
+            "delay": "0",
+            "speed": "0",
+            "acceleration": "0",
+            "max_speed": "0",
+            "cooldown": "0",
+            "cast_cooldown": null
+          }
+        ]
+      }
+    ],
+    "rules": [],
+    "stats": [],
+    "buffs": [
+      {
+        "name": "cougar",
+        "duration": "0",
+        "max_stacks": 1,
+        "refresh": true,
+        "interval": "0",
+        "tick_on_apply": false,
+        "tick_on_end": false,
+        "windup_cancel": [],
+        "slowed_while": [],
+        "tags": [],
+        "blocks": [],
+        "replaces": {
+          "q": "takedown",
+          "w": "pounce",
+          "e": "swipe"
+        },
+        "range_type": "Melee",
+        "stats": [],
+        "rules": []
+      }
+    ],
+    "inputs": [],
+    "pets": [],
+    "assumptions": [],
+    "raw_stats": {},
+    "changes": [],
+    "counts_as_cast": false
+  },
+  "validated": true,
+  "changes": [],
+  "image": {
+    "full": "Nidalee.png",
+    "group": "champion",
+    "sprite": "champion3.png",
+    "x": 48,
+    "y": 96,
+    "h": 48,
+    "w": 48
+  },
+  "_id": "685961987de6da37b9ad9076",
+  "extra_abilities": [
+    {
+      "name": "Takedown",
+      "description": "",
+      "maxrank": 4,
+      "image": {
+        "full": "RivenTriCleave.png",
+        "group": "spell",
+        "sprite": "spell11.png",
+        "x": 96,
+        "y": 96,
+        "h": 48,
+        "w": 48
+      },
+      "validated": true,
+      "cost": "0",
+      "cost_resource": "none",
+      "cooldown": "6",
+      "cast_time": "0",
+      "recharge": "0",
+      "cooldown_starts_after": null,
+      "cooldown_starts_on_cast": false,
+      "usable_during_cc": false,
+      "stages": [
+        {
+          "recast_window": "0",
+          "recast_delay": "0",
+          "outcomes": [],
+          "rules": [
+            {
+              "trigger": null,
+              "filter": null,
+              "outcome": null,
+              "conditions": [],
+              "actions": [
+                {
+                  "type_": "ApplyBuff",
+                  "props": {
+                    "buff": "takedown",
+                    "target": "self",
+                    "stacks": "1"
+                  }
+                },
+                {
+                  "type_": "ResetAttack",
+                  "props": {}
+                }
+              ],
+              "delay": "0",
+              "speed": "0",
+              "acceleration": "0",
+              "max_speed": "0",
+              "cooldown": "0",
+              "cast_cooldown": null
+            }
+          ]
+        }
+      ],
+      "rules": [],
+      "stats": [],
+      "buffs": [
+        {
+          "name": "takedown",
+          "duration": "10",
+          "max_stacks": 1,
+          "refresh": true,
+          "interval": "0",
+          "tick_on_apply": false,
+          "tick_on_end": false,
+          "windup_cancel": [],
+          "slowed_while": [],
+          "tags": [],
+          "blocks": [],
+          "replaces": {},
+          "range_type": null,
+          "stats": [],
+          "rules": [
+            {
+              "trigger": "on_hit",
+              "filter": null,
+              "outcome": null,
+              "conditions": [],
+              "actions": [
+                {
+                  "type_": "Damage",
+                  "props": {
+                    "target": "target",
+                    "scaling": "(by_rank(5, 30, 55, 80) + 0.75 * ad + 0.4 * ap) * (1 + by_rank(1, 1.25, 1.5, 1.75) * target_missing_hp_percent) * (1 + 0.3 * target_stacks_hunted_takedown)",
+                    "dmg_type": [
+                      "Ability damage",
+                      "On-hit damage"
+                    ],
+                    "dmg_sub_type": "Magic",
+                    "vamp": 0.0,
+                    "can_crit": true
+                  }
+                },
+                {
+                  "type_": "RemoveBuff",
+                  "props": {
+                    "buff": "hunted_takedown",
+                    "target": "target",
+                    "stacks": null
+                  }
+                },
+                {
+                  "type_": "RemoveBuff",
+                  "props": {
+                    "buff": "takedown",
+                    "target": "self",
+                    "stacks": null
+                  }
+                }
+              ],
+              "delay": "0",
+              "speed": "0",
+              "acceleration": "0",
+              "max_speed": "0",
+              "cooldown": "0",
+              "cast_cooldown": null
+            }
+          ]
+        }
+      ],
+      "inputs": [],
+      "pets": [],
+      "assumptions": [],
+      "raw_stats": {},
+      "changes": [],
+      "key": "takedown",
+      "rank_from": "r"
+    },
+    {
+      "name": "Pounce",
+      "description": "",
+      "maxrank": 4,
+      "image": {
+        "full": "RivenTriCleave.png",
+        "group": "spell",
+        "sprite": "spell11.png",
+        "x": 96,
+        "y": 96,
+        "h": 48,
+        "w": 48
+      },
+      "validated": true,
+      "cost": "0",
+      "cost_resource": "none",
+      "cooldown": "6",
+      "cast_time": "0",
+      "recharge": "0",
+      "cooldown_starts_after": null,
+      "cooldown_starts_on_cast": false,
+      "usable_during_cc": false,
+      "stages": [
+        {
+          "recast_window": "0",
+          "recast_delay": "0",
+          "outcomes": [],
+          "rules": [
+            {
+              "trigger": null,
+              "filter": null,
+              "outcome": null,
+              "conditions": [],
+              "actions": [
+                {
+                  "type_": "Damage",
+                  "props": {
+                    "target": "target",
+                    "scaling": "by_rank(50, 90, 130, 170) + 0.5 * bonus_ad + 0.3 * ap",
+                    "dmg_type": [
+                      "Ability damage"
+                    ],
+                    "dmg_sub_type": "Magic",
+                    "vamp": 0.0,
+                    "can_crit": false
+                  }
+                }
+              ],
+              "delay": "0",
+              "speed": "0",
+              "acceleration": "0",
+              "max_speed": "0",
+              "cooldown": "0",
+              "cast_cooldown": null
+            },
+            {
+              "trigger": null,
+              "filter": null,
+              "outcome": null,
+              "conditions": [
+                {
+                  "actor": "target",
+                  "key": "stacks_hunted_pounce",
+                  "comparison": "Equal",
+                  "value": "1"
+                }
+              ],
+              "actions": [
+                {
+                  "type_": "ModifyCooldown",
+                  "props": {
+                    "at_most": "by_rank(3, 2.5, 2, 1.5)"
+                  }
+                },
+                {
+                  "type_": "RemoveBuff",
+                  "props": {
+                    "buff": "hunted_pounce",
+                    "target": "target",
+                    "stacks": null
+                  }
+                }
+              ],
+              "delay": "0",
+              "speed": "0",
+              "acceleration": "0",
+              "max_speed": "0",
+              "cooldown": "0",
+              "cast_cooldown": null
+            }
+          ]
+        }
+      ],
+      "rules": [],
+      "stats": [],
+      "buffs": [],
+      "inputs": [],
+      "pets": [],
+      "assumptions": [
+        "The damage lands at the cast; the dash's travel time isn't modelled."
+      ],
+      "raw_stats": {},
+      "changes": [],
+      "key": "pounce",
+      "rank_from": "r"
+    },
+    {
+      "name": "Swipe",
+      "description": "",
+      "maxrank": 4,
+      "image": {
+        "full": "RivenTriCleave.png",
+        "group": "spell",
+        "sprite": "spell11.png",
+        "x": 96,
+        "y": 96,
+        "h": 48,
+        "w": 48
+      },
+      "validated": true,
+      "cost": "0",
+      "cost_resource": "none",
+      "cooldown": "6",
+      "cast_time": "0.25",
+      "recharge": "0",
+      "cooldown_starts_after": null,
+      "cooldown_starts_on_cast": false,
+      "usable_during_cc": false,
+      "stages": [
+        {
+          "recast_window": "0",
+          "recast_delay": "0",
+          "outcomes": [],
+          "rules": [
+            {
+              "trigger": null,
+              "filter": null,
+              "outcome": null,
+              "conditions": [],
+              "actions": [
+                {
+                  "type_": "Damage",
+                  "props": {
+                    "target": "target",
+                    "scaling": "by_rank(70, 130, 190, 250) + 0.7 * bonus_ad + 0.55 * ap",
+                    "dmg_type": [
+                      "Ability damage"
+                    ],
+                    "dmg_sub_type": "Magic",
+                    "vamp": 0.0,
+                    "can_crit": false
+                  }
+                }
+              ],
+              "delay": "0",
+              "speed": "0",
+              "acceleration": "0",
+              "max_speed": "0",
+              "cooldown": "0",
+              "cast_cooldown": null
+            }
+          ]
+        }
+      ],
+      "rules": [],
+      "stats": [],
+      "buffs": [],
+      "inputs": [],
+      "pets": [],
+      "assumptions": [],
+      "raw_stats": {},
+      "changes": [],
+      "key": "swipe",
+      "rank_from": "r"
+    }
+  ]
+}

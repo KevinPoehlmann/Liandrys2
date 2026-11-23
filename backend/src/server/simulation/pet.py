@@ -22,6 +22,7 @@ class PetCharacter(Character):
         self.name: str = definition.name
         self.passive = definition.passive
         self.expired: bool = False
+        self.extra_slots: dict = {}
         self._setup(owner.level, [], {}, {})
 
 

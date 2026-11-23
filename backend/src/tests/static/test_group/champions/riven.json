@@ -307,7 +307,8 @@
         "default": 0,
         "min": 0,
         "max": 1,
-        "description": "Cancel Broken Wings' animation with a move command (1) or not (0)"
+        "description": "Cancel Broken Wings' animation with a move command (1) or not (0)",
+        "per_cast": true
       }
     ],
     "assumptions": [

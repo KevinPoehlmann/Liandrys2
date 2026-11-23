@@ -505,7 +505,8 @@
         "default": 1,
         "min": 0,
         "max": 1.5,
-        "description": "Seconds Tides of Blood is charged (full damage after 1 s, 1.5 s at most)"
+        "description": "Seconds Tides of Blood is charged (full damage after 1 s, 1.5 s at most)",
+        "per_cast": true
       }
     ],
     "stages": [
