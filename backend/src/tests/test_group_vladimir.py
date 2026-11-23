@@ -2,9 +2,17 @@ import json
 
 import pytest
 
-from src.server.models.dataenums import (
-    ActionType, Actor, DamageSubType, DamageType, EffectType, ProcessedDamageProperties, Stat, StatusType, to_ticks
+from src.server.models.enums import (
+    ActionType,
+    Actor,
+    DamageSubType,
+    DamageType,
+    EffectType,
+    Stat,
+    StatusType,
+    to_ticks
 )
+from src.server.simulation.components import ProcessedDamageProperties
 from src.server.models.item import Item
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character, soft_cap_movespeed

@@ -4,11 +4,7 @@ from src.server.models.image import Image
 from src.server.models.pet import Pet
 from src.server.models.rule import Buff, Input, Rule, Stage, StatModifier
 
-from src.server.models.dataenums import (
-    ActionType,
-    ActiveType,
-    CostResource
-)
+from src.server.models.enums import ActionType, ActiveType, CostResource
 
 
 

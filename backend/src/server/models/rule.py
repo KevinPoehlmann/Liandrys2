@@ -2,7 +2,7 @@ from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Extra, Field, validator
 
-from src.server.models.dataenums import (
+from src.server.models.enums import (
     ActionType,
     Comparison,
     CostResource,

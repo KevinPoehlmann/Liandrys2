@@ -15,7 +15,7 @@ from src.server.models.champion import NewChampion, Champion, ShortChampion
 from src.server.models.item import NewItem, Item, ShortItem
 from src.server.models.rune import NewRune, Rune, ShortRune
 from src.server.models.summonerspell import NewSummonerspell, Summonerspell, ShortSummonerspell
-from src.server.models.dataenums import Map
+from src.server.models.enums import Map
 
 
 

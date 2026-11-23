@@ -1,4 +1,4 @@
-from src.server.models.dataenums import Actor, CostResource, EffectType
+from src.server.models.enums import Actor, CostResource, EffectType
 from src.server.simulation.simulation import Simulation
 
 

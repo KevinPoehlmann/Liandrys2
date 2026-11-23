@@ -38,7 +38,7 @@ from src.server.loader.webscraper2 import (
 )
 from src.server.models.ability import ChampionAbility, Ability, ItemActive
 from src.server.models.champion import NewChampion, Champion
-from src.server.models.dataenums import RangeType, Stat, ItemClass
+from src.server.models.enums import RangeType, Stat, ItemClass
 from src.server.models.item import NewItem
 from src.server.models.rune import NewRune
 from src.server.models.json_validation import PassiveJson, Image, SpellJson, ChampionJson, StatsJson, ItemJson, SummonerspellJson, GoldJson, RuneJson

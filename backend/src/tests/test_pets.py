@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from src.server.models.champion import Champion
-from src.server.models.dataenums import ActionType, Actor, EffectType, RuleActionType, Target, to_ticks
+from src.server.models.enums import ActionType, Actor, EffectType, RuleActionType, Target, to_ticks
 from src.server.models.pet import Pet
 from src.server.models.request import Action, Rank
 from src.server.models.rule import Rule

@@ -32,7 +32,7 @@ from src.server.models.json_validation import (
     SummonerspellJson
 )
 from src.server.models.champion import NewChampion
-from src.server.models.dataenums import Stat
+from src.server.models.enums import Stat
 from src.server.models.image import Image
 from src.server.models.item import NewItem
 from src.server.models.patch import NewPatch, Patch

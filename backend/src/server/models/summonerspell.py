@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 from src.server.models.ability import Ability
-from src.server.models.dataenums import Map
+from src.server.models.enums import Map
 from src.server.models.image import Image
 from src.server.models.pydanticid import PydanticObjectId
 

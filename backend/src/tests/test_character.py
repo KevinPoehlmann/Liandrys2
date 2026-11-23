@@ -1,10 +1,16 @@
 import pytest
 from collections import defaultdict
 
-from src.server.models.dataenums import (
-    Stat, ActionType, Actor, DamageSubType, DamageType, EffectType,
-    ProcessedDamageProperties, QueueComponent, StatusType
+from src.server.models.enums import (
+    Stat,
+    ActionType,
+    Actor,
+    DamageSubType,
+    DamageType,
+    EffectType,
+    StatusType
 )
+from src.server.simulation.components import ProcessedDamageProperties, QueueComponent
 from src.server.models.request import Action
 from src.server.simulation.character import soft_cap_movespeed
 

@@ -1,10 +1,7 @@
 import math
 import re
-from aenum import MultiValueEnum
-from dataclasses import dataclass, field
 from enum import Enum
-from typing import ClassVar, cast
-from pydantic import BaseModel
+from typing import ClassVar
 
 
 
@@ -378,16 +375,6 @@ class DamageSubType(str, Enum):
 #Abilities
 
 
-class AbilityStat(str, Enum):
-    COOLDOWN = "cooldown"
-    COST = "cost"
-    CAST_TIME = "cast_time"
-    SPEED = "speed"
-    RECHARGE = "recharge"
-    DURATION = "duration"
-
-
-
 class ActiveType(str, Enum):
     ACTIVE="Active"
     CONSUME="Consume"
@@ -413,15 +400,6 @@ class OriginKind(str, Enum):
     REGEN = "regen"
     VAMP = "vamp"  # life steal heals; later omnivamp
 
-
-class Origin(BaseModel):
-    """Where a result comes from, for the damage breakdown: champion parts by slot, everything else by name."""
-    kind: OriginKind
-    name: str  # "Q", "passive", "BA", "Ignite", "Sheen", "health"
-    buff: str | None = None  # "hemorrhage", "tibbers_aura"
-
-    class Config:
-        frozen = True  # hashable, so results can be grouped by origin
 
 
 class CostResource(str, Enum):
@@ -526,120 +504,3 @@ class RuleActionType(str, Enum):
 class StatMode(str, Enum):
     FLAT = "flat"
     PERCENT = "percent"
-
-
-############### BaseModels ###############
-
-
-class ItemStat(BaseModel):
-    stat: Stat
-    value: float
-
-
-class Mythic(BaseModel):
-    stat: Stat
-    value: float
-
-
-class Combo(BaseModel):
-    pass
-
-
-class EffectResult(BaseModel):
-    source: ActionType
-    actor: Actor
-    target: Actor
-    type_: EffectType
-    value: float
-    raw: float = 0
-    mitigated: float = 0
-    overheal: float = 0
-    damage_sub_type: DamageSubType | None = None
-    resource: CostResource | None = None  # for costs and regeneration
-    origin: Origin | None = None
-    dmg_tags: list[DamageType] = []  # for damage: all its tags (Conqueror and Electrocute filter by them)
-    cast: int | None = None  # the cast instance (attack, cast, item active) it belongs to
-
-
-class TickEvent(BaseModel):
-    tick: int
-    result: list[EffectResult]
-
-
-
-class EffectProperties(BaseModel):
-    pass
-
-
-class ProcessedDamageProperties(EffectProperties):
-    value: float
-    flat_pen: float
-    percent_pen: float
-    dmg_type: DamageType
-    dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.PHYSIC)
-    vamp: float = 0
-    life_steal: float = 0
-    omnivamp: float = 0
-    tags: list[DamageType] = []
-    execute: bool = False  # takes all remaining health, past shields (The Collector)
-
-
-class ProcessedHealProperties(EffectProperties):
-    value: float
-
-
-class ProcessedShieldProperties(EffectProperties):
-    value: float
-    duration: int
-    dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.TRUE)
-
-
-class ProcessedStatusProperties(EffectProperties):
-    type_: StatusType
-    duration: int
-    strength: float = 0.0
-
-
-class ProcessedCostProperties(EffectProperties):
-    resource: CostResource
-    value: float
-
-
-
-############### Dataclasses ###############
-
-
-
-@dataclass
-class AttackspeedStats():
-    attackspeed_ratio: float
-    attack_windup: float = 0.0
-    windup_modifier: float = 1.0
-    missile_speed: int = 0
-
-
-
-### Status Queue ###
-
-
-#Queue
-
-
-@dataclass 
-class QueueComponent():
-    source: ActionType
-    actor: Actor
-    target: Actor
-    type_: EffectType
-    props: EffectProperties | None = None
-    origin: Origin | None = None
-    cast: int | None = None  # the cast instance it belongs to
-
-
-#Status
-
-@dataclass
-class ActionEffect():
-    tick: int
-    rule_events: list = field(default_factory=list)
-    windup_cancel: set = field(default_factory=set)

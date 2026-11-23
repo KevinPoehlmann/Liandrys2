@@ -1,7 +1,7 @@
 import pytest
 
 from src.server.models.champion import Champion
-from src.server.models.dataenums import ActionType, Actor, CostResource, EffectType, ResourceType, to_ticks
+from src.server.models.enums import ActionType, Actor, CostResource, EffectType, ResourceType, to_ticks
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character
 from src.server.simulation.exceptions import SimulationError

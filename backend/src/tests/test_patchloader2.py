@@ -45,7 +45,7 @@ from src.server.loader.patchloader2 import (
 from src.server.loader.patchexceptions import PatcherError, LoadError
 from src.server.models.ability import Ability, ChampionAbility
 from src.server.models.champion import NewChampion
-from src.server.models.dataenums import RangeType, Stat
+from src.server.models.enums import RangeType, Stat
 from src.server.models.image import Image
 from src.server.models.item import NewItem
 from src.server.models.json_validation import PathJson

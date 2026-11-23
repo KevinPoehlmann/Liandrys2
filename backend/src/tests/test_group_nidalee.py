@@ -1,6 +1,6 @@
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, EffectType, OriginKind, to_ticks
+from src.server.models.enums import ActionType, Actor, EffectType, OriginKind, to_ticks
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character
 from src.server.simulation.simulation import DEFAULT_DISTANCE, Simulation

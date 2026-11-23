@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from src.server.models.dataenums import ActionType
+from src.server.models.enums import ActionType
 from src.server.models.rule import Buff
 
 if TYPE_CHECKING:

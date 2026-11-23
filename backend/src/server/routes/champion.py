@@ -12,7 +12,7 @@ from src.server.database import (
     update_champion
 )
 from src.server.models.champion import ShortChampion, Champion
-from src.server.models.dataenums import RangeType, ResourceType
+from src.server.models.enums import RangeType, ResourceType
 
 from src.server.routes.helpers import get_required_champion
 

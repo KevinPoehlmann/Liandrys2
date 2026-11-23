@@ -1,6 +1,6 @@
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, EffectType, Stat, to_ticks
+from src.server.models.enums import ActionType, Actor, EffectType, Stat, to_ticks
 from src.server.models.request import Action, Rank
 from src.server.models.rule import Buff, Rule
 from src.server.simulation.character import Character

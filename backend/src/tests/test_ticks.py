@@ -1,6 +1,6 @@
 import pytest
 
-from src.server.models.dataenums import to_ticks
+from src.server.models.enums import to_ticks
 
 
 @pytest.mark.parametrize("seconds, ticks", [

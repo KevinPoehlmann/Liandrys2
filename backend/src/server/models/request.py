@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
-from src.server.models.dataenums import ActionType, Actor, TickEvent
+from src.server.models.enums import ActionType, Actor
+from src.server.models.result import TickEvent
 
 
 class Rank(BaseModel):

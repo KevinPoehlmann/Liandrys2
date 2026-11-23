@@ -240,7 +240,7 @@ Pages: Cast_time, Channel (both marked partly outdated)
 - Some cast times scale with attack speed or windup (Jinx W, Kai'Sa W, Yasuo/Yone Q, Zeri Q, Smolder Q, …); some can be done while moving (Kayle, Samira R, Swain R, …).
 - Channels are different: the caster is occupied, the channel can be interrupted by stun, airborne, silence, suppression and so on (or by the caster's own action, e.g. Katarina R), interruption usually doesn't refund the cooldown. Cooldown start for channels is not stated.
 
-**Animation locks:** the wiki's cast time is the lock for most abilities. Some abilities lock longer than their cast time unless the animation is canceled (Riven's Q with a move command), and the wiki has no numbers for that; CommunityDragon's `spellTotalTime` looks like a default value. Riven's Q uses an input `riven_q_cancel` (default: not canceled) with assumed lock times, listed in the ability's `assumptions`. Real numbers are a Phase 4 topic.
+**Animation locks:** the wiki's cast time is the lock for most abilities. Some abilities lock longer than their cast time unless the animation is canceled (Riven's Q with a move command), and the wiki has no numbers for that; CommunityDragon's `spellTotalTime` looks like a default value. Riven's Q uses an input `riven_q_cancel` (default: not canceled) with assumed lock times, listed in the ability's `assumptions`. Real numbers are a Phase 3 topic.
 
 **Simulation:** `cast_time` is a formula (so attack-speed scaling works) and locks the caster until the rules land. ✓ `cooldown_starts_on_cast` covers the exception list. ✓ ⚠ No effects before the end of the cast time (rule delays only go forward). ⚠ No channels (Katarina R, Karthus R): needs interrupt handling once the enemy acts in the combo.
 

@@ -2,7 +2,7 @@ from dataclasses import replace
 
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor
+from src.server.models.enums import ActionType, Actor
 from src.server.models.request import Action
 from src.server.simulation.simulation import Simulation
 from src.tests.helpers import regenerated_health

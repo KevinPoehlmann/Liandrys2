@@ -17,16 +17,10 @@ from src.server.models.json_validation import (
     SummonerspellJson
 )
 from src.server.models.champion import Champion
-from src.server.models.dataenums import (
-    ActionEffect,
+from src.server.models.enums import (
     ActionType,
     DamageSubType,
     DamageType,
-    ProcessedDamageProperties,
-    ProcessedHealProperties,
-    ProcessedShieldProperties,
-    ProcessedStatusProperties,
-    QueueComponent,
     EffectType,
     StatusType,
     Actor,
@@ -40,7 +34,14 @@ from src.server.models.summonerspell import Summonerspell
 from src.server.models.patch import NewPatch, Patch
 from src.server.models.request import Rank
 from src.server.simulation.character import Character
-from src.server.simulation.events import RuleEvent
+from src.server.simulation.components import (
+    ProcessedDamageProperties,
+    ProcessedHealProperties,
+    ProcessedShieldProperties,
+    ProcessedStatusProperties,
+    QueueComponent
+)
+from src.server.simulation.events import ActionEffect, RuleEvent
 from src.server.simulation.simulation import Simulation
 
 

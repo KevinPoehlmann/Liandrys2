@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from src.server.models.dataenums import ActionType, Actor
+from src.server.models.enums import ActionType, Actor
 from src.server.models.rule import Rule
 
 
@@ -42,3 +42,11 @@ class BuffEnd:
     bearer: Actor
     buff: str
     end: int
+
+
+@dataclass
+class ActionEffect:
+    """What an action returns: the tick its cast time ends and the rule events it starts."""
+    tick: int
+    rule_events: list[RuleEvent] = field(default_factory=list)
+    windup_cancel: set = field(default_factory=set)

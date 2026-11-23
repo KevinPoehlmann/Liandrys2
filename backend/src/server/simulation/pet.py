@@ -1,6 +1,7 @@
 from dataclasses import replace
 
-from src.server.models.dataenums import ActionType, CostResource, DamageSubType, Origin, RuleActionType, Stat, Target
+from src.server.models.enums import ActionType, CostResource, DamageSubType, RuleActionType, Stat, Target
+from src.server.models.result import Origin
 from src.server.models.pet import Pet
 from src.server.models.rule import DamageAction, DamageProps, Rule
 from src.server.simulation.character import Character

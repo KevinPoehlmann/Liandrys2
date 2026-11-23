@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from src.server.models.champion import Champion
-from src.server.models.dataenums import RuleActionType, Stat, Target, Trigger
+from src.server.models.enums import RuleActionType, Stat, Target, Trigger
 from src.server.models.rule import ApplyBuffAction, Buff, DamageAction, ResetAttackAction, Rule, Stage
 
 

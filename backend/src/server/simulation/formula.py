@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from src.server.models.dataenums import ActionType, Stat
+from src.server.models.enums import ActionType, Stat
 from src.server.simulation.exceptions import SimulationError
 
 

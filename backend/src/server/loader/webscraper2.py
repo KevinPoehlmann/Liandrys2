@@ -4,6 +4,7 @@ import re
 import unicodedata
 
 from bs4 import BeautifulSoup, Tag
+from dataclasses import dataclass
 from datetime import datetime
 from src.server.loader.helper import (
     wiki_to_riot_patch,
@@ -17,12 +18,10 @@ from src.server.loader.helper import (
 from src.server.loader.patchexceptions import ScrapeError
 from src.server.models.ability import ChampionAbility, ItemActive, Ability
 from src.server.models.champion import NewChampion
-from src.server.models.dataenums import (
+from src.server.models.enums import (
     ActiveType,
     ResourceType,
     RangeType,
-    AttackspeedStats,
-    AbilityStat,
     ItemClass,
     Map,
     Stat
@@ -38,6 +37,15 @@ from src.server.models.summonerspell import NewSummonerspell
 
 patch_logger = logging.getLogger("liandrys.patch")
 debug_logger = logging.getLogger("liandrys.debug")
+
+
+
+@dataclass
+class AttackspeedStats():
+    attackspeed_ratio: float
+    attack_windup: float = 0.0
+    windup_modifier: float = 1.0
+    missile_speed: int = 0
 
 
 

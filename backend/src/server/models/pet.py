@@ -2,7 +2,7 @@ import re
 
 from pydantic import Field, validator
 
-from src.server.models.dataenums import DamageSubType, DamageType, Stat
+from src.server.models.enums import DamageSubType, DamageType, Stat
 from src.server.models.passive import Passive
 from src.server.models.rule import StrictModel
 

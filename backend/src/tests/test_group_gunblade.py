@@ -2,7 +2,8 @@ import json
 
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, EffectType, Origin, OriginKind, StatusType, to_ticks
+from src.server.models.enums import ActionType, Actor, EffectType, OriginKind, StatusType, to_ticks
+from src.server.models.result import Origin
 from src.server.models.request import Action, Rank
 from src.server.models.summonerspell import Summonerspell
 from src.server.simulation.character import Character

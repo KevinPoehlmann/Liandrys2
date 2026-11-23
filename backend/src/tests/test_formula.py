@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from src.server.models.dataenums import ActionType, Stat
+from src.server.models.enums import ActionType, Stat
 from src.server.simulation.formula import FormulaContext, FormulaError, evaluate_formula
 
 

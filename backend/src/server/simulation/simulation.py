@@ -3,31 +3,23 @@ from dataclasses import replace
 import math
 
 
-from src.server.models.dataenums import (
+from src.server.models.enums import (
     ActionType,
     Actor,
     Comparison,
     DamageSubType,
     DamageType,
-    EffectResult,
     EffectType,
-    Origin,
-    ProcessedDamageProperties,
-    ProcessedCostProperties,
-    ProcessedHealProperties,
-    ProcessedShieldProperties,
-    ProcessedStatusProperties,
-    QueueComponent,
     RuleActionType,
     Stat,
     StatusType,
     Target,
-    TickEvent,
     Trigger,
     TICKRATE,
     to_ticks
 )
 from src.server.models.request import V1Response, Action
+from src.server.models.result import EffectResult, Origin, TickEvent
 from src.server.models.rule import (
     ApplyBuffAction, Condition, DamageAction, DamageProps, HealAction, HealProps, RemoveBuffAction,
     ResetAttackAction, Rule, RuleAction, ShieldAction, ShieldProps, StatusAction, StatusProps, SummonAction,
@@ -36,6 +28,14 @@ from src.server.models.rule import (
 )
 from src.server.simulation.character import SUMMONER_SLOTS, Character
 from src.server.simulation.buff_instance import BuffInstance
+from src.server.simulation.components import (
+    ProcessedCostProperties,
+    ProcessedDamageProperties,
+    ProcessedHealProperties,
+    ProcessedShieldProperties,
+    ProcessedStatusProperties,
+    QueueComponent
+)
 from src.server.simulation.events import BuffEnd, BuffTick, PetAttackDue, PetExpire, RuleEvent
 from src.server.simulation.exceptions import SimulationError
 from src.server.simulation.formula import FormulaContext, evaluate_formula

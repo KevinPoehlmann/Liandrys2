@@ -2,7 +2,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, validator, ValidationError
 
 from src.server.models.image import Image
-from src.server.models.dataenums import Stat
+from src.server.models.enums import Stat
 
 
 

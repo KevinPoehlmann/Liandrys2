@@ -1,4 +1,4 @@
-from src.server.models.dataenums import ActionType, Actor
+from src.server.models.enums import ActionType, Actor
 
 
 class SimulationError(Exception):

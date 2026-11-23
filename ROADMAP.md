@@ -66,9 +66,10 @@ Known gaps found in Phase 1 (fold them into the new design):
 
 Cleanup once the simulation runs on the new system (not before, the old models still live in these files):
 - [x] Delete the old effect models (`effect.py`, `passive_effect.py`, the old `…Properties` and `Condition` in `dataenums.py`; the `Processed…Properties` stay, the new path uses them)
-- [ ] Move the simulation runtime types (`QueueComponent`, `ActionEffect`, `AttackspeedStats`) into `simulation/`, and the result types (`EffectResult`, `TickEvent`) into their own model
-- [ ] Remove dead code: `ItemStat`, `Mythic`, `Combo`, the unused `MultiValueEnum` import (then `aenum` can leave `requirements.txt`)
-- [ ] Rename `dataenums.py` → `enums.py` once it only holds enums and constants. It stays the import-free bottom layer: enums ← models ← simulation ← routes
+- [x] Move the simulation runtime types into `simulation/` (`QueueComponent` and the `Processed…Properties` → `components.py`, `ActionEffect` → `events.py`), the result types (`EffectResult`, `TickEvent`, `Origin`) into `models/result.py`, and `AttackspeedStats` into `webscraper2.py` (`AbilityStat` was unused and is gone)
+- [x] Remove dead code: `ItemStat`, `Mythic` (test_patchloader2 only has an item named "Mythic Cleaver"), `Combo`, `MultiValueEnum` and `aenum` in `requirements.txt`; `re`/`ClassVar` stay (`Actor`), `StatMode.PERCENT` stays (Rabadon, see the design doc)
+- [x] Rename `dataenums.py` → `enums.py` (no clash with the stdlib `enum`; `routes/enums.py` is the enum route, a different package). It stays the import-free bottom layer: enums ← models ← simulation ← routes
+- Left for the scraper rework (Phase 3), because only the scraper uses them: the pseudo stats in `Stat` (`target's armor`, `units`, `Charge`, …), `DamageType` `Default`/`Non-Damaging`/`See Notes`/`Spell damage`, the `ERROR` members and the `from_str` alias maps
 
 **Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Urgot (W: toggle, attacks made by an ability, on-hit at 50 %), Nidalee (forms, abilities replaced by a buff, rank from R), Sheen, Thornmail, Blade of the Ruined King (replaces Kraken Slayer: current-health on-hit, life steal, melee/ranged), The Collector, Hextech Gunblade (replaces Black Cleaver: item actives, omnivamp), Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
 
@@ -78,18 +79,9 @@ Cleanup once the simulation runs on the new system (not before, the old models s
 - [x] Items: Sheen, Thornmail, Blade of the Ruined King, The Collector, Hextech Gunblade
 - [x] Runes: Conqueror, Electrocute (runes and stat shards in the simulation, adaptive force, cast instances)
 
-## Phase 3: Admin side complete
+## Phase 3: Loader with little manual work per patch
 
-- [ ] **Data checks on PUT:** run each changed ability once in a mini simulation (dummy target, all ranks), reject with a clear message on error
-- [ ] Editor: field for `Champion.adaptive_type`
-- [ ] Editor: show save errors (400/422); update `originalChampion` after saving; load `/enum` once and `provide` it
-- [ ] PUT without changes should not be an error (today: 400)
-- [ ] Migration: `schema_version` per document, an ordered list of migrations, `update_many` instead of one-by-one updates, migrations for all types
-- [ ] Log view: probably fixed once the loader is async (Phase 4); also handle the polling race at start
-
-## Phase 4: Loader with little manual work per patch
-
-The loader is parked until it's needed again. Do this before data entry.
+Comes before the admin phase: the loader decides which named values exist per ability (the editor offers them for selection), and a fresh load into the new format is cheaper than migrating the old documents, which hold no valuable manual data yet.
 
 - [ ] Scrape each champion's adaptive type (physical/magic) from the wiki into `Champion.adaptive_type`; until then it is entered by hand (fixtures have it)
 - [ ] **Automatic stat patching:** re-scrape changed objects, take numbers/stats from the wiki, keep only the manual effects and mark them unvalidated
@@ -98,7 +90,18 @@ The loader is parked until it's needed again. Do this before data entry.
 - [ ] CommunityDragon as a data source. Checked for Riven (`raw.communitydragon.org/latest/game/data/characters/<name>/<name>.bin.json`): it has clean numbers per spell (`spellCastTime`/`castFrame` matching the wiki's cast times, cooldowns per rank, missile speeds, `DataValues` like `BaseDamage`/`ADRatio` per rank). `spellTotalTime` looks like a default (1.0 s on many spells), so real animation lengths would need the animation files. Probably more robust than scraping wiki HTML; the wiki's raw templates (`?action=raw`) are the other option.
 - [ ] Dash and leap travel times (Nidalee's Pounce lands at the cast today), e.g. from CommunityDragon's spell data or other sources
 - [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions. Then `Lock` can tell an animation from a cast time: item actives can't be used during a cast time, but during a pure animation (wiki)
+- [ ] Fresh load into the new format
 - [ ] `extra = forbid` for the hand-entered containers (Ability, Passive, Pet) so typos fail; needs a fresh load or an `$unset` of the old `effects` in the DB first
+
+## Phase 4: Admin side complete
+
+- [ ] **Rule editor** for the new format: rules (trigger, conditions, actions), buffs, stats, inputs, stages, pets, `Custom`. Values reference the named values from the loader. The current editor still has only the old effect components
+- [ ] **Data checks on PUT:** run each changed ability once in a mini simulation (dummy target, all ranks), reject with a clear message on error
+- [ ] Editor: field for `Champion.adaptive_type` (only if the loader can't scrape it)
+- [ ] Editor: show save errors (400/422); update `originalChampion` after saving; load `/enum` once and `provide` it
+- [ ] PUT without changes should not be an error (today: 400)
+- [ ] Migration (needed from the fresh load on): `schema_version` per document, an ordered list of migrations, `update_many` instead of one-by-one updates, migrations for all types
+- [ ] Log view: probably fixed once the loader is async (Phase 3); also handle the polling race at start
 
 ## Phase 5: User side V1
 
@@ -111,11 +114,11 @@ The loader is parked until it's needed again. Do this before data entry.
 
 ## Phase 5½ (optional): AI drafts for data entry
 
-Speeds up Phase 6. Needs the Phase 2 format to be stable and the Phase 3 data checks in place, which catch the AI's mistakes.
+Speeds up Phase 6. Needs the Phase 2 format to be stable and the Phase 4 data checks in place, which catch the AI's mistakes.
 
 - [ ] Decide the route: Claude API from the admin backend (API key, billed per token, a few dollars to tens of dollars for the initial load, cents per patch), or drafting in Claude Code sessions on the Pro subscription (no extra cost, no app integration)
 - [ ] The AI writes only the **structure** (trigger, conditions, actions) and references the scraped named values. It never writes numbers itself
-- [ ] Output is validated against the rule schema (structured output + `extra = forbid`), then by the Phase 3 dry-run simulation
+- [ ] Output is validated against the rule schema (structured output + `extra = forbid`), then by the Phase 4 dry-run simulation
 - [ ] Admin editor: a "Draft with AI" button fills the form; a human reviews, and only a human sets `validated`
 - [ ] Per patch, draft only new or structurally changed abilities
 

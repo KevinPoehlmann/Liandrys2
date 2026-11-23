@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from src.server.models.dataenums import ActionType, Actor, DamageSubType, EffectType, OriginKind, Stat
+from src.server.models.enums import ActionType, Actor, DamageSubType, EffectType, OriginKind, Stat
 from src.server.models.request import Action, Rank
 from src.server.models.rune import Rune
 from src.server.simulation.character import Character

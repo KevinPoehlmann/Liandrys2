@@ -9,7 +9,7 @@ from src.server.database import (
     update_item
 )
 from src.server.models.item import ShortItem, Item
-from src.server.models.dataenums import ItemClass, Map
+from src.server.models.enums import ItemClass, Map
 
 from src.server.routes.helpers import get_required_item
 

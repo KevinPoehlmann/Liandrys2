@@ -7,7 +7,7 @@ from src.server.models.image import Image
 
 from .pydanticid import PydanticObjectId
 
-from src.server.models.dataenums import AdaptiveType, RangeType, ResourceType
+from src.server.models.enums import AdaptiveType, RangeType, ResourceType
 
 
 

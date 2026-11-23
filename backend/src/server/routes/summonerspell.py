@@ -8,7 +8,7 @@ from src.server.database import (
     update_summonerspell
 )
 from src.server.models.summonerspell import ShortSummonerspell, Summonerspell
-from src.server.models.dataenums import Map
+from src.server.models.enums import Map
 
 from src.server.routes.helpers import get_required_summonerspell
 
