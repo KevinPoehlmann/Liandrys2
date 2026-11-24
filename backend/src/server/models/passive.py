@@ -12,6 +12,7 @@ class Passive(BaseModel):
     buffs: list[Buff] = []
     inputs: list[Input] = []
     assumptions: list[str] = []  # what we assumed where data was missing, shown to the user
+    values: dict[str, str] = {}  # loader-owned named values (BaseDamage, TotalDamage, ...), overwritten every patch
     raw_stats: dict[str, str] = {}
     changes: list[str] = []
     validated: bool = False

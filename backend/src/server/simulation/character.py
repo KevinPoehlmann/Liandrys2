@@ -134,6 +134,7 @@ class Character():
         self.rune_slots: dict[ActionType, Rune] = dict(zip(RUNE_SLOTS, runes))
         self.equipment_passives: list[tuple[Passive, ActionType]] = self._item_passives() + [
             (rune.passive, slot) for slot, rune in self.rune_slots.items()]
+        self.slot_values: dict[ActionType, dict[str, str]] = self._collect_named_values()
         self.choosing_adaptive: bool = False
         self.scenario: dict[str, float] = self._scenario(scenario)
         self.cooldowns: dict[ActionType, int] = {
@@ -257,10 +258,23 @@ class Character():
         instance = self.active_buffs.get(buff)
         return instance.stacks if instance else 0
 
+    def get_max_rank(self, slot: ActionType) -> int:
+        return getattr(self.ability_dict[slot][0], "maxrank", 0) if slot in self.ability_dict else 0
+
+    def named_values(self, slot: ActionType) -> dict[str, str]:
+        return self.slot_values.get(slot, {})
+
+    def _collect_named_values(self) -> dict[ActionType, dict[str, str]]:
+        containers = [(self.passive, ActionType.PASSIVE)] + self.equipment_passives
+        containers += [(ability, slot) for slot, (ability, _) in self.ability_dict.items()]
+        values: dict[ActionType, dict[str, str]] = defaultdict(dict)
+        for container, slot in containers:
+            values[slot] |= container.values
+        return dict(values)
+
     def formula_context(self, slot: ActionType, target: "Character | None" = None, stacks: int = 0, elapsed: float = 0.0) -> FormulaContext:
-        max_rank = getattr(self.ability_dict[slot][0], "maxrank", 0) if slot in self.ability_dict else 0
-        return FormulaContext(source=self, target=target, rank=self.get_rank(slot), max_rank=max_rank,
-                              stacks=stacks, elapsed=elapsed, slot=slot, scenario=self.scenario)
+        return FormulaContext(source=self, target=target, rank=self.get_rank(slot), max_rank=self.get_max_rank(slot),
+                              stacks=stacks, elapsed=elapsed, slot=slot, scenario=self.scenario, values=self)
 
     def buff_elapsed(self, instance: BuffInstance) -> float:
         return (self.current_tick - instance.start) * TICK_SECONDS

@@ -155,6 +155,75 @@ class TestLookups():
             evaluate_formula("by_rank(1, 2, 3)", FormulaContext(source=vayne, rank=0, max_rank=3))
 
 
+@dataclass
+class FakeValues:
+    values: dict[ActionType, dict[str, str]]
+    ranks: dict[ActionType, int]
+    max_ranks: dict[ActionType, int]
+
+    def named_values(self, slot: ActionType) -> dict[str, str]:
+        return self.values.get(slot, {})
+
+    def get_rank(self, slot: ActionType) -> int:
+        return self.ranks.get(slot, 0)
+
+    def get_max_rank(self, slot: ActionType) -> int:
+        return self.max_ranks.get(slot, 0)
+
+
+@pytest.fixture
+def vayne_values():
+    return FakeValues(
+        values={
+            ActionType.Q: {"TotalADRatio": "by_rank(0.75, 0.85, 0.95, 1.05, 1.15)", "ADRatioBonus": "TotalADRatio * ad"},
+            ActionType.R: {"TumbleCDReduction": "by_rank(30, 40, 50)"},
+            ActionType.W: {"Loop": "Loop + 1", "PingA": "PingB", "PingB": "PingA"},
+        },
+        ranks={ActionType.Q: 3, ActionType.R: 2, ActionType.W: 1},
+        max_ranks={ActionType.Q: 5, ActionType.R: 3, ActionType.W: 5},
+    )
+
+
+def values_context(source, values: FakeValues, slot: ActionType) -> FormulaContext:
+    return FormulaContext(source=source, slot=slot, rank=values.get_rank(slot), max_rank=values.get_max_rank(slot), values=values)
+
+
+class TestNamedValues():
+
+    def test_name_resolves_at_the_slots_rank(self, vayne, vayne_values):
+        assert evaluate_formula("TotalADRatio", values_context(vayne, vayne_values, ActionType.Q)) == 0.95
+
+
+    def test_names_can_use_other_names_and_stats(self, vayne, vayne_values):
+        assert evaluate_formula("ADRatioBonus", values_context(vayne, vayne_values, ActionType.Q)) == pytest.approx(95)
+
+
+    def test_prefix_reads_another_slot_at_its_own_rank(self, vayne, vayne_values):
+        assert evaluate_formula("r.TumbleCDReduction / 100", values_context(vayne, vayne_values, ActionType.Q)) == 0.4
+
+
+    def test_unknown_name_is_an_unknown_variable(self, vayne, vayne_values):
+        with pytest.raises(FormulaError, match="Unknown variable"):
+            evaluate_formula("TumbleCDReduction", values_context(vayne, vayne_values, ActionType.Q))
+
+
+    def test_unknown_prefixed_name_is_reported(self, vayne, vayne_values):
+        with pytest.raises(FormulaError, match="Unknown named value 'r.BaseDamage'"):
+            evaluate_formula("r.BaseDamage", values_context(vayne, vayne_values, ActionType.Q))
+
+
+    @pytest.mark.parametrize("formula", ["Loop", "PingA"])
+    def test_cycles_are_reported(self, vayne, vayne_values, formula):
+        with pytest.raises(FormulaError, match="refers to itself"):
+            evaluate_formula(formula, values_context(vayne, vayne_values, ActionType.W))
+
+
+    def test_own_variables_come_before_named_values(self, vayne):
+        values = FakeValues(values={ActionType.Q: {"ad": "1"}}, ranks={}, max_ranks={})
+
+        assert evaluate_formula("ad", values_context(vayne, values, ActionType.Q)) == 100
+
+
 class TestErrors():
 
     @pytest.mark.parametrize("formula", ["bonus_attack_damage", "target_ad", "target_target_ad"])

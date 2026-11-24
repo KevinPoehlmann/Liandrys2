@@ -34,6 +34,15 @@
     "name": "Phenomenal Evil Power",
     "description": "Innate: Veigar generates a stack of Phenomenal Evil for each enemy  champion hit by his abilities, and 5 stacks whenever he scores an enemy champion  takedown.\n\n\n\nPhenomenal Evil: For each stack, Veigar gains  1 ability power.",
     "static_cooldown": "0",
+    "values": {
+      "dQKillStacks": "1",
+      "dAbilityStacks": "1",
+      "dTakedownStacks": "5",
+      "dQKillStacksLarge": "3",
+      "PStacksPerDarkMatterCDR": "50",
+      "DarkMatterCDRIncrement": "0.1",
+      "APPerStack": "1"
+    },
     "raw_stats": {},
     "changes": [],
     "validated": true,
@@ -112,6 +121,11 @@
     "cooldown": "by_rank(6, 5.5, 5, 4.5, 4)",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "APRatio": "by_rank(0.5, 0.55, 0.6, 0.65, 0.7)",
+      "BaseDamage": "by_rank(80, 120, 160, 200, 240)",
+      "TotalDamage": "BaseDamage + APRatio * ap"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "target range": "1050.0 + (rank - 1) * -60.0",
@@ -148,7 +162,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(80, 120, 160, 200, 240) + by_rank(0.5, 0.55, 0.6, 0.65, 0.7) * ap",
+                  "scaling": "TotalDamage",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -161,7 +175,7 @@
                 "props": {
                   "buff": "phenomenal_evil",
                   "target": "self",
-                  "stacks": "1"
+                  "stacks": "passive.dAbilityStacks"
                 }
               }
             ],
@@ -185,9 +199,16 @@
     "name": "Dark Matter",
     "description": "Veigar calls a great mass of dark matter to fall from the sky to the target location, dealing magic damage when it lands. Stacks of Phenomenal Evil reduce Dark Matter's cooldown.",
     "cost": "by_rank(60, 65, 70, 75, 80)",
-    "cooldown": "8 * (1 - 0.1 * floor(stacks_phenomenal_evil / 50))",
+    "cooldown": "BaseCooldown * (1 - passive.DarkMatterCDRIncrement * floor(stacks_phenomenal_evil / passive.PStacksPerDarkMatterCDR))",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "APRatio": "by_rank(0.7, 0.8, 0.9, 1, 1.1)",
+      "BaseDamage": "by_rank(85, 140, 195, 250, 305)",
+      "ImpactDelay": "1.2",
+      "BaseCooldown": "8",
+      "TotalDamage": "BaseDamage + APRatio * ap"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "target range": "950.0",
@@ -223,7 +244,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(85, 140, 195, 250, 305) + by_rank(0.7, 0.8, 0.9, 1.0, 1.1) * ap",
+                  "scaling": "TotalDamage",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -236,7 +257,7 @@
                 "props": {
                   "buff": "phenomenal_evil",
                   "target": "self",
-                  "stacks": "1"
+                  "stacks": "passive.dAbilityStacks"
                 }
               }
             ],
@@ -264,6 +285,10 @@
     "cooldown": "by_rank(20, 18.5, 17, 15.5, 14)",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "StunDuration": "by_rank(1.5, 1.75, 2, 2.25, 2.5)",
+      "CageDelay": "0.5"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "target range": "725.0",
@@ -303,7 +328,7 @@
                 "props": {
                   "target": "target",
                   "status": "Stun",
-                  "duration": "by_rank(1.5, 1.75, 2, 2.25, 2.5)",
+                  "duration": "StunDuration",
                   "strength": "0"
                 }
               },
@@ -312,11 +337,11 @@
                 "props": {
                   "buff": "phenomenal_evil",
                   "target": "self",
-                  "stacks": "1"
+                  "stacks": "passive.dAbilityStacks"
                 }
               }
             ],
-            "delay": "0.5",
+            "delay": "CageDelay",
             "speed": "0",
             "acceleration": "0",
             "max_speed": "0",
@@ -339,6 +364,13 @@
     "cooldown": "by_rank(120, 90, 60)",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "APRatio": "by_rank(0.65, 0.7, 0.75)",
+      "BaseDamage": "by_rank(175, 250, 325)",
+      "MaxExecuteMult": "2",
+      "MinDamage": "BaseDamage + APRatio * ap",
+      "MaxDamage": "MinDamage * 2"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "target range": "650.0"
@@ -373,7 +405,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "(by_rank(175, 250, 325) + by_rank(0.65, 0.7, 0.75) * ap) * (1 + min(1, 1.5 * target_missing_hp_percent))",
+                  "scaling": "MinDamage * (1 + min(1, 1.5 * target_missing_hp_percent))",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -386,7 +418,7 @@
                 "props": {
                   "buff": "phenomenal_evil",
                   "target": "self",
-                  "stacks": "1"
+                  "stacks": "passive.dAbilityStacks"
                 }
               }
             ],

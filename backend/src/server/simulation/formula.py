@@ -1,6 +1,6 @@
 import math
 from collections.abc import Callable, Iterator, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Protocol
 
 from src.server.models.enums import ActionType, Stat
@@ -29,6 +29,14 @@ class StatSource(Protocol):
     def get_rank(self, slot: ActionType) -> int: ...
     def get_buff_stacks(self, buff: str) -> int: ...
     def get_cooldown(self, slot: ActionType) -> float: ...
+
+
+class ValueSource(Protocol):
+    """Whoever owns the containers: named values, ranks and max ranks per slot (pets ask their owner)."""
+
+    def named_values(self, slot: ActionType) -> Mapping[str, str]: ...
+    def get_rank(self, slot: ActionType) -> int: ...
+    def get_max_rank(self, slot: ActionType) -> int: ...
 
 
 def _total(stat: Stat) -> Callable[[StatSource], float]:
@@ -71,6 +79,8 @@ STAT_VARIABLES: dict[str, Callable[[StatSource], float]] = {
 }
 
 RANK_VARIABLES = {f"rank_{slot.value.lower()}": slot for slot in (ActionType.Q, ActionType.W, ActionType.E, ActionType.R)}
+# `q.TumbleCDReduction` reads a named value of another container.
+SLOT_PREFIXES = {slot.value: slot for slot in ActionType if slot != ActionType.BA}
 
 
 @dataclass
@@ -86,6 +96,37 @@ class FormulaContext:
     scenario: dict[str, float] = field(default_factory=dict)
     event_values: dict[str, float] = field(default_factory=dict)
     distance: float = 0  # between the two champions, set by the simulation (Javelin Toss)
+    values: ValueSource | None = None
+    resolving: tuple[tuple[ActionType | None, str], ...] = ()  # named values being evaluated, to catch cycles
+
+
+class SlotValues:
+    """What `q` stands for in `q.TumbleCDReduction`: the named values of that slot, at that slot's rank."""
+
+    def __init__(self, context: FormulaContext, slot: ActionType) -> None:
+        self._context = context
+        self._slot = slot
+
+    def __getattr__(self, name: str) -> float:
+        owner = self._context.values
+        context = replace(self._context, slot=self._slot, rank=owner.get_rank(self._slot),
+                          max_rank=owner.get_max_rank(self._slot))
+        value = _named_value(context, name)
+        if value is None:
+            raise FormulaError(f"Unknown named value '{self._slot.value}.{name}'")
+        return value
+
+
+def _named_value(context: FormulaContext, name: str) -> float | None:
+    if context.values is None or context.slot is None:
+        return None
+    formula = context.values.named_values(context.slot).get(name)
+    if formula is None:
+        return None
+    key = (context.slot, name)
+    if key in context.resolving:
+        raise FormulaError(f"Named value '{name}' refers to itself")
+    return evaluate_formula(formula, replace(context, resolving=context.resolving + (key,)))
 
 
 class FormulaNamespace(Mapping[str, float]):
@@ -115,7 +156,18 @@ class FormulaNamespace(Mapping[str, float]):
             return self._read_other(self._context.target, TARGET_PREFIX, name)
         if name.startswith(OWNER_PREFIX):
             return self._read_other(self._context.owner, OWNER_PREFIX, name)
-        return self._read(self._context.source, name)
+        try:
+            return self._read(self._context.source, name)
+        except KeyError:
+            return self._read_named(name)
+
+    def _read_named(self, name: str) -> float | SlotValues:
+        value = _named_value(self._context, name)
+        if value is not None:
+            return value
+        if name in SLOT_PREFIXES and self._context.values is not None:
+            return SlotValues(self._context, SLOT_PREFIXES[name])
+        raise KeyError(name)
 
     def _cooldown(self) -> float:
         # Seconds after haste and cooldown reduction, e.g. Vladimir's Crimson Rush fills with Transfusion's cooldown.
