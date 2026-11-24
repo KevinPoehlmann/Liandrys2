@@ -35,6 +35,7 @@ class UnsupportedCalculation(Exception):
 class SpellValues:
     values: dict[str, str] = field(default_factory=dict)
     unsupported: dict[str, str] = field(default_factory=dict)  # name -> why the loader could not translate it
+    calculations: dict[str, dict] = field(default_factory=dict)  # Riot's mSpellCalculations, to compare their structure
 
 
 def spell_values(spell: dict, max_rank: int) -> SpellValues:
@@ -46,6 +47,8 @@ def spell_values(spell: dict, max_rank: int) -> SpellValues:
         _add(result, name, lambda: _rank_value(spell.get(name) or [], max_rank, first_rank))
     for name, calculation in (spell.get("mSpellCalculations") or {}).items():
         _add(result, name, lambda: translate_calculation(calculation))
+        if name.isidentifier():
+            result.calculations[name] = calculation
     return result
 
 

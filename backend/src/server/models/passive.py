@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from src.server.models.change import Change
 from src.server.models.image import Image
 from src.server.models.rule import Buff, Input, Rule, StatModifier
 
@@ -15,7 +16,7 @@ class Passive(BaseModel):
     values: dict[str, str] = {}  # loader-owned named values (BaseDamage, TotalDamage, ...), overwritten every patch
     tooltip: str = ""  # loader-owned, Riot's text with @Name@ placeholders for the values
     raw_stats: dict[str, str] = {}
-    changes: list[str] = []
+    changes: list[Change] = []
     validated: bool = False
 
 

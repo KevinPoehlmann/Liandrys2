@@ -31,6 +31,7 @@ from src.server.models.json_validation import (
     SummonerspellsJson,
     SummonerspellJson
 )
+from src.server.models.change import patch_note_changes
 from src.server.models.champion import NewChampion
 from src.server.models.enums import Stat
 from src.server.models.image import Image
@@ -645,21 +646,21 @@ async def _patch_champions(changes: dict, new_patch: NewPatch, old_patch: NewPat
 
 async def _add_changes_champion(champion: NewChampion, diff: dict[str, list[str]]) -> None:
     if champion.passive.name in diff:
-        champion.passive.changes.extend(diff.pop(champion.passive.name))
+        champion.passive.changes.extend(patch_note_changes(diff.pop(champion.passive.name)))
         champion.passive.validated = False
     if champion.q.name in diff:
-        champion.q.changes.extend(diff.pop(champion.q.name))
+        champion.q.changes.extend(patch_note_changes(diff.pop(champion.q.name)))
         champion.q.validated = False
     if champion.w.name in diff:
-        champion.w.changes.extend(diff.pop(champion.w.name))
+        champion.w.changes.extend(patch_note_changes(diff.pop(champion.w.name)))
         champion.w.validated = False
     if champion.e.name in diff: 
-        champion.e.changes.extend(diff.pop(champion.e.name))
+        champion.e.changes.extend(patch_note_changes(diff.pop(champion.e.name)))
         champion.e.validated = False
     if champion.r.name in diff:
-        champion.r.changes.extend(diff.pop(champion.r.name))
+        champion.r.changes.extend(patch_note_changes(diff.pop(champion.r.name)))
         champion.r.validated = False
-    champion.changes.extend([line for lines in diff.values() for line in lines])
+    champion.changes.extend(patch_note_changes([line for lines in diff.values() for line in lines]))
     champion.validated = False
 
 
@@ -711,7 +712,7 @@ async def _patch_items(changes: dict, new_patch: NewPatch, old_patch: NewPatch, 
 
 
 async def _add_changes_item(item: NewItem, diff: list) -> None:
-    item.changes.extend(diff)
+    item.changes.extend(patch_note_changes(diff))
     item.validated = False
 
 
@@ -771,7 +772,7 @@ def _find_rune(rune_name: str, runes_data: dict) -> RuneClass | None:
 
 
 async def _add_changes_rune(rune: NewRune, diff: list) -> None:
-    rune.changes.extend(diff)
+    rune.changes.extend(patch_note_changes(diff))
     rune.validated = False
 
 
@@ -822,7 +823,7 @@ async def _patch_summonerspells(changes: dict, new_patch: NewPatch, old_patch: N
 
 
 async def _add_changes_summonerspell(spell: NewSummonerspell, diff: list) -> None:
-    spell.changes.extend(diff)
+    spell.changes.extend(patch_note_changes(diff))
     spell.validated = False
 
 

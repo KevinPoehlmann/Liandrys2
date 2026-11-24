@@ -38,7 +38,7 @@
     <div v-if="passive.changes?.length" class="bg-yellow-100 border border-yellow-400 p-4 rounded">
       <h3 class="font-semibold mb-2">Manual Patch Changes to Review:</h3>
       <ul class="list-disc ml-5 text-sm">
-        <li v-for="change in passive.changes" :key="change">{{ change }}</li>
+        <li v-for="(change, index) in passive.changes" :key="index">{{ change.text }}</li>
       </ul>
     </div>
   </div>

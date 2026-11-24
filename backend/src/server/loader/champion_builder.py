@@ -28,7 +28,7 @@ def build_champion(raw: RawChampion, entry: ChampionJson) -> NewChampion:
                  for slot, ddragon_spell in zip(SLOTS, entry.spells)}
     champion = NewChampion(
         key=entry.key, name=entry.name, champion_id=raw.champion_id, patch=raw.patch, hotfix=raw.hotfix,
-        last_changed=_last_changed(raw.champion_data),
+        last_changed=last_changed_patch(raw.champion_data),
         resource_type=ResourceType.from_str(entry.partype), image=entry.image,
         passive=ChampionPassive(name=spells["passive"].name or entry.passive.name, image=entry.passive.image),
         **abilities, **champion_stats(raw.cdragon),
@@ -37,7 +37,7 @@ def build_champion(raw: RawChampion, entry: ChampionJson) -> NewChampion:
     return champion
 
 
-def _last_changed(champion_data: dict) -> str | None:
+def last_changed_patch(champion_data: dict) -> str | None:
     """The wiki's "V26.07" as our patch "16.7.1"."""
     try:
         return wiki_to_riot_patch(champion_data["changes"])

@@ -760,14 +760,14 @@ async def test_add_changes_champion_applies_correct_diffs():
     await _add_changes_champion(champ, diff)
 
     # Ability-specific changes
-    assert champ.q.changes == ["Now silences for 1.5s instead of 1s"]
+    assert [change.text for change in champ.q.changes] == ["Now silences for 1.5s instead of 1s"]
     assert champ.q.validated is False
 
-    assert champ.passive.changes == ["Cooldown reduced from 30 to 20"]
+    assert [change.text for change in champ.passive.changes] == ["Cooldown reduced from 30 to 20"]
     assert champ.passive.validated is False
 
     # Remaining diff line gets added to general changes
-    assert champ.changes == ["General tooltip updated"]
+    assert [change.text for change in champ.changes] == ["General tooltip updated"]
     assert champ.validated is False
 
 

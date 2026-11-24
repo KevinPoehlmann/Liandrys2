@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
 
+from src.server.models.change import Change
 from src.server.models.passive import Passive
 from src.server.models.image import Image
 from src.server.models.pydanticid import PydanticObjectId
@@ -17,7 +18,7 @@ class NewRune(BaseModel):
     slot: int
     passive: Passive
     validated: bool = False
-    changes: list[str] = []
+    changes: list[Change] = []
     image: Image | None = None
 
     

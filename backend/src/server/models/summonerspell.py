@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 
+from src.server.models.change import Change
 from src.server.models.ability import Ability
 from src.server.models.enums import Map
 from src.server.models.image import Image
@@ -17,7 +18,7 @@ class NewSummonerspell(BaseModel):
 
     validated: bool = False
     maps: list[Map] = []
-    changes: list[str] = []
+    changes: list[Change] = []
     image: Image
 
 

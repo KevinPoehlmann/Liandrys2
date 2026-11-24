@@ -513,3 +513,8 @@ class ErrorCode(str, Enum):
     NOT_ENTERED = "not_entered"  # an ability without data yet
     NOT_SUPPORTED = "not_supported"  # the simulation can't do this yet
     INTERNAL = "internal"  # a bug
+
+
+class ChangeSource(str, Enum):
+    DATA = "data"  # the loader's diff of CommunityDragon's data
+    PATCH_NOTES = "patch_notes"  # a line from the wiki's patch notes

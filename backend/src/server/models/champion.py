@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
 
+from src.server.models.change import Change
 from src.server.models.ability import ChampionAbility, ExtraAbility, ShortChampionAbility
 from src.server.models.passive import ChampionPassive
 from src.server.models.image import Image
@@ -54,7 +55,7 @@ class NewChampion(BaseModel):
     extra_abilities: list[ExtraAbility] = []
 
     validated: bool = False
-    changes: list[str] = []
+    changes: list[Change] = []
 
     image: Image
 

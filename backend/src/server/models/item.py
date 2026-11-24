@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, root_validator
 from datetime import datetime
 
+from src.server.models.change import Change
 from src.server.models.ability import ItemActive
 from src.server.models.passive import ItemPassive
 from src.server.models.image import Image
@@ -30,7 +31,7 @@ class NewItem(BaseModel):
     requirements: str = ""
     maps: list[Map] = []
 
-    changes: list[str] = []
+    changes: list[Change] = []
 
     image: Image
 

@@ -1,5 +1,5 @@
-"""Loads new patches. Champions come from CommunityDragon, Data Dragon and the wiki API. Items, runes, summoner spells
-and patching forward still go through patchloader2 until they move here."""
+"""Loads new patches. Champions come from CommunityDragon, Data Dragon and the wiki API, on the first load and when
+patching forward. Items, runes, summoner spells and patch detection still go through patchloader2 until they move here."""
 import asyncio
 import logging
 import time
@@ -9,15 +9,18 @@ import aiohttp
 
 import src.server.database as db
 import src.server.loader.patchloader2 as old
-from src.server.loader.champion_builder import build_champion, wiki_mismatches
+import src.server.loader.webscraper2 as ws
+from src.server.loader.champion_builder import SLOTS, LoadedSpell, build_champion, loaded_spells, wiki_mismatches
+from src.server.loader.champion_patcher import patch_champion, spells_from_document
 from src.server.loader.champion_source import (cdragon_version, fetch_build, fetch_champion_data, fetch_strings,
                                                load_raw_champion)
-from src.server.loader.helper import SafeSession
+from src.server.loader.helper import SafeSession, patch_sort_key, riot_to_wiki_patch
 from src.server.loader.images import load_champion_images
 from src.server.loader.patchexceptions import LoadError, PatcherError
+from src.server.models.champion import Champion, NewChampion, RawChampion
 from src.server.models.json_validation import ChampionJson, ChampionsJson
 from src.server.models.patch import NewPatch
-from src.server.utils.logger import attach_fallback_logfile
+from src.server.utils.logger import attach_fallback_logfile, finalize_load_logfile
 
 
 patch_logger = logging.getLogger("liandrys.patch")
@@ -43,7 +46,7 @@ async def load_data() -> None:
                 return
             latest = await db.fetch_patch_latest()
             if latest and latest.total_count == latest.loaded_total_count:
-                await old._load_all_patches(patches, latest)
+                await load_patches(patches, latest)
             else:
                 await load_fresh_database(patches)
         except Exception as e:
@@ -129,6 +132,13 @@ async def load_champion(entry: ChampionJson, session: SafeSession, patch: NewPat
                         strings: dict[str, str], champion_data: dict | None = None) -> None:
     if await db.exists_champion_by_name(entry.name, patch.patch, patch.hotfix):
         return
+    raw = await _stored_raw_champion(entry, session, patch, build, strings, champion_data)
+    await _store_champion(build_champion(raw, entry), raw, session, patch)
+    load_logger.info(f"[CHAMPION] {entry.name} ✔ Loaded successfully")
+
+
+async def _stored_raw_champion(entry: ChampionJson, session: SafeSession, patch: NewPatch, build: str,
+                               strings: dict[str, str], champion_data: dict | None) -> RawChampion:
     raw = await load_raw_champion(session, patch.patch, patch.hotfix, entry.id_, entry.name, build, strings, champion_data)
     if not raw.wiki:
         patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] No wiki data templates found")
@@ -136,14 +146,106 @@ async def load_champion(entry: ChampionJson, session: SafeSession, patch: NewPat
         patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] Not in Module:ChampionData")
     # Stored before building, so a champion the builder can't handle still has its raw data to look at.
     await db.upsert_raw_champion(raw)
-    champion = build_champion(raw, entry)
+    return raw
+
+
+async def _store_champion(champion: NewChampion, raw: RawChampion, session: SafeSession, patch: NewPatch) -> None:
     for mismatch in wiki_mismatches(champion, raw.champion_data):
-        patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] {mismatch}")
+        patch_logger.warning(f"[CHAMPION] [WIKI] [{champion.name}] {mismatch}")
     for failure in await load_champion_images(session, champion, raw, cdragon_version(patch.patch)):
-        patch_logger.warning(f"[CHAMPION] [IMAGE] [{entry.name}] {failure}")
+        patch_logger.warning(f"[CHAMPION] [IMAGE] [{champion.name}] {failure}")
     await db.add_champion(champion)
     patch.loaded_champion_count += 1
-    load_logger.info(f"[CHAMPION] {entry.name} ✔ Loaded successfully")
+
+
+async def load_patches(patches: dict[str, list[datetime]], latest: NewPatch) -> None:
+    """Patches forward one patch (and hotfix) at a time, each from the one before."""
+    for patch_name in sorted(patches, key=patch_sort_key):
+        for hotfix in sorted(patches[patch_name]) or [None]:
+            finalize_load_logfile(latest.patch, latest.hotfix)
+            try:
+                latest = await load_patch(patch_name, hotfix, latest)
+            except Exception as e:
+                patch_logger.exception(f"[PATCH] [PATCH] [{patch_name} - {hotfix}] ❌ Failed to load patch: {e}")
+                await old._clean_up(NewPatch(patch=patch_name, hotfix=hotfix))
+                raise
+
+
+async def load_patch(patch_name: str, hotfix: datetime | None, old_patch: NewPatch) -> NewPatch:
+    _log_section(f"Loading patch {patch_name}, hotfix: {hotfix}")
+    start = time.monotonic()
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=600)) as aio_session:
+        session = SafeSession(aio_session)
+        patch_page = await old._fetch_wiki_html(riot_to_wiki_patch(patch_name), "Patch", old_patch, session)
+        notes = ws.scrape_patch(patch_page, hotfix)
+        patch = NewPatch(patch=patch_name, hotfix=hotfix, champion_count=old_patch.champion_count,
+                         item_count=old_patch.item_count, rune_count=old_patch.rune_count,
+                         summonerspell_count=old_patch.summonerspell_count)
+        champions = await fetch_champion_list(session, patch_name)
+        await patch_all_champions(champions, notes.get("champions", {}), session, patch, old_patch)
+        await old._patch_items(notes.get("items", {}), patch, old_patch, session)
+        await old._patch_runes(notes.get("runes", {}), patch, old_patch, session)
+        await old._patch_summonerspells(notes.get("summonerspells", {}), patch, old_patch, session)
+    patch.update_totals()
+    await db.upsert_patch(patch)
+    load_logger.info(f"[LOAD] Patched {patch.loaded_total_count} / {patch.total_count} objects "
+                     f"in {time.monotonic() - start:.2f} seconds")
+    return patch
+
+
+async def patch_all_champions(champions: list[ChampionJson], notes: dict, session: SafeSession, patch: NewPatch,
+                              old_patch: NewPatch) -> None:
+    """Champions of the old patch are patched forward, new ones get a first load.
+    `notes` is the wiki's {"changed": {champion: {ability: [lines]}}}."""
+    version = cdragon_version(patch.patch)
+    build = await fetch_build(session, version)
+    strings = await fetch_strings(session, version)
+    champion_data = await _champion_data_or_nothing(session)
+    previous = {champion.champion_id: champion
+                for champion in await db.fetch_champions_by_patch(old_patch.patch, old_patch.hotfix)}
+    patch.champion_count = len(champions)
+    semaphore = asyncio.Semaphore(CHAMPION_CONCURRENCY)
+
+    async def load(entry: ChampionJson) -> None:
+        async with semaphore:
+            data = champion_data.get(entry.id_, {})
+            if entry.id_ not in previous:
+                await load_champion(entry, session, patch, build, strings, data)
+                return
+            old_champion = previous[entry.id_]
+            champion_notes = notes.get("changed", {}).get(old_champion.name, {})
+            await patch_one_champion(entry, old_champion, champion_notes, session, patch, old_patch, build, strings, data)
+
+    results = await asyncio.gather(*(load(entry) for entry in champions), return_exceptions=True)
+    for entry, result in zip(champions, results):
+        if isinstance(result, Exception):
+            _log_error("CHAMPION", entry.name, result)
+            load_logger.error(f"[CHAMPION] {entry.name} ❌ Failed to patch")
+
+
+async def patch_one_champion(entry: ChampionJson, old_champion: Champion, notes: dict[str, list[str]],
+                             session: SafeSession, patch: NewPatch, old_patch: NewPatch, build: str,
+                             strings: dict[str, str], champion_data: dict) -> None:
+    if await db.exists_champion_by_name(entry.name, patch.patch, patch.hotfix):
+        return
+    raw = await _stored_raw_champion(entry, session, patch, build, strings, champion_data)
+    result = patch_champion(old_champion, await _old_spells(old_champion, old_patch), raw, entry, notes)
+    for name, reasons in result.unvalidated.items():
+        patch_logger.info(f"[CHAMPION] [PATCH] [{entry.name}] {name} unvalidated: {'; '.join(reasons)}")
+    await _store_champion(result.champion, raw, session, patch)
+    if result.changed:
+        patch.changed_champion_count += 1
+    load_logger.info(f"[CHAMPION] {entry.name} ✔ Patched successfully")
+
+
+async def _old_spells(old_champion: Champion, old_patch: NewPatch) -> dict[str, LoadedSpell]:
+    # Rebuilt from the old raw data with today's translator, so a translator change doesn't look like a patch change.
+    old_raw = await db.fetch_raw_champion(old_champion.champion_id, old_patch.patch, old_patch.hotfix)
+    if old_raw is None:
+        patch_logger.warning(f"[CHAMPION] [PATCH] [{old_champion.name}] No raw data of the old patch, comparing with "
+                             f"the stored values (structure changes stay unseen)")
+        return spells_from_document(old_champion)
+    return loaded_spells(old_raw, {slot: getattr(old_champion, slot).maxrank for slot in SLOTS})
 
 
 def _log_error(type_: str, name: str, error: Exception) -> None:
