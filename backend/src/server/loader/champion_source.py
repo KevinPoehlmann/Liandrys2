@@ -3,6 +3,7 @@ from datetime import datetime
 from urllib.parse import urlencode
 
 from src.server.loader.helper import SafeSession
+from src.server.loader.lua import parse_lua_table
 from src.server.loader.patchexceptions import LoadError
 from src.server.models.champion import RawChampion, WikiTemplate
 
@@ -71,13 +72,29 @@ def parse_wiki_templates(response: dict) -> dict[str, WikiTemplate]:
     return templates
 
 
+async def fetch_champion_data(session: SafeSession) -> dict[str, dict]:
+    """Module:ChampionData/data: every champion's wiki stats and last change, keyed by Data Dragon id (`apiname`)."""
+    query = urlencode({"action": "query", "titles": "Module:ChampionData/data", "prop": "revisions",
+                       "rvprop": "content", "rvslots": "main", "format": "json", "formatversion": 2})
+    response = await _get_json(session, f"{WIKI_API}?{query}", "wiki module", "ChampionData")
+    page = response["query"]["pages"][0]
+    if "revisions" not in page:
+        raise LoadError(404, "No module text", WIKI_API, "wiki module", "ChampionData")
+    return parse_champion_data(page["revisions"][0]["slots"]["main"]["content"])
+
+
+def parse_champion_data(text: str) -> dict[str, dict]:
+    # The module is keyed by display name ("Wukong"), we by Data Dragon id ("MonkeyKing").
+    return {entry["apiname"]: entry for entry in parse_lua_table(text).values() if "apiname" in entry}
+
+
 async def load_raw_champion(session: SafeSession, patch: str, hotfix: datetime | None, champion_id: str, champion_name: str,
-                            build: str, strings: dict[str, str]) -> RawChampion:
+                            build: str, strings: dict[str, str], champion_data: dict | None = None) -> RawChampion:
     cdragon = await fetch_champion_bin(session, cdragon_version(patch), champion_id)
     return RawChampion(
         champion_id=champion_id, patch=patch, hotfix=hotfix, build=build, fetched_at=datetime.now(),
         cdragon=cdragon, strings=champion_strings(strings, cdragon),
-        wiki=await fetch_wiki_templates(session, champion_name),
+        wiki=await fetch_wiki_templates(session, champion_name), champion_data=champion_data or {},
     )
 
 

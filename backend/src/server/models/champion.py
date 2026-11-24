@@ -86,6 +86,7 @@ class RawChampion(BaseModel):
     cdragon: dict  # the whole <champion>.bin.json; untyped on purpose, Riot adds fields every patch
     strings: dict[str, str] = {}  # this champion's entries from lol.stringtable.json (tooltips)
     wiki: dict[str, WikiTemplate] = {}  # per template title
+    champion_data: dict = {}  # the champion's entry in the wiki's Module:ChampionData/data (cross-check, last change)
 
 
 

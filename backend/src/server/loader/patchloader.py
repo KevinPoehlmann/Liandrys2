@@ -9,8 +9,9 @@ import aiohttp
 
 import src.server.database as db
 import src.server.loader.patchloader2 as old
-from src.server.loader.champion_builder import build_champion
-from src.server.loader.champion_source import cdragon_version, fetch_build, fetch_strings, load_raw_champion
+from src.server.loader.champion_builder import build_champion, wiki_mismatches
+from src.server.loader.champion_source import (cdragon_version, fetch_build, fetch_champion_data, fetch_strings,
+                                               load_raw_champion)
 from src.server.loader.helper import SafeSession
 from src.server.loader.patchexceptions import LoadError, PatcherError
 from src.server.models.json_validation import ChampionJson, ChampionsJson
@@ -100,11 +101,12 @@ async def load_all_champions(champions: list[ChampionJson], session: SafeSession
     version = cdragon_version(patch.patch)
     build = await fetch_build(session, version)
     strings = await fetch_strings(session, version)
+    champion_data = await _champion_data_or_nothing(session)
     semaphore = asyncio.Semaphore(CHAMPION_CONCURRENCY)
 
     async def load(entry: ChampionJson) -> None:
         async with semaphore:
-            await load_champion(entry, session, patch, build, strings)
+            await load_champion(entry, session, patch, build, strings, champion_data.get(entry.id_, {}))
 
     results = await asyncio.gather(*(load(entry) for entry in champions), return_exceptions=True)
     for entry, result in zip(champions, results):
@@ -113,16 +115,30 @@ async def load_all_champions(champions: list[ChampionJson], session: SafeSession
             load_logger.error(f"[CHAMPION] {entry.name} ❌ Failed to load")
 
 
+async def _champion_data_or_nothing(session: SafeSession) -> dict[str, dict]:
+    # Only a cross-check and the last change; champions load without it.
+    try:
+        return await fetch_champion_data(session)
+    except (LoadError, ValueError, KeyError) as e:
+        patch_logger.warning(f"[CHAMPION] [WIKI] Module:ChampionData not loaded, no cross-check: {e}")
+        return {}
+
+
 async def load_champion(entry: ChampionJson, session: SafeSession, patch: NewPatch, build: str,
-                        strings: dict[str, str]) -> None:
+                        strings: dict[str, str], champion_data: dict | None = None) -> None:
     if await db.exists_champion_by_name(entry.name, patch.patch, patch.hotfix):
         return
-    raw = await load_raw_champion(session, patch.patch, patch.hotfix, entry.id_, entry.name, build, strings)
+    raw = await load_raw_champion(session, patch.patch, patch.hotfix, entry.id_, entry.name, build, strings, champion_data)
     if not raw.wiki:
         patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] No wiki data templates found")
+    if not raw.champion_data:
+        patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] Not in Module:ChampionData")
     # Stored before building, so a champion the builder can't handle still has its raw data to look at.
     await db.upsert_raw_champion(raw)
-    await db.add_champion(build_champion(raw, entry))
+    champion = build_champion(raw, entry)
+    for mismatch in wiki_mismatches(champion, raw.champion_data):
+        patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] {mismatch}")
+    await db.add_champion(champion)
     patch.loaded_champion_count += 1
     load_logger.info(f"[CHAMPION] {entry.name} ✔ Loaded successfully")
 

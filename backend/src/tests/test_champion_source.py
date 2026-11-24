@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from src.server.loader.champion_source import (cdragon_version, champion_strings, fetch_build, fetch_wiki_templates,
-                                               load_raw_champion)
+from src.server.loader.champion_source import (cdragon_version, champion_strings, fetch_build, fetch_champion_data,
+                                               fetch_wiki_templates, load_raw_champion, parse_champion_data)
 from src.server.loader.patchexceptions import LoadError
 
 
@@ -82,3 +82,37 @@ async def test_missing_champion_is_a_load_error():
 
     assert error.value.code == 404
     assert error.value.url.endswith("/16.23/game/data/characters/nobody/nobody.bin.json")
+
+
+def module_response(text: str) -> dict:
+    return {"query": {"pages": [{"title": "Module:ChampionData/data", "revisions": [{"slots": {"main": {"content": text}}}]}]}}
+
+
+def test_champion_data_is_keyed_by_data_dragon_id():
+    data = parse_champion_data((CDRAGON / "champion_data.lua").read_text(encoding="utf-8"))
+
+    assert set(data) == {"Veigar", "Vayne", "Kled"}  # the module says "Kled & Skaarl"
+    assert data["Veigar"]["changes"] == "V26.07"
+    assert data["Kled"]["stats"]["hp_lvl"] == pytest.approx(84 + 1000 / 17)
+
+
+async def test_champion_data_from_the_wiki_api():
+    session = FakeSession({"titles=Module%3AChampionData%2Fdata": module_response(
+        (CDRAGON / "champion_data.lua").read_text(encoding="utf-8"))})
+
+    data = await fetch_champion_data(session)
+
+    assert data["Vayne"]["rangetype"] == "Ranged"
+
+
+async def test_missing_module_is_a_load_error():
+    session = FakeSession({"ChampionData": {"query": {"pages": [{"title": "Module:ChampionData/data", "missing": True}]}}})
+
+    with pytest.raises(LoadError):
+        await fetch_champion_data(session)
+
+
+async def test_raw_champion_keeps_its_champion_data(veigar_session):
+    raw = await load_raw_champion(veigar_session, "16.23.1", None, "Veigar", "Veigar", BUILD, {}, {"changes": "V26.07"})
+
+    assert raw.champion_data == {"changes": "V26.07"}

@@ -5,10 +5,10 @@ from pathlib import Path
 import pytest
 
 from src.server.loader.champion_builder import (apply_loader_part, build_champion, champion_stats, initial_structure,
-                                                loaded_spells)
-from src.server.loader.champion_source import champion_strings, parse_wiki_templates
+                                                loaded_spells, wiki_mismatches)
+from src.server.loader.champion_source import champion_strings, parse_champion_data, parse_wiki_templates
 from src.server.models.champion import RawChampion
-from src.server.models.enums import ResourceType
+from src.server.models.enums import AdaptiveType, RangeType, ResourceType
 from src.server.models.json_validation import ChampionJson
 
 
@@ -124,6 +124,64 @@ class TestBuildChampion():
 
         assert veigar.q.name == "Baleful Strike"
         assert veigar.passive.name == "Phenomenal Evil Power"
+
+
+def champion_data(champion_id: str) -> dict:
+    return parse_champion_data((CDRAGON / "champion_data.lua").read_text(encoding="utf-8"))[champion_id]
+
+
+def veigar_with_champion_data():
+    raw = raw_champion("Veigar")
+    raw.champion_data = champion_data("Veigar")
+    return build_champion(raw, ChampionJson(**fixture("veigar.ddragon.json")))
+
+
+class TestWikiCrossCheck():
+
+    def test_last_changed_is_our_patch_format(self):
+        assert veigar_with_champion_data().last_changed == "16.7.1"  # wiki: V26.07
+
+
+    def test_no_champion_data_no_last_change(self):
+        assert build_champion(raw_champion("Veigar"), ChampionJson(**fixture("veigar.ddragon.json"))).last_changed is None
+
+
+    def test_matching_champion_has_no_mismatches(self):
+        assert wiki_mismatches(veigar_with_champion_data(), champion_data("Veigar")) == []
+
+
+    def test_stats_are_compared_in_our_units(self):
+        veigar = veigar_with_champion_data()
+        veigar.hp_regen *= 5  # the wiki has per 5 seconds, we per second
+
+        assert wiki_mismatches(veigar, champion_data("Veigar")) == ["hp_regen: wiki 1.3, CDragon 6.5"]
+
+
+    def test_windup_from_the_cast_offset(self):
+        veigar = veigar_with_champion_data()
+        veigar.attack_windup = 0.3
+
+        assert wiki_mismatches(veigar, champion_data("Veigar")) == ["attack_windup: wiki 0.190937, CDragon 0.3"]  # 0.3 - 0.109
+
+
+    def test_range_and_adaptive_type(self):
+        veigar = veigar_with_champion_data()
+        veigar.range_type, veigar.adaptive_type = RangeType.MELEE, AdaptiveType.PHYSICAL
+
+        assert wiki_mismatches(veigar, champion_data("Veigar")) == [
+            "range_type: wiki Ranged, CDragon Melee", "adaptive_type: wiki Magic, CDragon physical"]
+
+
+    def test_found_a_real_difference(self):
+        # Vayne's attack speed ratio: 0.67 in CDragon, the wiki has her base attack speed 0.658 (as of 2026-11-24).
+        stats = champion_stats(fixture("vayne.bin.json"))
+        vayne = veigar_with_champion_data().copy(update=stats)
+
+        assert wiki_mismatches(vayne, champion_data("Vayne")) == ["attackspeed_ratio: wiki 0.658, CDragon 0.67"]
+
+
+    def test_without_champion_data_nothing_is_compared(self):
+        assert wiki_mismatches(veigar_with_champion_data(), {}) == []
 
 
 class TestApplyLoaderPart():

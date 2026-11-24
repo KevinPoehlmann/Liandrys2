@@ -28,6 +28,10 @@ class FakeSession:
         return next((data for part, data in self.responses.items() if part in url), "")
 
 
+def module_response(text: str) -> dict:
+    return {"query": {"pages": [{"title": "Module:ChampionData/data", "revisions": [{"slots": {"main": {"content": text}}}]}]}}
+
+
 def veigar_entry() -> ChampionJson:
     return ChampionJson(**fixture("veigar.ddragon.json"))
 
@@ -43,7 +47,8 @@ def session() -> FakeSession:
         "content-metadata.json": {"version": BUILD},
         "lol.stringtable.json": {"entries": fixture("veigar.strings.json")["entries"]},
         "veigar/veigar.bin.json": fixture("veigar.bin.json"),
-        "api.php": fixture("veigar.wiki.json"),
+        "gapprefix=Data+": fixture("veigar.wiki.json"),
+        "ChampionData": module_response((CDRAGON / "champion_data.lua").read_text(encoding="utf-8")),
     })
 
 
@@ -107,15 +112,45 @@ class TestLoadChampion():
 
     @pytest.mark.asyncio
     async def test_missing_wiki_templates_are_a_warning(self, session, patch, database, loggers):
-        session.responses["api.php"] = {"query": {"pages": []}}
+        session.responses["gapprefix=Data+"] = {"query": {"pages": []}}
 
         await loader.load_champion(veigar_entry(), session, patch, BUILD, {})
 
         database.add_champion.assert_called_once()
-        assert "No wiki data templates" in loggers["patch"].warning.call_args.args[0]
+        warnings = [call.args[0] for call in loggers["patch"].warning.call_args_list]
+        assert any("No wiki data templates" in warning for warning in warnings)
 
 
 class TestLoadAllChampions():
+
+    @pytest.mark.asyncio
+    async def test_champion_data_reaches_the_champion(self, session, patch, database):
+        await loader.load_all_champions([veigar_entry()], session, patch)
+
+        assert database.upsert_raw_champion.call_args.args[0].champion_data["apiname"] == "Veigar"
+        assert database.add_champion.call_args.args[0].last_changed == "16.7.1"
+
+
+    @pytest.mark.asyncio
+    async def test_missing_module_is_only_a_warning(self, session, patch, database, loggers):
+        del session.responses["ChampionData"]
+
+        await loader.load_all_champions([veigar_entry()], session, patch)
+
+        assert patch.loaded_champion_count == 1
+        warnings = [call.args[0] for call in loggers["patch"].warning.call_args_list]
+        assert any("Module:ChampionData not loaded" in warning for warning in warnings)
+
+
+    @pytest.mark.asyncio
+    async def test_mismatches_are_logged(self, session, patch, database, loggers, monkeypatch):
+        monkeypatch.setattr(loader, "wiki_mismatches", Mock(return_value=["hp: wiki 1, CDragon 2"]))
+
+        await loader.load_all_champions([veigar_entry()], session, patch)
+
+        loggers["patch"].warning.assert_called_with("[CHAMPION] [WIKI] [Veigar] hp: wiki 1, CDragon 2")
+        database.add_champion.assert_called_once()
+
 
     @pytest.mark.asyncio
     async def test_one_failing_champion_does_not_stop_the_others(self, session, patch, database, loggers):
