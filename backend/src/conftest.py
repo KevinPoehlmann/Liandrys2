@@ -232,7 +232,7 @@ def action_effect_aa(aatrox_with_items) -> ActionEffect:
         dmg_sub_type=DamageSubType.PHYSIC,
         can_crit=True
     ))
-    rule = Rule(actions=[damage], speed=str(aatrox_with_items.champion.missile_speed))
+    rule = Rule(actions=[damage], speed="0")  # Aatrox is melee, no missile
     return ActionEffect(
         tick=7,
         rule_events=[RuleEvent(rule=rule, slot=ActionType.BA, owner=Actor.BLUE, target=Actor.RED)]

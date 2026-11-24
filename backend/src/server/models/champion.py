@@ -18,23 +18,23 @@ class NewChampion(BaseModel):
     champion_id: str
     patch: str
     hotfix: datetime | None = None
-    last_changed: str
+    last_changed: str | None = None  # the old wiki scraper's "last changed"; Module:ChampionData will fill it
 
     range_type: RangeType
     adaptive_type: AdaptiveType | None = None  # entered by hand until the loader scrapes it (Phase 4)
     resource_type: ResourceType
     hp: float
-    hp_per_lvl: int
+    hp_per_lvl: float
     ad: float
     ad_per_lvl: float
     mana: float
     mana_per_lvl: float
-    movementspeed: int
-    armor: int
+    movementspeed: float
+    armor: float
     armor_per_lvl: float
     mr: float
     mr_per_lvl: float
-    attackrange: int
+    attackrange: float
     hp_regen: float
     hp_regen_per_lvl: float
     mana_regen: float
@@ -44,7 +44,7 @@ class NewChampion(BaseModel):
     attackspeed_per_lvl: float
     attack_windup: float
     windup_modifier: float
-    missile_speed: int
+    missile_speed: float
 
     passive: ChampionPassive
     q: ChampionAbility

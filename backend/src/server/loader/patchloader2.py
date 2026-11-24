@@ -238,7 +238,11 @@ async def _list_data(patch_ver: str, session: SafeSession) -> tuple[list[Champio
         champion_list = [ChampionJson(**data) for data in champions.data.values()]
     except Exception as e:
         raise PatcherError(f"Failed to fetch champions for patch {patch_ver}", str(e))
-    
+    return champion_list, *await _list_other_data(patch_ver, session)
+
+
+async def _list_other_data(patch_ver: str, session: SafeSession) -> tuple[list[tuple[str, ItemJson]], list[RuneClass], list[SummonerspellJson]]:
+    """Items, runes and summoner spells; the new patchloader lists champions itself."""
     try:
         items = ItemsJson(**requests.get(URLS.dataLink + patch_ver + URLS.itemList).json())
         item_list = [(item_id, ItemJson(**item_data)) for item_id, item_data in items.data.items()]
@@ -265,7 +269,7 @@ async def _list_data(patch_ver: str, session: SafeSession) -> tuple[list[Champio
     except Exception as e:
         raise PatcherError(f"Failed to fetch summonerspells for patch {patch_ver}", str(e))
 
-    return champion_list, item_list, rune_list, summoner_list
+    return item_list, rune_list, summoner_list
 
 
 async def _load_all_champions(champion_list: list[ChampionJson], session: SafeSession, patch: NewPatch) -> None:

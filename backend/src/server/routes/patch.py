@@ -10,7 +10,8 @@ from src.server.database import (
     clear_patch 
 )
 
-from src.server.loader.patchloader2 import load_data, check_patch_available, patch_load_lock
+from src.server.loader.patchloader import load_data, patch_load_lock
+from src.server.loader.patchloader2 import check_patch_available
 from src.server.models.patch import NewPatch, Patch
 
 

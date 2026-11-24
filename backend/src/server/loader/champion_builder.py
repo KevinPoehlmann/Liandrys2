@@ -4,15 +4,39 @@ from dataclasses import dataclass
 
 from src.server.loader.cdragon import SpellValues, bin_field, spell_values
 from src.server.loader.champion_source import loc_keys
-from src.server.models.ability import Ability
+from src.server.models.ability import Ability, ChampionAbility
 from src.server.models.champion import NewChampion, RawChampion, WikiTemplate
-from src.server.models.enums import AdaptiveType, RangeType
-from src.server.models.passive import Passive
+from src.server.models.enums import AdaptiveType, RangeType, ResourceType
+from src.server.models.image import Image
+from src.server.models.json_validation import ChampionJson
+from src.server.models.passive import ChampionPassive, Passive
 
 
 SLOTS = ("q", "w", "e", "r")
 WIKI_SLOTS = {"Q": "q", "W": "w", "E": "e", "R": "r", "I": "passive"}  # the wiki calls the passive "I" (innate)
 REDIRECT = re.compile(r"#REDIRECT \[\[(.+?)\]\]")
+
+
+def build_champion(raw: RawChampion, entry: ChampionJson) -> NewChampion:
+    """A newly loaded champion: stats and named values from CDragon, list data (key, ranks, resource, images) from Data Dragon."""
+    max_ranks = {slot: spell.maxrank for slot, spell in zip(SLOTS, entry.spells)}
+    spells = loaded_spells(raw, max_ranks)
+    abilities = {slot: _new_ability(spells[slot], ddragon_spell.name, ddragon_spell.maxrank, ddragon_spell.image)
+                 for slot, ddragon_spell in zip(SLOTS, entry.spells)}
+    champion = NewChampion(
+        key=entry.key, name=entry.name, champion_id=raw.champion_id, patch=raw.patch, hotfix=raw.hotfix,
+        resource_type=ResourceType.from_str(entry.partype), image=entry.image,
+        passive=ChampionPassive(name=spells["passive"].name or entry.passive.name, image=entry.passive.image),
+        **abilities, **champion_stats(raw.cdragon),
+    )
+    apply_loader_part(champion, spells)
+    return champion
+
+
+def _new_ability(spell: "LoadedSpell", ddragon_name: str, max_rank: int, image: Image) -> ChampionAbility:
+    ability = ChampionAbility(name=spell.name or ddragon_name, maxrank=max_rank, image=image)
+    initial_structure(ability)
+    return ability
 
 
 @dataclass

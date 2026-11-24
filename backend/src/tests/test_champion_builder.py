@@ -4,9 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from src.server.loader.champion_builder import apply_loader_part, champion_stats, initial_structure, loaded_spells
+from src.server.loader.champion_builder import (apply_loader_part, build_champion, champion_stats, initial_structure,
+                                                loaded_spells)
 from src.server.loader.champion_source import champion_strings, parse_wiki_templates
 from src.server.models.champion import RawChampion
+from src.server.models.enums import ResourceType
+from src.server.models.json_validation import ChampionJson
 
 
 CDRAGON = Path(__file__).parent / "static" / "cdragon"
@@ -70,6 +73,57 @@ class TestLoadedSpells():
 
         assert spells["q"].wiki is None
         assert spells["q"].values.values
+
+
+class TestBuildChampion():
+
+    @pytest.fixture
+    def veigar(self):
+        return build_champion(raw_champion("Veigar", wiki=True), ChampionJson(**fixture("veigar.ddragon.json")))
+
+
+    def test_list_data_comes_from_data_dragon(self, veigar):
+        assert (veigar.key, veigar.name, veigar.champion_id) == ("45", "Veigar", "Veigar")
+        assert veigar.resource_type == ResourceType.MANA
+        assert [veigar.q.maxrank, veigar.r.maxrank] == [5, 3]
+        assert veigar.image.full == "Veigar.png"
+        assert veigar.r.image.full == "VeigarR.png"
+
+
+    def test_stats_and_values_come_from_cdragon(self, veigar):
+        assert veigar.hp == champion_stats(fixture("veigar.bin.json"))["hp"]
+        assert veigar.q.values["BaseDamage"] == "by_rank(80, 120, 160, 200, 240)"
+        assert "@TotalDamage@" in veigar.q.tooltip
+        assert veigar.passive.values["APPerStack"] == "1"
+
+
+    def test_names_come_from_cdragon(self):
+        entry = ChampionJson(**fixture("veigar.ddragon.json"))
+        entry.passive.name = entry.spells[0].name = "Data Dragon name"
+
+        veigar = build_champion(raw_champion("Veigar"), entry)
+
+        assert [veigar.passive.name, veigar.q.name] == ["Phenomenal Evil Power", "Baleful Strike"]
+
+
+    def test_patch_comes_from_the_raw_data(self, veigar):
+        assert (veigar.patch, veigar.hotfix) == ("16.23.1", None)
+
+
+    def test_abilities_start_with_the_default_structure_and_no_rules(self, veigar):
+        assert (veigar.q.cost, veigar.q.cooldown) == ("mana", "cooldownTime")
+        assert veigar.q.stages == [] and veigar.q.rules == []
+        assert not veigar.validated and not veigar.q.validated
+
+
+    def test_missing_cdragon_name_falls_back_to_data_dragon(self):
+        raw = raw_champion("Veigar")
+        raw.strings = {}
+
+        veigar = build_champion(raw, ChampionJson(**fixture("veigar.ddragon.json")))
+
+        assert veigar.q.name == "Baleful Strike"
+        assert veigar.passive.name == "Phenomenal Evil Power"
 
 
 class TestApplyLoaderPart():
