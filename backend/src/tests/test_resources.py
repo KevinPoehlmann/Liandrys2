@@ -12,8 +12,8 @@ from src.server.simulation.simulation import Simulation
 # Stat growth at level 6: (6 - 1) * (0.7025 + 0.0175 * (6 - 1)) = 3.95
 GROWTH_LVL_6 = 3.95
 ANNIE_MAX_MANA = 418 + 25 * GROWTH_LVL_6
-ANNIE_MANA_PER_REGEN = (8 + 0.8 * GROWTH_LVL_6) / 10
-DARIUS_HP_PER_REGEN = (10 + 0.95 * GROWTH_LVL_6) / 10
+ANNIE_MANA_PER_REGEN = (1.6 + 0.16 * GROWTH_LVL_6) * 0.5
+DARIUS_HP_PER_REGEN = (2 + 0.19 * GROWTH_LVL_6) * 0.5
 REGEN_TICKS = to_ticks(0.5)  # 16 ticks = 0.528 s, the engine's regeneration interval
 
 Q_RANK_3_COST = 70
@@ -46,10 +46,10 @@ def darius(load_champion) -> Character:
 
 def energy_champion(load_champion) -> Champion:
     # Annie with an energy bar like Zed or Lee Sin: 200 energy (only the example; the maximum comes from the champion data,
-    # Shen has 400), 50 per 5 seconds, no growth.
+    # Shen has 400), 10 per second, no growth.
     champion = load_champion("annie")
     champion.resource_type = ResourceType.ENERGY
-    champion.mana, champion.mana_per_lvl, champion.mana_regen, champion.mana_regen_per_lvl = 200, 0, 50, 0
+    champion.mana, champion.mana_per_lvl, champion.mana_regen, champion.mana_regen_per_lvl = 200, 0, 10, 0
     for ability in (champion.q, champion.w):
         ability.cost, ability.cost_resource = "50", CostResource.ENERGY
     return champion
@@ -72,7 +72,7 @@ class TestMana():
         ]
 
 
-    def test_regenerates_a_tenth_of_mana_per_5_every_half_second(self, load_champion, darius):
+    def test_regenerates_half_the_mana_per_second_every_half_second(self, load_champion, darius):
         caster = annie(load_champion("annie"))
         sim = Simulation(caster, darius)
 

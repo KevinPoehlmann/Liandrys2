@@ -226,3 +226,23 @@ class TestDariusAbilities():
         vs_vayne.do_combo(combo(ActionType.R))
 
         assert vs_vayne.actors[Actor.BLUE].cooldowns[ActionType.R] == R_RANK_1_COOLDOWN_TICKS
+
+
+class TestWindupModifier():
+
+    # Darius' windup modifier is 0.5 (CommunityDragon): bonus attack speed shortens his windup only half as much.
+    # base windup = 0.2 / 0.625 = 0.32 s; with BotRK (+25 %) and level growth the attack takes 1 / (0.625 * 1.2895) s.
+    def test_bonus_attack_speed_shortens_the_windup_by_half(self, load_champion, load_item):
+        darius = Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), [load_item("blade_of_the_ruined_king")])
+        attack_time = 1 / (0.625 * (1 + 0.01 * GROWTH_LVL_6 + 0.25))
+
+        windup = darius.windup_time(attack_time)
+
+        assert windup == pytest.approx(0.32 + 0.5 * (0.2 * attack_time - 0.32))
+        assert to_ticks(windup) == 9  # without the modifier: 0.2 * attack_time = 0.248 s, 8 ticks
+
+
+    def test_at_base_attack_speed_the_modifier_changes_nothing(self, load_champion):
+        darius = Character(load_champion("darius"), 1, Rank(q=1, w=0, e=0, r=0), [])
+
+        assert darius.windup_time(1 / 0.625) == pytest.approx(0.32)

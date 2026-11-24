@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.server.loader.champion_builder import apply_loader_part, initial_structure, loaded_spells
+from src.server.loader.champion_builder import apply_loader_part, champion_stats, initial_structure, loaded_spells
 from src.server.loader.champion_source import champion_strings, parse_wiki_templates
 from src.server.models.champion import RawChampion
 
@@ -94,6 +94,40 @@ class TestApplyLoaderPart():
         initial_structure(ability)
 
         assert (ability.cost, ability.cooldown) == ("mana", "cooldownTime")
+
+
+class TestChampionStats():
+    # The fixtures were filled from the wiki; their base stats are still current for these three.
+    STATS = ["hp", "hp_per_lvl", "ad", "ad_per_lvl", "mana", "mana_per_lvl", "movementspeed", "armor", "armor_per_lvl", "mr",
+             "mr_per_lvl", "attackrange", "hp_regen", "hp_regen_per_lvl", "mana_regen", "mana_regen_per_lvl", "attackspeed",
+             "attackspeed_ratio", "attackspeed_per_lvl", "attack_windup", "missile_speed", "range_type", "adaptive_type"]
+
+    @pytest.mark.parametrize("champion", ["veigar", "darius", "riven"])
+    def test_match_the_wiki(self, load_champion, champion):
+        stats = champion_stats(fixture(f"{champion}.bin.json"))
+        expected = load_champion(champion)
+
+        for name in self.STATS:
+            assert stats[name] == pytest.approx(getattr(expected, name), abs=1e-4), name
+
+
+    def test_windup_from_cast_and_total_time(self):
+        # Vladimir: 0.3 s of 1.52 s
+        assert champion_stats(fixture("vladimir.bin.json"))["attack_windup"] == pytest.approx(0.19737, abs=1e-5)
+
+
+    def test_missing_windup_is_an_error_not_a_guess(self):
+        cdragon = fixture("veigar.bin.json")
+        cdragon["Characters/Veigar/CharacterRecords/Root"]["basicAttack"] = {}
+
+        with pytest.raises(ValueError, match="no windup"):
+            champion_stats(cdragon)
+
+
+    def test_windup_modifier_defaults_to_one(self):
+        # The old loader divided it by 100 (fixtures: 0.01 and 0.005).
+        assert champion_stats(fixture("veigar.bin.json"))["windup_modifier"] == 1.0
+        assert champion_stats(fixture("darius.bin.json"))["windup_modifier"] == 0.5
 
 
 def test_raw_strings_are_filtered_like_the_loader_does():

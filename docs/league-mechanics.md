@@ -107,7 +107,7 @@ Pages: Basic_attack, Attack_speed, Attack_effects
 - On-attack effects fire when the windup completes (launch); on-hit effects when the attack hits. Blind, dodge (Jax E, Nilah W) and block (Shen W) prevent the hit.
 - Cripple (attack speed reduction) stacks multiplicatively *(unverified)*.
 
-**Simulation:** windup locks the attacker, then abilities may start at once, the next attack waits for the full timer. ✓ `on_attack` fires at the end of the windup, `on_hit` when the damage lands. ✓ Cripple multiplies. ⚠ No attack speed cap/floor. ⚠ Windup ignores `windup_modifier`; also the loader divides the wiki's modifier by 100 ([webscraper2.py:108](../backend/src/server/loader/webscraper2.py#L108)), which looks wrong given a default of 1. ⚠ An attack reset during a windup doesn't cancel the attack (only reachable if a combo casts a reset during a windup).
+**Simulation:** windup locks the attacker, then abilities may start at once, the next attack waits for the full timer. ✓ `on_attack` fires at the end of the windup, `on_hit` when the damage lands. ✓ Cripple multiplies. ⚠ No attack speed cap/floor. ✓ Windup uses `windup_modifier` (`Character.windup_time`; base = windup percent / base attack speed, level growth counts as bonus; Darius 0.5, default 1). Item and ability attacks (Urgot's Purge) use the same formula. ⚠ An attack reset during a windup doesn't cancel the attack (only reachable if a combo casts a reset during a windup).
 
 ## Adaptive force
 Pages: Adaptive_force
@@ -152,7 +152,7 @@ Pages: Healing, Heal_and_shield_power, Life_steal, Vamp (Omnivamp), Grievous_Wou
 ## Resources and regeneration
 Pages: Health_regeneration, Mana, Mana_regeneration, Energy, Ability_resource, Grievous_Wounds
 
-- Health and mana regenerate in 0.5 s intervals (the Damage_over_time page: every 16 engine loops = 0.528 s, which is `to_ticks(0.5)`). Disabled while the value equals the maximum. The stat is "per 5 seconds"; each interval restores a tenth (energy: "5 energy per 0.5 seconds").
+- Health and mana regenerate in 0.5 s intervals (the Damage_over_time page: every 16 engine loops = 0.528 s, which is `to_ticks(0.5)`). Disabled while the value equals the maximum. The wiki shows the stat "per 5 seconds"; we store it per second like Riot's data, and each interval restores half of it (energy: "5 energy per 0.5 seconds").
 - Base regen grows per level like the other growing stats. Flat and "% base regen" bonuses are additive, 1:1: regen = base × (1 + % base) + flat. Multiplicative regen modifiers stack additively with each other.
 - Some mana sources depend on missing or maximum mana (Meditation, Crest of Insight, Howling Abyss).
 - Energy: 200 maximum (Shen 400, Akali up to 300), doesn't grow; 50 per 5 s; only Crest of Insight raises it. Restored by abilities (Lee Sin, Shen, Zed, Akali, Kennen, Ambessa) and Presence of Mind.

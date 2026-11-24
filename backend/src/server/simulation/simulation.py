@@ -482,7 +482,7 @@ class Simulation():
         cast = self._new_cast()
         self.attack_factors[cast] = evaluate_formula(props.on_hit_factor, context)
         attack_speed = evaluate_formula(props.attack_speed, context) if props.attack_speed else owner.get_stat(Stat.ATTACKSPEED_P)
-        windup = owner.attack_windup() / attack_speed
+        windup = owner.windup_time(1 / attack_speed)
         damage = DamageAction(type_=RuleActionType.DAMAGE, props=DamageProps(
             target=props.target, amount=props.amount, dmg_type=[DamageType.BASIC],
             dmg_sub_type=DamageSubType.PHYSIC, can_crit=props.can_crit))

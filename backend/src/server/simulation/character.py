@@ -52,8 +52,9 @@ MULTIPLICATIVE_STATS = {Stat.ARMOR_PEN_P, Stat.MAGIC_PEN_P, Stat.TENACITY_P}
 # Damage amplifications from several sources multiply (Hemoplague notes).
 COMPOUNDING_STATS = {Stat.DAMAGE_TAKEN_P}
 
-# Health, mana and energy regenerate every 0.5 s (16 engine loops), a tenth of the "per 5 seconds" stat each time.
-REGEN_TICKS = to_ticks(0.5)
+# Health, mana and energy regenerate every 0.5 s (16 engine loops), half of the per-second stat each time.
+REGEN_SECONDS = 0.5
+REGEN_TICKS = to_ticks(REGEN_SECONDS)
 CASTING_RESOURCES = {ResourceType.MANA: CostResource.MANA, ResourceType.ENERGY: CostResource.ENERGY}
 
 SUMMONER_SLOTS = (ActionType.S1, ActionType.S2)
@@ -440,8 +441,8 @@ class Character():
         return self.current_resource, self._max_resource(), self._regen_per_tick(Stat.MANA_REG, Stat.MANA_REG_P)
 
     def _regen_per_tick(self, stat: Stat, base_percent: Stat) -> float:
-        per_5_seconds = self.get_base_stat(stat) * (1 + self._get_bonus_stat(base_percent)) + self._get_bonus_stat(stat)
-        return per_5_seconds / 10
+        per_second = self.get_base_stat(stat) * (1 + self._get_bonus_stat(base_percent)) + self._get_bonus_stat(stat)
+        return per_second * REGEN_SECONDS
 
     @staticmethod
     def _enough(resource: CostResource, amount: float, value: float) -> bool:
@@ -920,13 +921,20 @@ class Character():
     def _basic_attack(self, action: Action, tick: int) -> ActionEffect:
         attack_time = 1 / self._get_attackspeed()
         self.cooldowns[ActionType.BA] = tick + to_ticks(attack_time)
-        windup_ticks = to_ticks(attack_time * self.attack_windup())
+        windup_ticks = to_ticks(self.windup_time(attack_time))
         rule = self._basic_attack_rule(blinded=StatusType.BLIND in self.status_effects)
         event = RuleEvent(rule=rule, slot=ActionType.BA, owner=action.actor, target=action.target, crit=action.crit)
         return ActionEffect(tick=tick + windup_ticks, rule_events=[event], windup_cancel=self._windup_cancels())
 
-    def attack_windup(self) -> float:
-        return self.champion.attack_windup
+    def windup_time(self, attack_time: float) -> float:
+        """Seconds until the attack launches (wiki, Attack speed#Windup).
+
+        The windup scales with the attack time; a windup modifier other than 1 scales only that change. The base is the
+        windup at the base attack speed, and level growth counts as bonus attack speed, so the modifier matters from level 2.
+        """
+        percent, modifier = self.champion.attack_windup, self.champion.windup_modifier
+        base_windup = percent / self.champion.attackspeed
+        return base_windup + modifier * (attack_time * percent - base_windup)
 
     def _windup_cancels(self) -> set[ActionType]:
         return {

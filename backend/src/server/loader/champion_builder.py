@@ -2,10 +2,11 @@
 import re
 from dataclasses import dataclass
 
-from src.server.loader.cdragon import SpellValues, spell_values
+from src.server.loader.cdragon import SpellValues, bin_field, spell_values
 from src.server.loader.champion_source import loc_keys
 from src.server.models.ability import Ability
 from src.server.models.champion import NewChampion, RawChampion, WikiTemplate
+from src.server.models.enums import AdaptiveType, RangeType
 from src.server.models.passive import Passive
 
 
@@ -25,7 +26,7 @@ class LoadedSpell:
 
 def loaded_spells(raw: RawChampion, max_ranks: dict[str, int]) -> dict[str, LoadedSpell]:
     """Q, W, E, R and the passive, found through the champion's own record (the passive has no ranks)."""
-    record = next(r for r in raw.cdragon.values() if isinstance(r, dict) and r.get("__type") == "CharacterRecord")
+    record = _character_record(raw.cdragon)
     paths = dict(zip(SLOTS, record["spells"])) | {"passive": record["mCharacterPassiveSpell"]}
     strings = {key.lower(): text for key, text in raw.strings.items()}
     templates = _wiki_by_slot(raw.wiki)
@@ -53,6 +54,52 @@ def _wiki_by_slot(templates: dict[str, WikiTemplate]) -> dict[str, WikiTemplate]
         if slot and target and target.group(1) in templates:
             by_slot[slot] = templates[target.group(1)]
     return by_slot
+
+
+def champion_stats(cdragon: dict) -> dict:
+    """The champion's base stats in our units. Riot leaves out fields that have their default value."""
+    record = _character_record(cdragon)
+    resource = record.get("primaryAbilityResource", {})
+    stat = lambda source, name, default=0.0: bin_field(source, name, {}).get("baseValue", default)
+    attack_speed = stat(record, "attackSpeedModifiable")
+    return {
+        "hp": stat(record, "baseHPModifiable"), "hp_per_lvl": stat(record, "hpPerLevelModifiable"),
+        "ad": stat(record, "baseDamageModifiable"), "ad_per_lvl": stat(record, "damagePerLevelModifiable"),
+        "mana": stat(resource, "arBaseModifiable"), "mana_per_lvl": stat(resource, "arPerLevelModifiable"),
+        "armor": stat(record, "baseArmorModifiable"), "armor_per_lvl": stat(record, "armorPerLevelModifiable"),
+        "mr": stat(record, "baseMR"), "mr_per_lvl": stat(record, "mrPerLevel"),
+        "movementspeed": stat(record, "baseMoveSpeedModifiable"), "attackrange": stat(record, "attackRangeModifiable"),
+        # Per second like Riot (the wiki and Data Dragon show per 5 seconds).
+        "hp_regen": stat(record, "baseStaticHPRegenModifiable"), "hp_regen_per_lvl": stat(record, "hpRegenPerLevelModifiable"),
+        "mana_regen": stat(resource, "arBaseStaticRegenModifiable"), "mana_regen_per_lvl": stat(resource, "arRegenPerLevelModifiable"),
+        "attackspeed": attack_speed, "attackspeed_ratio": stat(record, "attackSpeedRatioModifiable", attack_speed),
+        "attackspeed_per_lvl": stat(record, "attackSpeedPerLevelModifiable") / 100,
+        "attack_windup": _attack_windup(record.get("basicAttack", {})),
+        "windup_modifier": record.get("basicAttack", {}).get("mAttackDelayCastOffsetPercentAttackSpeedRatio", 1.0),
+        "missile_speed": _missile_speed(cdragon, record),
+        "range_type": RangeType(record.get("purchaseIdentities", ["Melee"])[0]),  # Nidalee lists both, her base form first
+        "adaptive_type": AdaptiveType.MAGIC if record.get("mAdaptiveForceToAbilityPowerWeight") else AdaptiveType.PHYSICAL,
+    }
+
+
+def _attack_windup(attack: dict) -> float:
+    # Riot's base is 30 % of the attack time, shifted per champion; a few give cast and total time instead (Vladimir).
+    if "mAttackCastTime" in attack:
+        return attack["mAttackCastTime"] / attack["mAttackTotalTime"]
+    if "mAttackDelayCastOffsetPercent" in attack:
+        return 0.3 + attack["mAttackDelayCastOffsetPercent"]
+    raise ValueError("The basic attack has no windup (neither a cast offset nor cast and total time)")
+
+
+def _missile_speed(cdragon: dict, record: dict) -> float:
+    # The spell's `missileSpeed` field is outdated; the missile's movement component holds the real speed.
+    attack = next((r for r in cdragon.values() if isinstance(r, dict)
+                   and r.get("mScriptName") == f"{record['mCharacterName']}BasicAttack"), {})
+    return attack.get("mSpell", {}).get("mMissileSpec", {}).get("movementComponent", {}).get("mSpeed", 0.0)
+
+
+def _character_record(cdragon: dict) -> dict:
+    return next(r for r in cdragon.values() if isinstance(r, dict) and r.get("__type") == "CharacterRecord")
 
 
 def apply_loader_part(champion: NewChampion, spells: dict[str, LoadedSpell]) -> None:

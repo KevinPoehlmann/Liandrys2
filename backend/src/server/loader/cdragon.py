@@ -58,6 +58,19 @@ def _add(result: SpellValues, name: str, translate) -> None:
         result.unsupported[name] = str(error)
 
 
+def bin_field(record: dict, name: str, default=None):
+    """A field by its name, or by its hash where CommunityDragon doesn't know the name yet ({726ee5cd} = arBaseModifiable)."""
+    return record.get(name, record.get(f"{{{field_hash(name)}}}", default))
+
+
+def field_hash(name: str) -> str:
+    # FNV-1a (32 bit) of the lowercased name, the hash Riot's bin files use for field names.
+    value = 0x811C9DC5
+    for byte in name.lower().encode():
+        value = ((value ^ byte) * 0x01000193) & 0xFFFFFFFF
+    return f"{value:08x}"
+
+
 def format_number(value: float) -> str:
     # Six significant digits remove float noise (0.44999998807907104 -> 0.45).
     return f"{float(f'{value:.6g}'):g}"

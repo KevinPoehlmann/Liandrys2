@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.server.loader.cdragon import format_number, spell_values, translate_calculation
+from src.server.loader.cdragon import bin_field, field_hash, format_number, spell_values, translate_calculation
 
 
 CDRAGON = Path(__file__).parent / "static" / "cdragon"
@@ -166,3 +166,18 @@ class TestCalculations():
         formula = translate_calculation({"__type": "GameCalculation", "mFormulaParts": [product]})
 
         assert formula == "(A + B) * 2"
+
+
+class TestHashedFields():
+
+    def test_hash_of_a_known_name(self):
+        # From CommunityDragon's hashes.binfields.txt
+        assert field_hash("baseHPModifiable") == "8662cf12"
+
+
+    def test_field_by_name_or_hash(self):
+        record = {"baseHPModifiable": 1, "{726ee5cd}": 2}
+
+        assert bin_field(record, "baseHPModifiable") == 1
+        assert bin_field(record, "arBaseModifiable") == 2
+        assert bin_field(record, "arPerLevelModifiable", 0) == 0
