@@ -1,0 +1,104 @@
+import json
+from datetime import datetime
+from pathlib import Path
+
+import pytest
+
+from src.server.loader.champion_builder import apply_loader_part, initial_structure, loaded_spells
+from src.server.loader.champion_source import champion_strings, parse_wiki_templates
+from src.server.models.champion import RawChampion
+
+
+CDRAGON = Path(__file__).parent / "static" / "cdragon"
+VEIGAR_RANKS = {"q": 5, "w": 5, "e": 5, "r": 3}
+
+
+def fixture(name: str) -> dict:
+    return json.loads((CDRAGON / name).read_text(encoding="utf-8"))
+
+
+def raw_champion(champion_id: str, wiki: bool = False) -> RawChampion:
+    name = champion_id.lower()
+    return RawChampion(
+        champion_id=champion_id, patch="16.23.1", build="16.23.1", fetched_at=datetime(2026, 11, 24),
+        cdragon=fixture(f"{name}.bin.json"), strings=fixture(f"{name}.strings.json")["entries"],
+        wiki=parse_wiki_templates(fixture(f"{name}.wiki.json")) if wiki else {},
+    )
+
+
+@pytest.fixture
+def veigar_spells():
+    return loaded_spells(raw_champion("Veigar", wiki=True), VEIGAR_RANKS)
+
+
+class TestLoadedSpells():
+
+    def test_slots_come_from_the_champion_record(self, veigar_spells):
+        assert {slot: spell.script_name for slot, spell in veigar_spells.items()} == {
+            "q": "VeigarBalefulStrike", "w": "VeigarDarkMatter", "e": "VeigarEventHorizon", "r": "VeigarR",
+            "passive": "VeigarPassive"}
+
+
+    def test_name_and_tooltip(self, veigar_spells):
+        strike = veigar_spells["q"]
+
+        assert strike.name == "Baleful Strike"
+        assert "<magicDamage>@TotalDamage@ magic damage</magicDamage>" in strike.tooltip
+
+
+    def test_tooltip_key_may_differ_from_the_spell(self):
+        # Darius Q is the spell DariusCleave, its texts are Spell_DariusQ_*.
+        spells = loaded_spells(raw_champion("Darius"), {"q": 5, "w": 5, "e": 5, "r": 3})
+
+        assert spells["q"].script_name == "DariusCleave"
+        assert spells["q"].name == "Decimate"
+        assert spells["q"].tooltip
+
+
+    def test_values_use_each_slots_ranks(self, veigar_spells):
+        assert veigar_spells["r"].values.values["BaseDamage"] == "by_rank(175, 250, 325)"
+        assert veigar_spells["passive"].values.values["APPerStack"] == "1"
+
+
+    def test_wiki_template_per_slot(self, veigar_spells):
+        assert veigar_spells["q"].wiki.title == "Template:Data Veigar/Baleful Strike"
+        assert veigar_spells["passive"].wiki.title == "Template:Data Veigar/Phenomenal Evil Power"
+
+
+    def test_missing_wiki_blocks_nothing(self):
+        spells = loaded_spells(raw_champion("Veigar"), VEIGAR_RANKS)
+
+        assert spells["q"].wiki is None
+        assert spells["q"].values.values
+
+
+class TestApplyLoaderPart():
+
+    def test_overwrites_values_and_tooltips_only(self, load_champion, veigar_spells):
+        veigar = load_champion("veigar")
+        veigar.q.values = {"BaseDamage": "1"}
+        rules_before = veigar.q.stages[0].rules
+        w_cooldown = veigar.w.cooldown
+
+        apply_loader_part(veigar, veigar_spells)
+
+        assert veigar.q.values["BaseDamage"] == "by_rank(80, 120, 160, 200, 240)"
+        assert veigar.q.tooltip == veigar_spells["q"].tooltip
+        assert veigar.q.stages[0].rules == rules_before
+        assert veigar.w.cooldown == w_cooldown
+
+
+    def test_initial_structure_points_to_the_loaded_values(self, load_champion):
+        ability = load_champion("veigar").q
+
+        initial_structure(ability)
+
+        assert (ability.cost, ability.cooldown) == ("mana", "cooldownTime")
+
+
+def test_raw_strings_are_filtered_like_the_loader_does():
+    # The fixtures were cut from the 32 MB table with champion_strings; this keeps them in sync with it.
+    darius = raw_champion("Darius")
+
+    assert champion_strings(darius.strings, darius.cdragon) == darius.strings
+    assert "spell_dariusq_tooltip" in darius.strings

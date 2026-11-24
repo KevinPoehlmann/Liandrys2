@@ -11,7 +11,7 @@ from pymongo.errors import InvalidURI
 from pymongo.results import UpdateResult
 
 from src.server.models.patch import NewPatch, Patch
-from src.server.models.champion import NewChampion, Champion, ShortChampion
+from src.server.models.champion import NewChampion, Champion, RawChampion, ShortChampion
 from src.server.models.item import NewItem, Item, ShortItem
 from src.server.models.rune import NewRune, Rune, ShortRune
 from src.server.models.summonerspell import NewSummonerspell, Summonerspell, ShortSummonerspell
@@ -49,6 +49,7 @@ async def setup_indexes() -> None:
     await item_collection.create_index([("item_id", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="item_index")
     await rune_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="rune_index")
     await summonerspell_collection.create_index([("key", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="summonerspell_index")
+    await raw_champion_collection.create_index([("champion_id", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="raw_champion_index")
 
 
 
@@ -59,6 +60,7 @@ champion_collection: AgnosticCollection = database.champions
 item_collection: AgnosticCollection = database.items
 rune_collection: AgnosticCollection = database.runes
 summonerspell_collection: AgnosticCollection = database.summonerspells
+raw_champion_collection: AgnosticCollection = database.raw_champions
 
 
 
@@ -149,6 +151,18 @@ async def clear_patches_collection() -> bool:
 
 
 #--------Champion-----------------------------
+
+
+async def upsert_raw_champion(raw: RawChampion) -> None:
+    # A reload of the same patch (hotfix build, newer wiki revision) replaces the old download.
+    key = {"champion_id": raw.champion_id, "patch": raw.patch, "hotfix": raw.hotfix}
+    await raw_champion_collection.replace_one(key, raw.dict(), upsert=True)
+
+
+async def fetch_raw_champion(champion_id: str, patch: str, hotfix: datetime | None) -> RawChampion | None:
+    document = await raw_champion_collection.find_one({"champion_id": champion_id, "patch": patch, "hotfix": hotfix})
+    return RawChampion.parse_obj(document) if document else None
+
 
 
 async def add_champion(champion: NewChampion) -> str:

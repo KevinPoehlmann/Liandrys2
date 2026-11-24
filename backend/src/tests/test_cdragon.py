@@ -63,10 +63,24 @@ class TestRankValues():
         assert "no ranks" in result.unsupported["Damage"]
 
 
+    def test_cooldown_starts_at_rank_zero_and_mana_at_rank_one(self):
+        values = spell_values(load_spell("veigar", "VeigarBalefulStrike"), max_rank=5).values
+
+        # Wiki: cooldown 6 to 4, cost 30 to 50
+        assert values["cooldownTime"] == "by_rank(6, 5.5, 5, 4.5, 4)"
+        assert values["mana"] == "by_rank(30, 35, 40, 45, 50)"
+
+
+    def test_spell_fields_are_always_present(self):
+        values = spell_values({}, max_rank=5).values
+
+        assert values == {"cooldownTime": "0", "mana": "0"}
+
+
     def test_hashed_names_are_skipped(self):
         spell = {"DataValues": [{"name": "{7d38e7d6}", "values": [1] * 7}]}
 
-        assert spell_values(spell, max_rank=5).values == {}
+        assert "{7d38e7d6}" not in spell_values(spell, max_rank=5).values
 
 
 class TestCalculations():
@@ -83,20 +97,21 @@ class TestCalculations():
         assert values["MaxDamage"] == "MinDamage * 2"
 
 
-    def test_level_interpolation_stops_at_18(self):
+    def test_level_interpolation_continues_past_18(self):
         values = spell_values(load_spell("darius", "DariusHemoMarker"), max_rank=0).values
 
-        levels = ", ".join(str(level) for level in range(13, 31))
-        assert values["BleedDamagePerStack"] == f"by_level({levels}, 30, 30) + 0.3 * bonus_ad"
+        # Wiki: 13 to 30 over levels 1-18, then 31 and 32
+        levels = ", ".join(str(level) for level in range(13, 33))
+        assert values["BleedDamagePerStack"] == f"by_level({levels}) + 0.3 * bonus_ad"
 
 
-    def test_level_interpolation_can_scale_past_18(self):
+    def test_level_interpolation_can_stop_at_18(self):
         part = {"__type": "ByCharLevelInterpolationCalculationPart", "mStartValue": 1, "mEndValue": 18,
-                "mScalePastDefaultMaxLevel": True}
+                "mScalePastDefaultMaxLevel": False}
 
         formula = translate_calculation({"__type": "GameCalculation", "mFormulaParts": [part]})
 
-        assert formula.endswith("17, 18, 19, 20)")
+        assert formula.endswith("17, 18, 18, 18)")
 
 
     def test_breakpoints_change_the_bonus_per_level(self):
@@ -129,9 +144,16 @@ class TestCalculations():
 
         result = spell_values(spell, max_rank=5)
 
-        assert result.values == {}
+        assert "Stacks" not in result.values and "Shred" not in result.values
         assert result.unsupported == {"Stacks": "part type BuffCounterByCoefficientCalculationPart",
                                       "Shred": "stat 29 with formula 0"}
+
+
+    def test_references_to_hashed_names_are_reported(self):
+        values = spell_values(load_spell("vladimir", "VladimirQ"), max_rank=5)
+
+        assert "EmpoweredHealTooltip" not in values.values
+        assert values.unsupported["EmpoweredHealTooltip"] == "refers to the hashed name {097cda4f}"
 
 
     def test_sums_inside_products_keep_their_parentheses(self):

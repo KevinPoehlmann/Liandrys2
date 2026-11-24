@@ -126,6 +126,9 @@ def _named_value(context: FormulaContext, name: str) -> float | None:
     key = (context.slot, name)
     if key in context.resolving:
         raise FormulaError(f"Named value '{name}' refers to itself")
+    # Riot's values are written from the champion's view: Tibbers' TibbersAuraDamage scales with Annie's AP.
+    if context.owner is not None:
+        context = replace(context, source=context.owner, owner=None)
     return evaluate_formula(formula, replace(context, resolving=context.resolving + (key,)))
 
 

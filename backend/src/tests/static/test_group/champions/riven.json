@@ -34,6 +34,12 @@
     "name": "Runic Blade",
     "description": "Innate: Riven's ability casts generate a stack of Charge for 6 seconds, refreshing on subsequent casts and stacking up to 3 times. Riven's basic attacks are empowered to each consume a stack to deal bonus physical damage equal to 30% – 60% (based on level) AD, reduced to「 50% 」「 15% – 30% (based on level) AD 」against structures.\n\n\n\nThe bonus damage is affected by  critical strike modifiers and applies  life steal at 100% effectiveness.",
     "static_cooldown": "0",
+    "values": {
+      "Charges": "3",
+      "TowerRatio": "0.5",
+      "MonsterBonusDamage": "50",
+      "TotalDamage": "by_level(0.3, 0.308823529412, 0.317647058824, 0.326470588235, 0.335294117647, 0.344117647059, 0.352941176471, 0.361764705882, 0.370588235294, 0.379411764706, 0.388235294118, 0.397058823529, 0.405882352941, 0.414705882353, 0.423529411765, 0.432352941176, 0.441176470588, 0.45, 0.458823529412, 0.467647058824) * ad"
+    },
     "raw_stats": {},
     "changes": [],
     "validated": true,
@@ -93,7 +99,7 @@
             "type_": "Damage",
             "props": {
               "target": "target",
-              "amount": "(0.3 + 0.15 * (level - 1) / 17) * ad",
+              "amount": "TotalDamage",
               "dmg_type": [
                 "Proc damage"
               ],
@@ -143,10 +149,17 @@
   "q": {
     "name": "Broken Wings",
     "description": "Riven lashes out in a series of strikes. This ability can be reactivated three times in a short time frame with the third hit knocking back nearby enemies.",
-    "cost": "0",
-    "cooldown": "13",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "BaseDamage": "by_rank(45, 75, 105, 135, 165)",
+      "ADRatio": "by_rank(0.6, 0.65, 0.7, 0.75, 0.8)",
+      "FirstSlashDamage": "BaseDamage + ADRatio * bonus_ad",
+      "cooldownTime": "13",
+      "mana": "0"
+    },
     "raw_stats": {
       "cast time": "none",
       "effect radius": "150.0 + (rank - 1) * 50.0"
@@ -180,7 +193,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
+                  "amount": "FirstSlashDamage",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -222,7 +235,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
+                  "amount": "FirstSlashDamage",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -264,7 +277,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
+                  "amount": "FirstSlashDamage",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -325,10 +338,17 @@
   "w": {
     "name": "Ki Burst",
     "description": "Riven emits a Ki Burst, damaging and stunning nearby enemies.",
-    "cost": "0",
-    "cooldown": "by_rank(11, 10, 9, 8, 7)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0",
     "recharge": "0",
+    "values": {
+      "StunDuration": "0.75",
+      "BaseDamage": "by_rank(65, 95, 125, 155, 185)",
+      "TotalDamage": "BaseDamage + bonus_ad",
+      "cooldownTime": "by_rank(11, 10, 9, 8, 7)",
+      "mana": "0"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "effect radius": "300.0 + (rank - 1) * 60.0"
@@ -361,7 +381,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "by_rank(65, 95, 125, 155, 185) + bonus_ad",
+                  "amount": "TotalDamage",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -405,10 +425,18 @@
   "e": {
     "name": "Valor",
     "description": "Riven steps forward a short distance and blocks incoming damage.",
-    "cost": "0",
-    "cooldown": "by_rank(10, 9, 8, 7, 6)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0",
     "recharge": "0",
+    "values": {
+      "ShieldAmount": "by_rank(70, 95, 120, 145, 170)",
+      "BaseShieldAmount": "by_rank(70, 95, 120, 145, 170)",
+      "ShieldDuration": "1.5",
+      "TotalShield": "ShieldAmount + 1.1 * bonus_ad",
+      "cooldownTime": "by_rank(10, 9, 8, 7, 6)",
+      "mana": "0"
+    },
     "raw_stats": {
       "cast time": "none",
       "range": "250.0"
@@ -441,7 +469,7 @@
                 "type_": "Shield",
                 "props": {
                   "target": "self",
-                  "amount": "by_rank(70, 95, 120, 145, 170) + 1.1 * bonus_ad",
+                  "amount": "TotalShield",
                   "duration": "1.5",
                   "dmg_sub_type": "True"
                 }
@@ -465,10 +493,22 @@
   "r": {
     "name": "Blade of the Exile",
     "description": "Riven empowers her keepsake weapon with energy, and gains Attack Damage and Range. During this time, she also gains the ability to use Wind Slash, a powerful ranged attack, once.",
-    "cost": "0",
-    "cooldown": "by_rank(120, 90, 60)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "MinBase": "by_rank(100, 150, 200)",
+      "MaxBase": "by_rank(300, 450, 600)",
+      "Duration": "15",
+      "PercentBonusAD": "0.2",
+      "TooltipAttackRange": "75",
+      "MinDamage": "MinBase + 0.55 * bonus_ad",
+      "MaxDamage": "MaxBase + 1.65 * bonus_ad",
+      "BonusAD": "PercentBonusAD * ad",
+      "cooldownTime": "by_rank(120, 90, 60)",
+      "mana": "0"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "target range": "1100.0",
@@ -531,7 +571,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "(by_rank(100, 150, 200) + 0.55 * bonus_ad) * (1 + min(2, 8 / 3 * target_missing_hp_percent))",
+                  "amount": "MinDamage * (1 + min(2, 8 / 3 * target_missing_hp_percent))",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -551,7 +591,7 @@
     "buffs": [
       {
         "name": "blade_of_the_exile",
-        "duration": "15",
+        "duration": "Duration",
         "max_stacks": 1,
         "refresh": true,
         "interval": "0",
@@ -563,7 +603,7 @@
         "stats": [
           {
             "stat": "ad",
-            "formula": "0.2 * ad",
+            "formula": "BonusAD",
             "mode": "flat",
             "conversion": false,
             "snapshot": true

@@ -117,14 +117,16 @@
   "q": {
     "name": "Baleful Strike",
     "description": "Veigar unleashes a bolt of dark energy that deals magic damage to the first two enemies hit. Units killed by this bolt grant Veigar some ability power permanently.",
-    "cost": "by_rank(30, 35, 40, 45, 50)",
-    "cooldown": "by_rank(6, 5.5, 5, 4.5, 4)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
     "values": {
       "APRatio": "by_rank(0.5, 0.55, 0.6, 0.65, 0.7)",
       "BaseDamage": "by_rank(80, 120, 160, 200, 240)",
-      "TotalDamage": "BaseDamage + APRatio * ap"
+      "TotalDamage": "BaseDamage + APRatio * ap",
+      "cooldownTime": "by_rank(6, 5.5, 5, 4.5, 4)",
+      "mana": "by_rank(30, 35, 40, 45, 50)"
     },
     "raw_stats": {
       "cast time": "0.25",
@@ -198,7 +200,7 @@
   "w": {
     "name": "Dark Matter",
     "description": "Veigar calls a great mass of dark matter to fall from the sky to the target location, dealing magic damage when it lands. Stacks of Phenomenal Evil reduce Dark Matter's cooldown.",
-    "cost": "by_rank(60, 65, 70, 75, 80)",
+    "cost": "mana",
     "cooldown": "BaseCooldown * (1 - passive.DarkMatterCDRIncrement * floor(stacks_phenomenal_evil / passive.PStacksPerDarkMatterCDR))",
     "cast_time": "0.25",
     "recharge": "0",
@@ -207,7 +209,8 @@
       "BaseDamage": "by_rank(85, 140, 195, 250, 305)",
       "ImpactDelay": "1.2",
       "BaseCooldown": "8",
-      "TotalDamage": "BaseDamage + APRatio * ap"
+      "TotalDamage": "BaseDamage + APRatio * ap",
+      "mana": "by_rank(60, 65, 70, 75, 80)"
     },
     "raw_stats": {
       "cast time": "0.25",
@@ -281,13 +284,15 @@
   "e": {
     "name": "Event Horizon",
     "description": "Veigar twists the edges of space, creating a cage that Stuns enemies that pass through.",
-    "cost": "by_rank(70, 75, 80, 85, 90)",
-    "cooldown": "by_rank(20, 18.5, 17, 15.5, 14)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
     "values": {
       "StunDuration": "by_rank(1.5, 1.75, 2, 2.25, 2.5)",
-      "CageDelay": "0.5"
+      "CageDelay": "0.5",
+      "cooldownTime": "by_rank(20, 18.5, 17, 15.5, 14)",
+      "mana": "by_rank(70, 75, 80, 85, 90)"
     },
     "raw_stats": {
       "cast time": "0.25",
@@ -360,8 +365,8 @@
   "r": {
     "name": "Primordial Burst",
     "description": "Blasts target enemy champion, dealing a large amount of magic damage, increasing based on the target's missing health.",
-    "cost": "100",
-    "cooldown": "by_rank(120, 90, 60)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
     "values": {
@@ -369,7 +374,9 @@
       "BaseDamage": "by_rank(175, 250, 325)",
       "MaxExecuteMult": "2",
       "MinDamage": "BaseDamage + APRatio * ap",
-      "MaxDamage": "MinDamage * 2"
+      "MaxDamage": "MinDamage * 2",
+      "cooldownTime": "by_rank(120, 90, 60)",
+      "mana": "100"
     },
     "raw_stats": {
       "cast time": "0.25",

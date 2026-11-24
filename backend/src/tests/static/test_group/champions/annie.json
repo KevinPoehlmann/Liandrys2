@@ -34,6 +34,12 @@
     "name": "Pyromania",
     "description": "Innate - Pyromania: Annie generates a stack of Pyromania whenever she hits an enemy with  Disintegrate or casts her other abilities, stacking up to 4 times, at which she gains Energized.\n\n\n\nEnergized: Annie empowers her next cast of  Disintegrate,  Incinerate, or  Summon: Tibbers to consume all Pyromania stacks to  stun enemies hit for 1.25 / 1.5 / 1.75 (based on level) seconds.\n\n\n\nAnnie gains maximum stacks of Pyromania when the game starts and upon respawning. She will lose Energized and all Pyromania stacks upon death.",
     "static_cooldown": "0",
+    "values": {
+      "MaxStacks": "4",
+      "StunBaseDuration": "1.25",
+      "StunDurationPerTier": "0.25",
+      "StunDuration": "by_level(1.25, 1.25, 1.25, 1.25, 1.25, 1.5, 1.5, 1.5, 1.5, 1.5, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75)"
+    },
     "raw_stats": {},
     "changes": [],
     "validated": true,
@@ -105,7 +111,7 @@
                 "actor": "bearer",
                 "key": "stacks_pyromania",
                 "comparison": "Equal",
-                "value": "4"
+                "value": "MaxStacks"
               }
             ],
             "actions": [
@@ -149,10 +155,17 @@
   "q": {
     "name": "Disintegrate",
     "description": "Annie hurls a Mana infused fireball, dealing damage and refunding the Mana cost if it destroys the target.",
-    "cost": "by_rank(60, 65, 70, 75, 80)",
-    "cooldown": "4",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "BaseDamage": "by_rank(80, 120, 160, 200, 240)",
+      "APRatio": "0.8",
+      "TotalDamage": "BaseDamage + APRatio * ap",
+      "cooldownTime": "4",
+      "mana": "by_rank(60, 65, 70, 75, 80)"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "target range": "625.0"
@@ -218,7 +231,7 @@
                 "props": {
                   "target": "target",
                   "status": "Stun",
-                  "duration": "by_level(1.25, 1.25, 1.25, 1.25, 1.25, 1.5, 1.5, 1.5, 1.5, 1.5, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75)",
+                  "duration": "passive.StunDuration",
                   "strength": "0"
                 }
               },
@@ -253,7 +266,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "by_rank(80, 120, 160, 200, 240) + 0.8 * ap",
+                  "amount": "TotalDamage",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -279,10 +292,17 @@
   "w": {
     "name": "Incinerate",
     "description": "Annie casts a blazing cone of fire, dealing damage to all enemies in the area.",
-    "cost": "by_rank(70, 75, 80, 85, 90)",
-    "cooldown": "7",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "BaseDamage": "by_rank(70, 115, 160, 205, 250)",
+      "APRatio": "0.8",
+      "TotalDamage": "BaseDamage + APRatio * ap",
+      "cooldownTime": "7",
+      "mana": "by_rank(70, 75, 80, 85, 90)"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "effect radius": "600.0",
@@ -349,7 +369,7 @@
                 "props": {
                   "target": "target",
                   "status": "Stun",
-                  "duration": "by_level(1.25, 1.25, 1.25, 1.25, 1.25, 1.5, 1.5, 1.5, 1.5, 1.5, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75)",
+                  "duration": "passive.StunDuration",
                   "strength": "0"
                 }
               },
@@ -384,7 +404,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "by_rank(70, 115, 160, 205, 250) + 0.8 * ap",
+                  "amount": "TotalDamage",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -411,10 +431,24 @@
   "e": {
     "name": "Molten Shield",
     "description": "Grants Annie or an ally a shield, a burst of Move Speed, and damages enemies who strike her with attacks or spells.",
-    "cost": "by_rank(60, 65, 70, 75, 80)",
-    "cooldown": "by_rank(12, 11.5, 11, 10.5, 10)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0",
     "recharge": "0",
+    "values": {
+      "ShieldDuration": "3",
+      "DamageReduction": "by_rank(13, 17, 21, 25, 29)",
+      "DamageReflection": "by_rank(25, 35, 45, 55, 65)",
+      "MovementSpeed": "by_rank(0.15, 0.2, 0.25, 0.3, 0.35)",
+      "MovementSpeedDuration": "1.5",
+      "ShieldAmount": "by_rank(60, 95, 130, 165, 200)",
+      "CastRangeGenerosity": "225",
+      "DamageReturn": "DamageReflection + 0.4 * ap",
+      "MoveSpeedCalc": "by_level(0.2, 0.217647058824, 0.235294117647, 0.252941176471, 0.270588235294, 0.288235294118, 0.305882352941, 0.323529411765, 0.341176470588, 0.358823529412, 0.376470588235, 0.394117647059, 0.411764705882, 0.429411764706, 0.447058823529, 0.464705882353, 0.482352941176, 0.5, 0.5, 0.5)",
+      "ShieldBlockTotal": "ShieldAmount + 0.4 * ap",
+      "cooldownTime": "by_rank(12, 11.5, 11, 10.5, 10)",
+      "mana": "by_rank(60, 65, 70, 75, 80)"
+    },
     "raw_stats": {
       "cast time": "none",
       "target range": "800.0"
@@ -472,8 +506,8 @@
                 "type_": "Shield",
                 "props": {
                   "target": "self",
-                  "amount": "by_rank(60, 95, 130, 165, 200) + 0.4 * ap",
-                  "duration": "3",
+                  "amount": "ShieldBlockTotal",
+                  "duration": "ShieldDuration",
                   "dmg_sub_type": "True"
                 }
               },
@@ -481,8 +515,8 @@
                 "type_": "Shield",
                 "props": {
                   "target": "pet",
-                  "amount": "by_rank(60, 95, 130, 165, 200) + 0.4 * ap",
-                  "duration": "3",
+                  "amount": "ShieldBlockTotal",
+                  "duration": "ShieldDuration",
                   "dmg_sub_type": "True"
                 }
               },
@@ -515,7 +549,7 @@
     "buffs": [
       {
         "name": "molten_shield",
-        "duration": "3",
+        "duration": "ShieldDuration",
         "max_stacks": 1,
         "refresh": true,
         "interval": "0",
@@ -541,7 +575,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "by_rank(25, 35, 45, 55, 65) + 0.4 * ap",
+                  "amount": "DamageReturn",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -566,7 +600,7 @@
       },
       {
         "name": "molten_shield_reflected",
-        "duration": "3",
+        "duration": "ShieldDuration",
         "max_stacks": 1,
         "refresh": true,
         "interval": "0",
@@ -578,7 +612,7 @@
       },
       {
         "name": "molten_shield_speed",
-        "duration": "1.5",
+        "duration": "MovementSpeedDuration",
         "max_stacks": 1,
         "refresh": true,
         "interval": "0",
@@ -588,7 +622,7 @@
         "stats": [
           {
             "stat": "move speed percent",
-            "formula": "(0.2 + 0.3 * (min(level, 18) - 1) / 17) * max(0, 1 - elapsed / 1.5)",
+            "formula": "MoveSpeedCalc * max(0, 1 - elapsed / MovementSpeedDuration)",
             "mode": "flat",
             "conversion": false
           }
@@ -603,10 +637,31 @@
   "r": {
     "name": "Summon: Tibbers",
     "description": "Annie wills her bear Tibbers to life, dealing damage to units in the area. Tibbers can attack and also burns enemies that stand near him.",
-    "cost": "100",
-    "cooldown": "by_rank(130, 115, 100)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "InitialDamage": "by_rank(150, 275, 400)",
+      "AuraDamage": "by_rank(10, 15, 20)",
+      "TibbersAttackDamage": "by_rank(30, 50, 70)",
+      "TibbersAttackSpeedDecay": "-0.1",
+      "TibbersAttackAPRatio": "0.1",
+      "MovespeedBurst": "1",
+      "EnrageDuration": "3",
+      "AvengerEnrageDuration": "10",
+      "TibbersLifetime": "45",
+      "TibbersBonusMS": "by_rank(0, 25, 50)",
+      "TibbersModeSpecificHPMod": "1",
+      "RPercentPenBuff": "by_rank(0.1, 0.15, 0.2)",
+      "InitialBurstDamage": "InitialDamage + 0.75 * ap",
+      "TibbersAuraDamage": "AuraDamage + 0.04 * ap",
+      "TibbersAADamage": "TibbersAttackDamage + TibbersAttackAPRatio * ap",
+      "TibbersTotalHP": "by_level(1275, 1275, 1275, 1275, 1275, 1275, 1350, 1425, 1500, 1575, 1850, 2125, 2400, 2675, 2950, 3300, 3650, 4000, 4000, 4000) * TibbersModeSpecificHPMod + 0.5 * ap + 1.5 * bonus_hp",
+      "TibbersTotalResists": "by_level(30, 30, 30, 30, 30, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100)",
+      "cooldownTime": "by_rank(130, 115, 100)",
+      "mana": "100"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "target range": "600.0",
@@ -673,7 +728,7 @@
                 "props": {
                   "target": "target",
                   "status": "Stun",
-                  "duration": "by_level(1.25, 1.25, 1.25, 1.25, 1.25, 1.5, 1.5, 1.5, 1.5, 1.5, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75)",
+                  "duration": "passive.StunDuration",
                   "strength": "0"
                 }
               },
@@ -708,7 +763,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "by_rank(150, 275, 400) + 0.75 * ap",
+                  "amount": "InitialBurstDamage",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -746,7 +801,7 @@
     "stats": [
       {
         "stat": "magic penetration percent",
-        "formula": "by_rank(0.1, 0.15, 0.2)",
+        "formula": "RPercentPenBuff",
         "mode": "flat",
         "conversion": false
       }
@@ -757,16 +812,16 @@
     "pets": [
       {
         "name": "tibbers",
-        "duration": "45",
+        "duration": "TibbersLifetime",
         "stats": {
-          "hp": "by_level(1275, 1275, 1275, 1275, 1275, 1275, 1350, 1425, 1500, 1575, 1850, 2125, 2400, 2675, 2950, 3300, 3650, 4000, 4000, 4000) + 0.5 * owner_ap + 1.5 * owner_bonus_hp",
+          "hp": "TibbersTotalHP",
           "armor": "5 * level",
           "mr": "5 * level",
           "attackspeed": "[0.625, 0.739, 1.043, 1.307, 1.536, 1.736][stacks_tibbers_enrage]",
-          "movementspeed": "by_rank(350, 375, 400)"
+          "movementspeed": "350 + TibbersBonusMS"
         },
         "attack": {
-          "amount": "by_rank(30, 50, 70) + 0.1 * owner_ap",
+          "amount": "TibbersAADamage",
           "dmg_type": [
             "Basic damage"
           ],
@@ -841,7 +896,7 @@
             },
             {
               "name": "tibbers_aura",
-              "duration": "45",
+              "duration": "TibbersLifetime",
               "max_stacks": 1,
               "refresh": true,
               "interval": "0.25",
@@ -860,7 +915,7 @@
                       "type_": "Damage",
                       "props": {
                         "target": "enemy",
-                        "amount": "by_rank(2.5, 3.75, 5) + 0.01 * owner_ap",
+                        "amount": "TibbersAuraDamage / 4",
                         "dmg_type": [
                           "Ability damage",
                           "Area damage"

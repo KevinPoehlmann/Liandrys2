@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import pytest
 
@@ -216,6 +216,13 @@ class TestNamedValues():
     def test_cycles_are_reported(self, vayne, vayne_values, formula):
         with pytest.raises(FormulaError, match="refers to itself"):
             evaluate_formula(formula, values_context(vayne, vayne_values, ActionType.W))
+
+
+    def test_pets_read_named_values_from_their_owners_view(self, vayne, vayne_values):
+        pet = FakeSource(stats={Stat.AD: 10})
+        context = replace(values_context(vayne, vayne_values, ActionType.Q), source=pet, owner=vayne)
+
+        assert evaluate_formula("ADRatioBonus + ad", context) == pytest.approx(95 + 10)
 
 
     def test_own_variables_come_before_named_values(self, vayne):

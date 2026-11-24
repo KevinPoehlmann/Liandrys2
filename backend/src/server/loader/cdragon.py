@@ -5,7 +5,8 @@ from dataclasses import dataclass, field
 from src.server.simulation.formula import MAX_LEVEL
 
 
-# Riot's level formulas end at 18; levels 19 and 20 (roles) keep the level 18 value unless the part says otherwise.
+# Riot's level formulas are defined up to 18 and continue to 19 and 20 (roles). The bin files only store
+# non-default fields, and mScalePastDefaultMaxLevel only ever appears as false, so scaling on is the default.
 RIOT_MAX_LEVEL = 18
 SIMPLE_TERM = re.compile(r"^-?[\w.]+$")
 FUNCTION_NAME = re.compile(r"^\w+(?=\()")
@@ -22,6 +23,10 @@ STAT_VARIABLES = {
 }
 
 
+# Spell fields kept under Riot's own field names, with the index of rank 1 (mana lists have no rank 0).
+SPELL_FIELDS = {"cooldownTime": 1, "mana": 0}
+
+
 class UnsupportedCalculation(Exception):
     pass
 
@@ -36,6 +41,9 @@ def spell_values(spell: dict, max_rank: int) -> SpellValues:
     result = SpellValues()
     for data_value in spell.get("DataValues") or []:
         _add(result, data_value.get("name", ""), lambda: _rank_value(data_value.get("values", []), max_rank))
+    for name, first_rank in SPELL_FIELDS.items():
+        # Always present, so `cooldown: "cooldownTime"` and `cost: "mana"` resolve even for free spells.
+        _add(result, name, lambda: _rank_value(spell.get(name) or [], max_rank, first_rank))
     for name, calculation in (spell.get("mSpellCalculations") or {}).items():
         _add(result, name, lambda: translate_calculation(calculation))
     return result
@@ -55,11 +63,11 @@ def format_number(value: float) -> str:
     return f"{float(f'{value:.6g}'):g}"
 
 
-def _rank_value(values: list[float], max_rank: int) -> str:
-    # Index 0 is rank 0, so a 5-rank ability uses entries 1-5.
+def _rank_value(values: list[float], max_rank: int, first_rank: int = 1) -> str:
+    # DataValues start at rank 0, so a 5-rank ability uses entries 1-5.
     if not values:
         return "0"
-    ranked = values[1:max_rank + 1] if max_rank else values
+    ranked = values[first_rank:first_rank + max_rank] if max_rank else values
     if len(set(format_number(value) for value in ranked)) == 1:
         return format_number(ranked[0])
     if not max_rank:
@@ -72,7 +80,7 @@ def translate_calculation(calculation: dict) -> str:
         case "GameCalculation":
             formula = _sum(calculation.get("mFormulaParts", []))
         case "GameCalculationModified":
-            formula = calculation["mModifiedGameCalculation"]
+            formula = _name(calculation["mModifiedGameCalculation"])
         case other:
             raise UnsupportedCalculation(f"calculation type {other}")
     if "mMultiplier" in calculation:
@@ -89,11 +97,11 @@ def _sum(parts: list[dict]) -> str:
 def _part(part: dict) -> str:
     match part.get("__type"):
         case "NamedDataValueCalculationPart":
-            return part["mDataValue"]
+            return _name(part["mDataValue"])
         case "NumberCalculationPart":
             return format_number(part.get("mNumber", 0))
         case "StatByNamedDataValueCalculationPart":
-            return f"{part['mDataValue']} * {_stat(part)}"
+            return f"{_name(part['mDataValue'])} * {_stat(part)}"
         case "StatByCoefficientCalculationPart":
             if "mCoefficient" not in part:
                 raise UnsupportedCalculation("stat part without coefficient")
@@ -112,6 +120,12 @@ def _part(part: dict) -> str:
             return _by_level(_breakpoints(part))
         case other:
             raise UnsupportedCalculation(f"part type {other}")
+
+
+def _name(name: str) -> str:
+    if not name.isidentifier():
+        raise UnsupportedCalculation(f"refers to the hashed name {name}")
+    return name
 
 
 def _stat(part: dict) -> str:
@@ -156,27 +170,33 @@ def _clamp(part: dict) -> str:
 
 
 def _interpolation(part: dict) -> list[float]:
-    start, end = part.get("mStartValue", 0), part.get("mEndValue", 0)
+    start, end = _clean(part.get("mStartValue", 0)), _clean(part.get("mEndValue", 0))
     step = (end - start) / (RIOT_MAX_LEVEL - 1)
-    last_level = MAX_LEVEL if part.get("mScalePastDefaultMaxLevel") else RIOT_MAX_LEVEL
+    last_level = MAX_LEVEL if part.get("mScalePastDefaultMaxLevel", True) else RIOT_MAX_LEVEL
     return [start + step * (min(level, last_level) - 1) for level in range(1, MAX_LEVEL + 1)]
 
 
 def _breakpoints(part: dict) -> list[float]:
     # A breakpoint either adds a one-time bonus at its level or changes the bonus per level from then on.
     breakpoints = {point["mLevel"]: point for point in part.get("mBreakpoints", [])}
-    value = part.get("mLevel1Value", 0)
-    per_level = part.get("mInitialBonusPerLevel", 0)
+    value = _clean(part.get("mLevel1Value", 0))
+    per_level = _clean(part.get("mInitialBonusPerLevel", 0))
     values = [value]
     for level in range(2, MAX_LEVEL + 1):
         point = breakpoints.get(level, {})
-        per_level = point.get("mBonusPerLevelAtAndAfter", per_level)
-        value += per_level + point.get("mAdditionalBonusAtThisLevel", 0)
+        per_level = _clean(point.get("mBonusPerLevelAtAndAfter", per_level))
+        value += per_level + _clean(point.get("mAdditionalBonusAtThisLevel", 0))
         values.append(value)
     return values
 
 
+def _clean(value: float) -> float:
+    return float(format_number(value))
+
+
 def _by_level(values: list[float]) -> str:
-    if len(set(format_number(value) for value in values)) == 1:
-        return format_number(values[0])
-    return f"by_level({', '.join(format_number(value) for value in values)})"
+    # The inputs are already cleaned, so more digits keep interpolated steps (0.3 -> 0.45 in 17 steps) exact.
+    formatted = [f"{value:.12g}" for value in values]
+    if len(set(formatted)) == 1:
+        return formatted[0]
+    return f"by_level({', '.join(formatted)})"

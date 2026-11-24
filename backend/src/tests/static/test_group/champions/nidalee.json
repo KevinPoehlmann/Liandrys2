@@ -34,6 +34,7 @@
     "name": "Prowl",
     "description": "Innate: Riven's ability casts generate a stack of Charge for 6 seconds, refreshing on subsequent casts and stacking up to 3 times. Riven's basic attacks are empowered to each consume a stack to deal bonus physical damage equal to 30% – 60% (based on level) AD, reduced to「 50% 」「 15% – 30% (based on level) AD 」against structures.\n\n\n\nThe bonus damage is affected by  critical strike modifiers and applies  life steal at 100% effectiveness.",
     "static_cooldown": "0",
+    "values": {},
     "raw_stats": {},
     "changes": [],
     "validated": true,
@@ -118,11 +119,23 @@
       "w": 48
     },
     "validated": true,
-    "cost": "by_rank(50, 55, 60, 65, 70)",
+    "cost": "mana",
     "cost_resource": "mana",
-    "cooldown": "6",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "TooltipCougarMinimumDamage": "by_rank(5, 30, 55, 80, 105)",
+      "SpearMinimumAPRatio": "0.5",
+      "SpearMinimumDamage": "by_rank(70, 90, 110, 130, 150)",
+      "SpearMaximumDamage": "by_rank(227.5, 292.5, 357.5, 422.5, 487.5)",
+      "DamageMulti": "3.25",
+      "RangeThreshold": "525",
+      "HumanMinimumDamage": "SpearMinimumDamage + SpearMinimumAPRatio * ap",
+      "HumanMaximumDamage": "HumanMinimumDamage * DamageMulti",
+      "cooldownTime": "6",
+      "mana": "by_rank(50, 55, 60, 65, 70)"
+    },
     "cooldown_starts_after": null,
     "cooldown_starts_on_cast": false,
     "usable_during_cc": false,
@@ -142,7 +155,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "(by_rank(70, 90, 110, 130, 150) + 0.5 * ap) * (1 + 0.45 * min(5, floor(max(0, distance - 525) / 155)))",
+                  "amount": "HumanMinimumDamage * (1 + 0.45 * min(5, floor(max(0, distance - RangeThreshold) / 155)))",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -239,11 +252,22 @@
       "w": 48
     },
     "validated": true,
-    "cost": "by_rank(30, 35, 40, 45, 50)",
+    "cost": "mana",
     "cost_resource": "mana",
-    "cooldown": "by_rank(13, 12, 11, 10, 9)",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "ModesBonusMaxTraps": "0",
+      "DotDuration": "4",
+      "BaseDamagePerTick": "by_rank(10, 20, 30, 40, 50)",
+      "TrapLifetime": "120",
+      "TotalFlatDamage": "by_rank(40, 80, 120, 160, 200)",
+      "MaxTraps": "by_level(4, 4, 4, 4, 4, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 10, 10, 10, 10, 10) + ModesBonusMaxTraps",
+      "DamagePerSecond": "BaseDamagePerTick + 0.05 * ap",
+      "cooldownTime": "by_rank(13, 12, 11, 10, 9)",
+      "mana": "by_rank(30, 35, 40, 45, 50)"
+    },
     "cooldown_starts_after": null,
     "cooldown_starts_on_cast": false,
     "usable_during_cc": false,
@@ -439,7 +463,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "bearer",
-                  "amount": "by_rank(10, 20, 30, 40, 50) + 0.05 * ap",
+                  "amount": "DamagePerSecond",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -498,11 +522,22 @@
       "w": 48
     },
     "validated": true,
-    "cost": "by_rank(50, 55, 60, 65, 70)",
+    "cost": "mana",
     "cost_resource": "mana",
-    "cooldown": "12",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "BaseHeal": "by_rank(50, 75, 100, 125, 150)",
+      "MaxHealMult": "1",
+      "MaxHealThreshold": "0.05",
+      "BonusAS": "by_rank(0.2, 0.3, 0.4, 0.5, 0.6)",
+      "ASDuration": "7",
+      "TotalHealing": "BaseHeal + 0.35 * ap",
+      "MaxHealing": "TotalHealing * (1 + MaxHealMult)",
+      "cooldownTime": "12",
+      "mana": "by_rank(50, 55, 60, 65, 70)"
+    },
     "cooldown_starts_after": null,
     "cooldown_starts_on_cast": false,
     "usable_during_cc": false,
@@ -522,7 +557,7 @@
                 "type_": "Heal",
                 "props": {
                   "target": "self",
-                  "amount": "(by_rank(50, 75, 100, 125, 150) + 0.35 * ap) * (1 + missing_hp_percent)"
+                  "amount": "TotalHealing * (1 + missing_hp_percent)"
                 }
               },
               {
@@ -564,7 +599,7 @@
         "stats": [
           {
             "stat": "attackspeed",
-            "formula": "by_rank(0.2, 0.3, 0.4, 0.5, 0.6)",
+            "formula": "BonusAS",
             "mode": "flat",
             "conversion": false,
             "snapshot": false
@@ -593,11 +628,30 @@
       "w": 48
     },
     "validated": true,
-    "cost": "0",
+    "cost": "mana",
     "cost_resource": "none",
-    "cooldown": "3",
+    "cooldown": "cooldownTime",
     "cast_time": "0",
     "recharge": "0",
+    "values": {
+      "PassivePercentMS": "10",
+      "TakedownBaseDamage": "by_rank(5, 30, 55, 80)",
+      "TakedownADRatio": "0.75",
+      "TakedownAPRatio": "0.4",
+      "TakedownDamageAmp": "by_rank(1, 1.25, 1.5, 1.75)",
+      "PounceCooldown": "by_rank(3, 2.5, 2, 1.5)",
+      "PounceDamage": "by_rank(50, 90, 130, 170)",
+      "PounceADRatio": "0.5",
+      "PounceAPRatio": "0.3",
+      "SwipeDamage": "by_rank(70, 130, 190, 250)",
+      "SwipeADRatio": "0.7",
+      "SwipeAPRatio": "0.55",
+      "TotalPounceDamage": "PounceDamage + PounceADRatio * bonus_ad + PounceAPRatio * ap",
+      "TotalSwipeDamage": "SwipeDamage + SwipeADRatio * bonus_ad + SwipeAPRatio * ap",
+      "TotalTakedownDamage": "TakedownBaseDamage + TakedownADRatio * ad + TakedownAPRatio * ap",
+      "cooldownTime": "3",
+      "mana": "0"
+    },
     "cooldown_starts_after": null,
     "cooldown_starts_on_cast": false,
     "usable_during_cc": false,
@@ -698,11 +752,18 @@
         "w": 48
       },
       "validated": true,
-      "cost": "0",
+      "cost": "mana",
       "cost_resource": "none",
-      "cooldown": "6",
+      "cooldown": "cooldownTime",
       "cast_time": "0",
       "recharge": "0",
+      "values": {
+        "TotalADRatio": "0.75",
+        "BuffDuration": "10",
+        "BonusAttackRange": "75",
+        "cooldownTime": "6",
+        "mana": "0"
+      },
       "cooldown_starts_after": null,
       "cooldown_starts_on_cast": false,
       "usable_during_cc": false,
@@ -770,7 +831,7 @@
                   "type_": "Damage",
                   "props": {
                     "target": "target",
-                    "amount": "(by_rank(5, 30, 55, 80) + 0.75 * ad + 0.4 * ap) * (1 + by_rank(1, 1.25, 1.5, 1.75) * target_missing_hp_percent) * (1 + 0.3 * target_stacks_hunted_takedown)",
+                    "amount": "r.TotalTakedownDamage * (1 + r.TakedownDamageAmp * target_missing_hp_percent) * (1 + 0.3 * target_stacks_hunted_takedown)",
                     "dmg_type": [
                       "Ability damage",
                       "On-hit damage"
@@ -829,11 +890,16 @@
         "w": 48
       },
       "validated": true,
-      "cost": "0",
+      "cost": "mana",
       "cost_resource": "none",
-      "cooldown": "6",
+      "cooldown": "cooldownTime",
       "cast_time": "0",
       "recharge": "0",
+      "values": {
+        "EnhancedPounceRange": "750",
+        "cooldownTime": "6",
+        "mana": "0"
+      },
       "cooldown_starts_after": null,
       "cooldown_starts_on_cast": false,
       "usable_during_cc": false,
@@ -853,7 +919,7 @@
                   "type_": "Damage",
                   "props": {
                     "target": "target",
-                    "amount": "by_rank(50, 90, 130, 170) + 0.5 * bonus_ad + 0.3 * ap",
+                    "amount": "r.TotalPounceDamage",
                     "dmg_type": [
                       "Ability damage"
                     ],
@@ -886,7 +952,7 @@
                 {
                   "type_": "ModifyCooldown",
                   "props": {
-                    "at_most": "by_rank(3, 2.5, 2, 1.5)"
+                    "at_most": "r.PounceCooldown"
                   }
                 },
                 {
@@ -935,11 +1001,15 @@
         "w": 48
       },
       "validated": true,
-      "cost": "0",
+      "cost": "mana",
       "cost_resource": "none",
-      "cooldown": "6",
+      "cooldown": "cooldownTime",
       "cast_time": "0.25",
       "recharge": "0",
+      "values": {
+        "cooldownTime": "6",
+        "mana": "0"
+      },
       "cooldown_starts_after": null,
       "cooldown_starts_on_cast": false,
       "usable_during_cc": false,
@@ -959,7 +1029,7 @@
                   "type_": "Damage",
                   "props": {
                     "target": "target",
-                    "amount": "by_rank(70, 130, 190, 250) + 0.7 * bonus_ad + 0.55 * ap",
+                    "amount": "r.TotalSwipeDamage",
                     "dmg_type": [
                       "Ability damage"
                     ],

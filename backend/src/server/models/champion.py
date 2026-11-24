@@ -70,6 +70,25 @@ class Champion(NewChampion):
 
 
 
+class WikiTemplate(BaseModel):
+    title: str  # "Template:Data_Veigar/Baleful_Strike"
+    revision_id: int  # a newer revision on the wiki means the text changed
+    text: str
+
+
+class RawChampion(BaseModel):
+    """Everything the loader downloaded for one champion and patch, unchanged. Never read by the user API."""
+    champion_id: str
+    patch: str
+    hotfix: datetime | None = None
+    build: str  # CommunityDragon's content version, "16.23.8406595+branch.releases-16-23.content.release"
+    fetched_at: datetime
+    cdragon: dict  # the whole <champion>.bin.json; untyped on purpose, Riot adds fields every patch
+    strings: dict[str, str] = {}  # this champion's entries from lol.stringtable.json (tooltips)
+    wiki: dict[str, WikiTemplate] = {}  # per template title
+
+
+
 class ShortChampion(BaseModel):
     id: PydanticObjectId = Field(..., alias="_id")
     key: str

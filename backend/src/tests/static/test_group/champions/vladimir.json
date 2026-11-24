@@ -34,6 +34,12 @@
     "name": "Crimson Pact",
     "description": "Innate: Vladimir gains (3.3% bonus health) as  ability power and (160% AP) as  bonus health. These two bonuses do not stack with each other.",
     "static_cooldown": "0",
+    "values": {
+      "HPforAP": "30",
+      "APRatioBonusHP": "1.6",
+      "ApproximateAPBonusAvoidingRecursion": "((bonus_hp + APRatioBonusHP * (-1 * ap)) * (0.01 * 3.333)) * 1.06",
+      "ApproximateHPBonusAvoidingRecursion": "(bonus_ap + (0.01 * 3.333) * (-1 * bonus_hp)) * (1.06 * APRatioBonusHP)"
+    },
     "raw_stats": {},
     "changes": [],
     "validated": true,
@@ -86,13 +92,13 @@
     "stats": [
       {
         "stat": "ap",
-        "formula": "0.03333 * bonus_hp",
+        "formula": "bonus_hp / HPforAP",
         "mode": "flat",
         "conversion": true
       },
       {
         "stat": "hp",
-        "formula": "1.6 * ap",
+        "formula": "APRatioBonusHP * ap",
         "mode": "flat",
         "conversion": true
       }
@@ -102,10 +108,27 @@
   "q": {
     "name": "Transfusion",
     "description": "Vladimir steals life from the target enemy. When Vladimir's resource is full, Transfusion will benefit from massively increased damage and healing for a brief time.",
-    "cost": "0",
-    "cooldown": "by_rank(9, 7.9, 6.8, 5.7, 4.6)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0.25",
     "recharge": "0",
+    "values": {
+      "HealAPRatio": "0.35",
+      "BaseDamage": "by_rank(80, 100, 120, 140, 160)",
+      "BaseHeal": "by_rank(20, 25, 30, 35, 40)",
+      "Empowered___HealPer100AP_0_1_": "0.04",
+      "DamagePercentAmp": "85",
+      "FrenzyDuration": "2.5",
+      "MinionHealPercent": "35",
+      "BaseDamageTooltip": "BaseDamage + 0.6 * ap",
+      "BaseHealTooltip": "BaseHeal + HealAPRatio * ap",
+      "EmpoweredDamageTooltip": "BaseDamageTooltip * 1.85",
+      "EmpoweredHealPercentTooltip": "EmpoweredHealPercent * 1",
+      "EmpoweredHealPercent": "(5 + 0.04 * ap) * 0.01",
+      "MovementSpeedOnQ2": "by_level(10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 30, 30, 30, 30, 30, 40, 40, 40, 40, 40)",
+      "cooldownTime": "by_rank(9, 7.9, 6.8, 5.7, 4.6)",
+      "mana": "0"
+    },
     "raw_stats": {
       "cast time": "0.25",
       "target range": "600.0"
@@ -144,7 +167,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "(by_rank(80, 100, 120, 140, 160) + 0.6 * ap)",
+                  "amount": "BaseDamageTooltip",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -156,7 +179,7 @@
                 "type_": "Heal",
                 "props": {
                   "target": "self",
-                  "amount": "(by_rank(20, 25, 30, 35, 40) + 0.35 * ap)"
+                  "amount": "BaseHealTooltip"
                 }
               }
             ],
@@ -181,7 +204,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "1.85 * (by_rank(80, 100, 120, 140, 160) + 0.6 * ap)",
+                  "amount": "EmpoweredDamageTooltip",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -193,7 +216,7 @@
                 "type_": "Heal",
                 "props": {
                   "target": "self",
-                  "amount": "(by_rank(20, 25, 30, 35, 40) + 0.35 * ap) + 30 + 10 * (level - 1) + (0.05 + 0.04 * ap / 100) * missing_hp"
+                  "amount": "BaseHealTooltip + 30 + 10 * (level - 1) + EmpoweredHealPercent * missing_hp"
                 }
               },
               {
@@ -305,7 +328,7 @@
         "stats": [
           {
             "stat": "move speed percent",
-            "formula": "(0.1 + 0.1 * ((level >= 6) + (level >= 11) + (level >= 16))) * max(0, 1 - elapsed / 0.5)",
+            "formula": "MovementSpeedOnQ2 / 100 * max(0, 1 - elapsed / 0.5)",
             "mode": "flat",
             "conversion": false
           }
@@ -318,10 +341,23 @@
   "w": {
     "name": "Sanguine Pool",
     "description": "Vladimir sinks into a pool of blood, becoming untargetable for 2 seconds. Additionally, enemies on the pool are slowed and Vladimir siphons life from them.",
-    "cost": "0.15 * current_hp",
-    "cooldown": "by_rank(28, 25, 22, 19, 16)",
+    "cost": "HealthCost * current_hp",
+    "cooldown": "cooldownTime",
     "cast_time": "0",
     "recharge": "0",
+    "values": {
+      "MinionHealingMod": "0.6",
+      "BaseDamage": "by_rank(80, 135, 190, 245, 300)",
+      "HealthCost": "0.15",
+      "BonusHealthRatio": "0.15",
+      "MoveSpeedMod": "-0.4",
+      "VampPercent": "0.3",
+      "HasteBoost": "0.375",
+      "HasteDuration": "1",
+      "TotalDamage": "BaseDamage + BonusHealthRatio * bonus_hp",
+      "TotalHeal": "TotalDamage * VampPercent",
+      "cooldownTime": "by_rank(28, 25, 22, 19, 16)"
+    },
     "raw_stats": {
       "cast time": "none",
       "effect radius": "350.0"
@@ -447,7 +483,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "enemy",
-                  "amount": "(by_rank(20, 33.75, 47.5, 61.25, 75) + 0.0375 * bonus_hp)",
+                  "amount": "TotalDamage / 4",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -460,7 +496,7 @@
                 "type_": "Heal",
                 "props": {
                   "target": "self",
-                  "amount": "0.3 * (by_rank(20, 33.75, 47.5, 61.25, 75) + 0.0375 * bonus_hp)"
+                  "amount": "TotalHeal / 4"
                 }
               }
             ],
@@ -476,10 +512,24 @@
   "e": {
     "name": "Tides of Blood",
     "description": "Vladimir pays his own health to charge up a reservoir of blood which, when released, deals damage in the area around him but can be blocked by enemy units.",
-    "cost": "0",
-    "cooldown": "by_rank(13, 11, 9, 7, 5)",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0",
     "recharge": "0",
+    "values": {
+      "SlowPercent": "by_rank(40, 45, 50, 55, 60)",
+      "MaxHealthCost": "8",
+      "BaseDamage": "by_rank(30, 45, 60, 75, 90)",
+      "TotalMaxHPDamage": "6",
+      "MaxChannelTime": "1.5",
+      "TimetoRampMaxDamage": "1",
+      "BaseMaxDamage": "by_rank(60, 90, 120, 150, 180)",
+      "MinDamageTooltip": "BaseDamage + 0.015 * max_hp + 0.35 * ap",
+      "MaxDamageTooltip": "BaseMaxDamage + 0.06 * max_hp + 0.8 * ap",
+      "ChargeHealthTooltip": "0.08 * max_hp",
+      "cooldownTime": "by_rank(13, 11, 9, 7, 5)",
+      "mana": "0"
+    },
     "raw_stats": {
       "cast time": "none",
       "effect radius": "600.0",
@@ -568,7 +618,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "(by_rank(30, 45, 60, 75, 90) + 0.015 * max_hp + 0.35 * ap) + ((by_rank(60, 90, 120, 150, 180) + 0.06 * max_hp + 0.8 * ap) - (by_rank(30, 45, 60, 75, 90) + 0.015 * max_hp + 0.35 * ap)) * min(tides_charge, 1)",
+                  "amount": "MinDamageTooltip + (MaxDamageTooltip - MinDamageTooltip) * min(tides_charge, 1)",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -601,7 +651,7 @@
                   "target": "target",
                   "status": "Slow",
                   "duration": "0.5",
-                  "strength": "by_rank(0.4, 0.45, 0.5, 0.55, 0.6)"
+                  "strength": "SlowPercent / 100"
                 }
               }
             ],
@@ -666,10 +716,21 @@
   "r": {
     "name": "Hemoplague",
     "description": "Vladimir infects an area with a virulent plague. Affected enemies take increased damage for the duration. After a few seconds, Hemoplague deals magic damage to infected enemies and heals Vladimir for each enemy Champion hit.",
-    "cost": "0",
-    "cooldown": "120",
+    "cost": "mana",
+    "cooldown": "cooldownTime",
     "cast_time": "0",
     "recharge": "0",
+    "values": {
+      "BaseDamage": "by_rank(150, 250, 350)",
+      "DamageAmp": "10",
+      "VampPercentFirstChamp": "100",
+      "Duration": "4",
+      "VampPercentAdditionalChamp": "40",
+      "Damage": "BaseDamage + 0.7 * ap",
+      "SecondaryHealingTooltip": "Damage * 0.4",
+      "cooldownTime": "120",
+      "mana": "0"
+    },
     "raw_stats": {
       "cast time": "none",
       "target range": "625.0",
@@ -721,7 +782,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "by_rank(150, 250, 350) + 0.7 * ap",
+                  "amount": "Damage",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -745,7 +806,7 @@
                 "type_": "Heal",
                 "props": {
                   "target": "self",
-                  "amount": "by_rank(150, 250, 350) + 0.7 * ap"
+                  "amount": "Damage"
                 }
               }
             ],
