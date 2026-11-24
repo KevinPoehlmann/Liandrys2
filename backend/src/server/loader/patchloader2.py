@@ -519,24 +519,6 @@ async def _load_image(image: Image, session: SafeSession, patch: NewPatch, force
                 type=image.group,
                 name=image.full)
 
-    # Download the sprite only if present and x/y are 0 (as Riot does it)
-    if image.sprite and (image.x == image.y == 0):
-        sprite_path = Path(PATHS.sprite) / image.sprite
-        if not sprite_path.exists() or force_reload:
-            sprite_url = f"{URLS.dataLink}{patch.patch}{URLS.sprite}{image.sprite}"
-            try:
-                if not await _download_file(sprite_url, sprite_path, session):
-                    raise LoadError(404, "Sprite not found", sprite_url, image.group, image.sprite)
-            except HTTPError as e:
-                raise LoadError(e.code, e.reason, e.url, image.group, image.full)
-            except URLError as e:
-                raise LoadError(
-                    code=getattr(e, "errno", -1),
-                    reason=str(getattr(e, "reason", "Unknown error")),
-                    url=e.filename,
-                    type=image.group,
-                    name=image.full)
-
 
 async def _load_image_rune(icon: str, session: SafeSession) -> Image:
     image = Image(

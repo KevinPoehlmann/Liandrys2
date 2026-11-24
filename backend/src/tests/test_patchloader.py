@@ -66,6 +66,13 @@ def loggers(monkeypatch) -> dict[str, Mock]:
     return mocks
 
 
+@pytest.fixture(autouse=True)
+def images(monkeypatch) -> AsyncMock:
+    mock = AsyncMock(return_value=[])
+    monkeypatch.setattr(loader, "load_champion_images", mock)
+    return mock
+
+
 @pytest.fixture
 def database(monkeypatch) -> Mock:
     mock = Mock(exists_champion_by_name=AsyncMock(return_value=False), upsert_raw_champion=AsyncMock(),
@@ -122,6 +129,16 @@ class TestLoadChampion():
 
 
 class TestLoadAllChampions():
+
+    @pytest.mark.asyncio
+    async def test_images_are_stored_and_failures_logged(self, session, patch, database, loggers, images):
+        images.return_value = ["spell veigarbalefulstrike: 404 Image not found"]
+
+        await loader.load_all_champions([veigar_entry()], session, patch)
+
+        assert images.call_args.args[3] == "16.23"
+        assert database.add_champion.call_args.args[0] is images.call_args.args[1]
+        loggers["patch"].warning.assert_any_call("[CHAMPION] [IMAGE] [Veigar] spell veigarbalefulstrike: 404 Image not found")
 
     @pytest.mark.asyncio
     async def test_champion_data_reaches_the_champion(self, session, patch, database):

@@ -97,12 +97,21 @@ class LoadedSpell:
 
 def loaded_spells(raw: RawChampion, max_ranks: dict[str, int]) -> dict[str, LoadedSpell]:
     """Q, W, E, R and the passive, found through the champion's own record (the passive has no ranks)."""
-    record = _character_record(raw.cdragon)
-    paths = dict(zip(SLOTS, record["spells"])) | {"passive": record["mCharacterPassiveSpell"]}
     strings = {key.lower(): text for key, text in raw.strings.items()}
     templates = _wiki_by_slot(raw.wiki)
-    return {slot: _loaded_spell(raw.cdragon[path], max_ranks.get(slot, 0), strings, templates.get(slot))
-            for slot, path in paths.items()}
+    return {slot: _loaded_spell(record, max_ranks.get(slot, 0), strings, templates.get(slot))
+            for slot, record in _spell_records(raw.cdragon).items()}
+
+
+def spell_icons(raw: RawChampion) -> dict[str, str]:
+    """The game asset of each slot's icon. Some spells list more (Nidalee R: both forms, Darius' passive: its buff); the first is the spell's own."""
+    return {slot: record["mSpell"].get("mImgIconName", [""])[0] for slot, record in _spell_records(raw.cdragon).items()}
+
+
+def _spell_records(cdragon: dict) -> dict[str, dict]:
+    record = _character_record(cdragon)
+    paths = dict(zip(SLOTS, record["spells"])) | {"passive": record["mCharacterPassiveSpell"]}
+    return {slot: cdragon[path] for slot, path in paths.items()}
 
 
 def _loaded_spell(record: dict, max_rank: int, strings: dict[str, str], wiki: WikiTemplate | None) -> LoadedSpell:

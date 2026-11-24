@@ -13,6 +13,7 @@ from src.server.loader.champion_builder import build_champion, wiki_mismatches
 from src.server.loader.champion_source import (cdragon_version, fetch_build, fetch_champion_data, fetch_strings,
                                                load_raw_champion)
 from src.server.loader.helper import SafeSession
+from src.server.loader.images import load_champion_images
 from src.server.loader.patchexceptions import LoadError, PatcherError
 from src.server.models.json_validation import ChampionJson, ChampionsJson
 from src.server.models.patch import NewPatch
@@ -138,6 +139,8 @@ async def load_champion(entry: ChampionJson, session: SafeSession, patch: NewPat
     champion = build_champion(raw, entry)
     for mismatch in wiki_mismatches(champion, raw.champion_data):
         patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] {mismatch}")
+    for failure in await load_champion_images(session, champion, raw, cdragon_version(patch.patch)):
+        patch_logger.warning(f"[CHAMPION] [IMAGE] [{entry.name}] {failure}")
     await db.add_champion(champion)
     patch.loaded_champion_count += 1
     load_logger.info(f"[CHAMPION] {entry.name} ✔ Loaded successfully")
