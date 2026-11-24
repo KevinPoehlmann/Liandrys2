@@ -192,7 +192,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "bearer",
-                  "scaling": "70 + 190 * (min(level, 18) - 1) / 17 + 0.1 * bonus_ad + 0.05 * ap",
+                  "amount": "70 + 190 * (min(level, 18) - 1) / 17 + 0.1 * bonus_ad + 0.05 * ap",
                   "dmg_type": [
                     "Proc damage"
                   ],
@@ -225,7 +225,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "bearer",
-                  "scaling": "70 + 190 * (min(level, 18) - 1) / 17 + 0.1 * bonus_ad + 0.05 * ap",
+                  "amount": "70 + 190 * (min(level, 18) - 1) / 17 + 0.1 * bonus_ad + 0.05 * ap",
                   "dmg_type": [
                     "Proc damage"
                   ],

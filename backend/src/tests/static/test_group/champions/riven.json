@@ -93,7 +93,7 @@
             "type_": "Damage",
             "props": {
               "target": "target",
-              "scaling": "(0.3 + 0.15 * (level - 1) / 17) * ad",
+              "amount": "(0.3 + 0.15 * (level - 1) / 17) * ad",
               "dmg_type": [
                 "Proc damage"
               ],
@@ -180,7 +180,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
+                  "amount": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -222,7 +222,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
+                  "amount": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -264,7 +264,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
+                  "amount": "by_rank(45, 75, 105, 135, 165) + by_rank(0.6, 0.65, 0.7, 0.75, 0.8) * bonus_ad",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -361,7 +361,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(65, 95, 125, 155, 185) + bonus_ad",
+                  "amount": "by_rank(65, 95, 125, 155, 185) + bonus_ad",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -441,7 +441,7 @@
                 "type_": "Shield",
                 "props": {
                   "target": "self",
-                  "scaling": "by_rank(70, 95, 120, 145, 170) + 1.1 * bonus_ad",
+                  "amount": "by_rank(70, 95, 120, 145, 170) + 1.1 * bonus_ad",
                   "duration": "1.5",
                   "dmg_sub_type": "True"
                 }
@@ -531,7 +531,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "(by_rank(100, 150, 200) + 0.55 * bonus_ad) * (1 + min(2, 8 / 3 * target_missing_hp_percent))",
+                  "amount": "(by_rank(100, 150, 200) + 0.55 * bonus_ad) * (1 + min(2, 8 / 3 * target_missing_hp_percent))",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"

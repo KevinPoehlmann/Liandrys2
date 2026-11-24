@@ -253,7 +253,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(80, 120, 160, 200, 240) + 0.8 * ap",
+                  "amount": "by_rank(80, 120, 160, 200, 240) + 0.8 * ap",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -384,7 +384,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(70, 115, 160, 205, 250) + 0.8 * ap",
+                  "amount": "by_rank(70, 115, 160, 205, 250) + 0.8 * ap",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -472,7 +472,7 @@
                 "type_": "Shield",
                 "props": {
                   "target": "self",
-                  "scaling": "by_rank(60, 95, 130, 165, 200) + 0.4 * ap",
+                  "amount": "by_rank(60, 95, 130, 165, 200) + 0.4 * ap",
                   "duration": "3",
                   "dmg_sub_type": "True"
                 }
@@ -481,7 +481,7 @@
                 "type_": "Shield",
                 "props": {
                   "target": "pet",
-                  "scaling": "by_rank(60, 95, 130, 165, 200) + 0.4 * ap",
+                  "amount": "by_rank(60, 95, 130, 165, 200) + 0.4 * ap",
                   "duration": "3",
                   "dmg_sub_type": "True"
                 }
@@ -541,7 +541,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(25, 35, 45, 55, 65) + 0.4 * ap",
+                  "amount": "by_rank(25, 35, 45, 55, 65) + 0.4 * ap",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -708,7 +708,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "by_rank(150, 275, 400) + 0.75 * ap",
+                  "amount": "by_rank(150, 275, 400) + 0.75 * ap",
                   "dmg_type": [
                     "Ability damage",
                     "Area damage"
@@ -766,7 +766,7 @@
           "movementspeed": "by_rank(350, 375, 400)"
         },
         "attack": {
-          "scaling": "by_rank(30, 50, 70) + 0.1 * owner_ap",
+          "amount": "by_rank(30, 50, 70) + 0.1 * owner_ap",
           "dmg_type": [
             "Basic damage"
           ],
@@ -860,7 +860,7 @@
                       "type_": "Damage",
                       "props": {
                         "target": "enemy",
-                        "scaling": "by_rank(2.5, 3.75, 5) + 0.01 * owner_ap",
+                        "amount": "by_rank(2.5, 3.75, 5) + 0.01 * owner_ap",
                         "dmg_type": [
                           "Ability damage",
                           "Area damage"

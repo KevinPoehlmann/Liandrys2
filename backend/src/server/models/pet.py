@@ -12,7 +12,7 @@ PET_NAME = re.compile(r"[a-z][a-z0-9_]*")
 
 
 class PetAttack(StrictModel):
-    scaling: str
+    amount: str
     dmg_type: list[DamageType] = [DamageType.BASIC]
     dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
     windup: float = Field(..., gt=0, lt=1)  # share of the attack time, like a champion's attack_windup

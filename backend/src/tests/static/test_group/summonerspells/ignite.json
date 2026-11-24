@@ -83,7 +83,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "bearer",
-                  "scaling": "(70 + 20 * (min(level, 5) - 1) + 25 * max(0, level - 5)) / 5",
+                  "amount": "(70 + 20 * (min(level, 5) - 1) + 25 * max(0, level - 5)) / 5",
                   "dmg_type": [
                     "Proc damage",
                     "DOT damage"

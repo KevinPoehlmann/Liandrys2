@@ -34,7 +34,7 @@
             "type_": "Heal",
             "props": {
               "target": "self",
-              "scaling": "(0.05 if ranged else 0.08) * damage"
+              "amount": "(0.05 if ranged else 0.08) * damage"
             }
           }
         ],

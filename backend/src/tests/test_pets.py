@@ -27,7 +27,7 @@ def dummy_pet(**passive) -> dict:
         "name": "dummy",
         "duration": "2",
         "stats": {"hp": "1000", "attackspeed": "1"},
-        "attack": {"scaling": "by_rank(10, 20, 30) + 0.01 * owner_max_hp", "dmg_type": ["Ability damage"],
+        "attack": {"amount": "by_rank(10, 20, 30) + 0.01 * owner_max_hp", "dmg_type": ["Ability damage"],
                    "dmg_sub_type": "Magic", "windup": 0.2},
         "passive": {"name": "Dummy"} | passive,
     }
@@ -150,7 +150,7 @@ class TestSummon():
 
 
     def test_owner_can_target_its_pet(self, annie_with_pet, darius):
-        shield_pet = rule(None, action("Shield", target="pet", scaling="50", duration="3"))
+        shield_pet = rule(None, action("Shield", target="pet", amount="50", duration="3"))
         sim = Simulation(annie_with_pet(e_rules=(shield_pet,)), darius)
 
         sim.do_combo(combo(ActionType.R, ActionType.E))
@@ -159,7 +159,7 @@ class TestSummon():
 
 
     def test_rule_for_the_pet_does_nothing_without_a_pet(self, annie_with_pet, darius):
-        shield_pet = rule(None, action("Shield", target="pet", scaling="50", duration="3"))
+        shield_pet = rule(None, action("Shield", target="pet", amount="50", duration="3"))
         sim = Simulation(annie_with_pet(e_rules=(shield_pet,)), darius)
 
         sim.do_combo(combo(ActionType.E))
@@ -168,7 +168,7 @@ class TestSummon():
 
 
     def test_pet_can_target_its_owner(self, annie_with_pet, darius):
-        pet = dummy_pet(rules=[rule("on_start", action("Shield", target="owner", scaling="30", duration="3"))])
+        pet = dummy_pet(rules=[rule("on_start", action("Shield", target="owner", amount="30", duration="3"))])
         annie = annie_with_pet(pet)
         sim = Simulation(annie, darius)
 

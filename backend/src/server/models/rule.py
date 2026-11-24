@@ -25,7 +25,7 @@ class StrictModel(BaseModel):
 
 class DamageProps(StrictModel):
     target: Target
-    scaling: str
+    amount: str
     dmg_type: list[DamageType] = [DamageType.ABILITY]
     dmg_sub_type: DamageSubType = DamageSubType.PHYSIC
     vamp: float = 0.0
@@ -42,18 +42,18 @@ class ToggleBuffProps(StrictModel):
 class AttackProps(StrictModel):
     """An attack an ability makes on its own (Urgot's Purge): its own cast instance, on-attack and on-hit effects, basic damage."""
     target: Target
-    scaling: str
+    amount: str
     can_crit: bool = False
     on_hit_factor: str = "1"  # on-hit and on-attack damage of this attack (Purge: 50 %)
     attack_speed: str | None = None  # sets the windup; None = the champion's attack speed (Purge: fixed 3.0)
 
 class HealProps(StrictModel):
     target: Target
-    scaling: str
+    amount: str
 
 class ShieldProps(StrictModel):
     target: Target
-    scaling: str
+    amount: str
     duration: str
     dmg_sub_type: DamageSubType = DamageSubType.TRUE
 

@@ -35,7 +35,7 @@
               "type_": "Damage",
               "props": {
                 "target": "target",
-                "scaling": "(0.06 if ranged else 0.09) * target_current_hp",
+                "amount": "(0.06 if ranged else 0.09) * target_current_hp",
                 "dmg_type": [
                   "Proc damage",
                   "On-hit damage"

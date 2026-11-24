@@ -115,7 +115,7 @@ In JSON every action has the same shape as today's polymorphic models, with all 
 
 ```json
 {"type_": "ApplyBuff", "props": {"buff": "silver_bolts", "target": "target", "stacks": "1"}}
-{"type_": "Damage", "props": {"target": "bearer", "scaling": "...", "dmg_type": ["Proc damage"], "dmg_sub_type": "True", "vamp": 0.0}}
+{"type_": "Damage", "props": {"target": "bearer", "amount": "...", "dmg_type": ["Proc damage"], "dmg_sub_type": "True", "vamp": 0.0}}
 {"type_": "ResetAttack", "props": {}}
 ```
 
@@ -229,7 +229,7 @@ Each table lives inside its call, so a formula can mix several: `by_rank(50, 80,
 @custom_action("zed_death_mark")
 def zed_death_mark(ctx: ActionContext, percent: str) -> list[Action]:
     stored = ctx.target.buff("death_mark").data["damage"]
-    return [Damage(scaling=f"{stored} * ({percent})", target=Target.TARGET)]
+    return [Damage(amount=f"{stored} * ({percent})", target=Target.TARGET)]
 ```
 
 - The function gets a read-only context and **returns normal actions**. It changes nothing directly, so the simulation stays in charge of time and order.
@@ -246,7 +246,7 @@ buffs:
   - name: spellblade, duration: "10"
     rules:
       - trigger: on_hit
-        actions: [Damage(scaling: "base_ad", target: target), RemoveBuff(spellblade, self),
+        actions: [Damage(amount: "base_ad", target: target), RemoveBuff(spellblade, self),
                   ApplyBuff(spellblade_cooldown, self)]
   - name: spellblade_cooldown, duration: "1.5"
 rules:
@@ -284,7 +284,7 @@ buffs:
   - name: hemorrhage, duration: "5", max_stacks: 5, interval: "1.25"
     rules:
       - trigger: on_interval
-        actions: [Damage(scaling: "... * stacks", target: bearer)]
+        actions: [Damage(amount: "... * stacks", target: bearer)]
   - name: noxian_might, duration: "5"
     stats: [ad: flat "..."]
 rules:
@@ -384,7 +384,7 @@ Later, by entering champions with new mechanics (e.g. Gnar, Nidalee), we see whe
 - **Damage tags in rules (decided instead of filter lists):** damage-triggered rules see `tag_<tag>` variables, so "neither basic nor non-pet proc damage" is the condition `tag_basic == 0` and `tag_proc * (1 - tag_pet) == 0`. A pet's damage always carries `Pet damage` and fires `on_damage_dealt` for its owner too (owner: Tibbers' aura and attacks trigger The Collector). Tibbers' attacks are basic damage (fixture fixed).
 - **Conqueror (built):** stacks and the heal are `on_damage_dealt` rules; the heal rule comes first, so the hit that brings the 12th stack doesn't heal yet (owner). Edge case: an on-hit part of that same hit (a second damage result) already heals.
 - **Electrocute (built):** new trigger `on_debuff_dealt` (a status or a DoT, i.e. a buff with an interval, applied to an enemy) with the variables `cc`, `dot` and `status_<type>`. The `cast_cooldown` gate is per container (owner, slot, cast instance, target), so Electrocute's damage and debuff rules give one stack per cast together. New comparisons `Greater or equal` / `Less or equal` pick the damage type (physical only if the AD part is bigger; a tie is magic, wiki). The delayed strike is a buff with one interval tick at its end, because a rule's conditions are checked when it runs, not when it is queued. Tibbers' attacks stack it (pet damage).
-- **Urgot W (built):** on-hit comes from the damage tag (owner's idea): basic damage from a rule that isn't itself an on-hit rule applies on-hit (attacks, pets' attacks on their own rules, Purge's shots, later Ezreal Q). New action `Attack(target, scaling, can_crit, on_hit_factor, attack_speed)`: an attack an ability makes on its own, with its own cast instance, on-attack and on-hit effects (`on_hit_factor` scales their damage, Purge 0.5). Like a basic attack it starts at once, launches after the champion's windup share of `1 / attack_speed` (on-attack fires then) and flies with the attack missile; a shot in flight still hits after Purge is turned off (owner: shots are modified basic attacks). It doesn't touch the attack timer. `Buff.blocks` lists slots that wait while the buff is active (no manual attacks during Purge). The rank 5 toggle is a recast stage with `recast_window` `inf`; a buff with an interval but no duration ticks until removed; `cooldown_starts_after` with such a buff waits until it is removed. `Action.delay` (seconds after the previous action) lets a combo wait, e.g. Purge for three shots. Urgot's passive is left out (which leg fires depends on facing; possible later with leg cooldown buffs and an input for how many legs face the target).
+- **Urgot W (built):** on-hit comes from the damage tag (owner's idea): basic damage from a rule that isn't itself an on-hit rule applies on-hit (attacks, pets' attacks on their own rules, Purge's shots, later Ezreal Q). New action `Attack(target, amount, can_crit, on_hit_factor, attack_speed)`: an attack an ability makes on its own, with its own cast instance, on-attack and on-hit effects (`on_hit_factor` scales their damage, Purge 0.5). Like a basic attack it starts at once, launches after the champion's windup share of `1 / attack_speed` (on-attack fires then) and flies with the attack missile; a shot in flight still hits after Purge is turned off (owner: shots are modified basic attacks). It doesn't touch the attack timer. `Buff.blocks` lists slots that wait while the buff is active (no manual attacks during Purge). The rank 5 toggle is a recast stage with `recast_window` `inf`; a buff with an interval but no duration ticks until removed; `cooldown_starts_after` with such a buff waits until it is removed. `Action.delay` (seconds after the previous action) lets a combo wait, e.g. Purge for three shots. Urgot's passive is left out (which leg fires depends on facing; possible later with leg cooldown buffs and an input for how many legs face the target).
 - **Forms (built with Nidalee):** `Champion.extra_abilities` holds more abilities (`ExtraAbility`: `key`, `rank_from`), placed in the internal slots `x1`–`x9`, so cooldowns, ranks, formulas and origins work per ability (each form has its own cooldowns). `Buff.replaces` (slot -> key) points a key press to an extra ability while the bearer's own buff is active; the request keeps sending Q/W/E/R, the simulation resolves the slot before waiting. `Buff.range_type` overrides melee/ranged (the cougar's attacks have no missile, `ranged` is 0). New action `ToggleBuff`. `Ability.counts_as_cast = False` skips on-cast effects (the form swap doesn't grant Spellblade). The form swap doesn't reset the attack timer (owner); both forms have the same attack speed, the same windup is assumed. Hwei's subcasts fit the same pattern (a short buff that replaces Q/W/E). An extra ability's origin is named by the key it sits on, with its key as the third part: `ability / Q / takedown`, `ability / E / swipe` (owner).
 - **Nidalee's Hunt (built):** Javelin Toss and Bushwhack (outcome `hit`, step-in time per cast, from 1.5 s when it is armed) mark the target with `hunted`, `hunted_takedown` and `hunted_pounce`, so the first Takedown (+30 %) and the first Pounce (cooldown at most 3/2.5/2/1.5 s) each use the Hunt once; in human form a Hunt resets Aspect of the Cougar. New formula variable `distance` (the simulation's distance); Javelin Toss grows +45 % per full 155 units (wiki), counted from 525 units (assumption), at most 225 %. Not modelled: Prowl, Pounce's longer range and the Hunt extension.
 - **Per-cast and list inputs (built):** `Input.per_cast` inputs are chosen per cast in `Action.params` (Riven's Q cancel, Tides of Blood's charge, Bushwhack's step-in time); the scenario value stays the default for every cast. The cast's rules and the buffs it applies (duration, interval, interval rules) see them. `Input.many` inputs are lists; `Rule.for_each` runs a rule once per value with the variable `each` (Nidalee's traps placed before the fight, later Teemo's shrooms).

@@ -227,7 +227,7 @@ def processed_status_props(request) -> ProcessedStatusProperties:
 def action_effect_aa(aatrox_with_items) -> ActionEffect:
     damage = DamageAction(type_=RuleActionType.DAMAGE, props=DamageProps(
         target=Target.TARGET,
-        scaling="ad",
+        amount="ad",
         dmg_type=[DamageType.BASIC],
         dmg_sub_type=DamageSubType.PHYSIC,
         can_crit=True

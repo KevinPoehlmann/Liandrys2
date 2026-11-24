@@ -484,7 +484,7 @@ class Simulation():
         attack_speed = evaluate_formula(props.attack_speed, context) if props.attack_speed else owner.get_stat(Stat.ATTACKSPEED_P)
         windup = owner.attack_windup() / attack_speed
         damage = DamageAction(type_=RuleActionType.DAMAGE, props=DamageProps(
-            target=props.target, scaling=props.scaling, dmg_type=[DamageType.BASIC],
+            target=props.target, amount=props.amount, dmg_type=[DamageType.BASIC],
             dmg_sub_type=DamageSubType.PHYSIC, can_crit=props.can_crit))
         hit = Rule(actions=[damage], delay=str(windup), speed=str(owner.champion.missile_speed))
         self._queue_rule(replace(event, rule=hit, cast=cast), tick)
@@ -512,7 +512,7 @@ class Simulation():
     def _damage(self, props: DamageProps, event: RuleEvent) -> QueueComponent:
         target, context = self._target_and_context(props.target, event)
         flat_pen, percent_pen = self.actors[event.owner].get_penetration(props.dmg_sub_type)
-        value = evaluate_formula(props.scaling, context) * event.damage_factor
+        value = evaluate_formula(props.amount, context) * event.damage_factor
         if props.can_crit:
             value *= self._crit_factor(event.crit, self.actors[event.owner])
         processed = ProcessedDamageProperties(
@@ -533,14 +533,14 @@ class Simulation():
 
     def _heal(self, props: HealProps, event: RuleEvent) -> QueueComponent:
         target, context = self._target_and_context(props.target, event)
-        processed = ProcessedHealProperties(value=evaluate_formula(props.scaling, context))
+        processed = ProcessedHealProperties(value=evaluate_formula(props.amount, context))
         return QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.HEAL, props=processed, origin=self._origin(event))
 
 
     def _shield(self, props: ShieldProps, event: RuleEvent) -> QueueComponent:
         target, context = self._target_and_context(props.target, event)
         processed = ProcessedShieldProperties(
-            value=evaluate_formula(props.scaling, context),
+            value=evaluate_formula(props.amount, context),
             duration=to_ticks(evaluate_formula(props.duration, context)),
             dmg_sub_type=props.dmg_sub_type
         )

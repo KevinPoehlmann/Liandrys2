@@ -938,7 +938,7 @@ class Character():
     def _basic_attack_rule(self, blinded: bool) -> Rule:
         damage = DamageAction(type_=RuleActionType.DAMAGE, props=DamageProps(
             target=Target.TARGET,
-            scaling="0" if blinded else "ad",
+            amount="0" if blinded else "ad",
             dmg_type=[DamageType.BASIC],
             dmg_sub_type=DamageSubType.PHYSIC,
             can_crit=True

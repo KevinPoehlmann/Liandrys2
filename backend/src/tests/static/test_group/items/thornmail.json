@@ -44,7 +44,7 @@
               "type_": "Damage",
               "props": {
                 "target": "target",
-                "scaling": "20 + 0.1 * bonus_armor",
+                "amount": "20 + 0.1 * bonus_armor",
                 "dmg_type": [
                   "Reactive damage"
                 ],

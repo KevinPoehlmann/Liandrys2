@@ -59,7 +59,7 @@ class PetCharacter(Character):
         attack = self.definition.attack
         damage = DamageAction(type_=RuleActionType.DAMAGE, props=DamageProps(
             target=Target.TARGET,
-            scaling="0" if blinded else attack.scaling,
+            amount="0" if blinded else attack.amount,
             dmg_type=attack.dmg_type,
             dmg_sub_type=attack.dmg_sub_type
         ))

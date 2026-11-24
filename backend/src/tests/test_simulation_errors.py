@@ -25,14 +25,14 @@ def darius(load_champion) -> Character:
 
 def broken_rule_after(seconds: float) -> dict:
     return {"trigger": "on_start", "delay": str(seconds), "actions": [{"type_": "Damage", "props": {
-        "target": "target", "scaling": "unknown_variable", "dmg_sub_type": "True"}}]}
+        "target": "target", "amount": "unknown_variable", "dmg_sub_type": "True"}}]}
 
 
 class TestEndlessRules:
     def test_a_rule_triggering_itself_in_the_same_tick_stops(self, load_champion, darius):
         # Every damage dealt deals damage again, without a delay: the tick never ends.
         vayne = with_passive_rule(load_champion, "vayne", {"trigger": "on_damage_dealt", "actions": [{"type_": "Damage", "props": {
-            "target": "target", "scaling": "1", "dmg_sub_type": "True"}}]})
+            "target": "target", "amount": "1", "dmg_sub_type": "True"}}]})
 
         with pytest.raises(SimulationError) as error:
             Simulation(vayne, darius).do_combo(attacks(1))
@@ -46,7 +46,7 @@ class TestEndlessRules:
         vayne = with_passive_rule(load_champion, "vayne", {
             "trigger": "on_damage_dealt",
             "conditions": [{"actor": "target", "key": "missing_hp", "comparison": "Less than", "value": "3"}],
-            "actions": [{"type_": "Damage", "props": {"target": "target", "scaling": "1", "dmg_sub_type": "True"}}]})
+            "actions": [{"type_": "Damage", "props": {"target": "target", "amount": "1", "dmg_sub_type": "True"}}]})
         Simulation(vayne, darius).do_combo(attacks(1))
 
 

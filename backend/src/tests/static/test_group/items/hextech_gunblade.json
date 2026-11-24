@@ -47,7 +47,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "175 + 78 * (min(level, 18) - 1) / 17 + 0.3 * ap",
+                  "amount": "175 + 78 * (min(level, 18) - 1) / 17 + 0.3 * ap",
                   "dmg_type": [
                     "Ability damage"
                   ],

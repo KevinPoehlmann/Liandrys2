@@ -142,7 +142,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "(by_rank(70, 90, 110, 130, 150) + 0.5 * ap) * (1 + 0.45 * min(5, floor(max(0, distance - 525) / 155)))",
+                  "amount": "(by_rank(70, 90, 110, 130, 150) + 0.5 * ap) * (1 + 0.45 * min(5, floor(max(0, distance - 525) / 155)))",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -439,7 +439,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "bearer",
-                  "scaling": "by_rank(10, 20, 30, 40, 50) + 0.05 * ap",
+                  "amount": "by_rank(10, 20, 30, 40, 50) + 0.05 * ap",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -522,7 +522,7 @@
                 "type_": "Heal",
                 "props": {
                   "target": "self",
-                  "scaling": "(by_rank(50, 75, 100, 125, 150) + 0.35 * ap) * (1 + missing_hp_percent)"
+                  "amount": "(by_rank(50, 75, 100, 125, 150) + 0.35 * ap) * (1 + missing_hp_percent)"
                 }
               },
               {
@@ -770,7 +770,7 @@
                   "type_": "Damage",
                   "props": {
                     "target": "target",
-                    "scaling": "(by_rank(5, 30, 55, 80) + 0.75 * ad + 0.4 * ap) * (1 + by_rank(1, 1.25, 1.5, 1.75) * target_missing_hp_percent) * (1 + 0.3 * target_stacks_hunted_takedown)",
+                    "amount": "(by_rank(5, 30, 55, 80) + 0.75 * ad + 0.4 * ap) * (1 + by_rank(1, 1.25, 1.5, 1.75) * target_missing_hp_percent) * (1 + 0.3 * target_stacks_hunted_takedown)",
                     "dmg_type": [
                       "Ability damage",
                       "On-hit damage"
@@ -853,7 +853,7 @@
                   "type_": "Damage",
                   "props": {
                     "target": "target",
-                    "scaling": "by_rank(50, 90, 130, 170) + 0.5 * bonus_ad + 0.3 * ap",
+                    "amount": "by_rank(50, 90, 130, 170) + 0.5 * bonus_ad + 0.3 * ap",
                     "dmg_type": [
                       "Ability damage"
                     ],
@@ -959,7 +959,7 @@
                   "type_": "Damage",
                   "props": {
                     "target": "target",
-                    "scaling": "by_rank(70, 130, 190, 250) + 0.7 * bonus_ad + 0.55 * ap",
+                    "amount": "by_rank(70, 130, 190, 250) + 0.7 * bonus_ad + 0.55 * ap",
                     "dmg_type": [
                       "Ability damage"
                     ],

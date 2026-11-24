@@ -13,7 +13,7 @@ def vayne_with_burn(load_champion, damage: str, duration: str) -> Character:
     champion.passive.buffs.append(Buff.parse_obj({
         "name": "burn", "duration": duration, "interval": "1",
         "rules": [{"trigger": "on_interval", "actions": [{"type_": "Damage", "props": {
-            "target": "bearer", "scaling": damage, "dmg_sub_type": "True"}}]}],
+            "target": "bearer", "amount": damage, "dmg_sub_type": "True"}}]}],
     }))
     champion.passive.rules.append(Rule.parse_obj({
         "trigger": "on_start", "actions": [{"type_": "ApplyBuff", "props": {"buff": "burn", "target": "target"}}],

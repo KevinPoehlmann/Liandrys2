@@ -66,7 +66,7 @@ class TestSimulationRoute:
     def test_broken_data_names_champion_and_rule(self, simulate, loggers, load_champion):
         vayne = load_champion("vayne")
         vayne.passive.rules.append(Rule.parse_obj({"trigger": "on_start", "delay": "1", "actions": [{"type_": "Damage", "props": {
-            "target": "target", "scaling": "unknown_variable", "dmg_sub_type": "True"}}]}))
+            "target": "target", "amount": "unknown_variable", "dmg_sub_type": "True"}}]}))
 
         body = simulate([action("ba")], attacker=vayne).json()
 

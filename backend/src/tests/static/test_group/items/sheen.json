@@ -92,7 +92,7 @@
                   "type_": "Damage",
                   "props": {
                     "target": "target",
-                    "scaling": "base_ad",
+                    "amount": "base_ad",
                     "dmg_type": [
                       "Proc damage",
                       "On-hit damage"

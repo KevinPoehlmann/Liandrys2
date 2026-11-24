@@ -200,7 +200,7 @@
                 "type_": "Attack",
                 "props": {
                   "target": "enemy",
-                  "scaling": "12 + by_rank(0.2, 0.235, 0.27, 0.305, 0.34) * ad",
+                  "amount": "12 + by_rank(0.2, 0.235, 0.27, 0.305, 0.34) * ad",
                   "can_crit": false,
                   "on_hit_factor": "0.5",
                   "attack_speed": "3"

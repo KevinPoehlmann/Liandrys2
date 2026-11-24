@@ -162,7 +162,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "TotalDamage",
+                  "amount": "TotalDamage",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -244,7 +244,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "TotalDamage",
+                  "amount": "TotalDamage",
                   "dmg_type": [
                     "Ability damage"
                   ],
@@ -405,7 +405,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "scaling": "MinDamage * (1 + min(1, 1.5 * target_missing_hp_percent))",
+                  "amount": "MinDamage * (1 + min(1, 1.5 * target_missing_hp_percent))",
                   "dmg_type": [
                     "Ability damage"
                   ],
