@@ -14,155 +14,50 @@
 
 ## Phase 0: Safety net ✅
 
-- [x] All tests green again (234), and no test touches the real DB
-- [x] Bugs found on the way: hotfix year came from `datetime.now()`, the suffix regex broke "August", broken images (write before download), `abort_event`, patch `timestamp`
-- [x] Commit and push the current state to GitHub
+Done, see [docs/decisions.md](docs/decisions.md#phase-0-safety-net).
 
 ## Phase 1: Simulation correctness ✅
 
-All bugs below were confirmed with probe tests. Each fix gets a regression test.
+Done, see [docs/decisions.md](docs/decisions.md#phase-1-simulation-correctness).
 
-- [x] Effects after the last action are lost (delayed damage, projectiles, remaining DoT ticks): process the queue until it is empty
-- [x] Status effects crash: they are never turned into `ProcessedStatusProperties`
-- [x] Stat buffs never apply: `evaluating_stat` is never cleared (e.g. Aatrox AD stays the same with 5 or 10 stacks)
-- [x] Damage results vanish from `effect_list` with vamp: `effect_results` is overwritten in the `_process_queue` loop
-- [x] Expired shields keep blocking: not reachable, `take_effects` drops expired shields before damage (regression test added)
-- [x] Heal results: `max` → `min` (negative overheal)
-- [x] Tenacity minimum compares 0.3 to ticks, not seconds
-- [x] Found on the way: stat buffs applied to every stat, not only their own `stat`
+## Phase 2: Ability system (data model) ✅
 
-Quick wins that fit in here:
-- [x] `fetch_patch_latest` sorts the patch **string** ("15.9.1" > "15.10.1"); same for `sorted(...)` in the loader
-- [x] User UI: changing the patch dropdown doesn't refetch data; the simulation `watch` misses `ability_points`
-- [x] Chart: `"Magical"` → `"Magic"` color; the mode toggle (`subtype`/`source`/`total`) has no effect; shields missing in "Tank" (shields now apply per damage component, so damage `value` is health damage)
-- [x] Admin UI: `filtered()` uses `this` in `<script setup>` (works in dev, crashes in a production build)
-
-## Phase 2: Ability system (data model)
-
-The core of the project. **Decide first, then build.** Every change here touches model + simulation + editor + tests. The design is in [docs/ability-system.md](docs/ability-system.md).
-
-Decisions:
-- [x] **Formula variables:** own namespace with Python-safe names, a generated `target_` set, `by_rank`/`by_level` lookups; `HpScaling` is removed
-- [x] **Target per component:** `target` enum (`self | target`, extensible for pets/2v2)
-- [x] **Ability vs. passive:** separate containers, shared `Rule = trigger → conditions → actions` and one action vocabulary; named buffs with runtime instances, DoTs are buffs
-- [x] **Escape hatch:** `Custom(function, args)` returning normal actions
-
-Building blocks that are missing (each one gets a champion/item from the test group):
-- [x] Timed buffs and "next attack" buffs: Sheen/Spellblade, Nasus Q, "+30% AS for 3s"
-- [x] `Hit` (on-hit) and `GetHit` (e.g. Thornmail)
-- [x] Named stack counters with max, duration and reset: Conqueror, BotRK's Clawing Shadows, Vayne W, Electrocute
-- [x] Conditions with an actor (self/target/bearer): executes, "below 30% HP" (range conditions come with distance, Phase 5)
-- [x] Recasts (Riven), auto-attack resets (Riven Q, Vayne Q)
-- [x] ~~Cooldown reduction on hit~~ (`ModifyCooldown` is built with Nidalee; on-hit reductions use it in a rule)
-- [x] ~~Non-linear rank values~~ (`by_rank(...)` lists every rank; the scraper no longer builds effects)
-- [x] ~~`extra = "forbid"` on the effect models~~ (the rule models have it; the old effect models are gone)
-- [x] Pets (actor ids like `blue.tibbers`, Tibbers)
-- [x] Results know their origin: `EffectResult.source` is only an `ActionType` today, so an item/rune proc (Sheen, Kraken, Electrocute) can't be told apart. Add the owning item/rune/buff while the result format is being rebuilt anyway; the post-V1 damage breakdown builds on it
-
-Known gaps found in Phase 1 (fold them into the new design):
-- [x] ~~Cast buffs are commented out (`_check_buffs`)~~ (old path removed; stacks come from rules)
-- [x] `bonus <stat>` only counts items, not buffs
-- [x] ~~A status with `duration` on the EffectComponent~~ (EffectComponent is gone; DoTs are buffs with an interval)
-
-Cleanup once the simulation runs on the new system (not before, the old models still live in these files):
-- [x] Delete the old effect models (`effect.py`, `passive_effect.py`, the old `…Properties` and `Condition` in `dataenums.py`; the `Processed…Properties` stay, the new path uses them)
-- [x] Move the simulation runtime types into `simulation/` (`QueueComponent` and the `Processed…Properties` → `components.py`, `ActionEffect` → `events.py`), the result types (`EffectResult`, `TickEvent`, `Origin`) into `models/result.py`, and `AttackspeedStats` into `webscraper2.py` (`AbilityStat` was unused and is gone)
-- [x] Remove dead code: `ItemStat`, `Mythic` (test_patchloader2 only has an item named "Mythic Cleaver"), `Combo`, `MultiValueEnum` and `aenum` in `requirements.txt`; `re`/`ClassVar` stay (`Actor`), `StatMode.PERCENT` stays (Rabadon, see the design doc)
-- [x] Rename `dataenums.py` → `enums.py` (no clash with the stdlib `enum`; `routes/enums.py` is the enum route, a different package). It stays the import-free bottom layer: enums ← models ← simulation ← routes
-- Left for the scraper rework (Phase 3), because only the scraper uses them: the pseudo stats in `Stat` (`target's armor`, `units`, `Charge`, …), `DamageType` `Default`/`Non-Damaging`/`See Notes`/`Spell damage`, the `ERROR` members and the `from_str` alias maps
-
-**Test group:** Veigar, Annie (+Tibbers as a design check), Darius, Vayne, Riven, Vladimir, plus Urgot (W: toggle, attacks made by an ability, on-hit at 50 %), Nidalee (forms, abilities replaced by a buff, rank from R), Sheen, Thornmail, Blade of the Ruined King (replaces Kraken Slayer: current-health on-hit, life steal, melee/ranged), The Collector, Hextech Gunblade (replaces Black Cleaver: item actives, omnivamp), Conqueror, Electrocute (see the design doc for what each covers). One test per combo with the expected damage. Every building block is "done" when its test-group member works.
-
-- [x] Champions: Annie (+Tibbers), Darius, Vayne, Vladimir, Riven, Veigar, Urgot (W)
-- [x] Nidalee forms (`extra_abilities`, `Buff.replaces`, `ToggleBuff`, `counts_as_cast`, `Buff.range_type`)
-- [x] Nidalee Hunt (`ModifyCooldown`, `distance`)
-- [x] Items: Sheen, Thornmail, Blade of the Ruined King, The Collector, Hextech Gunblade
-- [x] Runes: Conqueror, Electrocute (runes and stat shards in the simulation, adaptive force, cast instances)
-
-Error handling (the base for the Phase 4 data checks and the Phase 5 error display):
-- [x] Rules that trigger each other without a delay never leave their tick (the request hangs): stop after `MAX_RULE_EVENTS_PER_TICK` with the rules involved
-- [x] Errors in queued effects (projectiles, DoT ticks, rules after the last action) name the tick and the rule's origin (`phase="effect"`) instead of the action running at that moment, or a 500
-- [x] Exception types with context: champion, container, stage and rule number, formula ("Veigar ability 'Q', stage 1, rule 1: Unknown variable in formula …"). Typed errors (`ComboError`, `DataError`, `NotEnteredError`, `NotSupportedError`) set the response `code`; unknown buff and pet names are a `DataError` instead of a bare `KeyError`
-- [x] Backend safety net: error responses are `{detail, code, error_id}` (`code`: `invalid_combo | invalid_data | not_entered | not_supported | internal`). Unexpected errors in any route log their traceback with the id to `alerts.log`; failed simulations log the whole request to `simulation.log`, so they can be replayed as a test
+Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-model). Design in [docs/ability-system.md](docs/ability-system.md).
 
 ## Phase 3: Loader with little manual work per patch
 
-Comes before the admin phase: the loader decides which named values exist per ability (the editor offers them for selection), and a fresh load into the new format is cheaper than migrating the old documents, which hold no valuable manual data yet.
+The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching (in progress), (3) summoner spells, (4) items incl. actives, (5) runes.
 
-The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Structure comes from manual entry (Phase 4) or AI drafts (pilot in Phase 4, scaled in Phase 6).
+**Next (champions patching):**
+- [ ] **Patch notes through the wiki API** instead of the HTML scraper. Decided: wikitext only, no HTML fallback (one parser; the HTML markup just changed under us). The page is structured: `;{{ci|Darius}}` = champion, `* {{ai|Decimate|Darius}}` = ability, `** …` = line, `* Stats` = champion level. Templates become readable text (`{{ap|9 to 4}}` ⇒ "9 to 4"; the per-rank values are only computed by the template, and our numbers come from CDragon anyway). Hotfix sections too (`=== October 22nd Hotfix ===`). The HTML fix in `webscraper2` is a stopgap until then
+- [ ] **Name dictionary** wiki ⇔ Data Dragon for all four types, used when fetching and when matching patch notes. Champions: match by name, then by Data Dragon id (`{{ci|Nunu}}` is the id of "Nunu & Willump"). Merge the existing `itemWikiNames`/`runeWikiNames` from `info.json`
+- [ ] **Translator: `AbilityResourceByCoefficientCalculationPart`** (decided over a diff workaround). Ryze W's `WDamageCalc = BaseDamage + 0.6 × AP + 0.03 × bonus mana` is untranslated today, so the 26.21 change 0.6 ⇒ 0.7 is invisible to the diff (it compares only the structure of untranslated calculations). Translated, it becomes a named value and the normal path applies. Check which other unknown part types the 16.21 data has (`unsupported` over all champions)
+- [ ] Hotfixes (decided: overwrite the patch, see decisions). Open: does `hotfix` stay part of a document's identity or become "last updated"
 
-- [x] **Decided: raw data is stored.** The whole CDragon file per object and patch goes into its own collection, separate from the finished objects and never read by the user API (measured for Veigar: 133 KB with tooltips and wiki templates, so ≈ 23 MB per patch for champions). It is the lookup for manual entry and the source when later features need more fields (dash times, animations), without reloading old patches. Not relying on CDragon keeping old folders forever
-- [x] **Decide:** the loader stores everything it scrapes in its own raw models, so nothing gets lost. The finished objects (`Champion`, `Ability`, …) are built from the raw data and keep only what the simulation needs. Open: are the numbers copied into the finished objects (a build step reruns every patch) or referenced by name and resolved at simulation time? Either way the hand-made structure must survive a new patch
-  - **Decided: reference by name.** Each document has a loader-owned `values` field (`BaseDamage = [80, 120, …]`, overwritten every patch) next to the hand-made rules, which use the name (`BaseDamage + APRatio * ap`) and are never touched by a patch. The simulation resolves the name by rank like `by_rank(...)`. No build step, and "manual effect data lives per patch" (backlog) shrinks because the structure changes less often. Risk: Riot renames a value; the loader sees that a name used by a rule is gone and marks the ability unvalidated
-  - **Formula syntax:** rules use Riot's names as they are (no own names, they are the link between patches). A bare name is the rule's own ability; other abilities with a prefix (`q.TumbleCDReduction`). No `by_rank`/`by_level` in hand-written formulas: a `DataValues` name resolves by rank (all lists have 7 entries = rank 0–6; constants are equal everywhere), and level scaling only appears in `mSpellCalculations`, which the loader translates into our syntax once (Darius: `BleedDamagePerStack = "by_level(13, …, 30) + 0.3 * bonus_ad"`). Calculations are named values too, so a rule is often just `amount: "TotalDamage"`; a formula in `amount` is still allowed where Riot's tooltip calculation doesn't cover the mechanic (Veigar R's missing-HP scaling). The translator knows the ~11 part types and reports unknown ones instead of guessing. A patch that changes a calculation's structure (not just numbers) is taken over but marks the ability unvalidated
-  - ✅ **Renamed `scaling` → `amount`** in `Damage`, `Attack`, `Heal`, `Shield` and `PetAttack` (same name as `ModifyCooldown`/`PayCost`). The old admin editor components still say `scaling`; they are replaced by the Phase 4 rule editor
-  - **Everything the loader delivers goes into `values`; every formula field is hand-owned**, also `cost` and `cooldown`. The loader adds the spell fields under Riot's field names (`cooldownTime`, `mana`; they can't clash with the mostly capitalized `DataValues`, Gunblade has its own `Cooldown`), and `cooldown`/`cost` default to those names. A formula like Veigar W's (`cooldownTime` is 0 there, the script uses `BaseCooldown`) survives every patch
-  - Not now: a hand-owned `formulas` field for own named formulas (separate from the loader's `values`, which every patch overwrites). Purely additive, can come later if `amount` formulas get messy
-  - To clarify when building the patch flow: does CDragon show mechanic changes? Likely signals: value names added/removed, changed `mSpellCalculations`, changed tooltip text. Behavior that lives only in game scripts is not exported, so the wiki patch notes probably stay a second net (objects named there get flagged)
-- [ ] Named values per ability with stable names (`BaseDamage`, `ADRatio`, …), so rules can reference them. The rule editor (Phase 4) offers them for selection, and AI drafts (Phase 4/6) depend on them
-- [ ] Store each ability's description text (tooltip / wiki text): shown in the editor for manual entry, and the input for AI drafts (Phase 4/6)
-  - **Decided:** the CDragon tooltip (`lol.stringtable.json`, e.g. `spell_veigarbalefulstrike_tooltip`) is loader-owned and required; a changed tooltip is a validation signal. Its placeholders are our names (`@TotalDamage@`), Riot's cross-references match our prefix idea (`@Spell.VeigarPassive:dQKillStacks@`)
-  - The wiki text with its notes is required for the first load: what the game logic decides (spell shield interaction, which abilities can be cast during others like Riven E → R, on-hit, can't crit) is not in CDragon. Stored as text, not parsed into fields. On patches, the full text is refetched when the wiki page has a newer revision (wiki API revision id), so a late wiki edit is picked up on a later run; patch note lines stay in `changes`. A missing or outdated wiki text blocks nothing
-  - CDragon's hints (tooltip tags like `<magicDamage>`, spell tags like `Trait_AttackReset`/`Trait_Shield`, flags like `mCantCancelWhileWindingUp`) are shown in the editor as suggestions. Crit hints: Vayne Q has an explicit `CanBonusDamageCrit = 0`; Darius W's `ADRatio` is the whole attack (1.4–1.6 × AD) while Vayne Q's `TotalADRatio` is only the bonus, which may tell whether the bonus can crit (check against the wiki)
+**Open from the 16.20 → 16.21 run** (throwaway DB `liandrys-patchtest`, port 27018, kept for further runs and Phase 4):
+- [ ] An extra ability whose numbers live in another slot's values (Nidalee's Pounce uses R's `PounceDamage`) is unvalidated as "patch notes only" although the data line exists on R
+- [ ] Ammo abilities: `mAmmoRechargeTime` (52 spells, Zyra W) is not read
+- [ ] Fiddlesticks' missile speed is 0 (wiki 1750; attack spell `FiddleSticksBasicAttack`, probably case)
+- [ ] Karthus has his cast offset only in `critAttacks` (wiki 0.04375); the basic attack's default 0 is used, the cross-check warns
+- [ ] Varus Q `TotalDamageMax` refers to a hashed name (`{b3ef3984}`)
+- [ ] Vayne's attack speed ratio is 0.67 in CDragon, the wiki has 0.658 (her base attack speed). Check in the practice tool
+- [ ] Levels 19/20 (practice tool): interpolations continue past 18 by default (`mScalePastDefaultMaxLevel` only appears as `false`; the wiki agrees for Darius' bleed). Breakpoint formulas continue too, unconfirmed: Tibbers' HP (fixture 4000 at 19/20, translator 4350/4700), Annie E's movement speed (fixture stops at 18, CDragon continues)
+- [ ] Refresh the fixture `values` from the loader (current patch) and update the expectations, each checked against the wiki. Known changes: Annie Q (80–240 ⇒ 80–260) and W (70–250 ⇒ 70–230), Vayne W (6–10 % / 50–110 ⇒ 4–10 % / 40–100), Urgot R cooldown (120/90/60 ⇒ 100/85/70), Annie E cooldown (check `Cooldown.values`)
 
-- [x] Read each champion's adaptive type (physical/magic) into `Champion.adaptive_type`: from CDragon (`mAdaptiveForceToAbilityPowerWeight`), cross-checked against `Module:ChampionData/data` (`adaptivetype`)
-- [ ] **Automatic patching:** load the new CDragon data, overwrite `values`, copy the hand-made part forward unchanged, and decide per ability whether it stays validated:
-
-  | Change | Result |
-  |---|---|
-  | Only numbers | stays validated |
-  | Structure of a calculation that a rule uses by name, fully understood by the translator | stays validated (the rule follows automatically) |
-  | Structure of a calculation that no rule uses by name while rules use its values (the rule rebuilt it by hand), or a part the translator doesn't know | unvalidated |
-  | A name a rule uses is gone | unvalidated |
-  | A new name appeared | unvalidated (probably a new mechanic) |
-  | Tooltip text changed, numbers equal | unvalidated |
-  | Named in the wiki patch notes, but nothing changed in CDragon | unvalidated, marked "patch notes only" (mechanics CDragon can't show) |
-
-  `changes` holds only the changes of **this** patch (loader diff and patch note lines). A copied document starts with empty `changes`, so the history of an ability is the `changes` of each patch. Unvalidated abilities are the input for AI drafts later (Phase 4/6)
-  - ✅ For champions. `changes` is `list[Change]` with `source` (`data` = loader diff, `patch_notes` = wiki line); "patch notes only" is an unvalidated container without `data` lines. Old documents with plain strings parse as patch note lines. Stat changes are only lines; `Champion.validated` is computed: all abilities and the passive validated. Items, runes and summoner spells still extend the old list (old loader)
-- [ ] **Images (decided):**
-  - Source: CommunityDragon for all images. Data Dragon only has the client's shop/overview icons and misses recasts and forms (Sion W recast); the spell data names each spell's icon path. Check that sizes are uniform
-  - Every patch downloads all images and stores them under a content hash (`VeigarBalefulStrike.3fa2c1.png`). Same image, same name, nothing written; a changed image gets a new name, however often it changes. Documents point to their file, so each patch shows its own image and nothing needs renaming afterwards
-  - Images are never deleted, so items removed from the game keep their image in old patches
-  - No sprites: they saved requests in the HTTP/1.1 era; a few hundred small icons load fine one by one. `Image` shrinks to a path (no `sprite`, `x`, `y`, `w`, `h`)
-  - Stages can have their own image (Sion W recast), falling back to the ability's image
-  - ✅ Champions (`loader/images.py`): the champion icon is the client's `champion-icons/<key>.png` (128×128), spell and passive icons come from each spell's `mImgIconName` (the first entry; Nidalee R and Darius' passive list more), 64×64, checked for the 8 test group champions. Stored as `<asset name>.<8 hex of sha256>.png` under `src/images/<group>/`. A missing image is a warning and keeps Data Dragon's metadata. `Image` is `full` + `group` now (the frontends build `images/<group>/<full>`, none used sprites); the old loader no longer downloads sprites
-  - Open: stage images (Sion W recast), items, runes and summoner spells with their types
+**Later in this phase:**
+- [ ] Named values per ability with stable names (`BaseDamage`, `ADRatio`, …) for the other three types; the rule editor (Phase 4) offers them for selection
+- [ ] Description texts for the other three types (champions: CDragon tooltip + wiki templates, see decisions)
+- [ ] Images: stage images (Sion W recast), items, runes and summoner spells with their types
 - [ ] Error handling refactor: dead `urllib` excepts, `_retry` swallowing non-HTTP errors, `gather` without `return_exceptions` (orphaned tasks), blocking `requests.get` inside `async` functions, `image` unbound in `_load_rune`
 - [ ] The patchloader tests write into the real `src/logs` (e.g. `liandrys_all.log`); mock the loggers like `tests/test_errors.py` does
 - [ ] Re-download the 12 zero-byte images
-- [x] **Decided: CommunityDragon is the source for numbers, for patches and hotfixes.**
-  - Timing (checked for 26.20–26.23): the CDragon folder (`raw.communitydragon.org/<16.x>/`, game version 16.x = patch 26.x) is there on release Wednesday between 07:15 and 09:40 UTC. The wiki patch page exists 1–2 days earlier but is mostly a stub until the night before release; the wiki champion pages lag by an unknown time
-  - Content: `DataValues` per spell with stable names (`BaseDamage`, `APRatio`, …, 7 entries = rank 0–6), `mSpellCalculations` with the tooltip formulas (Veigar Q: `TotalDamage = BaseDamage + APRatio * AP`), cooldowns (`cooldownTime`, index 1 = rank 1), mana (`mana`, index 0 = rank 1), missile speeds. `spellTotalTime` looks like a default (1.0 s on many spells), so real animation lengths would need the animation files. Quirks to handle: float noise (`0.44999998`), mana lists with 6 instead of 7 entries (check the indexing), several spells per ability (`AnnieR` + `InfernalGuardian`), unused spells (`Incinerate`)
-  - Hotfixes: CDragon rewrites the patch folder in place (Varus' 26.21 hotfix 33 ⇒ 42 is in `16.21`), with no history, so how fast is unknown. Balance hotfixes are rare (1 in 26.13–26.22). Detection: the wiki hotfix list (as today) plus the build number in `content-metadata.json`; a new build triggers a reload and a value diff, so bugfix-only builds change nothing. A wiki hotfix with numbers that CDragon doesn't show yet marks the object "hotfix reported, not in the data yet". Log build numbers with timestamps to learn the delay
-  - Riot's official sources: later, they tend to be incomplete
-  - Items, summoner spells, runes (checked Sheen, Hextech Gunblade, Ignite, Conqueror, Electrocute): items (`items.cdtb.bin.json`) have named single values (`mDataValues`), calculations (`mItemCalculations`, Gunblade `ActiveDamage = 175 → 253 by level + 0.3 * ap`), stats as fields (`mFlatMagicDamageMod`), icon path and tooltip keys; item actives are spells in `shared.cdtb.bin.json` (`HextechGunbladeSpell`: cooldown, range). Summoner spells are in `shared.cdtb.bin.json` in the champion spell format (Ignite adds a 12th part type, `GameCalculationModified`). Runes (`perks.cdtb.bin.json`) only have named script values (`MinAdaptivePerStack`, `MaxStacks`, …) and no calculations, so their wiki text matters more
-  - Mana cost lists have 6 entries starting at rank 1 (Veigar Q 30–50 in the wiki), value lists 7 starting at rank 0
-- [x] **Decided: build order, one type at a time, each complete:** (1) champions first load, checked against the test group fixtures; (2) champions patching, tested by loading an old CDragon patch and patching forward (e.g. 16.20 → 16.21 with Varus' hotfix), with the test group fixtures (converted to names and `amount`) as the hand-made part; (3) summoner spells; (4) items incl. actives; (5) runes. Patching right after the first load, because it is the point of this phase and tests today's decisions early
-  - ✅ Translator (`loader/cdragon.py`), named values in formulas (`values`, `q.Name`; pets read them from their owner's view), all test group champions use names. Their `values` keep the numbers each fixture was built with
-  - ✅ Raw data (`loader/champion_source.py`: CDragon bin, tooltips filtered from `lol.stringtable.json`, all wiki data templates in one API request; `RawChampion` in `raw_champions`), build step (`loader/champion_builder.py`: `loaded_spells`, `apply_loader_part`, `initial_structure`, `champion_stats`), `cost`/`cooldown` via `mana`/`cooldownTime`, `tooltip` field, regeneration per second
-  - ✅ New `loader/patchloader.py` next to the old one; the admin route calls it (the old `patchloader2.py`/`webscraper2.py` and their tests go once all four types moved; until then the new loader calls the old functions for items, runes, summoner spells, patch detection and patching). First load of a champion: Data Dragon list (`championFull`: key, `maxrank`, `partype`, image metadata), raw data → `raw_champions` (stored before building, so a failing champion keeps its raw data), `build_champion` (`champion_stats` + `loaded_spells` + `initial_structure`; names from CDragon, Data Dragon as fallback). At most 5 champions load in parallel (wiki API), and one failing champion doesn't stop the others. Champion stats that were `int` are `float` now, `last_changed` is optional
-  - ✅ `Module:ChampionData` as a logged cross-check: read through the wiki API once per load (`loader/lua.py` parses the Lua table, incl. Kled's `84+1000/17`), keyed by `apiname` (the module uses display names), stored per champion in `RawChampion.champion_data`. `wiki_mismatches` compares stats in our units, windup, range and adaptive type; each mismatch is a warning in the patch log, a missing module only a warning. `last_changed` comes from its `changes` in our patch format (`V26.07` ⇒ `16.7.1`)
-  - Open from the cross-check: Vayne's attack speed ratio is 0.67 in CDragon, the wiki has 0.658 (her base attack speed). Check in the practice tool which one is right
-  - ✅ Images with hash (see Images below)
-  - ✅ Patching (`loader/champion_patcher.py`, flow in `patchloader.py`): copies the old document, overwrites stats, `values`, `tooltip`, names and max ranks, and decides validation by the table under "Automatic patching". The old side is rebuilt from the old patch's raw data with today's translator, so a translator change doesn't look like a patch change (fallback without raw data: the stored `values`, structure changes stay unseen). Which names a container uses comes from its hand-made formula strings (`used_names`, bare = own slot, `q.X` = Q). Structure of a calculation = the raw calculation without its numbers. Tested with Veigar, one test per table row. The unvalidation reasons go to the patch log
-  - Next: run a real patch forward (16.20 → 16.21), then hotfixes (see below)
-  - **Decided: hotfixes overwrite the patch** instead of copying every document (CDragon also rewrites its folder in place). A hotfix reruns the loader part on the same documents and diffs against the stored raw data; its lines are added to the patch's `changes`. Check once a day: `content-metadata.json`'s build number unchanged ⇒ nothing; new build ⇒ reload and diff, a bugfix-only build gives an empty diff and changes nothing. The wiki hotfix list stays a second net. Open: does `hotfix` stay part of a document's identity (patch + hotfix) or become "last updated"
-  - Later in step 1: refresh the fixture `values` from the loader (current patch) and update the expectations, each checked against the wiki. Known changes: Annie Q (80–240 ⇒ 80–260) and W (70–250 ⇒ 70–230), Vayne W (6–10 % / 50–110 ⇒ 4–10 % / 40–100), Urgot R cooldown (120/90/60 ⇒ 100/85/70), Annie E cooldown (not in `cooldownTime`, find it)
-  - Levels 19/20 (check in the practice tool): interpolations continue past 18 by default (`mScalePastDefaultMaxLevel` only appears as `false`; the wiki agrees for Darius' bleed). Breakpoint formulas have no such flag and continue too, unconfirmed: Tibbers' HP (fixture 4000 at 19/20, translator 4350/4700), Annie E's movement speed (fixture stops at 18, CDragon continues)
-- [x] **Decided: champion base stats come from CDragon** (checked against `Module:ChampionData` for Veigar, Annie, Darius, Vladimir, Riven). The `CharacterRecord` has `baseHPModifiable`, `hpPerLevelModifiable`, `baseArmorModifiable`, `baseMR`, `baseDamageModifiable`, `attackSpeedModifiable`/`attackSpeedRatioModifiable`/`attackSpeedPerLevelModifiable`, `attackRangeModifiable`, `baseMoveSpeedModifiable`, `basicAttack.mAttackDelayCastOffsetPercent` (+ `…AttackSpeedRatio` = `windup_modifier`; Vladimir uses `mAttackCastTime`/`mAttackTotalTime` instead), `mAdaptiveForceToAbilityPowerWeight`, `primaryAbilityResource.arType`. Regeneration is per second (the wiki shows per 5 s); champion regen fields and the simulation now use per second too. Item flat regen stats must be per second as well (Phase 3 items). Every champion has a windup (`mAttackDelayCastOffsetPercent` or `mAttackCastTime`/`mAttackTotalTime`, checked for 27); a missing one is an error. The simulation uses `windup_modifier` (wiki formula, see docs/league-mechanics.md); the old test fixtures had the scraper's value / 100 and are fixed
-  - Hashed fields are FNV-1a hashes of the lowercased field name, so they are the same for every champion. The mana fields are unknown to CDragon's hash list (`CommunityDragon/Data`, `hashes.binfields.txt`); guessed and confirmed: `{726ee5cd}` = `arBaseModifiable`, `{6216bf7b}` = `arPerLevelModifiable`, `{c4ab3550}` = `arBaseStaticRegenModifiable`, `{3a509002}` = `arRegenPerLevelModifiable` (could be contributed to CDragon)
-  - Missile speed: the `missileSpeed` field is outdated (Veigar 1100); the real one is `mSpell.mMissileSpec.movementComponent.mSpeed` of the basic attack spell (Veigar 1500, Vayne 2000, as in the wiki). Probably the same for ability missiles (Veigar Q: wiki 2200, `missileSpeed` 1200)
-  - Melee/ranged from `purchaseIdentities` (Nidalee lists both, base form first), adaptive type from `mAdaptiveForceToAbilityPowerWeight` (missing = physical). Hashed fields are read by name or hash (`bin_field`), so they keep working once CDragon knows the names
-  - Data Dragon stays for the champion list and `maxrank`. The resource type stays Data Dragon's `partype` (our `ResourceType` uses its texts) `Module:ChampionData` is loaded every run as a cross-check; a mismatch goes to the log (the wiki has errors too: Annie's HP per level is -10 there)
-- [x] **Decided: the wiki is read through its data templates, not its HTML.** Every ability has a template (`Template:Data_Veigar/Baleful_Strike?action=raw`) with fields (`damagetype`, `spellshield`, `projectile`, `targeting`, `cast time`, `notes`); `Module:ChampionData/data` has every champion (incl. `adaptivetype`), `Module:ItemData/data` every item. Used for notes and editor suggestions; removes most of the fragile HTML scraping. Check whether the patch page works as raw text too
-- [ ] PBE preview (V1, after the base loader): CDragon mirrors the PBE (`pbe/`, e.g. 16.24 while 26.23 is live) in the same format, about two weeks ahead. Load it as a provisional next patch, clearly marked, replaced on release. Gives time for bigger reworks and shows users what is coming. PBE values still change, and some never ship
+- [ ] Left from Phase 2 for the scraper rework, because only the scraper uses them: the pseudo stats in `Stat` (`target's armor`, `units`, `Charge`, …), `DamageType` `Default`/`Non-Damaging`/`See Notes`/`Spell damage`, the `ERROR` members and the `from_str` alias maps
+- [ ] PBE preview (V1, after the base loader): CDragon mirrors the PBE (`pbe/`, e.g. 16.24 while 26.23 is live) in the same format, about two weeks ahead. Load it as a provisional next patch, clearly marked, replaced on release. PBE values still change, and some never ship
 - [ ] Dash and leap travel times (Nidalee's Pounce lands at the cast today), e.g. from CommunityDragon's spell data or other sources
-- [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions. Then `Lock` can tell an animation from a cast time: item actives can't be used during a cast time, but during a pure animation (wiki)
-  - Cast times are not reliable in CDragon: three fields (`spellCastTime`, often a default 0.25 and once -2.0; `mCastTime`; `castFrame`, a frame of the animation at 30 fps) that disagree with each other and with the wiki (Darius Q 0.75 in the wiki, 0.25 in `spellCastTime`). Decided: `cast_time` stays hand-owned, the editor suggests the wiki template's `cast time` and shows the three CDragon fields. Phase 4: a few practice tool checks or the CommunityDragon Discord could tell what each field means
-  - Animation lengths are in the `.anm` files, which CDragon does not serve (404); the animation graph (`animations/skin0.bin.json`) only names the file per clip. Reading them needs the local game files (WAD archives)
+- [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions. Then `Lock` can tell an animation from a cast time (item actives can't be used during a cast time, but during a pure animation). Why CDragon doesn't help yet: see decisions, "Cast times and animations"
 - [ ] Fresh load into the new format
 - [ ] `extra = forbid` for the hand-entered containers (Ability, Passive, Pet) so typos fail; needs a fresh load or an `$unset` of the old `effects` in the DB first
+
 
 ## Phase 4: Admin side complete
 

@@ -639,13 +639,24 @@ def _scrape_patch_only(content: Tag) -> dict[str, dict]:
     return patch_changes
 
 
+def _section_start(content: Tag, section_id: str) -> Tag | None:
+    """The tag whose following siblings are the section's content. The old markup puts the id on a span inside the
+    h3; the newer one puts it on the h3 itself and wraps that in a div.mw-heading."""
+    anchor = content.find(id=section_id)
+    if not anchor:
+        return None
+    heading = anchor if anchor.name == "h3" else anchor.find_parent("h3")
+    if heading and "mw-heading" in heading.parent.get("class", []):
+        return heading.parent
+    return heading
+
+
 def _scrape_patch_champions(content: Tag) -> dict:
-    champion_start = content.find("span", id="Champions")
+    champion_start = _section_start(content, "Champions")
     champion_changes = {"new": [], "changed": {}}
     if not champion_start:
         return champion_changes
-    
-    champion_start = champion_start.find_parent("h3")
+
     for sibling in champion_start.find_next_siblings():
         if sibling.name == "dl":
             name, changes = _scrape_patch_champion(sibling)
@@ -674,19 +685,18 @@ def _scrape_patch_champion(content: Tag) -> tuple[str, dict | None]:
         return champion_name, changes
     for li in ul.find_all("li", recursive=False):
         label = _get_clean_text(li.span) if li.span else "General"
-        sub_changes = [_get_clean_text(c) for c in li.find_all("li", recursive=False)]
-        changes[label] = sub_changes
+        changes[label] = [_get_clean_text(line) for sublist in li.find_all("ul", recursive=False)
+                          for line in sublist.find_all("li", recursive=False)]
 
     return champion_name, changes
 
 
 def _scrape_patch_rest(content: Tag, object_type: str) -> dict:
-    object_start = content.find("span", id=object_type)
+    object_start = _section_start(content, object_type)
     object_changes = {"new": [], "changed": {}, "deleted": []}
     if not object_start:
         return object_changes
-    
-    object_start = object_start.find_parent("h3")
+
     for sibling in object_start.find_next_siblings():
         if sibling.name == "dl":
             name, changes = _scrape_patch_object(sibling)
@@ -733,8 +743,7 @@ def _scrape_hotfix(content: Tag, hotfix: datetime) -> dict[str, dict]:
         "summonerspells": {"changed": {}}
     }
     wiki_hotfix = datetime_to_wiki(hotfix)
-    span = content.find("span", id=wiki_hotfix.replace(" ", "_"))
-    hotfix_start = span.find_parent("h3") if span else None
+    hotfix_start = _section_start(content, wiki_hotfix.replace(" ", "_"))
     if not hotfix_start:
         patch_logger.error(f"[HOTFIX] [SCRAPE] [{hotfix}] Hotfix not found in wiki content")
         return patch_changes

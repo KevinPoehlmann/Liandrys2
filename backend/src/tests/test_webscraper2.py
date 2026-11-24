@@ -1,4 +1,5 @@
 import pytest
+from bs4 import BeautifulSoup
 
 from datetime import datetime
 
@@ -530,6 +531,35 @@ def test_scrape_patch_champions(load_soup):
     assert "changed" in result
     assert "Kai'Sa" in result["changed"]
     assert "Gwen" in result["changed"]
+
+
+def test_scrape_patch_champions_reads_the_lines(load_soup):
+    content = load_soup("v25.06").find("div", class_="mw-parser-output")
+
+    caitlyn = _scrape_patch_champions(content)["changed"]["Caitlyn"]
+
+    assert caitlyn["Yordle Snap Trap"]
+    assert all(caitlyn.values())
+
+
+NEW_HEADING_MARKUP = """<div class="mw-parser-output">
+<div class="mw-heading mw-heading3"><h3 id="Champions">Champions</h3><span class="mw-editsection">edit</span></div>
+<dl><dt><span class="champion-icon" data-champion="Caitlyn"><span><a>Caitlyn</a></span></span></dt></dl>
+<ul><li><span class="ability-icon"><span><a>Headshot</a></span></span>
+<ul><li>AD ratio reduced to <span class="pp-tooltip">60% / 70% / 80%</span> AD.</li></ul></li>
+<li>Stats<ul><li>Mana growth increased to 50 from 40.</li></ul></li></ul>
+<div class="mw-heading mw-heading3"><h3 id="Items">Items</h3></div>
+</div>"""
+
+
+def test_scrape_patch_with_the_newer_heading_markup():
+    # Since 2026 the wiki puts the id on the h3 and wraps it in a div.mw-heading (V26.21).
+    content = BeautifulSoup(NEW_HEADING_MARKUP, "lxml").find("div", class_="mw-parser-output")
+
+    result = _scrape_patch_champions(content)
+
+    assert result["changed"] == {"Caitlyn": {"Headshot": ["AD ratio reduced to 60% / 70% / 80% AD."],
+                                             "General": ["Mana growth increased to 50 from 40."]}}
 
 
 def test_scrape_patch_champion_kaisa(load_soup):

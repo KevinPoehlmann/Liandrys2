@@ -8,7 +8,8 @@ League of Legends damage calculator: pick champions, levels, items, runes and a 
 - **Explain, don't just do.** This is a learning project: give reasons and trade-offs, especially for design decisions. Ask before changing data formats (models, formula syntax, DB schema).
 - **Code style:** everything in English (names, comments, strings). Few comments. Prefer descriptive names and small, compact functions. Comment only the *why* of non-obvious things (e.g. a League mechanic).
 - **Be careful with dependency upgrades.** Library updates have broken the project before. Bump versions one at a time, and only with the tests passing.
-- `ToDo.md` is the owner's idea collection. Don't restructure it. Planned work lives in `ROADMAP.md`.
+- `ToDo.md` is the owner's idea collection. Don't restructure it. Planned (open) work lives in `ROADMAP.md`; finished work and decisions with their reasons move to `docs/decisions.md`, so the roadmap stays short.
+- **Save context:** one chat per roadmap step. Read files by headings first, then only the needed sections; keep fixture, log and traceback output short.
 
 ## Architecture
 
@@ -32,7 +33,7 @@ frontend/admin/     admin UI (Vue 3 + Vite + Tailwind) :5174 -> proxies to :5001
 
 **Data flow:** Riot Data Dragon (lists, base stats, images) + League wiki (scraped details) → loader → MongoDB → the admin editor completes abilities/passives by hand → the user picks a combo → simulation → `effect_list` → chart.
 
-**Patch versioning:** every document carries `patch` + `hotfix`. A new patch copies all documents of the old patch forward. Champions are diffed against CommunityDragon (`loader/champion_patcher.py`): `changes` (`list[Change]`, source `data` or `patch_notes`) holds only this patch's changes, and an ability loses `validated` only where the change can break its hand-made rules (table in ROADMAP Phase 3). Items, runes and summoner spells still go through the old loader: named in the patch notes ⇒ `changes` lines and `validated = False`. `validated` means "the manually maintained data is trustworthy for this patch"; `Champion.validated` is computed from its abilities. A patch with `loaded_total_count < total_count` is incomplete, and the next load resumes it.
+**Patch versioning:** every document carries `patch` + `hotfix`. A new patch copies all documents of the old patch forward. Champions are diffed against CommunityDragon (`loader/champion_patcher.py`): `changes` (`list[Change]`, source `data` or `patch_notes`) holds only this patch's changes, and an ability loses `validated` only where the change can break its hand-made rules (table in [docs/decisions.md](docs/decisions.md#automatic-patching)). Items, runes and summoner spells still go through the old loader: named in the patch notes ⇒ `changes` lines and `validated = False`. `validated` means "the manually maintained data is trustworthy for this patch"; `Champion.validated` is computed from its abilities. A patch with `loaded_total_count < total_count` is incomplete, and the next load resumes it.
 
 **Models:**
 - Every type has `New<Type>` (no id, what the loader writes), `<Type>` (with `_id`) and `Short<Type>` (projection for lists).

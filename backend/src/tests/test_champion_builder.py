@@ -228,12 +228,12 @@ class TestChampionStats():
         assert champion_stats(fixture("vladimir.bin.json"))["attack_windup"] == pytest.approx(0.19737, abs=1e-5)
 
 
-    def test_missing_windup_is_an_error_not_a_guess(self):
+    def test_missing_cast_offset_is_the_default_zero(self):
+        # Riot leaves out default values: Alistar, Fiddlesticks and Volibear have no offset, the wiki says 0.
         cdragon = fixture("veigar.bin.json")
         cdragon["Characters/Veigar/CharacterRecords/Root"]["basicAttack"] = {}
 
-        with pytest.raises(ValueError, match="no windup"):
-            champion_stats(cdragon)
+        assert champion_stats(cdragon)["attack_windup"] == 0.3
 
 
     def test_windup_modifier_defaults_to_one(self):

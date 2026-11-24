@@ -164,11 +164,10 @@ def champion_stats(cdragon: dict) -> dict:
 
 def _attack_windup(attack: dict) -> float:
     # Riot's base is 30 % of the attack time, shifted per champion; a few give cast and total time instead (Vladimir).
+    # An offset of 0 is left out like every default (Alistar, Volibear: 0 in the wiki).
     if "mAttackCastTime" in attack:
         return attack["mAttackCastTime"] / attack["mAttackTotalTime"]
-    if "mAttackDelayCastOffsetPercent" in attack:
-        return 0.3 + attack["mAttackDelayCastOffsetPercent"]
-    raise ValueError("The basic attack has no windup (neither a cast offset nor cast and total time)")
+    return 0.3 + attack.get("mAttackDelayCastOffsetPercent", 0.0)
 
 
 def _missile_speed(cdragon: dict, record: dict) -> float:

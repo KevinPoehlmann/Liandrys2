@@ -61,10 +61,10 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
     champion.changes = _data_changes(_stat_lines(champion, champion_stats(raw.cdragon)))
     for slot, container in _containers(champion):
         diff = diffs.get(slot, SpellDiff())
-        lines = notes.pop(container.name, [])
+        lines = _note_lines(notes, container.name)
         if slot in new_spells:
             container.name = new_spells[slot].name or container.name
-            lines += notes.pop(container.name, [])
+            lines += _note_lines(notes, container.name)
         if slot in max_ranks:
             _set_max_rank(container, max_ranks[slot], diff)
         container.changes = _data_changes(diff.lines) + patch_note_changes(lines)
@@ -79,6 +79,12 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
     apply_loader_part(champion, new_spells)
     champion.validated = all(container.validated for _, container in _containers(champion))
     return PatchedChampion(champion, unvalidated)
+
+
+def _note_lines(notes: dict[str, list[str]], name: str) -> list[str]:
+    # Two-part abilities ("Safeguard / Iron Will") appear in the patch notes under either part.
+    names = [name] + [part.strip() for part in name.split(" / ")] if " / " in name else [name]
+    return [line for alias in names for line in notes.pop(alias, [])]
 
 
 def spells_from_document(champion: NewChampion) -> dict[str, LoadedSpell]:

@@ -3,7 +3,7 @@ import copy
 import pytest
 
 from src.server.loader.champion_builder import champion_stats, loaded_spells
-from src.server.loader.champion_patcher import patch_champion, spells_from_document, used_names
+from src.server.loader.champion_patcher import _note_lines, patch_champion, spells_from_document, used_names
 from src.server.models.ability import Ability
 from src.server.models.change import Change
 from src.server.models.enums import ChangeSource
@@ -167,6 +167,14 @@ class TestValidation():
         assert result.unvalidated["Baleful Strike"] == ["named in the patch notes only"]
         assert result.champion.q.changes == [Change(source=ChangeSource.PATCH_NOTES, text="Now pierces")]
         assert texts(result.champion) == ["Splash art updated"]
+
+
+    def test_two_part_abilities_match_either_name(self):
+        # 26.21: Lee Sin's "Safeguard / Iron Will" appears as "Safeguard"
+        notes = {"Safeguard": ["Cooldown increased"], "Iron Will": ["Bug fix"], "Tempest": ["Other"]}
+
+        assert _note_lines(notes, "Safeguard / Iron Will") == ["Cooldown increased", "Bug fix"]
+        assert notes == {"Tempest": ["Other"]}
 
 
     def test_an_unvalidated_ability_stays_unvalidated(self, veigar, old_raw, new_raw):

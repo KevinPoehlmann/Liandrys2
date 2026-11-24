@@ -23,8 +23,10 @@ STAT_VARIABLES = {
 }
 
 
-# Spell fields kept under Riot's own field names, with the index of rank 1 (mana lists have no rank 0).
-SPELL_FIELDS = {"cooldownTime": 1, "mana": 0}
+# Spell fields kept under Riot's old field names: the fields to read, live first, and the index of rank 1 (mana lists
+# have no rank 0). The old lists are stale copies Riot no longer updates (Darius Q in 26.21: cooldownTime 9–5,
+# Cooldown and the wiki 9–4); they stay as a fallback.
+SPELL_FIELDS = {"cooldownTime": (("Cooldown", "cooldownTime"), 1), "mana": (("manaValues", "mana"), 0)}
 
 
 class UnsupportedCalculation(Exception):
@@ -42,14 +44,23 @@ def spell_values(spell: dict, max_rank: int) -> SpellValues:
     result = SpellValues()
     for data_value in spell.get("DataValues") or []:
         _add(result, data_value.get("name", ""), lambda: _rank_value(data_value.get("values", []), max_rank))
-    for name, first_rank in SPELL_FIELDS.items():
+    for name, (sources, first_rank) in SPELL_FIELDS.items():
         # Always present, so `cooldown: "cooldownTime"` and `cost: "mana"` resolve even for free spells.
-        _add(result, name, lambda: _rank_value(spell.get(name) or [], max_rank, first_rank))
+        _add(result, name, lambda: _rank_value(_spell_field(spell, sources), max_rank, first_rank))
     for name, calculation in (spell.get("mSpellCalculations") or {}).items():
         _add(result, name, lambda: translate_calculation(calculation))
         if name.isidentifier():
             result.calculations[name] = calculation
     return result
+
+
+def _spell_field(spell: dict, sources: tuple[str, ...]) -> list[float]:
+    for source in sources:
+        value = spell.get(source)
+        values = value.get("values") if isinstance(value, dict) else value
+        if values:
+            return values
+    return []
 
 
 def _add(result: SpellValues, name: str, translate) -> None:
@@ -194,9 +205,10 @@ def _interpolation(part: dict) -> list[float]:
 
 def _breakpoints(part: dict) -> list[float]:
     # A breakpoint either adds a one-time bonus at its level or changes the bonus per level from then on.
-    breakpoints = {point["mLevel"]: point for point in part.get("mBreakpoints", [])}
+    # Riot leaves out the default level 1, which sets the bonus per level from the start (Yone W against minions).
+    breakpoints = {point.get("mLevel", 1): point for point in part.get("mBreakpoints", [])}
     value = _clean(part.get("mLevel1Value", 0))
-    per_level = _clean(part.get("mInitialBonusPerLevel", 0))
+    per_level = _clean(breakpoints.get(1, {}).get("mBonusPerLevelAtAndAfter", part.get("mInitialBonusPerLevel", 0)))
     values = [value]
     for level in range(2, MAX_LEVEL + 1):
         point = breakpoints.get(level, {})

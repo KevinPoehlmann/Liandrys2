@@ -71,6 +71,19 @@ class TestRankValues():
         assert values["mana"] == "by_rank(30, 35, 40, 45, 50)"
 
 
+    def test_cooldown_and_mana_come_from_the_live_fields(self):
+        # cooldownTime still says 9 / 8 / 7 / 6 / 5; Riot only updates the Cooldown object (26.21, wiki: 9 to 4)
+        values = spell_values(load_spell("darius", "DariusCleave"), max_rank=5).values
+
+        assert values["cooldownTime"] == "by_rank(9, 7.75, 6.5, 5.25, 4)"
+
+
+    def test_old_spell_fields_are_the_fallback(self):
+        values = spell_values({"cooldownTime": [0, 8, 7], "mana": [40, 50]}, max_rank=2).values
+
+        assert (values["cooldownTime"], values["mana"]) == ("by_rank(8, 7)", "by_rank(40, 50)")
+
+
     def test_spell_fields_are_always_present(self):
         values = spell_values({}, max_rank=5).values
 
@@ -120,6 +133,17 @@ class TestCalculations():
         # Wiki: 30 + 5 per level until 10, then + 10 per level until 13, then + 25 per level
         assert values["NoxianMightBonusAD"] == (
             "by_level(30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 85, 95, 105, 130, 155, 180, 205, 230, 255, 280)")
+
+
+    def test_breakpoint_without_level_starts_at_level_one(self):
+        # Yone W against minions; wiki: 30 + 10 per level until 8, then + 20 per level until 13, then + 40 per level
+        part = {"__type": "ByCharLevelBreakpointsCalculationPart", "mLevel1Value": 30.0, "mBreakpoints": [
+            {"mBonusPerLevelAtAndAfter": 10.0}, {"mLevel": 9, "mBonusPerLevelAtAndAfter": 20.0},
+            {"mLevel": 14, "mBonusPerLevelAtAndAfter": 40.0}]}
+
+        formula = translate_calculation({"__type": "GameCalculation", "mFormulaParts": [part]})
+
+        assert formula == "by_level(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200, 240, 280, 320, 360, 400, 440, 480)"
 
 
     def test_breakpoints_add_one_time_bonuses(self):
