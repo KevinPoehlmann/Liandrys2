@@ -826,7 +826,7 @@
             "Basic damage"
           ],
           "dmg_sub_type": "Magic",
-          "windup": 0.2,
+          "windup": 0.4,
           "missile_speed": 0
         },
         "passive": {

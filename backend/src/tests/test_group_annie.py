@@ -174,7 +174,7 @@ class TestMoltenShield():
 
 TIBBERS = Actor("blue.tibbers")
 SUMMON_TICK = CAST_TICKS
-TIBBERS_WINDUP = 0.2
+TIBBERS_WINDUP = 0.4  # CommunityDragon (annietibbers): 30 % shifted by +0.1
 R_RANK_1_TIBBERS_ATTACK = 30
 R_RANK_1_AURA = 2.5
 ENRAGE_TICKS = to_ticks(3.036)
