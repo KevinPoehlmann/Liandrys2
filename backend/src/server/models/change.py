@@ -6,6 +6,7 @@ from src.server.models.enums import ChangeSource
 class Change(BaseModel):
     source: ChangeSource
     text: str
+    details: list[str] = []  # sub-lines of a patch note line (wiki "***"): extra info on `text`
 
     @classmethod
     def validate(cls, value):
@@ -15,5 +16,5 @@ class Change(BaseModel):
         return super().validate(value)
 
 
-def patch_note_changes(lines: list[str]) -> list[Change]:
-    return [Change(source=ChangeSource.PATCH_NOTES, text=line) for line in lines]
+def patch_note(text: str, details: list[str] | None = None) -> Change:
+    return Change(source=ChangeSource.PATCH_NOTES, text=text, details=details or [])

@@ -9,14 +9,15 @@ import aiohttp
 
 import src.server.database as db
 import src.server.loader.patchloader2 as old
-import src.server.loader.webscraper2 as ws
 from src.server.loader.champion_builder import SLOTS, LoadedSpell, build_champion, loaded_spells, wiki_mismatches
 from src.server.loader.champion_patcher import patch_champion, spells_from_document
 from src.server.loader.champion_source import (cdragon_version, fetch_build, fetch_champion_data, fetch_strings,
                                                load_raw_champion)
 from src.server.loader.helper import SafeSession, patch_sort_key, riot_to_wiki_patch
 from src.server.loader.images import load_champion_images
+from src.server.loader.patch_notes import fetch_patch_page, parse_patch_notes
 from src.server.loader.patchexceptions import LoadError, PatcherError
+from src.server.models.change import Change
 from src.server.models.champion import Champion, NewChampion, RawChampion
 from src.server.models.json_validation import ChampionJson, ChampionsJson
 from src.server.models.patch import NewPatch
@@ -176,8 +177,7 @@ async def load_patch(patch_name: str, hotfix: datetime | None, old_patch: NewPat
     start = time.monotonic()
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=600)) as aio_session:
         session = SafeSession(aio_session)
-        patch_page = await old._fetch_wiki_html(riot_to_wiki_patch(patch_name), "Patch", old_patch, session)
-        notes = ws.scrape_patch(patch_page, hotfix)
+        notes = parse_patch_notes(await fetch_patch_page(session, riot_to_wiki_patch(patch_name)), hotfix)
         patch = NewPatch(patch=patch_name, hotfix=hotfix, champion_count=old_patch.champion_count,
                          item_count=old_patch.item_count, rune_count=old_patch.rune_count,
                          summonerspell_count=old_patch.summonerspell_count)
@@ -196,7 +196,7 @@ async def load_patch(patch_name: str, hotfix: datetime | None, old_patch: NewPat
 async def patch_all_champions(champions: list[ChampionJson], notes: dict, session: SafeSession, patch: NewPatch,
                               old_patch: NewPatch) -> None:
     """Champions of the old patch are patched forward, new ones get a first load.
-    `notes` is the wiki's {"changed": {champion: {ability: [lines]}}}."""
+    `notes` are the patch notes' {"changed": {champion: {ability: [lines]}}}."""
     version = cdragon_version(patch.patch)
     build = await fetch_build(session, version)
     strings = await fetch_strings(session, version)
@@ -223,7 +223,7 @@ async def patch_all_champions(champions: list[ChampionJson], notes: dict, sessio
             load_logger.error(f"[CHAMPION] {entry.name} ❌ Failed to patch")
 
 
-async def patch_one_champion(entry: ChampionJson, old_champion: Champion, notes: dict[str, list[str]],
+async def patch_one_champion(entry: ChampionJson, old_champion: Champion, notes: dict[str, list[Change]],
                              session: SafeSession, patch: NewPatch, old_patch: NewPatch, build: str,
                              strings: dict[str, str], champion_data: dict) -> None:
     if await db.exists_champion_by_name(entry.name, patch.patch, patch.hotfix):

@@ -1,0 +1,993 @@
+{{Infobox patch
+|gallery = {{GalleryHelper
+|LoL 25.S1.1 Patch Highlights.png¦Patch Highlights¦
+|Elise MasqueoftheBlackRoseSkin.jpg¦Elise¦
+|Ezreal MasqueoftheBlackRoseSkin.jpg¦Ezreal¦
+|Katarina PrestigeMasqueoftheBlackRoseSkin.jpg¦Katarina¦
+|Master Yi VictoriousSkin.jpg¦Master Yi¦
+|Renata Glasc MasqueoftheBlackRoseSkin.jpg¦Renata Glasc¦
+|Samira MasqueoftheBlackRoseSkin.jpg¦Samira¦
+|Sett RadiantSerpentSkin.jpg¦Sett¦
+|Vladimir MasqueoftheBlackRoseSkin.jpg¦Vladimir¦
+}}
+|Caption = Welcome to Noxus, you are formally invited to join the Black Rose...
+|Highlights =
+* {{Univ|Masque of the Black Rose}} skins
+* {{Univ|Modern Mythos}} skin
+* 2024 Split 3 {{univ|Victorious}} skin
+* Southeast Asia (SEA) [[server]] merge
+* Swiftplay semi-global release
+* 2025 Season 1: [[Welcome to Noxus]]
+* New Battle Pass system
+* {{tip|Summoner's Rift}}
+** Noxus-themed map
+** Feats of Strength & Boots upgrades
+** New Epic Monster: {{ui|Atakhan}}
+** Minion stat & mechanics changes
+* {{ci|Ashe}} adjustments
+* {{ci|Kalista}} adjustments
+* New [[Rune]]s:
+** {{ri|Axiom Arcanist}}, {{ri|Deep Ward}}, {{ri|Grisly Mementos}}, {{ri|Sixth Sense}}
+* {{tip|Turret}} {{ii|Ohmwrecker (Turret Item)|Warmup}} buffs
+* New [[Summoner spell]] icons
+* {{si|Teleport|icononly=true}}{{si|Unleashed Teleport|icononly=true}} [[Teleport]] rework
+* [[Homeguard]] changes
+|Release = January {{NumberSup|9}}, 2025
+|Related = [https://www.leagueoflegends.com/en-us/news/game-updates/patch-25-s1-1-notes/ Patch 25.S1.1 Notes]
+|Prev = V14.24
+|Next = V25.S1.2
+}}
+This is the version article (patch notes) for '''patch 25.S1.1 (15.1)''' in {{tip|League of Legends}}.
+
+== New Cosmetics ==
+The following [[Champion skin]]s have been added to the store:
+* {{csl|Elise|Masque of the Black Rose}} (Battle Pass)
+* {{csl|Ezreal|Masque of the Black Rose}} ({{RP|1350}})
+* {{csl|Katarina|Prestige Masque of the Black Rose}} (Battle Pass)
+* {{csl|Renata Glasc|Masque of the Black Rose}} (Battle Pass)
+* {{csl|Samira|Masque of the Black Rose}} (Battle Pass)
+* {{csl|Sett|Radiant Serpent}} (Sanctum)
+* {{csl|Vladimir|Masque of the Black Rose}} (Battle Pass)
+
+The following Champion skin will be distributed to players in any ranked queue:
+* {{csl|Master Yi|Victorious|chromas=true}}
+
+The following [[Chroma]] sets have been added to the store:
+* {{csl|Ezreal|Masque of the Black Rose|chromas=true}}
+* {{csl|Galio|Mythmaker|chromas=Paragon}}
+* {{csl|Garen|Mythmaker|chromas=Paragon}}
+* {{csl|Katarina|Prestige Masque of the Black Rose|chromas=true}}
+* {{csl|Sivir|Mythmaker|chromas=Paragon}}
+
+The following [[Summoner icon]]s have been added to the store:
+<gallery captionalign="center" widths="90" orientation="square" spacing="small">
+Viktor Illustration Icon II profileicon.jpg|Viktor Illustration Icon II
+Crest Of The Rose profileicon.jpg|Crest Of The Rose
+Du Couteau Daggers profileicon.jpg|Du Couteau Daggers
+False Face profileicon.jpg|False Face
+Deadly Disguise profileicon.jpg|Deadly Disguise
+Golden Thorns profileicon.jpg|Golden Thorns
+Masque Of The Black Rose Ezreal Border profileicon.jpg|Masque Of The Black Rose Ezreal Border
+Prestige Edition Masque Of The Black Rose Katarina profileicon.jpg|Prestige Edition Masque Of The Black Rose Katarina
+Masque Of The Black Rose Renata Glasc Border profileicon.jpg|Masque Of The Black Rose Renata Glasc Border
+Masque Of The Black Rose Samira Border profileicon.jpg|Masque Of The Black Rose Samira Border
+Masque Of The Black Rose Vladimir Border profileicon.jpg|Masque Of The Black Rose Vladimir Border
+Radiant Serpent Sett profileicon.jpg|Radiant Serpent Sett
+</gallery>
+
+The following [[Ward skin]]s have been added to the store:
+<gallery captionalign="center" widths="90" orientation="square" spacing="small">
+Masque of the Black Rose Ward.png|Masque of the Black Rose
+</gallery>
+
+The following [[Emote]]s have been added to the store:
+<gallery captionalign="center" widths="90" orientation="square" spacing="small">
+Oopsies Emote.png|Oopsies
+I'm Smiling, Really Emote.png|I'm Smiling, Really
+Sanguine Smirk Emote.png|Sanguine Smirk
+Gentleman Thief Emote.png|Gentleman Thief
+Ready For Trouble? Emote.png|Ready For Trouble?
+Serpent Style! Emote.png|Serpent Style!
+</gallery>
+
+== League of Legends V25.S1.1 ==
+=== Client ===
+;2025 Annual Cycle — Thematic Seasons
+* '''Season 1: Welcome to {{fi|Noxus}}'''
+* Annual release cycles will now be split into 3 Thematic Seasons, or simply '''Seasons''', each lasting around 8 patch cycles (~4 months). Each Season may be themed around factions or alternate universes and centered around champion releases/updates.<ref name="seasons 2025">[https://www.leagueoflegends.com/en-us/news/dev/dev-seasons-in-2025/ /dev: Seasons in 2025]</ref><ref>X — [https://x.com/Spideraxe30/status/1862116893928145356 Riot Meddler on seasonal themes]</ref>
+** The theming can tie into game modes and meta-game experiences, rewards tracks, gameplay visuals, cosmetics, and all related content.
+* New 'Bringer of Ruin' in-Client motion comic.  ''Available until January 23rd, 2025, 12:00 PST.''
+* The Home page of the Client has been upgraded. Separate sections of interest are now organized into labeled tabs on the left. Includes tabs such as:
+** The current season's theme
+** Act Battle Pass
+** Other in-client experiences
+** Patch Notes
+** A new '''Info Hub''' area for showcasing news and highlights in or related to League of Legends and Teamfight Tactics.
+** ''And others.''
+
+;Battle Pass
+* A Season is further divided into two Acts. Each Act has a corresponding Battle Pass which offers a unique rewards track and is always available.
+** Average free Battle Pass rewards include:
+*** One themed Seasonal skin permanent.
+*** One random {{RP|1350}} or lower Skin Shard.
+*** A unique title.
+*** Two emotes.
+*** Two Mystery emotes.
+*** Three profile icons.
+*** Two Mystery icons.
+*** Four Champion Capsules.
+*** {{BE|4750}}
+*** 5 infinitely repeating "Epilogue" milestones at the end of the main reward track: the first four milestones are part of the free Pass and grant {{BE|50}} per level ({{BE|200}} per loop).
+** Average paid Battle Pass rewards include:
+*** Every free reward.
+*** The Act's Prestige skin.
+*** {{AS|3x}} Ancient Sparks.
+*** Three Reward Skins.
+*** Three Borders.
+*** Seven Loot Orbs.
+*** One Banner.
+*** One Ward Skin.
+*** Two Emotes.
+*** Two Icons.
+*** {{OE|1000}}
+*** Infinitely repeating "Epilogue" milestones at the end of the main reward track: the last level is part of the paid Pass and grants {{OE|25}} (once per loop).
+* The Battle Pass is accompanied by Daily, Weekly, and per-Act ''Objectives'' that feed into the Battle Pass track's progression.
+* Champion Mastery is now rewarded through the Battle Pass.
+* {{sbc|Removed:}} Event passes, event tokens & event shop.
+** Prestige skins and cosmetics are no longer tied to event passes.
+** One Prestige skin will be available each Act to earn as the ultimate paid Battle Pass reward.
+* Battle Pass Reward skins will not be added to the reroll pool.
+* {{sbc|Removed:}} Champion Capsules and Glorious Champion Capsules.
+** Rewards are incorporated into the Battle Pass track.
+* {{sbc|Removed:}} Players no longer gain a free {{ME|10 Mythic Essence}} every 50 levels. The currency is now exclusively premium.<ref>X — Riot BarackProbama (15 January 2025) [https://x.com/CestDommage/status/1879575709657743370 ''"The intent has always been for it to serve as a premium currency. (…)"'']</ref>
+
+;Champion Mastery<ref>Riot Support — [https://support-leagueoflegends.riotgames.com/hc/en-us/articles/36013837638035-Welcome-to-Noxus-Act-1 Welcome to Noxus: Act 1] (under the "Mastery Objectives" section). ''Retrieved 2025-04-08 03:00 UTC.''</ref>
+* Rewards are now incorporated into the Battle Pass track, earned via missions.
+** {{sbc|New:}} Missions for completing Mastery Milestones.
+**# (Indefinitely repeating) Complete 1 Mastery Milestone on any champion. Awards {{BXP|100}}.
+**# (Once per season) Achieve Milestone IV on any champion. Awards {{BXP|500}}.
+** {{sbc|Removed:}} Hextech Chests can no longer be earned from the Champion Mastery track.
+*** Achieving Milestone I no longer rewards a Hextech Chest (up to 6 from this milestone per split)
+*** Achieving Milestone III no longer rewards a Hextech Chest (up to 25 from this milestone per split)
+** {{sbc|Removed:}} Players can no longer earn a Superior Hextech Chest (by completing 12 Milestones in a Mastery Set).
+* {{sbc|Undocumented:}} Milestone requirement changes.
+** <u>Milestone I</u>
+*** New requirement: 1 game of A- and higher
+*** Old requirement: 1 game B- and higher, 4 games of C- and higher
+** <u>Milestone II</u>
+*** New requirement: 1 game of A- and higher
+*** Old requirement: 1 game A- and higher, 4 games of C- and higher
+** <u>Milestone III</u>
+*** New requirement: 1 game of S- and higher
+*** Old requirement: 1 game S- and higher, 4 games of C- and higher
+** <u>Milestone IV</u>
+*** New requirement: 1 game of S- and higher
+*** Old requirement: 1 game S- and higher, 4 games of C- and higher
+** <u>Bonus Milestone</u>
+*** New requirement: 2 games of S- and higher
+*** Old requirement: 3 games of S- and higher
+* '''Mastery Set rewards'''
+** New (Seasonal Missions):
+*** At 12 Mastery Milestones completed — {{BXP|1500}}.
+*** At 25 Mastery Milestones completed — {{BXP|500}}.
+*** At 40 Mastery Milestones completed — {{BXP|500}}.
+** Old (separate Split Milestones track):
+*** At 12 Mastery Milestones completed — 1 Superior Mastery Chest, which is part of the same loot pool as a {{tt|regular Masterwork Chest|Opening the Superior one does not count toward the player's Masterwork Chest progress track.}}.
+*** At 24 Mastery Milestones completed — {{BE|750}}.
+*** At 40 Mastery Milestones completed — {{BE|1250}}.
+
+;Hextech Crafting
+* {{sbc|Removed:}} Players can no longer obtain Masterwork Chests in any way. (These would be granted via Ranked and Event rewards tracks, real-life promotions, as well as direct purchases from the Store as single or bundle items and as part of other bundles.)
+* This is an announcement for a future change. The '''Masterwork Chest progression track is expected to be retired''' with the release of patch '''25.S1.5'''.
+** Rewards are now incorporated into the Battle Pass track.
+* Key Fragments are now crafted into the equivalent amount of Keys at once.
+
+;Honor System Rework
+* This is an announcement for a future change. The '''Honor Shop and Honor tokens are expected to be retired''' on patch '''25.S1.4'''.
+** Players will receive future yearly Honor skins as well as all past Honor skins by acquiring and sustaining Honor level 5.
+*** All existing Honor skins will also be distributed to all players at Honor level 5 after this update is released.
+** Unspent Honor 5 Tokens will be automatically converted to {{OE|1050}} each.
+
+;Missions
+* {{sbc|Removed:}} First Win of the Day repeating mission that granted 400 XP and {{BE|50}}.
+* {{sbc|Removed:}} Missions no longer have a fallback of "participation" points (earned points for time spent playing). This has been effectively replaced by participation missions (e.g. "play a number of games") and/or other types of generic missions.
+* {{sbc|New:}} Daily, Weekly, per-Act missions for the Act's Battle Pass; Mastery, Event and other related missions. Rewards typically include Battle Pass XP and rarely icons and other non-premium content.
+** Progression and rewards from these missions are consolidated with the Battle Pass.
+* Added new Objectives UI window for the purposes of missions. ''[Location of the Missions button is unchanged.]''
+** There are two menus, one for League of Legends missions and one for Teamfight Tactics missions (toggled from the logo buttons at the top left).
+** The left side displays the different categories as tabs.
+** The top side displays the current Pass, the player's current level and XP progress, and reward for reaching the next level.
+** The rest of the menu lists the player's current missions along with their description, progress and reward(s).
+*** The menu also shows the remaining time to reset time-gated missions, the player's total active missions in a category, as well as their seasonal Mastery Set under the 'Mastery' category specifically.
+
+;Mythic Shop
+* This is an announcement for a future change. Starting in Patch 25.S1.2, Mythic Shop listings will be rotated every patch instead of every two patches. The current schedule for the Mythic Shop content in 25.S1.1 is unchanged.
+
+;Performance
+* Improved Client load times, especially on lower spec devices.
+* In the General tab of the Client settings, there is no longer an option to "Close League Client as Needed". Only the option to ''always'' close remains.
+
+;Practice Tool
+* Added access to multi-player, up to 10 players.
+* New cheats: 
+** Set Game Speed to:
+*** 0.25x
+*** 0.5x
+*** 1x
+*** 2x
+** Spawn {{ui|Ruinous Atakhan}} in Top Lane
+** Spawn {{ui|Ruinous Atakhan}} in Bot Lane
+** Spawn {{ui|Voracious Atakhan}} in Top Lane
+** Spawn {{ui|Voracious Atakhan}} in Bot Lane
+** Complete Feats of Strength.
+*** ''Can only be overridden by one team.''
+* {{sbc|Undocumented / Bug:}} After killing the first {{ui|Dragon|Elemental Drake|link=Dragon pit}} of the game, spawning the same one again no longer sets the map's element and the game's {{bi|Dragon Soul}}.
+
+;Queues
+* Swiftplay replaces Quickplay for {{tip|Summoner's Rift}}.<ref name="2025 swiftplay">[https://www.leagueoflegends.com/en-us/news/dev/dev-introducing-swiftplay/ /dev: Introducing Swiftplay]</ref> It will initially launch in the following [[server|regions]]: NA, LAN, LAS, EUW, EUNE, RU, BR, TR, TW, VN. Swiftplay's launch will take place alongside the release of patch 25.S1.1.
+** In the lobby, players can select the same champion in two different roles, unless that champion is among the highest pick rate champions overall.
+** Sources of gold and experience grant more of each later in the game.
+** Increased effectiveness of comeback xp / gold.
+** Decreased effectiveness for taking down players who are behind.
+** Turret plates fall earlier.
+** Baron Nashor spawns earlier.
+** Teams only need 3 drakes to achieve soul.
+** Support and Jungle quests complete faster.
+** Nearby minions that die grant reduced gold if not killed by a champion.
+** Support items cost more but have increased stats.
+* Co-Op vs. AI queues are now using Swiftplay game rules.
+
+;Ranked<ref name="seasons 2025"/>
+* 2025, Season 1 begins on 12:00:00 in every server according to local time.
+* Ranks and MMR will '''no longer reset''' after each Season (previously Split), but only after the launch of the new annual cycle.
+** With the beginning of Season 1, 2025, players will incur the one and only reset to their Rank standing for the entirety of 2025 (and so on for future annual cycles).
+* {{sbc|Removed:}} Ranked rewards track.
+** Rewards are now incorporated into the Battle Pass track.
+** Players now achieve eligibility for each season's ''Victorious'' skin by winning 15 Ranked games (in Solo/Duo and Flex combined).
+* Duo restrictions in Solo/Duo queue are lifted for the duration of this patch cycle, 25.S1.1. They will be re-enabled at the start of the next patch cycle.
+
+;Servers<ref>Riot Games (26 November 2024) — [https://www.leagueoflegends.com/en-sg/news/announcements/the-sea-server-merge-is-coming/ The SEA Server Merge is Coming!]</ref>
+* The following shards will be retired when the 14.24 patch cycle '''ends''' (January 9th, 3 AM local time):
+*# SG — Singapore, Malaysia, & Indonesia (SG2)
+*# TH — Thailand (TH2)
+*# PH — The Philippines (PH2)
+* Their regions will be merged into a single '''Southeast Asia (SEA)''' shard, available alongside this patch's launch.
+* Accounts will be transferred automatically; players will not be required to perform any steps (a first-time login may be required).
+
+;Misc
+* A new "Version" tab has been added at the bottom of the Client settings that displays details about the game version, including the internal version (which uses the old scheme).
+
+=== Game ===
+;Ambient game start
+* Reduced to 1:00 from 1:10 on Summoner's Rift.
+** ''Minion and Monster spawning is now offset 10 seconds later to keep the actual time of their first spawn <u>unchanged</u>.''
+
+;[[File:Bloody Petals buff.png|20px|link=]] Bloody Petals
+* {{sbc|New:}} This permanent, neutral buff is granted by picking up [[File:Blood RoseSquare.png|20px|link=]] Blood Roses or [[File:Large Blood RoseSquare.png|20px|link=]] Large Blood Roses, and as a direct reward from taking down {{ui|Ruinous Atakhan}}.
+* {{sbc|Bloody Petals:}} For each stack, gain {{as|25|xp}} {{sti|xp|{{as|experience}}}} and {{as|{{pp|0.6*1 to 0.6*0.333|0;39|changedisplay=true|type=stacks|formula=UNKNOWN; effect capped at 39 stacks.|round=3}} '''bonus''' Attack Damage}} or {{as|{{pp|1 to 0.333|0;39|changedisplay=true|type=stacks|formula=UNKNOWN; effect capped at 39 stacks.|round=3}} Ability Power}} ([[Adaptive force|Adaptive]]). Each team member is granted an additional {{pp|0;100|0;X|key=%|changedisplay=true|type=their KDA}} {{sti|xp|{{as|experience}}}}.
+* Stacks infinitely.
+
+;Champion Kill Bounties
+* {{sbc|Removed:}} There is no longer a buffer amount of 50 gold when entering a negative bounty state.
+* Depreciation rate from deaths reduced to {{g|1 bounty gold}} : {{g|5 gold distributed}} from {{g|1 bounty gold}} : {{g|4 gold distributed}}.
+* {{sbc|Removed:}} First Blood no longer grants {{g|100 '''bonus''' gold}} nor generates {{g|50 '''bonus''' gold}} toward the assist bounty.
+
+;[[Feats of Strength]] - New Mechanic
+* A Best-of-Three (first to 2) competition to complete various "Feats". A teams earns 1 point upon:
+** An ally drawing First Blood
+** Scoring the First Turret
+** Taking down the first 3 Epic monsters
+* The winning team is awarded the ''Blessing of Noxus'':
+** Automatically modifies Tier 2 Boots into a ''Triumphant'' version, granting them a small stat bonus varying by item.
+** Unlocks paid, Tier 3 upgrades for Boots items. At least 2 Legendary-tier items must be equipped before being able to buy them.
+* The fulfillment of Feats of Strength is indicated below the announcement overlay upon completing one related action.
+* The current status for both teams can also be viewed in the scoreboard.
+
+;Gold generation
+* Passive gold generation now starts at 1:40 into the game instead of 1:50.
+
+;[[Homeguard]]
+* {{sbc|New Effect:}} Homeguard is now always available from {{sbc|0:20}} game time, granting {{as|75% '''bonus''' movement speed}} until {{sbc|14:00}} game time.
+** ''[Note: This is the same value granted at 14 minutes. There are no changes to Homeguard after 14 minutes.]''
+* Homeguard duration reduced to 7 seconds from 8.
+* {{sbc|Removed:}} While {{bi|Hand of Baron}} is active, no longer increases Homeguard's haste to {{as|{{pp|125 to 200|20;25;30;35;40|key=%|changedisplay=true|type=minutes}} '''bonus''' movement speed|ms}}.
+* Respawn Homeguard haste increased to {{as|75% '''bonus''' movement speed}} from {{as|{{fd|66.67}}%|ms}}.
+* Respawn Homeguard duration increased to 20 seconds from 8.
+* {{sbc|New Effect:}} Respawn Homeguard's buff icon now has a timer noting its exact duration on the status bar.
+* {{sbc|New Effect:}} Noted the debuff on the status bar when Homeguard is disabled due to entering combat.
+
+;Jungle plants
+* {{sbc|New:}} [[File:Blood RoseSquare.png|20px|link=]] Blood Rose / [[File:Large Blood RoseSquare.png|20px|link=]] Large Blood Rose.
+** {{sbc|Gloom:}} Blood Roses periodically spawn around slain champions' death location around the map. Each needs 30 seconds to grow.
+** Additionally, 8 normal and 8 Large Blood Roses spawn in {{uis|Atakhan}} quadrant once his pit is formed and over the period until his spawn.
+** After {{ui|Atakhan}} spawns, the plants will stop spawning around the map.
+** {{ui|Ruinous Atakhan}} specifically grows 6 normal Blood Roses and 6 Large Blood Roses upon being taken down.
+** Picking up a Blood Rose permanently grants 1 stack of the [[File:Bloody Petals buff.png|20px|link=]] ''Bloody Petals'' buff to all team members, and picking up a Large Blood Rose grants 3.
+
+;Minimap
+* ''The following changes are undocumented.''
+* Improved fidelity of all objective and point-of-interest icons.
+* Improved hourglass timer visual and color contrast.
+* Minimap turret icon has been changed to match the updated Turret icon visual seen on the scoreboard's objective tracker section.
+* New minimap icon for {{ui|Atakhan}}. Each form has a unique icon.
+
+;Objective Votes
+* {{sbc|Bug Fix:}} UI for Dragon contesting vote no longer becomes invisible when disconnecting from and reconnecting to the game in the span of an active vote.
+
+;Scoreboard
+* ''The following changes are undocumented.''
+* Added objective tracker for {{ui|Atakhan}}.
+* Champion status section now has a background for each team's side, colored in the respective team colors.
+* Each champion's row is now visually separated by a faint line.
+* New Feats of Strength section that shows the completion of each applicable objective, under the respective team's side and colored in the respective team colors.
+** The winning team is signified by a 'Boot' icon in their color.
+* In the objective timers section:
+** Added {{ui|Atakhan}} as a large section between Baron Nashor and Dragons. Each form of Atakhan has a unique icon.
+** Improved the color clarity, made the trim shinier, and bevelled the corners.
+** Updated the icons for {{ui|Blue Sentinel}}, {{ui|Red Brambleback}} and {{ui|Baron Nashor}} (Baron now matches the icon on the objective tracker section).
+* New Scoreboard UI at the bottom will track each team's completed Feats.
+
+;Shopkeepers
+* {{sbc|Undocumented:}} Selection outline of each model is now visible for both sides' shopkeepers.
+
+=== Champions ===
+;{{ci|Annie}}
+* {{ai|Disintegrate|Annie}}
+** {{sbc|New Effect:}} Now refunds the mana cost and 50% of the cooldown if the target dies while the projectile is in flight.
+
+;{{ci|Ashe}}
+* {{ai|Frost Shot|Ashe}}
+** {{sbc|New Effect:}} '''Ashe's''' basic attacks deal bonus damage equal to {{as|(75% + {{ii|Infinity Edge|40%}}) critical strike chance|critical chance}}. Additionally, her basic attacks and ability hits apply ''Frost'' to enemies for 2 seconds, which {{tip|slow|slows}} them by {{pp|key=%|20 to 30}} for the duration.
+** {{sbc|Old Effect:}} '''Ashe's''' basic attack and ability hits apply ''Frost'' to enemies for 2 seconds, which {{tip|slow|slows}} them by {{pp|key=%|20 to 30}} for the duration. Basic attacks against enemies affected by ''Frost'' are modified to deal 115% {{as|(+ (75% + {{ii|Infinity Edge|40%}}) critical strike chance)|critical chance}} damage.
+* {{ai|Ranger's Focus|Ashe}}
+** Bonus attack speed increased to {{ap|25 to 65}}% from {{ap|25 to 55}}%.
+** Damage per flurry increased to {{as|{{ap|110 to 130}}% AD}} from {{as|{{ap|105 to 125}}% AD}}.
+* {{ai|Volley|Ashe}}
+** Base damage increased to {{ap|60 to 200}} from {{ap|20 to 80}}.
+** AD ratio changed to {{as|100% '''bonus''' AD}} from {{as|100% '''total''' AD}}.
+
+;{{ci|Bard}}
+* {{ai|Traveler's Call|Bard}}
+** First Chime spawn time in Summoner's Rift reduced to 0:15 from 0:25.
+
+;{{ci|Cassiopeia}}
+* {{ai|Serpentine Grace|Cassiopeia}}
+** {{sbc|New Effect:}} Now grants an additional {{as|{{pp|2 to 36}} '''bonus''' movement speed}} if her team gets ''Blessing of Noxus''.
+
+;{{ci|Ekko}}
+* {{csl|Ekko|Arcane Last Stand}}
+** {{sbc|Bug Fix:}} Restored VFX trail and SFX during the Homeguard animation.
+** {{ai|Chronobreak|Ekko}}
+*** {{sbc|Bug Fix:}} The Paragon Chroma no longer causes the afterimage to duplicate at very regular intervals while moving, instead of only one afterimage existing.
+
+;{{ci|Elise}}
+* General
+** Now swaps {{ri|Axiom Arcanist}} with {{ri|Nimbus Cloak}}.
+
+;{{ci|Gangplank}}
+* {{ai|Parrrley|Gangplank}}
+** {{sbc|Bug Fix:}} Now properly benefits from {{iis|Spear of Shojin}} Focused Will.
+* {{ai|Powder Keg|Gangplank}}
+** {{sbc|Bug Fix:}} Now properly benefits from {{iis|Spear of Shojin}} Focused Will.
+
+;{{ci|Illaoi}}
+* {{ai|Test of Spirit|Illaoi}}
+** {{sbc|Bug Fix:}} VO for when an enemy's spirit is active no longer unintentionally plays for allies as well.
+
+;{{ci|Jayce}}
+* General
+** Now swaps {{ri|Axiom Arcanist}} with {{ri|Nimbus Cloak}}.
+
+;{{ci|Kalista}}
+* Stats
+** Mana regeneration growth increased to {{fd|0.8}} from {{fd|0.4}}.
+* {{ai|Martial Poise|Kalista}}
+** ''Dash is still affected by slow and cripple. Has a new speed floor<!--300+{{fd|0.01}}{{times}}total MS?-->.''
+** New calculations for dash speed.
+** Base attack speed is now properly referenced. ''This is a buff of around 8%.''
+** Influence of attack speed slows has been halved.
+*** Attack speed increases still have full influence.
+** Movement speed multiplier changed to ({{as|{{fd|0.2}}% '''total''' movement speed}} + {{fd|0.25}}) from (1 - sum of slows).
+*** This is typically close to 100% but now benefits from bonus movement speed and is more resilient to slows. The minimum multiplier is 48%.
+** Restored the dash animation when basic attacking.
+** {{sbc|Bug Fix:}} Using {{ai|Pierce|Kalista}} during her attack winddown animation no longer causes her attack and idle animations to constantly reset when repeatedly inputting movement and stop commands without allowing the winddown animation cycle to finish.
+* {{ai|Pierce|Kalista}}
+** Mana cost increased to {{ap|60 to 80}} from {{ap|50 to 70}}.
+** Base damage reduced to {{ap|10 to 270}} from {{ap|20 to 280}}.
+* {{ai|Rend|Kalista}}
+** Base damage per subsequent spear changed to {{ap|7 to 35}} from {{ap|8 to 24}}.
+** AD ratio per subsequent spear reduced to {{as|{{ap|20 to 40}}% AD}} from {{as|{{ap|25 to 45}}% AD}}.
+
+;{{ci|Master Yi}}
+* {{ai|Highlander|Master Yi}}
+** {{sbc|Bug Fix:}} Slow immunity no longer ignores {{cai|Gravity Field|Viktor}}.
+
+;{{ci|Neeko}}
+* {{ai|Shapesplitter|Neeko}}
+** {{sbc|Undocumented:}} While Neeko is disguised as a non-champion, clones no longer expose the following buff VFX: {{ri|Arcane Comet}} ready, {{iis|Ardent Censer}} Sanctify, {{bi|Crest of Cinders}}, {{bi|Crest of Insight}}, all effects granted by a {{bi|Dragon Soul}}, {{ri|First Strike}} ready, {{ri|Guardian}} trigger radius, {{bi|Hand of Baron}}, {{tip|Spellblade}}, {{iis|Staff of Flowing Water}} Rapids, Shared Riches floating charges ({{ii|World Atlas}} & {{ii|Runic Compass}}), and {{ii|Elixir of Iron}}, {{ii|Elixir of Sorcery}} and {{ii|Elixir of Wrath}} being active.
+
+;{{ci|Nidalee}}
+* General
+** Now swaps {{ri|Axiom Arcanist}} with {{ri|Nimbus Cloak}}.
+
+;{{ci|Pyke}}
+* {{ai|Death from Below|Pyke}}
+** {{sbc|Removed:}} {{ii|Your Cut}} no longer grants an additional {{g|100}} if it was awarded from a kill that counted as ''First Blood''.
+
+;{{ci|Rengar}}
+* {{ai|Bola Strike|Rengar}}
+** {{sbc|Bug Fix:}} No longer generates 2 stacks toward effects such as {{ri|Phase Rush}} and {{iis|Eclipse}} Ever Rising Moon.
+
+;{{ci|Rumble}}
+* {{csl|Rumble|Badlands Baron}}
+** {{ai|The Equalizer|Rumble}}
+*** {{sbc|Bug Fix:}} Restored all SFX.
+
+;{{ci|Senna}}
+* {{csl|Senna|Bewitching}}
+** {{sbc|Bug Fix:}} Chromas now use the correct assets during the Homeguard animation and no longer fall back to Senna's default skin's assets.
+
+;{{ci|Seraphine}}
+* {{csl|Seraphine|KDA ALL OUT Superstar|K/DA ALL OUT Seraphine}}
+** Removed special missions for progressively unlocking each form. Rewards are now automatically distributed after purchase.<ref>Riot Support (16 January 2025 updated) — [https://support-leagueoflegends.riotgames.com/hc/en-us/articles/360058019573-K-DA-ALL-OUT-Seraphine-FAQ K/DA ALL OUT Seraphine FAQ]</ref>
+
+;{{ci|Shaco}}
+* {{ai|Jack in the Box|Shaco}}
+** {{sbc|Bug Fix:}} No longer illegally always triggers {{iis|Malignance}} Hatefog.
+
+;{{ci|Sylas}}
+* {{csl|Sylas|Ashen Slayer}}
+** {{sbc|Bug Fix:}} Restored wings and props during the {{si|Recall}} animation.
+
+;{{ci|Tristana}}
+* {{ai|Rocket Jump|Tristana}}
+** {{sbc|Bug Fix:}} Killing a clone no longer unintentionally resets the cooldown.
+
+;{{ci|Twitch}}
+* {{ai|Venom Cask|Twitch}}
+** Slow AP ratio increased to {{as|6% per 100 AP}} from {{as|5% per 100 AP}}.
+
+;{{ci|Varus}}
+* Stats
+** Base mana reduced to 320 from 360.
+* {{ai|Piercing Arrow|Varus}}
+** Mana cost reduced to {{ap|50 to 70}} from {{ap|65 to 85}}.
+* {{ai|Blighted Quiver|Varus}}
+** On-hit base damage changed to {{ap|6 to 30}} from {{ap|8 to 28}}.
+* {{ai|Hail of Arrows|Varus}}
+** Mana cost increased to 90 from 80.
+
+;{{ci|Viego}}
+* {{ai|Sovereign's Domination|Viego}}
+** {{sbc|Bug Fix:}} After possessing {{ci|Warwick}}, triggering {{ai|Blood Hunt|Warwick}}, and discarding the possession, hunt SFX no longer persist.
+
+;{{ci|Viktor}}
+* General
+** {{sbc|Bug Fix:}} Corrected various clipping issues with the model.
+
+;{{ci|Warwick}}
+* {{ai|Blood Hunt|Warwick}}
+** {{sbc|Bug Fix:}} No longer grants bonuses while no skill points have been spent for the ability.
+
+;{{ci|Yorick}}
+* {{ai|Eulogy of the Isles|Yorick}}
+** {{sbc|Undocumented / Bug Fix:}} Maiden's attacks now once again trigger {{iis|Malignance}} Hatefog.
+
+;{{ci|Zoe}}
+* General
+** Now swaps {{ri|Axiom Arcanist}} with {{ri|Nimbus Cloak}}.
+
+=== Items ===
+;{{ii|Abyssal Mask}}
+* Health increased to 350 from 300.
+* Magic resistance increased to 50 from 45.
+* {{sbc|Unique Passive - Unmake:}}
+** {{sbc|New Effect:}} Enemy champions within {{tt|700 units|center to edge}} of you become cursed, causing them to receive {{as|12% increased magic damage|magic damage}} from all sources.
+** {{sbc|Old Effect:}} Enemy champions within {{tt|700 units|center to edge}} of you become cursed, {{as|reducing their magic resistance by 30%|magic penetration}}.
+* No longer limits the user to 1 {{sbc|Blight}} item.
+* Now limits the user to 1 '''Abyssal Mask'''.
+
+;{{ii|Aegis of the Legion}} - Re-added
+* Total cost reduced to {{g|1100}} from {{g|1200}}.
+** Combine cost reduced to {{g|400}} from {{g|500}}.
+* Armor reduced to 25 from 30.
+* Magic resistance reduced to 25 from 30.
+* Now builds into {{ii|Unending Despair}}.
+
+;{{ii|Armored Advance}} - New item
+* ''Tier 3 Boots.''
+* {{sbc|Requirements:}} Requires ''Blessing of Noxus'' and two Legendary-tier items equipped.
+* {{sbc|Recipe:}} {{ii|Plated Steelcaps}} + {{g|750}} = {{g|1950}}.
+* {{sbc|Stats:}} 40 armor, 50 movement speed.
+* {{sbc|Unique Passive - Plating:}} Reduces incoming [[damage]] from all [[basic attack]]s by 12% (''excluding [[turret]] attacks'').
+* {{sbc|Unique Passive - Noxian Endurance:}} Taking {{as|physical damage}} from champions grants you a {{tip|shield}} that absorbs {{pp|10 to 140|color=pd}} {{as|(+ 4% '''maximum''' health)}} {{as|physical damage}} for 4 seconds (12 second cooldown).
+* Limited to 1 {{sbc|Boots}} item.
+* {{sbc|Caption:}} "Nothin' more glorious than the single advance of a thousand soldiers. —Captain Farron"
+
+;{{ii|Berserker's Greaves}}
+* {{sbc|New Effect:}} ''Triumphant'' version grants +5% attack speed.
+* Now builds into {{ii|Gunmetal Greaves}}.
+* No longer builds into {{ii|Zephyr}}.
+
+;{{ii|Boots of Swiftness}}
+* {{sbc|New Effect:}} ''Triumphant'' version grants +5 movement speed.
+* Now builds into {{ii|Swiftmarch}}.
+
+;{{ii|Bloodletter's Curse}} - Re-added
+* {{sbc|New:}}
+** {{sbc|Recipe:}} {{ii|Haunting Guise}} + {{ii|Fiendish Codex}} + {{g|750}} = {{g|2900}}.
+** {{sbc|Stats:}} 60 ability power, 350 health, 15 ability haste.
+** {{sbc|Unique Passive - Vile Decay:}} Dealing {{as|magic damage}} to an enemy champion with your innate ability or abilities applies a stack to them for 6 seconds, stacking up to 6 times and up to 1 per basic attack or ability per cast instance every {{fd|0.3}} seconds. Each stack inflicts {{as|5% magic resistance reduction}}, up to {{as|30%|mr}} at 6 stacks.
+** Limited to 1 {{sbc|Blight}} item.
+* {{sbc|Old:}}
+** {{sbc|Stats:}} 60 ability power, 10 ability haste, 30 armor, 30 magic resistance.
+** {{sbc|Unique Passive - Vile Decay:}} Dealing {{as|magic damage}} to an enemy champion applies a stack to them for 6 seconds, stacking up to 6 times. Each stack inflicts {{as|5% magic resistance reduction}}, up to {{as|30%|mr}} at 6 stacks. Damaging basic attacks and spells can only apply a stack once every 2 seconds.
+** Limited to 1 '''Bloodletter's Curse'''.
+
+;{{ii|Chainlaced Crushers}} - New item
+* ''Tier 3 Boots.''
+* {{sbc|Requirements:}} Requires ''Blessing of Noxus'' and two Legendary-tier items equipped.
+* {{sbc|Recipe:}} {{ii|Mercury's Treads}} + {{g|750}} = {{g|2050}}.
+* {{sbc|Stats:}} 35 magic resistance, 50 movement speed, 30% tenacity.
+* {{sbc|Unique Passive - Noxian Persistence:}} Taking {{as|magic damage}} from champions grants you a {{tip|shield}} that absorbs {{pp|10 to 140|color=md}} {{as|(+ 4% '''maximum''' health)}} {{as|magic damage}} for 4 seconds (12 second cooldown).
+* Limited to 1 {{sbc|Boots}} item.
+* {{sbc|Caption:}} "Noxus and magic have a vast, varied history…"
+
+;{{ii|Chain Vest}}
+* No longer builds into {{ii|Unending Despair}}.
+
+;{{ii|Crimson Lucidity}} - New item
+* ''Tier 3 Boots.''
+* {{sbc|Requirements:}} Requires ''Blessing of Noxus'' and two Legendary-tier items equipped.
+* {{sbc|Recipe:}} {{ii|Ionian Boots of Lucidity}} + {{g|750}} = {{g|1650}}.
+* {{sbc|Stats:}} 25 ability haste, 50 movement speed.
+* {{sbc|Unique Passive - Ionian Insight:}} Gain 10 [[Haste#Summoner spell haste|summoner spell haste]].
+* {{sbc|Unique Passive - Noxian Haste:}} {{tip|heal|Healing}}, {{tip|shield|shielding}} or buffing an ally, damaging abilities against champions, and using [[summoner spell]]s grants you {{as|{{rd|10%|8%}} '''bonus''' movement speed}} for 4 seconds. This can be triggered from the same cast instance only once every 4 seconds.
+* Limited to 1 {{sbc|Boots}} item.
+* {{sbc|Caption:}} "A little hemomancy always clears the mind… —Ophelia"
+
+;{{ii|Fiendish Codex}}
+* Now builds into {{ii|Bloodletter's Curse}}.
+
+;{{ii|Forever Forward}} - New item
+* ''Tier 3 Boots.''
+* {{sbc|Requirements:}} Requires ''Blessing of Noxus'' and two Legendary-tier items equipped.
+* {{sbc|Recipe:}} {{ii|Synchronized Souls}} + {{g|750}} = {{g|1650}}.
+* {{sbc|Stats:}} 55 movement speed.
+* {{sbc|Unique Passive - Voidborn:}} Gain {{si|Empowered Recall}}.
+* {{sbc|Unique Passive - Noxian Synchrony:}} Gain {{as|45 (+ 10% '''total''' movement speed) '''bonus''' movement speed}} while out-of-combat.
+* Limited to 1 {{sbc|Boots}} item.
+* {{sbc|Caption:}} "The Empire of Noxus shall endure… Perfected."
+
+;{{ii|Giant's Belt}}
+* Now builds into {{ii|Unending Despair}}.
+
+;{{ii|Gunmetal Greaves}} - New item
+* ''Tier 3 Boots.''
+* {{sbc|Requirements:}} Requires ''Blessing of Noxus'' and two Legendary-tier items equipped.
+* {{sbc|Recipe:}} {{ii|Berserker's Greaves}} + {{g|750}} = {{g|1850}}.
+* {{sbc|Stats:}} 40% attack speed, 50 movement speed.
+* {{sbc|Unique Passive - Noxian Gait:}} Basic attacks [[on-hit]] against champions grant you {{as|{{rd|15%|10%}} '''bonus''' movement speed}} decaying over 2 seconds.
+* Limited to 1 {{sbc|Boots}} item.
+* {{sbc|Caption:}} "The empire values strength. I value style. —Samira"
+
+;{{ii|Haunting Guise}}
+* Now builds into {{ii|Bloodletter's Curse}}.
+
+;{{ii|Heartsteel}}
+* Colossal Consumption base damage reduced to 70 from 80.
+* Colossal Consumption damage health ratio changed to {{as|6% '''maximum''' health}} from {{as|12% '''bonus''' health '''from items'''}}.
+* Colossal Consumption bonus health reduced to 10% of damage dealt from 12%.
+** Colossal Consumption bonus health changed to {{ap|70*0.10}} {{as|(+ {{ap|6*0.10}}% '''maximum''' health)}} from {{ap|80*0.12}} {{as|(+ {{ap|12*0.12}}% '''bonus''' health '''from items''')}}.
+
+;{{ii|Ionian Boots of Lucidity}}
+* {{sbc|New Effect:}} ''Triumphant'' version grants +5 ability haste.
+* Now builds into {{ii|Crimson Lucidity}}.
+
+;{{ii|Kindlegem}}
+* No longer builds into {{ii|Unending Despair}}.
+
+;{{ii|Malignance}}
+* {{sbc|Bug Fix:}} Pet damage now correctly activates Hatefog.
+
+;{{ii|Mercury's Treads}}
+* {{sbc|New Effect:}} ''Triumphant'' version grants +5 magic resistance.
+* Now builds into {{ii|Chainlaced Crushers}}.
+
+;{{ii|Plated Steelcaps}}
+* {{sbc|New Effect:}} ''Triumphant'' version grants +5 armor.
+* Now builds into {{ii|Armored Advance}}.
+
+;{{ii|Ruby Crystal}}
+* No longer builds into {{ii|Unending Despair}}.
+
+;{{ii|Sorcerer's Shoes}}
+* {{sbc|New Effect:}} ''Triumphant'' version grants +4 magic penetration.
+* Now builds into {{ii|Spellslinger's Shoes}}.
+
+;{{ii|Spear of Shojin}}
+* {{sbc|Bug Fix:}} Pets not sourced from champion innates now properly grant stacks of Focused Will.
+
+;{{ii|Spellslinger's Shoes}} - New item
+* ''Tier 3 Boots.''
+* {{sbc|Requirements:}} Requires ''Blessing of Noxus'' and two Legendary-tier items equipped.
+* {{sbc|Recipe:}} {{ii|Sorcerer's Shoes}} + {{g|750}} = {{g|1850}}.
+* {{sbc|Stats:}} 19 magic penetration, 10% magic penetration, 50 movement speed.
+* Limited to 1 {{sbc|Boots}} item.
+* {{sbc|Caption:}} "A calculated step. Infinite misdirections."
+
+;{{ii|Swiftmarch}} - New item
+* ''Tier 3 Boots.''
+* {{sbc|Requirements:}} Requires ''Blessing of Noxus'' and two Legendary-tier items equipped.
+* {{sbc|Recipe:}} {{ii|Boots of Swiftness}} + {{g|750}} = {{g|1750}}.
+* {{sbc|Stats:}} 75 movement speed.
+* {{sbc|Unique Passive - Fleetfooted:}} Gain 25% [[slow resist]].
+* {{sbc|Unique Passive - Noxian Fervor:}} Gain {{as|4% '''bonus total''' movement speed}}.
+* Limited to 1 {{sbc|Boots}} item.
+* {{sbc|Caption:}} "Now this is how to move! —Draven"
+
+;{{ii|Spear of Shojin}}
+* {{sbc|Bug Fix:}} 
+
+;{{ii|Synchronized Souls}}
+* {{sbc|New Effect:}} ''Triumphant'' version grants +5 movement speed.
+* Now builds into {{ii|Forever Forward}}.
+
+;{{ii|Unending Despair}}
+* {{sbc|New Recipe:}} {{ii|Aegis of the Legion}} + {{ii|Giant's Belt}} + {{g|800}} = {{g|2800}}.
+** {{sbc|Old Recipe:}} {{ii|Chain Vest}} + {{ii|Kindlegem}} + {{ii|Ruby Crystal}} + {{g|800}} = {{g|2800}}.
+* Health increased to 400 from 350.
+* Armor reduced to 25 from 60.
+* Magic resistance increased to 25 from 0.
+* Anguish cooldown reduced to 4 seconds from 5.
+* Anguish base damage reduced to {{pp|8 to 15}} from {{pp|30 to 50}}.
+
+;{{ii|Warmog's Armor}}
+* {{sbc|New:}}
+** {{sbc|Recipe:}} {{ii|Giant's Belt}} + {{ii|Giant's Belt}} + {{ii|Crystalline Bracer}} + {{g|700}} = {{g|3300}}.
+** {{sbc|Stats:}} 1000 health, 100% base health regeneration.
+** {{sbc|Unique Passive - Warmog's Heart:}} This passive activates if you have at least {{as|2000 '''bonus''' health}}. {{stil|Health regeneration|Regenerate}}{{ft|{{as|{{fd|1.5}}% '''maximum''' health}} every {{fd|0.5}} seconds|{{as|15% '''maximum''' health}} every 5 seconds}}if damage has not been taken in the last 8 seconds (3 seconds for damage from non-champions).
+** {{sbc|Unique Passive - Warmog's Vitality:}} Gain {{as|'''bonus''' health}} equal to {{as|10% '''bonus''' health '''from items'''}}.
+** Limited to 1 '''Warmog's Armor'''.
+* {{sbc|Old:}}
+** {{sbc|Recipe:}} {{ii|Giant's Belt}} + {{ii|Winged Moonplate}} + {{ii|Crystalline Bracer}} + {{g|800}} = {{g|3300}}.
+** {{sbc|Stats:}} 1000 health, 100% base health regeneration, 4% movement speed.
+** {{sbc|Unique Passive - Warmog's Heart:}} This passive activates if you have at least {{as|1500 '''bonus''' health}}. {{stil|Health regeneration|Regenerate}}{{ft|{{as|{{fd|2.5}}% '''maximum''' health}} every {{fd|0.5}} seconds|{{as|25% '''maximum''' health}} every 5 seconds}}and gain {{as|10% '''bonus''' movement speed}} if damage has not been taken in the last 6 seconds (3 seconds for damage from non-champions).
+** Limited to 1 '''Warmog's Armor'''.
+
+;{{ii|Winged Moonplate}}
+* No longer builds into {{ii|Warmog's Armor}}.
+
+;{{ii|World Atlas}}
+* First charge timer reduced to 1:40 from 1:50.
+
+;{{ii|Zephyr}} - Removed
+* Removed from the game.
+* ''Replaced by {{ii|Gunmetal Greaves}}.''
+
+=== Runes ===
+;{{ri|Axiom Arcanist}} - New Rune
+* ''Replaces {{ri|Nullifying Orb}} from slot 1.''
+* [[File:Sorcery icon.png|20px|link=]] [[Sorcery]] Slot 1 rune.
+* {{sbc|Passive:}}
+** Your ultimate has 14% increased damage (reduced to 9% for AoE damaging abilities), healing and shielding.
+** Scoring an enemy champion {{tip|takedown}} reduces your ultimate's '''current''' cooldown by 7%.
+
+;{{ri|Deep Ward}} - New Rune
+* ''Replaces {{ri|Eyeball Collection}} from slot 2.''
+* [[File:Domination icon.png|20px|link=]] [[Domination]] Slot 2 rune.
+* {{sbc|Passive:}}
+** {{tip|Stealth Ward|Stealth Wards}} and {{tip|Totem Ward|Totem Wards}} placed in the enemy jungle are considered ''Deep''.
+** All ''Deep'' wards are granted {{as|1 '''bonus''' health}}, ''Deep'' {{tip|Stealth Ward|Stealth Wards}} last {{pp|30 to 45|type=average champion level}} seconds longer, and ''Deep'' {{tip|Totem Ward|Totem Wards}} last {{pp|30 to 120|type=average champion level}} seconds longer.
+** At level 9, wards placed in the river will also be considered ''Deep''.
+* In modes where wards are not available, '''Deep Ward''' is swapped for {{ri|Grisly Mementos}}.
+
+;{{ri|Eyeball Collection}} - Removed
+* Removed from the game.
+* ''Replaced by {{ri|Deep Ward}}.''
+
+;{{ri|Ghost Poro}} - Removed
+* Removed from the game.
+* ''Replaced by {{ri|Grisly Mementos}}.''
+
+;{{ri|Grisly Mementos}} - New Rune
+* ''Replaces {{ri|Ghost Poro}} from slot 2.''
+* [[File:Domination icon.png|20px|link=]] [[Domination]] Slot 2 rune.
+* {{sbc|Passive:}}
+** Gain 4 ''trinket haste'' per ''Memento'' stack, up to 100 at maximum stacks.
+** Gain a ''Memento'' stack whenever scoring a champion {{tip|takedown}}, up to 25 stacks.
+* In modes where wards are not available, each stack permanently grants 2 summoner haste instead, up to 50.
+
+;{{ri|Nullifying Orb}} - Removed
+* Removed from the game.
+* ''Replaced by {{ri|Axiom Arcanist}}.''
+
+;{{ri|Sixth Sense}} - New Rune
+* ''Replaces {{ri|Zombie Ward}} from slot 2.''
+* [[File:Domination icon.png|20px|link=]] [[Domination]] Slot 2 rune.
+* {{sbc|Passive:}} Automatically [[File:Enemy Ward time indicator.png|24px|link=]] tracks un-tracked nearby wards within 900 units ({{rd|300|360}} second cooldown).
+** At level 11, additionally {{tip|true sight|reveals}} the ward for 10 seconds upon being triggered.
+* In modes where wards are not available, '''Sixth Sense''' is swapped for {{ri|Grisly Mementos}}.
+
+;{{ri|Zombie Ward}} - Removed
+* Removed from the game.
+* ''Replaced by {{ri|Sixth Sense}}.''
+
+=== Summoner Spells ===
+;{{si|Barrier}}
+* Updated icon.
+
+;{{si|Clarity}}
+* Updated icon.
+
+;{{si|Cleanse}}
+* Updated icon.
+
+;{{si|Exhaust}}
+* Updated icon.
+
+;{{si|Flash}}
+* Updated icon.
+
+;{{si|Ghost}}
+* Updated icon.
+
+;{{si|Heal}}
+* Updated icon.
+
+;{{si|Ignite}}
+* Updated icon.
+
+;{{si|Smite}}
+* Updated icon.
+* Recharge timer now starts at 1:20 from 1:30.
+* {{si|Unleashed Smite}}
+** Updated icon.
+
+;{{si|Teleport}}
+* Updated {{si|Teleport}} and {{si|Unleashed Teleport}} icons.
+* Channel duration reduced to 3 seconds from 4.
+* {{sbc|Removed:}} No longer causes the champion to {{tip|blink}} to the target after the channel completes.
+* {{sbc|New Effect:}} After the channel completes, now causes the champion to {{tip|dash}} to the location of the target at the time of cast over {{pp|round=3|0.5 to (4.5*4500)/5000+0.5 for 10;5|0 to 4500;5000+|type=distance to target|label=Seconds|formula=(5-0.5)*distance/5000+0.5}} seconds, while being {{tip|untargetable}} and {{tip|lockout|unable to act}}.
+** Distance is measured from champion's casting position to the target's location at the time of starting the channel.
+** {{si|Unleashed Teleport}} reduces the travel time to {{pp|round=3|0.5 to (3.5*16500)/18000+0.5 for 12;4|0 to 16500;18000+|type=distance to target|label=Seconds|formula=(4-0.5)*distance/18000+0.5}} seconds.
+* {{sbc|New Effect:}} Can now target allied minions and wards.
+* Cooldown reduced to 300 seconds from 360.
+* {{sbc|New Effect:}} Channel is no longer cancelled by the target's death.
+* {{sbc|Removed:}} No longer renders the target {{tip|invulnerable}} and {{tip|stun|stuns}} them if they are a minion, ward, or trap.
+* Cooldown now starts upon the dash ending, rather than the channel ending.
+* {{sbc|New Effect:}} Now displays a timer for the remaining duration as a circular VFX at the target location. This is visible to all players.
+* {{sbc|Removed:}} No longer causes the user to land {{tip|cr|icononly = true}} 225 units away from a turret, or {{tip|cr|icononly = true}} 100 units away from other unit types, toward the direction of their nexus.
+* {{sbc|Bug:}} {{sis|Unleashed Teleport}} tooltip incorrectly states that the haste lasts for 4 seconds instead of 3.
+
+=== Minions ===
+;General
+* Damage to structures increased to 55% from 50%.
+* Damage to champions increased to 55% from 50%.
+* Experience range increased to 1500 from 1400.
+* {{sbc|Undocumented:}} Base movement speed changed to {{sti|ms|{{pp|color=ms|type=minutes|325 to 425 for 5|0;11 to 26|formula=325, +25 for every 5 minutes after 6:00 and until 26:00}}}} from {{sti|ms|{{pp|color=ms|type=minutes|325 to 425 for 5|0;10 to 25|formula=325, +25 for every 5 minutes after 5:00 and until 25:00}}}}.
+** ''Now starts upgrading at minute {{sbc|11:00}} instead of {{sbc|10:00}}.''
+
+;Melee Minion
+* Health changed to {{pp|type=upgrades|440+25*x for 5; then+35*x;...;1475;1500|x for 15;...;31;32|formula=440 + 25 per upgrade for upgrades 1-5; then + 35 per upgrade, capped at (440 + 1060) health}} from {{pp|type=upgrades|455+22*x+0.3*(x-1)*x/2 for 5; then+32.25*x+0.3*((x+4)*(x+5)-4*5)/2|x for 25|formula=455 + 22 per upgrade + 0.3*(upgrade-1)*upgrade/2) for upgrades 1–5; then (455+22*5+32.25*(upgrade-5)+0.3*(upgrade-1)*upgrade/2), capped at (455 + 845) health}}.
+* Attack damage changed to {{pp|type=upgrades|11 to 11 for 5; then+3*x;...;77;80|x for 15;...;27;28|formula=11 for upgrades 1–5; then + 3 per upgrade, capped at (11 + 69) attack damage}} from {{pp|type=upgrades|12 to 12 for 5; then+3.41*x; 80|x for 25|formula=12 for upgrades 1–5; then + 3.41 per upgrade, capped at (12 + 68) attack damage}}.
+* Armor changed to {{pp|type=upgrades|round=3|0 to 0 for 5; then+0.085*(x-1)/2*x;20|x for 28|formula=0 for upgrades 1–5; then + (0.085*(upgrade-6)/2*(upgrade-5)), capped at 20 armor}} from {{pp|type=upgrades|round=3|0 to 0 for 5; then+0.085*(x-1)/2*x; 16|x for 25|formula=0 for upgrades 1–5; then + (0.085*(upgrade-6)/2*(upgrade-5)), capped at 16 armor}}.
+* {{sbc|New Effect:}} Now deals '''bonus''' damage on-hit equal to {{as|2% of target's '''current''' health}} against lane minions.
+
+;Caster Minion
+* Health changed to {{pp|type=upgrades|275+9*x;...;599;600|x for 15;...;36;37|formula=275 + 9 per upgrade, capped at (275 + 325) health}} from {{pp|type=upgrades|290+6*x for 5; then+8.25*x;485|x for 25|formula=290 + 6 per upgrade for upgrades 1–5; then +8.25 per upgrade, capped at (290 + 195) health}}.
+* Attack damage changed to {{pp|type=upgrades|19.5+1.5*x for 5; then+4*x;...;123;125|x for 15;...;29;30|formula=19.5 + 1.5 per upgrade for upgrades 1–5; then + 4.5 per upgrade, capped at (19.5 + 105.5) attack damage}} from {{pp|type=upgrades|23+1.5*x for 5; then+4.5*x;120|x for 25|formula=23 + 1.5 per upgrade for upgrades 1–5; then +4.5 per upgrade, capped at (23 + 97) attack damage}}.
+* {{sbc|New Effect:}} Now deals '''bonus''' damage on-hit equal to {{as|4% of target's '''current''' health}} against lane minions.
+
+;Siege Minion
+* Health changed to {{pp|type=upgrades|750+85*x;...;5850|x for 15;...;60|formula=750 + 85 per upgrade, capped at (750 + 5100) health}} from {{pp|type=upgrades|850+62*x for 5; then+87*x;...;10850|x for 15;...;117|formula=850 + 62 per upgrade for upgrades 1–5; then + 87 per upgrade, capped at (850 + 10000) health}}.
+* Attack damage changed to {{pp|type=upgrades|36+1.5*x;...;126|x for 15;...;60|formula=36 + 1.5 per upgrade, capped at (36 + 90) attack damage}} from {{pp|type=upgrades|40+1.5*x;...;10040|x for 15;...;6667|formula=40 + 1.5 per upgrade, capped at (40 + 10000) attack damage}}.
+* First spawn time increased to 2:35 (4th wave) from 2:05 (3rd wave).
+** ''Respawn interval unchanged.''
+* {{sbc|New Effect:}} Now deals '''bonus''' damage on-hit equal to {{as|6% of target's '''current''' health}} against lane minions.
+
+;Super Minion
+* Health changed to {{pp|type=upgrades|1500+100*x;...;7500|x for 15;...;60|formula=1500 + 100 per upgrade, capped at (1500 + 6000) health}} from {{pp|type=upgrades|1500+100*x;...;11500|x for 15;...;100|formula=1500 + 100 per upgrade, capped at (1500 + 10000) health}}.
+* Attack damage changed to {{pp|type=upgrades|210+5*x;...;510|x for 15;...;60|formula=210 + 5 per upgrade, capped at (210 + 300) attack damage}} from {{pp|type=upgrades|225+5*x;...;1225|x for 15;...;200|formula=225 + 5 per upgrade, capped at (225 + 1000) attack damage}}.
+
+=== Monsters ===
+;[[Atakhan|Atakhan, Bringer of Ruin]] - New Epic Monster
+* Spawns at 20 minutes at the entrance of either top and bottom lane in the river. The location is determined by the side (half of the map) where the most kills and damage have occurred by 14 minutes. This is done via an internal "score", and the amount of score added is different between kills and damage.
+* At 14 minutes, terrain will appear on the respective side, marking his camp's location. The terrain consists of two walls in a circular arrangement, each facing each other along the river line. The river brush at the entrance where Atakhan spawns is removed.
+* Over the course of the next 6 minutes, 8 [[File:Blood RoseSquare.png|20px|link=]] Blood Roses and 8 [[File:Large Blood RoseSquare.png|20px|link=]] large Blood Roses will grow in the same quadrant of the map as the camp.
+* Can spawn in one of two forms, ''Voracious'' and ''Ruinous''.
+* Both forms of Atakhan have identical basic attacks and a bolt ability, but also a unique special ability that differs between the two forms.
+** His attacks and abilities apply stacks of the [[File:Frail and Unworthy buff.png|20px|link=]] ''Frail and Unworthy'' debuff for 4 seconds which may stack up to 50 times and refreshes with each attack and ability hit. For each stack, the target's resistances are reduced by 1, for a maximum of 50 resistances reduction.
+*** Basic attacks apply 1 stack.
+*** Bolt ability applies 5 stacks per bolt.
+*** Form ability applies 3 stacks per hit.
+* '''{{ui|Voracious Atakhan}}:'''
+** Spawns with lower score.
+** Ability deals damage over time in a {{tt|600-radius|Estimated}} area under him.
+** Rewards all members of the slaying team with two buffs, a temporary and a permanent one.
+** [[File:False Life buff.png|20px|link=]] '''False Life'''
+*** {{sbc|Effect:}} Upon taking {{tip|death|lethal damage}}, enter {{tip|resurrection}} for {{fd|5.5}} seconds, during which you are {{tip|invulnerable}}, {{tip|untargetable}}, and {{tip|lockout|unable to act}}. After 2 seconds into the duration, you {{tip|blink}} to your [[Spawn|summoning platform]]. If taken to lethal damage by an enemy champion, they instead gain 1 stack of [[File:Bloody Petals buff.png|20px|link=]] ''Bloody Petals'' and {{g|100}}. The regular kill bounty is not dispensed, and on-kill/takedown effects do not trigger.
+*** {{sbc|Duration:}} 150 seconds.
+** [[File:False Life (Gold) buff.png|20px|link=]] '''False Life'''
+*** {{sbc|Effect:}} Gain an additional {{g|40}} when scoring a {{tip|champion}} takedown.
+*** {{sbc|Duration:}} Permanent.
+* '''{{ui|Ruinous Atakhan}}:'''
+** Spawns with higher score.
+** Ability deals damage in 8 constricting rings over {{fd|2.5}} seconds around his camp, starting at the circle outlined by the camp's terrain.
+** Upon being taken down, grants 6 stacks of [[File:Bloody Petals buff.png|20px|link=]] ''Bloody Petals'' to the killing team, spawns 6 [[File:Blood RoseSquare.png|20px|link=]] Blood Roses and 6 [[File:Large Blood RoseSquare.png|20px|link=]] large Blood Roses around his camp and rewards all members of the slaying team with the ''Crown of Carnage'' buff.
+** [[File:Crown of Carnage buff.png|20px|link=]] '''Crown of Carnage'''
+*** {{sbc|Effect:}} Gain 25% increased effects from all epic {{tip|monster}} buffs.
+*** {{sbc|Duration:}} Permanent.
+*** ''Buff details:''
+**** {{bi|Touch of the Void}} — 25% more damage.
+**** {{bi|Hunger of the Void}} — {{Pending for test}} Effect unknown.
+**** {{ii|Eye of the Herald}} — Mercenary has {{as|25% increased health}}, deals 25% increased damage to all targets, and duration of stun and knockup during [[File:Rift Herald Rodeo buff.png|20px|link=]] Rift Herald Rodeo is increased by 25%.
+**** {{bi|Dragon Slayer}} — Each stack's stat bonus is increased by 25%.
+**** {{bi|Chemtech Dragon Soul}} — 25% more damage while below the threshold.
+**** {{bi|Cloud Dragon Soul}} — 25% more {{as|'''bonus''' movement speed}} on both the regular and the super buff.
+**** {{bi|Hextech Dragon Soul}} — 25% more damage and slow.
+**** {{bi|Infernal Dragon Soul}} — 25% more damage.
+**** {{bi|Mountain Dragon Soul}} — 25% larger shield.
+**** {{bi|Ocean Dragon Soul}} — 25% more health and mana restoration.
+**** {{bi|Aspect of the Dragon}} — 25% more damage.
+**** {{bi|Hand of Baron}} — 25% more attack damage and ability power.
+
+;{{ui|Rift Herald}}
+* Initial spawn timer increased to 16:00 from 14:00.
+* Despawn timer increased to 24:45 (24:55 if in combat) from 19:45 (19:55 if in combat).
+* {{sbc|Undocumented:}} Experience bounty increased to {{pp|309;318;330|6;8;11|changedisplay=true}} from {{pp|306;312;320|6;8;11|changedisplay=true}}.
+
+;{{ui|Baron Nashor}}
+* Initial spawn timer increased to 25:00 from 20:00.
+
+=== Turrets ===
+;Bounties
+* {{sbc|Removed:}} First Turret no longer grants {{g|300 '''bonus''' gold}}.
+
+;{{ii|Fortification}}
+* Damage reduction reduced to 50% from 85%.
+
+;Nexus Turret
+* {{sbc|New Effect:}} Now respawns 3 minutes after being destroyed.
+
+;{{ii|Ohmwrecker (Turret Item)|Ohmwrecker}}
+* Bonus damage per stack increased to 50% from 40%.
+** Maximum damage increased to 150% from 120%.
+* Stack duration increased to 5 seconds from 3.
+
+=== Summoner's Rift ===
+;Map
+* {{fi|Noxus}}-themed map skin.
+** {{fi|Black Rose}} (Order) vs {{fi|Trifarix|The Noxian Trifarix}} (Chaos)
+* Updated internal regions to match the Season 2024 map restructuring.
+
+=== Howling Abyss ===
+;Map-specific balancing
+* {{ci|Diana}}
+** Outgoing damage modifier changed to 0% from +2%.
+** Incoming damage modifier changed to 0% from -2%.
+* {{ci|Elise}}
+** Tenacity changed to +10% from +20%.
+* {{ci|Karma}}
+** Outgoing damage modifier changed to 0% from -2%.
+* {{ci|Master Yi}}
+** Incoming damage modifier changed to 0% from -3%.
+* {{ci|Swain}}
+** Outgoing damage modifier changed to -5% from -10%.
+* {{ci|Warwick}}
+** Healing modifier changed to 0% from +20%.
+
+== Hotfixes ==
+=== {{Anchor|January 9th Hotfix}}January 9th Hotfix<ref>X — League of Legends Dev Team [https://x.com/LoLDev/status/1877545981647925562 We just shipped a micropatch to fix the following bugs]</ref> ===
+;Client
+* {{sbc|Bug Fix:}} No longer sometimes crashes in the Reconnect screen.
+
+;{{ci|Annie}}
+* {{ai|Disintegrate|Annie}}
+** {{sbc|Bug Fix:}} Now properly gains the refund effects if her other damaging spells kill the target before the fireball has reached them.
+
+;{{ci|Rek'Sai}}
+* {{ai|Void Rush|Rek'Sai}}
+** {{sbc|Bug Fix:}} No longer becomes permanently invisible if she dies during the cast time while {{bi|False Life}} is active.<ref>Reddit — u/And_jsg (9 January 2025) [https://www.reddit.com/r/reksaimains/comments/1hxc6ok/reksai_becomes_invisible_if_she_ults_while_having/ Invisible Rek'Sai + Atakhan buff bug]</ref>
+
+;{{ci|Sion}}
+* {{ai|Glory in Death|Sion}}
+** {{sbc|Bug Fix:}} Now once again properly gains Deathguard upon respawning.
+
+;{{ri|Cash Back}}
+* {{sbc|Bug Fix:}} Refunding a Legendary item now once again properly removes the bonus gold granted from having purchased it. (This issue was only present in Swiftplay, but the rune had been temporarily disabled everywhere.)
+** The rune has been re-enabled.<ref>X — League of Legends Dev Team (9 January 2025) [https://x.com/LoLDev/status/1877460195116216466 The Cash Back rune has been temporarily disabled due to a bug]</ref>
+
+;Feats of Strength
+* {{sbc|Bug Fix:}} No longer incorrectly assigns victory to the first team that gains only a single out of the three epic monster objectives, if they had completed one other type of feat beforehand.
+* {{sbc|Bug Fix:}} No longer sometimes assigns victory to the first team that completes one feat.
+* {{sbc|Undocumented / Bug Fix:}} No longer grants rewards to the team that lost the Feats of Strength as well, upon them meeting the requirements later in the game.
+
+=== {{Anchor|January 10th Hotfix}}January 10th Hotfix<ref>X — Riot Phroxzon [https://x.com/RiotPhroxzon/status/1877882535805641183 Patch 15.1b is Live!]</ref> ===
+;{{ii|Armored Advance}}
+* Noxian Endurance base shield reduced to {{pp|10 to 120}} from {{pp|10 to 140}}.
+* Noxian Endurance cooldown increased to 15 seconds from 12.
+
+;{{ii|Chainlaced Crushers}}
+* Noxian Persistence base shield reduced to {{pp|10 to 120}} from {{pp|10 to 140}}.
+* Noxian Persistence cooldown increased to 15 seconds from 12.
+
+;{{ii|Sorcerer's Shoes}}
+* ''Triumphant'' bonus magic penetration reduced to +2 from +4.
+
+;{{ii|Spellslinger's Shoes}}
+* Flat magic penetration reduced to 18 from 19.
+* Percentage magic penetration reduced to 8% from 10%.
+
+;{{ii|Swiftmarch}}
+* Base movement speed reduced to 70 from 75.
+
+;{{si|Teleport}}
+* {{sbc|Bug Fix:}} No longer unintentionally cancels if the target is a {{ai|Captive Audience|Jhin|Lotus Trap}} and it dies or expires.
+* {{sbc|Bug Fix:}} {{sis|Unleashed Teleport}} tooltip now states the correct haste duration.
+
+;Jungle plants
+* {{ui|Blood Rose}} / {{ui|Large Blood Rose}}
+** Spawn amount from {{uis|Atakhan}} pit reduced to 7 normal and 7 Large from 8 normal and 8 Large.
+** Spawn rate from Gloom (champion deaths) reduced.
+
+==== Swiftplay ====
+;General
+* {{sbc|Bug Fix:}} Corrected some errors in the matchmaker that resulted in greatly unbalanced games (e.g. new players joining the same lobby as other random veteran players).
+* {{sbc|Bug Fix:}} Champion Mastery, Challenges, Eternals and Objectives progression is now functional.
+
+;Mode-specific balancing
+* {{ci|Jarvan IV}}
+** Stats
+*** Armor growth override is now -{{fd|0.5}}.
+** {{ai|Dragon Strike|Jarvan IV}}
+*** Base damage changed to {{ap|70 to 230}}.
+* {{ci|Kayle}}
+** Stats
+*** Attack damage override is now -{{fd|0.5}}.
+*** Attack speed growth override is now -{{fd|0.5}}%.
+** {{ai|Celestial Blessing|Kayle}}
+*** Base bonus movement speed changed to {{ap|24 to 32}}%.
+* {{ci|Seraphine}}
+** Stats
+*** Health growth override is now +5.
+** {{ai|Beat Drop|Seraphine}}
+*** Base damage changed to {{ap|70 to 210}}.
+*** AP ratio changed to {{as|60% AP}}.
+* {{ci|Vex}}
+** {{ai|Doom 'n Gloom|Vex}}
+*** Gloom AP ratio changed to {{as|40% AP}}.
+** {{ai|Personal Space|Vex}}
+*** Damage AP ratio changed to {{as|50% AP}}.
+* {{ci|Viktor}}
+** Stats
+*** Health growth override is now -8.
+** {{ai|Arcane Storm|Viktor}}
+*** Base damage per hit changed to {{ap|60 to 140 3}}.
+*** AP ratio per hit changed to {{as|40% AP}}.
+* {{ci|Ziggs}}
+** {{ai|Bouncing Bomb|Ziggs}}
+*** AP ratio changed to {{as|75% AP}}.
+** {{ai|Satchel Charge|Ziggs}}
+*** Cooldown changed to {{ap|18 to 10}} seconds.
+
+;Other
+* {{ui|Atakhan}}
+** {{sbc|Bug Fix:}} Threshold for spawning the ''Ruinous'' form has now been adjusted accordingly to match the accelerated game pace.
+
+=== January 13th Hotfix ===
+;Structures
+* {{sbc|Undocumented / Bug Fix:}} The Nexus no longer becomes targetable when only one of its turrets die.
+* {{sbc|Undocumented / Bug Fix:}} Nexus Turrets' {{ii|Warden's Eye}} true sight no longer persists while they are dead.
+
+=== January 22nd Hotfix ===
+;{{ci|Rumble}}<ref>X — League of Legends Dev Team [https://x.com/LoLDev/status/1882250549086789956 "We've just pushed a fix to address an issue where Rumble (…)"]</ref>
+* {{ai|Junkyard Titan|Rumble}}
+** {{sbc|Bug Fix:}} Now once again properly gains all bonus effects while in Danger Zone.
+
+
+== References ==
+{{Reflist}}
+
+{{Release history}}
+[[Category:2025 Annual Cycle patch|V25.01]]

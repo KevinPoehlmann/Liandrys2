@@ -44,6 +44,7 @@ from src.server.loader.patchloader2 import (
 )
 from src.server.loader.patchexceptions import PatcherError, LoadError
 from src.server.models.ability import Ability, ChampionAbility
+from src.server.models.change import patch_note
 from src.server.models.champion import NewChampion
 from src.server.models.enums import RangeType, Stat
 from src.server.models.image import Image
@@ -97,18 +98,25 @@ def test_get_newer_patches_with_unlisted_patch():
 
 @pytest.mark.asyncio
 async def test_check_wiki_for_hotfixes(mocker):
-    mock_response = mocker.Mock()
-    mock_response.ok = True
-    mock_response.text = "<html>Some wiki patch content</html>"
-
-    mock_session = mocker.Mock()
-    mock_session.get.return_value = mock_response
-
-    mock_hotfix_list = [datetime(2025, 4, 1)]
-    mocker.patch("src.server.loader.patchloader2.ws.scrape_hotfix_list", return_value=mock_hotfix_list)
+    wikitext = "|Release = March {{NumberSup|31}}, 2025\n== Hotfixes ==\n=== April 1st Hotfix ===\n== See Also =="
+    response = mocker.Mock()
+    response.json.return_value = {"query": {"pages": [{"revisions": [{"slots": {"main": {"content": wikitext}}}]}]}}
+    get = mocker.patch("src.server.loader.patchloader2.requests.get", return_value=response)
 
     result = await _check_wiki_for_hotfixes(["15.7.1"])
-    assert result == {"15.7.1": mock_hotfix_list}
+
+    assert result == {"15.7.1": [datetime(2025, 4, 1)]}
+    assert get.call_args.kwargs["params"]["titles"] == "V25.07"
+
+
+@pytest.mark.asyncio
+async def test_check_wiki_for_hotfixes_missing_page(mocker):
+    response = mocker.Mock()
+    response.json.return_value = {"query": {"pages": [{"title": "V25.07", "missing": True}]}}
+    mocker.patch("src.server.loader.patchloader2.requests.get", return_value=response)
+
+    with pytest.raises(PatcherError):
+        await _check_wiki_for_hotfixes(["15.7.1"])
 
 @pytest.mark.asyncio
 async def test_check_wiki_for_hotfixes_invalid_response(mocker):
@@ -116,8 +124,6 @@ async def test_check_wiki_for_hotfixes_invalid_response(mocker):
     mock_response.raise_for_status.side_effect = requests.RequestException("Not Found")
 
     mocker.patch("src.server.loader.patchloader2.requests.get", return_value=mock_response)
-
-    mocker.patch("src.server.loader.patchloader2.ws.scrape_hotfix_list")
 
     with pytest.raises(PatcherError):
         await _check_wiki_for_hotfixes(["15.7.1"])
@@ -562,10 +568,10 @@ async def test_load_patch(mocker):
     old_patch = NewPatch(patch="15.8.0", hotfix=None)
 
     # Mocks
-    mock_wiki_html = "<html>patch wiki</html>"
-    mock_fetch_html = mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value=mock_wiki_html)
-    mock_scrape_patch = mocker.patch(
-        "src.server.loader.patchloader2.ws.scrape_patch",
+    wikitext = "=== Champions ==="
+    mock_fetch_page = mocker.patch("src.server.loader.patchloader2.fetch_patch_page", return_value=wikitext)
+    mock_parse_notes = mocker.patch(
+        "src.server.loader.patchloader2.parse_patch_notes",
         return_value={
             "champions": {},
             "items": {},
@@ -583,8 +589,8 @@ async def test_load_patch(mocker):
 
     await _load_patch(patch_str, hotfix, old_patch)
 
-    mock_fetch_html.assert_called_once_with("V25.08", "Patch", mocker.ANY, mocker.ANY)
-    mock_scrape_patch.assert_called_once_with(mock_wiki_html, hotfix)
+    mock_fetch_page.assert_called_once_with(mocker.ANY, "V25.08")
+    mock_parse_notes.assert_called_once_with(wikitext, hotfix)
     mock_patch_champions.assert_called_once()
     mock_patch_items.assert_called_once()
     mock_patch_runes.assert_called_once()
@@ -709,7 +715,7 @@ async def test_patch_champions(mocker):
 
     changes = {
         "new": ["Milio"],
-        "changed": {"Ahri": {"Q": ["Cooldown increased"]}},
+        "changed": {"Ahri": {"Q": [patch_note("Cooldown increased")]}},
         "deleted": []
     }
 
@@ -752,9 +758,9 @@ async def test_add_changes_champion_applies_correct_diffs():
 
     # Mock diff with matching and non-matching entries
     diff = {
-        "Call of the Void": ["Now silences for 1.5s instead of 1s"],
-        "Void Shift": ["Cooldown reduced from 30 to 20"],
-        "Some Untracked Label": ["General tooltip updated"]
+        "Call of the Void": [patch_note("Now silences for 1.5s instead of 1s")],
+        "Void Shift": [patch_note("Cooldown reduced from 30 to 20")],
+        "Some Untracked Label": [patch_note("General tooltip updated")]
     }
 
     await _add_changes_champion(champ, diff)
@@ -860,7 +866,7 @@ async def test_patch_items(mocker):
 
     changes = {
         "new": ["Mythic Cleaver"],
-        "changed": {"Black Cleaver": ["Cooldown reduced"]},
+        "changed": {"Black Cleaver": [patch_note("Cooldown reduced")]},
         "deleted": []
     }
 
@@ -915,7 +921,7 @@ async def test_patch_runes(mocker):
 
     changes = {
         "new": ["Electrocute"],
-        "changed": {"Cheap Shot": ["Effect clarified"]},
+        "changed": {"Cheap Shot": [patch_note("Effect clarified")]},
         "deleted": []
     }
 
@@ -1046,7 +1052,7 @@ async def test_patch_summonerspells(mocker):
 
     changes = {
         "new": ["Flash"],
-        "changed": {"Ghost": ["Cooldown reduced from 210 to 180"]},
+        "changed": {"Ghost": [patch_note("Cooldown reduced from 210 to 180")]},
         "deleted": []
     }
 

@@ -1,0 +1,580 @@
+{{Infobox patch
+|gallery = {{GalleryHelper
+|LoL 26.21 Patch Highlights.png¦Patch Highlights¦
+|Akali TrueDamageKnowMyNameSkin.jpg¦Akali¦
+|Ekko PrestigeTrueDamageKnowMyNameSkin.jpg¦Ekko¦
+|Qiyana TrueDamageKnowMyNameSkin.jpg¦True Damage¦
+}}
+|Caption = {{Univ|True Damage|file=True Damage Member profileicon.jpg}} has arrived with style! Plus tons to look forward to across SR, Mayhem, Classic, and Arena.
+|Highlights = 
+* {{Univ|True Damage|True Damage Know My Name|True Damage Member profileicon.jpg}} skins
+|Release = October {{NumberSup|21}}, 2026
+|Related = [https://www.leagueoflegends.com/en-us/news/game-updates/league-of-legends-patch-26-21-notes/ Patch 26.21 Notes]
+|Prev = V26.20
+|Next = V26.22
+}}
+{{SeeOther|{{tip|League Classic}} Patch|[[League Classic/Patch 6|here]]}}
+This is the version article (patch notes) for '''patch 26.21''' in {{tip|League of Legends}}.
+
+== New Cosmetics ==
+The following [[Champion skin]]s have been added:
+* {{csl|Akali|True Damage Know My Name}} ({{RP|1820}})
+* {{csl|Ekko|Prestige True Damage Know My Name}} ({{ME|150}})
+* {{csl|Qiyana|True Damage Know My Name}} ({{RP|1350}})
+* {{csl|Senna|True Damage Know My Name}} ({{RP|1350}})
+* {{csl|Yasuo|True Damage Know My Name}} ({{RP|1350}})
+
+The following [[Chroma]] sets have been added:
+* {{csl|Akali|True Damage Know My Name|chromas=true}}
+* {{csl|Ekko|Prestige True Damage Know My Name|chromas=true}}
+* {{csl|Qiyana|True Damage Know My Name|chromas=true}}
+* {{csl|Senna|True Damage Know My Name|chromas=true}}
+* {{csl|Yasuo|True Damage Know My Name|chromas=true}}
+
+The following [[Summoner icon]]s have been added:
+<gallery captionalign="center" widths="90" orientation="square" spacing="small">
+2026 OMG profileicon.jpg|2026 OMG
+2026 UP profileicon.jpg|2026 UP
+True Damage Know My Name Akali Border profileicon.jpg|True Damage Know My Name Akali Border
+Prestige True Damage Know My Name Ekko Border profileicon.jpg|Prestige True Damage Know My Name Ekko Border
+True Damage Know My Name Qiyana Border profileicon.jpg|True Damage Know My Name Qiyana Border
+True Damage Know My Name Senna Border profileicon.jpg|True Damage Know My Name Senna Border
+True Damage Know My Name Yasuo Border profileicon.jpg|True Damage Know My Name Yasuo Border
+Make No Mistakes profileicon.jpg|Make No Mistakes
+Hello From Worlds 2026! profileicon.jpg|Hello From Worlds 2026!
+Toothy Grin profileicon.jpg|Toothy Grin
+HEARTSTEEL Prospect profileicon.jpg|HEARTSTEEL Prospect
+HEARTSTEEL Member profileicon.jpg|HEARTSTEEL Member
+KDA Prospect profileicon.jpg|K/DA Prospect
+Mystery profileicon.jpg|Mystery
+Pentakill Prospect profileicon.jpg|Pentakill Prospect
+Pentakill Member profileicon.jpg|Pentakill Member
+True Damage Prospect profileicon.jpg|True Damage Prospect
+True Damage Member profileicon.jpg|True Damage Member
+Worlds Performer profileicon.jpg|Worlds Performer
+Your Biggest Fan profileicon.jpg|Your Biggest Fan
+Nagoya 2026 Golden Champion profileicon.jpg|Nagoya 2026 Golden Champion
+</gallery>
+
+The following [[Emote]]s have been added:
+<gallery captionalign="center" widths="90" orientation="square" spacing="small">
+Bubblegum Pop Emote.png|Bubblegum Pop
+Time for Triumph Emote.png|Time for Triumph
+Royal Eye-Roll Emote.png|Royal Eye-Roll
+Face the Music Emote.png|Face the Music
+Feel The Groove Emote.png|Feel The Groove
+HEARTSTEEL Poro Emote.png|HEARTSTEEL Poro
+Bouncer Poro Emote.png|Bouncer Poro
+Pentakill Poro Emote.png|Pentakill Poro
+True Damage Poro Emote.png|True Damage Poro
+Mystery Emote.png|Mystery
+Snack Time Emote.png|Snack Time
+Pins and Needles Emote.png|Pins and Needles
+??? Emote.png|???
+Gotta Chomp Emote.png|Gotta Chomp
+Witchy Brew Emote.png|Witchy Brew
+Scissors Gesture Emote.png|Scissors Gesture
+Victory Pose Emote.png|Victory Pose
+Splatula Emote.png|{{tt|Splatula|Acquired by completing the 'Play 1 TFT game' mission in 26.21. Originally meant as a reward for players who have reported bugs since the release of Set 18: Enchanted Wilds (aka bug *splat*ters), but the reward was difficult to distribute in the latter case.}}
+</gallery>
+
+== League of Legends V26.21 ==
+=== Client ===
+;Minimum System Requirements
+* We've shipped an improvement to how our patch launcher works. This improvement uses a software library that requires SSE 4.2, which results in us increasing our AMD minspec by one version.
+
+;Mythic Shop
+* As a heads up, during Patch 26.22, we'll be making changes to the Mythic Shop so that each player will start to see offerings unique to them, rather than everyone having the same selection at a given time. We're hoping this will open up the possibility in the future to allow for you to see more relevant content. 
+* In preparation for this, we'll be making some changes during 26.21 so the rotation timings of the Bi-weekly, Weekly, and Daily sections of the Mythic Shop are better aligned. Keep a close eye on the rotation timings so you don't miss anything.
+
+;Replays
+* Replay downloads will be limited to 10 per hour. You will still be able to download your own replays, as well as replays from your friends and other players.
+* This change is necessary to prevent large-scale abuse of downloaded replays by bad actors using vibecoded apps to scrape thousands upon thousands of replays. We opted for a time-based limit to still allow creators to make content, while preventing mass exploitative downloads. We'll continue to monitor how many replays are downloaded to ensure players have access to this important feature while preventing clear misuse.
+
+=== Champions ===
+;{{ci|Azir}}
+* Stats
+** Mana growth increased to 50 from 40.
+
+;{{ci|Briar}}
+* {{ai|Certain Death|Briar}}
+** {{sbc|Bug Fix:}} Updated SFX to use the base skin's ult SFX when playing against her to improve clarity.
+
+;{{ci|Caitlyn}}
+* {{ai|Headshot|Caitlyn}}
+** AD ratio reduced to {{as|{{pp|key=%|60 to 80 for 3|1 to 13}} AD}} from {{as|{{pp|key=%|60 to 100 for 3|1 to 13}} AD}}.
+** Critical strike chance ratio reduced to {{pp|0 to 80 for 11|key=%|0 to 100|key1=%|type=critical strike chance|color=critical strike chance}} from {{pp|0 to 100 for 11|key=%|0 to 100|key1=%|type=critical strike chance|color=critical strike chance|showtype=false}}.
+** {{ii|Infinity Edge}} critical strike chance ratio reduced to {{pp|0 to 24 for 11|key=%|0 to 100|key1=%|type=critical strike chance|color=critical strike chance}} from {{pp|0 to 30 for 11|key=%|0 to 100|key1=%|type=critical strike chance|color=critical strike chance|showtype=false}}.
+* {{ai|Piltover Peacemaker|Caitlyn}}
+** Base damage increased to {{ap|50 to 230}} from {{ap|50 to 210}}.
+
+;{{ci|Darius}}
+* {{ai|Decimate|Darius}}
+** Cooldown reduced to {{ap|9 to 4}} seconds from {{ap|9 to 5}}.
+
+;{{ci|Jinx}}
+* Stats
+** Base health reduced to 610 from 630.
+** Attack damage growth reduced to 3 from {{fd|3.25}}.
+
+;{{ci|Kled}}
+* {{ai|Chaaaaaaaarge!!!|Kled}}
+** {{sbc|Bug Fix:}} Updated SFX to use the base skin's ult SFX when playing against him to improve clarity.
+
+;{{ci|Lee Sin}}
+* {{ai|Safeguard|Lee Sin}}
+** Cooldown increased to 8 seconds from 7.
+* {{ai|Tempest|Lee Sin}}
+** {{sbc|Bug Fix:}} No longer reveals invisible enemies if they stealth after being hit by the ability.
+* {{ai|Dragon's Rage|Lee Sin}}
+** Base damage reduced to {{ap|150 to 550 3}} from {{ap|175 to 625 3}}.
+
+;{{ci|Locke}}
+* Stats
+** Mana growth reduced to 60 from 70.
+* {{ai|Ritual Nails|Locke}}
+** Cooldown and mana refund per unused charge changed to {{pp|10 to 40|key=%}} from {{pp|20 to 35|key=%|showtype=false}}.
+* {{ai|Soul Ignition|Locke}}
+** Mana cost increased to {{ap|60 to 80}} from {{ap|50 to 70}}.
+** Grey Health store reduced to {{pp|20 to 200}} from {{pp|40 to 200}}.
+** Maximum Grey Health based on current health threshold changed to {{pp|100 to 500}} from {{pp|150 to 450}}.
+* {{ai|Ashen Pursuit|Locke}}
+** Blink base damage increased to {{ap|40 to 100}} from {{ap|40 to 80}}.
+** Blink AP ratio increased to {{as|50% AP}} from {{as|40% AP}}.
+
+;{{ci|Miss Fortune}}
+* {{ai|Make It Rain|Miss Fortune}}
+** Total base damage increased to {{ap|90 to 210}} from {{ap|70 to 190}}.
+* {{ai|Bullet Time|Miss Fortune}}
+** Critical strike damage increased to 145% from 130%.
+** {{ii|Infinity Edge}} critical strike damage increased to {{fd|13.5}}% from 9%.
+
+;{{ci|Nidalee}}
+* {{ai|Javelin Toss|Nidalee}}
+** {{sbc|Bug Fix:}} Fixed a bug where the damage could go through spell shields at max range.
+* {{ai|Pounce|Nidalee}}
+** Base damage reduced to {{ap|50 to 170 4}} from {{ap|55 to 190 4}}.
+* {{ai|Primal Surge|Nidalee}}
+** Bonus attack speed reduced to {{ap|20 to 60}}% from {{ap|30 to 70}}%.
+
+;{{ci|Nunu}}
+* {{ai|Absolute Zero|Nunu}}
+** Maximum base damage increased to {{ap|750 to 1450 3}} from {{ap|625 to 1275 3}}.
+
+;{{ci|Orianna}}
+* {{ai|Command: Attack|Orianna}}
+** AP ratio increased to {{as|60% AP}} from {{as|55% AP}}.
+* {{ai|Command: Dissonance|Orianna}}
+** AP ratio increased to {{as|85% AP}} from {{as|80% AP}}.
+
+;{{ci|Qiyana}}
+* {{ai|Edge of Ixtal|Qiyana}}
+** Base damage reduced to {{ap|70 to 190}} from {{ap|80 to 200}}.
+
+;{{ci|Rammus}}
+* {{ai|Defensive Ball Curl|Rammus}}
+** Base bonus armor reduced to {{ap|25 to 45}} from {{ap|27 to 47}}.
+** Armor ratio for bonus armor reduced to {{as|{{ap|30 to 50}}% '''total''' armor|ar}} from {{as|{{ap|30 to 60}}%|ar}}.
+** Magic resistance ratio for bonus magic resistance reduced to {{as|{{ap|30 to 50}}% '''total''' magic resistance|mr}} from {{as|{{ap|30 to 60}}%|mr}}.
+
+;{{ci|Ryze}}
+* {{ai|Overload|Ryze}}
+** Flux bonus damage changed to {{pp|type=[[File:Realm Warp.png|20px|border]] ''Realm Warp's'' Rank|key=%|10 to 100 for 4|0 to 3}} from {{pp|type=[[File:Realm Warp.png|20px|border]] ''Realm Warp's'' Rank|key=%|15 to 90 for 4|0 to 3|showtype=false}}.
+** Bonus movement speed increased to {{ap|30 to 50}}% from {{ap|28 to 44}}%.
+* {{ai|Rune Prison|Ryze}}
+** AP ratio increased to {{as|70% AP}} from {{as|60% AP}}.
+
+;{{ci|Sion}}
+* Stats
+** Health growth increased to 95 from 87.
+* {{ai|Unstoppable Onslaught|Sion}}
+** Base damage modifier increased to {{pp|type=channel time|changedisplay=true|key=%|0 to 200 for 4|0 to 3|formula=66.66% every 1 second. ''This is capped at 3 seconds.''}} from {{pp|type=channel time|changedisplay=true|key=%|0 to 500/3 for 4|0 to 3|formula=55.55% every 1 second. ''This is capped at 3 seconds.''|showtype=false}}.
+*** Maximum base damage increased to {{ap|150*3 to 450*3 3}} from {{ap|150*2.66666 to 450*2.66666 3|round=2}}.
+** Bonus AD modifier increased to {{pp|type=channel time|changedisplay=true|key=%|0 to 200 for 4|0 to 3|formula=66.66% every 1 second. ''This is capped at 3 seconds.''}} from {{pp|type=channel time|changedisplay=true|key=%|0 to 100 for 4|0 to 3|formula=33.33% every 1 second. ''This is capped at 3 seconds.''|showtype=false}}.
+*** Maximum bonus AD ratio increased to {{as|120% '''bonus''' AD}} from {{as|80%|AD}}.
+** {{sbc|Bug Fix:}} Tooltip now displays the correct minimum and maximum bonus AD ratios (40-120%). It displayed an incorrect Bonus AD Scaling (60%-120%). It was never actually changed in patch 25.16 beyond the tooltip.
+** {{sbc|Bug Fix:}} Updated SFX to use the base skin's ult SFX when playing against him to improve clarity.
+
+;{{ci|Taliyah}}
+* {{ai|Unraveled Earth|Taliyah}}
+** Initial base damage increased to {{ap|70 to 250}} from {{ap|60 to 240}}.
+** Initial AP ratio increased to {{as|70% AP}} from {{as|60% AP}}.
+** Detonation base damage increased to {{ap|30 to 90}} from {{ap|25 to 85}}.
+
+;{{ci|Taric}}
+* {{ai|Starlight's Touch|Taric}}
+** Casts when allies are {{tip|untargetable}} now successfully trigger.
+* {{ai|Dazzle|Taric}}
+** Casts when allies are {{tip|untargetable}} now successfully trigger.
+** Tooltip updated to include "Dazzle will not cast from Vanished allies".
+* {{ai|Cosmic Radiance|Taric}}
+** Casts when allies are {{tip|untargetable}} now successfully trigger.
+
+;{{ci|Tristana}}
+* {{ai|Rapid Fire|Tristana}}
+** Bonus attack speed reduced to {{ap|40 to 120}}% from {{ap|60 to 120}}%.
+
+;{{ci|Twisted Fate}}
+* {{ai|Destiny|Twisted Fate}}
+** {{sbc|New Effect:}} Now reveals {{tip|untargetable}} units.
+
+;{{ci|Varus}}
+* {{ai|Piercing Arrow|Varus}}
+** Minimum base damage changed to {{ap|50 to 230}} from {{ap|53.33 to 240|round=2}}.
+** Damage modifier increased to {{pp|type=channel time|key=%|0 to 70 for 11|0 to 1.25|round1=3|formula=7% per 0.125 seconds. ''This is capped at 1.25 seconds.''}} from {{pp|type=channel time|key=%|0 to 50 for 11|0 to 1.25|round1=3|formula=5% per 0.125 seconds. ''This is capped at 1.25 seconds.''|showtype=false}}.
+*** Maximum base damage increased to {{ap|50*1.7 to 230*1.7|round=2}} from {{ap|53.33*1.5 to 240*1.5|round=2}}.
+*** Maximum bonus AD ratio increased to {{as|136% '''bonus''' AD}} from {{as|120%|AD}}.
+* {{ai|Blighted Quiver|Varus}}
+** On-hit base damage reduced to {{ap|4 to 28}} from {{ap|4 to 40}}.
+** On-hit bonus AD ratio increased to {{as|20% '''bonus''' AD}} from {{as|15%|AD}}.
+** On-hit AP ratio increased to {{as|30% AP}} from {{as|25% AP}}.
+** Blight target's health ratio damage per stack reduced to {{as|{{ap|2.5 to 4.5}}% of target's '''maximum''' health}} from {{as|{{ap|3 to 5}}%|hp}}.
+** Blight target's health AP ratio per stack increased to {{as|{{fd|1.4}}% per 100 AP}} from {{as|{{fd|1.3}}% per 100 AP}}.
+** Blight damage modifier increased to {{pp|0 to 70 for 11|0 to 1.25|key=%|type=[[File:Varus Piercing Arrow.png|20px|border]] ''Piercing Arrow's'' charge time|formula=7% per 0.125 seconds. ''This is capped at 1.25 seconds.''|round1=3}} from {{pp|0 to 50 for 11|0 to 1.25|key=%|type=[[File:Varus Piercing Arrow.png|20px|border]] ''Piercing Arrow's'' charge time|formula=5% per 0.125 seconds. ''This is capped at 1.25 seconds.''|round1=3|showtype=false}}.
+** Blight cooldown refund per target reduced to 11% from 13%.
+** Blight cooldown refund modifier increased to {{pp|0 to 70 for 11|0 to 1.25|key=%|type=[[File:Varus Piercing Arrow.png|20px|border]] ''Piercing Arrow's'' charge time|formula=7% per 0.125 seconds. ''This is capped at 1.25 seconds.''|round1=3}} from {{pp|0 to 50 for 11|0 to 1.25|key=%|type=[[File:Varus Piercing Arrow.png|20px|border]] ''Piercing Arrow's'' charge time|formula=5% per 0.125 seconds. ''This is capped at 1.25 seconds.''|round1=3|showtype=false}}.
+** Active target's health ratio damage per stack reduced to {{as|{{ap|6 to 10}}% of target's '''missing''' health}} from {{as|{{ap|6 to 14}}%|hp}}.
+** Active damage modifier increased to {{pp|0 to 70 for 11|0 to 1.25|key=%|type=[[File:Varus Piercing Arrow.png|20px|border]] ''Piercing Arrow's'' charge time|formula=7% per 0.125 seconds. ''This is capped at 1.25 seconds.''|round1=3}} from {{pp|0 to 50 for 11|0 to 1.25|key=%|type=[[File:Varus Piercing Arrow.png|20px|border]] ''Piercing Arrow's'' charge time|formula=5% per 0.125 seconds. ''This is capped at 1.25 seconds.''|round1=3|showtype=false}}.
+
+;{{ci|Vel'Koz}}
+* {{ai|Organic Deconstruction|Vel'Koz}}
+** Base damage increased to {{pp|35 to 205}} from {{pp|35 to 180}}.
+** AP ratio increased to {{as|65% AP}} from {{as|60% AP}}.
+
+;{{ci|Viktor}}
+* Stats
+** Base movement speed reduced to 330 from 335.
+* {{ai|Siphon Power|Viktor}}
+** Base shield reduced to {{pp|30 to 130}} from {{pp|40 to 140}}.
+** Shield AP ratio reduced to {{as|20% AP}} from {{as|25% AP}}.
+** Shield duration reduced to 2 seconds from {{fd|2.5}}.
+
+;{{ci|Wukong}}
+* Stats
+** Base health regeneration increased to {{fd|5.5}} from {{fd|3.5}}.
+* {{ai|Stone Skin|Wukong}}
+** Bonus armor reduced to {{pp|4.5 to 10}} from {{pp|6 to 10}}.
+
+;{{ci|Xin Zhao}}
+* {{ai|Three Talon Strike|Xin Zhao}}
+** Bonus AD ratio increased to {{as|45% '''bonus''' AD}} from {{as|40%|AD}}.
+* {{ai|Audacious Charge|Xin Zhao}}
+** Attack speed ratio increased to {{as|1% per 4% '''bonus''' AS}} from {{as|1% per 5% '''bonus''' AS}}.
+
+;{{ci|Yone}}
+* {{ai|Mortal Steel|Yone}}
+** AD ratio reduced to {{as|105% AD}} from {{as|110% AD}}.
+
+;{{ci|Zaahen}}
+* {{ai|The Darkin Glaive|Zaahen}}
+** {{sbc|Bug Fix:}} Damage now applies if he goes into revive mid-strike.
+
+;{{ci|Zoe}}
+* {{ai|Spell Thief|Zoe}}
+** {{sbc|Bug Fix:}} Fixed a bug where she can get a 1000 damage {{si|Smite}} from a minion drop earlier than expected.
+
+;{{ci|Zyra}}
+* {{ai|Rampant Growth|Zyra}}
+** Recharge time reduced to {{ap|16 to 10}} seconds from {{ap|18 to 10}}.
+
+=== Items ===
+;{{ii|Bastionbreaker}}
+* Lethality reduced to 18 from 22.
+* Shaped Charge base damage reduced to {{rd|40|20}} from {{rd|50|25}}.
+* Sabotage duration increased to 25000 seconds from 90.
+
+;{{ii|Dawncore}}
+* First Light ability power per 100% base mana regeneration increased to 15 from 10.
+
+;{{ii|Gluttonous Greaves}}
+* Total cost increased to {{g|1100}} from {{g|1000}}.
+** Combine cost increased to {{g|800}} from {{g|700}}.
+
+;{{ii|Hubris}}
+* Base bonus damage changed to {{rd|15|10}} from 12.
+* Bonus attack damage per stack changed to {{rd|3|2}} from 3.
+
+;{{ii|Titanic Hydra}}
+* {{sbc|Bug Fix:}} Fixed a bug where Titanic Crescent's cooldown timer would not be displayed after use.
+
+=== Runes ===
+;{{ri|Hail of Blades}}
+* {{sbc|Bug Fix:}} Fixed a bug where it does not trigger on auto resets if the first attack was cancelled.
+
+=== Summoner Spells ===
+;{{si|Teleport}}
+* {{sbc|Bug Fix:}} Fixed a bug where the channel VFX was visible for enemies when cast in brush.
+
+=== ARAM: Mayhem ===
+* New feature - Headliners
+** K/DA: Collect 4 K/DA Cards to earn an extra Augment!
+** HEARTSTEEL: Augments can come with unique modifiers making them extra strong.
+** True Damage: Takedowns and destroying towers can drop Anvils for your team.
+** Pentakill: Increase the power of one of your abilities at the start of the game and at level 18.
+** Disco: Dance under the disco ball to earn Gold for everyone.
+** Cafe Cuties: Health relics are especially powerful.
+** Bees: Collect the honey pots and avoid the bees that fly across the map.
+** Command Line: Reroll one of your augments to be a higher tier in every selection.
+** And more to come????
+* New Augments
+** Silver Blue Barrier
+*** Gain a Shield whenever you cast an Ability based on the mana cost.
+** Flow of Spirit
+*** Using a specific ability grants you stacking Attack Speed.
+** Fruitify
+*** Enemy Champion takedowns create Fruit that can be picked up by you and your allies for healing.
+** Gift of the Drowned
+*** All Bonus Health from your items is converted to Lethality.
+** Hands Off The Talent
+*** Your Attacks deal extra damage if fired from max range.
+** Lich Brain
+*** Gain Ability Power based on your Bonus Health.
+** Lonely Warrior
+*** Gain Armor, Magic Resistance, and Attack Speed for every enemy Champion around you.
+** No Mana, No Problem
+*** All mana from your items is converted to Ability Power.
+** Sound Barrier
+*** Your shields grant Move Speed.
+** Ultimate Recursion
+*** Gain 50 Ultimate Ability Haste.
+** Gold Arcane Axiom
+*** Takedowns refund a portion of your Ultimate Cooldown.
+** Armored Impact
+*** Using an Ability causes your next Attack to deal additional damage based on your Armor.
+** BEES!!!
+*** Your abilities occasionally fling an exploding beehive at your enemies that deals damage, slows, and applies On-Hit effects.
+** Brass Blast
+*** Gain a Summoner Spell that allows you to charge up a horn blast to knock back and damage your enemies.
+** CRIMSON COBALT
+*** One of your Abilities marks enemy champions; consuming the mark deals extra damage and reduces the cooldown of your Ability.
+** Double Time
+*** Damaging enemy champions with two separate abilities in quick succession grants permanent Mana and deals additional damage.
+** Enchanting Butterflies
+*** Healing and Shielding allies summons butterflies. Once you have enough butterflies, they"ll fly at enemies you damage, dealing additional damage.
+** Get Jinxed
+*** Gain a Summoner Spell that allows you to jump on a destructive rocket and drive it into your enemies.
+** Heavy Is The Crown
+*** Gain Attack Damage, Ability Power, and Attack Speed but decrease your own Move Speed. Every Takedown increases this effect and dying decreases the effect.
+** Jeweled Bracelet
+*** Your Ultimate Ability can now critically strike.
+** Recoil
+*** One of your abilities will launch you backwards when you fire it.
+** Salvation
+*** Falling to low Health pushes back enemies and heals allies.
+** Sap Magic
+*** Every 10 seconds, your next Attack deals additional damage and heals you.
+** Still Here
+*** Gain Attack Damage, Ability Power, and Lifesteal based on how low your Health is.
+** Take"em Down Down Down
+*** Damage an enemy champion five times with Attacks and Abilities to gain a burst of healing and extra damage.
+** The Boom and the Bass
+*** After casting an Ability, your next attack deals bonus damage and grants you a burst of Move Speed.
+** Tickle Monster
+*** All Attack Damage from your items is converted to Attack Speed.
+** Upgrade: Stormsurge
+*** When Stormsurge applies Squall, it now detonates in an area, dealing additional damage and marking enemies with a secondary Squall.
+** Weapon Of Destiny
+*** The first Legendary Item you buy gets stronger stats with every takedown.
+** Prismatic Big Shot
+*** A large percent of your Attack Speed is converted to Critical Strike Damage.
+** Bouncing Bees
+*** After using an ability, your next Attack bounces to nearby enemies, prioritizing enemy champions. Complete the quest by bouncing your Attacks to enemy champions to gain additional bounces and Attack Damage.
+** Group Hug
+*** One of your Abilities that heals or shields also heals or shields nearby allies.
+** Mosh Monster
+*** Using your Ultimate Ability grants you increased Health and creates a zone around you that slows Enemy Champions. Takedowns increase the amount of Bonus Health you get and the size of the slow zone.
+** Third Times The Harm
+*** Attacking an enemy champion three times deals a burst of damage and grants you a burst of Attack Speed.
+** Totentanz
+*** Gain a Summoner Spell that lets you “Dance with Death”, granting you immortality for 5 seconds, but if you don"t get a takedown during that time, you"ll get dragged to the underworld.
+* Removed Augments
+** Combusting Interest
+** Crit 'n Cast
+** Critical Missile
+** Dimension Shift
+** DropBear
+** Dropkick
+** Fan the Hammer
+** Hide on Bush
+** High Roller
+** Our Healing
+** Poro Stampede
+** Spiritual Purification
+** Ult Bot
+
+=== Arena ===
+* Champions
+** Bel'Veth
+*** Q - Void Surge
+**** Attack Damage Ratio: 105% ⇒ 95%
+*** R - Endless Banquet
+**** Bonus Attack Damage Ratio per Stack: 1% ⇒ 0.5%
+** Briar
+*** Q - Head Rush
+**** Stun Duration: 0.85s ⇒ 0.5s
+*** E - Chilling Scream
+**** Full Charge Ability Power Ratio: 100% ⇒ 150%
+**** Full Charge Wall Hit Ability Power Ratio: 240% ⇒ 350%
+**** Total Maximum Ability Power Ratio: 340% ⇒ 500%
+** Elise
+*** E - Cocoon
+**** Cooldown: 8 / 7.5 / 7 / 6.5 / 6s ⇒ 10s
+*** W - Skittering Frenzy
+**** Spiderlings: 2 / 3 / 4 / 5 ⇒ 4 / 6 / 8 / 10
+**** Removed: Old Spider Damage Buff.
+** Ezreal
+*** R - Trueshot Barrage
+**** Bonus Attack Damage Ratio: 100% ⇒ 150%
+**** Cooldown: 50 / 40 / 30s ⇒ 40 / 30 / 20s
+** Fiora
+*** Passive - Duelist's Dance
+**** Bonus Attack Damage Ratio: 3% per 100 bonus AD ⇒ 2% per 100 bonus AD
+*** Q - Lunge
+**** Ability Power Ratio: 0 ⇒ 25%
+** Galio
+*** W - Shield of Durand
+**** Passive Shield Health Ratio: 7.5 - 15% ⇒ 6 - 10%
+**** Fully-Channeled Taunt Duration: 1.5s ⇒ 1s
+*** R - Hero's Entrance
+**** Knockup Duration: 1.5s ⇒ 1s
+** Gangplank
+*** W - Remove Scurvy
+**** Ability Power Ratio: 90% ⇒ 135%
+**** Cooldown: 22 / 20 / 18 / 16 / 14s ⇒ 18 / 16 / 14 / 12 / 10s
+*** R - Cannon Barrage
+**** Cooldown: 130 / 110 / 90s ⇒ 100 / 80 / 60s
+** Gnar
+*** W - Hyper
+**** Duration: 4s ⇒ 2s
+**** Movement Speed: 20 / 40 / 60 / 80 ⇒ 40 / 80 / 120 / 160
+*** R - GNAR!
+**** Ability Power Ratio: 100% ⇒ 150%
+** Kayn
+*** Passive - The Darkin Scythe
+**** Transformation Progress: Increased rate.
+** Katarina
+*** R - Death Lotus
+**** On-Hit Ratio: 20 / 25 / 30% ⇒ 25% flat
+**** Ability Power Ratio per Dagger: 26% ⇒ 35%
+** Lee Sin
+*** E - Tempest
+**** Ability Power Ratio: 0 ⇒ 75%
+** Malzahar
+*** W - Void Swarm
+**** Maximum Voidling Charges: Can now store up to 6 charges.
+** Milio
+*** Q - Ultra Mega Fire Kick
+**** Cooldown: 8s ⇒ 10s
+**** Ability Power Ratio: 120% ⇒ 200%
+*** R - Breath Of Life
+**** Cooldown: 160 / 145 / 130s ⇒ 180 / 150 / 130s
+** Miss Fortune
+*** Q - Double Up
+**** Ability Power Ratio: 55% ⇒ 70%
+*** R - Bullet Time
+**** Ability Power Ratio: 35% ⇒ 40%
+** Morgana
+*** Q - Dark Binding
+**** Cooldown: 12s ⇒ 14s
+*** E - Black Shield
+**** Cooldown: 26 / 23.5 / 21 / 18.5 / 16s ⇒ 30 / 27.5 / 25 / 22.5 / 20s
+** Nidalee
+*** W - Bushwhack
+**** Trap Cooldown: 14 / 13 / 12 / 11 / 10s ⇒ 8s
+*** R - Aspect of the Cougar
+**** Cougar Ability Cooldowns: 6s ⇒ 4s
+** Rengar
+*** W - Battle Roar
+**** Ability Power Ratio: 95% ⇒ 120%
+**** Empowered Ability Power Ratio: 105% ⇒ 120%
+** Renata Glasc
+*** R - Hostile Takeover
+**** Cooldown: 150 / 130 / 110s ⇒ 170 / 150 / 130s
+*** W - Bailout
+**** Cooldown: 28 / 27 / 26 / 25 / 24s ⇒ 32 / 31 / 30 / 29 / 28s
+** Skarner
+*** Q - Shattered Earth
+**** Bonus Attack Damage Ratio: 90% ⇒ 150%
+*** W - Seismic Bastion
+**** Cooldown: 10 / 9 / 8 / 7 / 6s ⇒ 8 / 7 / 6 / 5 / 4s
+**** Ability Power Ratio: 80% ⇒ 120%
+** Teemo
+*** E - Toxic Shot
+**** Initial Hit Attack Damage Ratio: 5% ⇒ 10%
+**** Damage over Time Attack Damage Ratio: 10% ⇒ 20%
+** Urgot
+*** W - Purge
+**** On-Hit Effectiveness: 50% ⇒ 75%
+** Varus
+*** E - Hail of Arrows
+**** Cooldown: 18 / 16 / 14 / 12 / 10s ⇒ 14 / 12 / 10 / 8 / 6s
+**** Ability Power Ratio: 0 ⇒ 50%
+** Yone
+*** R - Fate Sealed
+**** Bonus Attack Damage Ratio: 80% ⇒ 100%
+**** Cooldown: 70 / 60 / 50s ⇒ 60 / 50 / 40s
+** Yuumi
+*** W - You and Me!
+**** Heal and Shield Power: 10 - 25% ⇒ 4 - 8%
+** Zaahen
+*** Passive - Cultivation of War
+**** Bonus Attack Damage per Stack: 1 - 2% ⇒ 1%
+* Items
+** Turbo Chemtank
+*** Restore: 4% ⇒ 20% Maximum Health
+** Galeforce
+*** Maximum Dash Range: 600 ⇒ 900
+** Night Harvester
+*** Cooldown: 10s ⇒ 8s
+*** Movement Speed Duration: 1.5s ⇒ 1s
+*** Movement Speed: 40% ⇒ 60%
+** Mirage Blade
+*** Cooldown Refund: 20% ⇒ 15%
+** Moonflair Spellblade
+*** Cooldown Refund per Attack: 0.5 ⇒ 0.3
+*** Number of Enhanced Attacks: 2 ⇒ 3
+* Augments
+** Big Brain
+*** Out-of-Combat Timer: 3s ⇒ 5s
+** Castle
+*** Cooldown: 12s ⇒ 10s
+** Chroma Flux
+*** Cooldown: 10s ⇒ 8s
+** Courage of the Colossus
+*** Cooldown: 5s ⇒ 6s
+** Dawnbringer's Resolve
+*** Healing: 25 / 30 ⇒ 35 / 40
+** Dual Wield
+*** On-Hit Effectiveness: 40 / 50 / 60% ⇒ 40 / 45 / 50%
+** Flashy
+*** Charges: 2 / 3 ⇒ 4 / 6
+** Hive Mind
+*** Starting Bees: 2 / 4 / 6 ⇒ 3 / 6 / 9
+** Minionmancer
+*** Increased Minion Power: 40 / 55 ⇒ 55 / 70
+** Nesting Doll
+*** Maximum Revives: 1 / 2 / 3 ⇒ 0 / 1 / 2
+** Rite of the Forge God
+*** Item Stat Amplification: 40% ⇒ 60%
+** Spin to Win
+*** Damage Amplification: 25 / 35% ⇒ 35 / 45%
+** Trueshot Prodigy
+*** Base Damage: 175 / 350 / 525 ⇒ 175 / 275 / 375
+*** Attack Damage Ratio: 100% ⇒ 50%
+*** Cooldown: 10 / 8 / 6s ⇒ 12 / 10 / 8s
+
+== Hotfixes ==
+=== October 22nd Hotfix ===
+;{{ci|Varus}}
+* {{ai|Living Vengeance|Varus}}
+** Attack speed ratio for bonus AD and AP on kill increased to {{as|14% '''bonus total''' attack speed}} from {{as|11%|as}}.
+** Attack speed ratio for bonus AD and AP on takedown increased to {{as|42% '''bonus total''' attack speed}} from {{as|33%|as}}.
+* {{ai|Piercing Arrow|Varus}}
+** Minimum base damage increased to {{ap|50 to 250}} from {{ap|50 to 230}}.
+
+{{References}}
+
+== See Also ==
+{{Release history}}
+
+[[Category:2026 Annual Cycle patch]]

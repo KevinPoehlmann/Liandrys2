@@ -12,6 +12,8 @@ from urllib.error import URLError, HTTPError
 
 import src.server.database as db
 import src.server.loader.webscraper2 as ws
+from src.server.loader.champion_source import WIKI_API
+from src.server.loader.patch_notes import fetch_patch_page, hotfix_dates, page_text, parse_patch_notes, patch_page_params
 
 from src.server.loader.helper import (
     info_loader,
@@ -31,7 +33,7 @@ from src.server.models.json_validation import (
     SummonerspellsJson,
     SummonerspellJson
 )
-from src.server.models.change import patch_note_changes
+from src.server.models.change import Change
 from src.server.models.champion import NewChampion
 from src.server.models.enums import Stat
 from src.server.models.image import Image
@@ -137,15 +139,17 @@ async def _check_wiki_for_hotfixes(patch_list: list[str]) -> dict[str, list[date
 
     for patch in patch_list:
         wiki_patch = riot_to_wiki_patch(patch)
-        wiki_url = URLS.wiki + wiki_patch
 
         try:
-            response = requests.get(wiki_url)
+            response = requests.get(WIKI_API, params=patch_page_params(wiki_patch))
             response.raise_for_status()
-        except requests.RequestException as e:
-            raise PatcherError(f"Could not fetch wiki patch: {wiki_url}", "Wiki page not found or unavailable") from e
+            text = page_text(response.json())
+        except (requests.RequestException, ValueError) as e:
+            raise PatcherError(f"Could not fetch wiki patch: {wiki_patch}", "Wiki page not found or unavailable") from e
+        if text is None:
+            raise PatcherError(f"No wiki patch page: {wiki_patch}", "Wiki page not found or unavailable")
 
-        hotfix_results[patch] = ws.scrape_hotfix_list(response.text)
+        hotfix_results[patch] = hotfix_dates(text)
 
     return hotfix_results
 
@@ -587,8 +591,7 @@ async def _load_patch(patch_str: str, hotfix: datetime | None, old_patch: NewPat
     timeout = aiohttp.ClientTimeout(total=600)
     async with aiohttp.ClientSession(timeout=timeout) as aio_session:
         session = SafeSession(aio_session)
-        patch_wiki = await _fetch_wiki_html(patch, "Patch", old_patch, session)
-        changes = ws.scrape_patch(patch_wiki, hotfix)
+        changes = parse_patch_notes(await fetch_patch_page(session, patch), hotfix)
 
         new_patch = NewPatch(
             patch=patch_str,
@@ -644,23 +647,23 @@ async def _patch_champions(changes: dict, new_patch: NewPatch, old_patch: NewPat
         new_patch.loaded_champion_count += 1
 
 
-async def _add_changes_champion(champion: NewChampion, diff: dict[str, list[str]]) -> None:
+async def _add_changes_champion(champion: NewChampion, diff: dict[str, list[Change]]) -> None:
     if champion.passive.name in diff:
-        champion.passive.changes.extend(patch_note_changes(diff.pop(champion.passive.name)))
+        champion.passive.changes.extend(diff.pop(champion.passive.name))
         champion.passive.validated = False
     if champion.q.name in diff:
-        champion.q.changes.extend(patch_note_changes(diff.pop(champion.q.name)))
+        champion.q.changes.extend(diff.pop(champion.q.name))
         champion.q.validated = False
     if champion.w.name in diff:
-        champion.w.changes.extend(patch_note_changes(diff.pop(champion.w.name)))
+        champion.w.changes.extend(diff.pop(champion.w.name))
         champion.w.validated = False
     if champion.e.name in diff: 
-        champion.e.changes.extend(patch_note_changes(diff.pop(champion.e.name)))
+        champion.e.changes.extend(diff.pop(champion.e.name))
         champion.e.validated = False
     if champion.r.name in diff:
-        champion.r.changes.extend(patch_note_changes(diff.pop(champion.r.name)))
+        champion.r.changes.extend(diff.pop(champion.r.name))
         champion.r.validated = False
-    champion.changes.extend(patch_note_changes([line for lines in diff.values() for line in lines]))
+    champion.changes.extend([line for lines in diff.values() for line in lines])
     champion.validated = False
 
 
@@ -712,7 +715,7 @@ async def _patch_items(changes: dict, new_patch: NewPatch, old_patch: NewPatch, 
 
 
 async def _add_changes_item(item: NewItem, diff: list) -> None:
-    item.changes.extend(patch_note_changes(diff))
+    item.changes.extend(diff)
     item.validated = False
 
 
@@ -772,7 +775,7 @@ def _find_rune(rune_name: str, runes_data: dict) -> RuneClass | None:
 
 
 async def _add_changes_rune(rune: NewRune, diff: list) -> None:
-    rune.changes.extend(patch_note_changes(diff))
+    rune.changes.extend(diff)
     rune.validated = False
 
 
@@ -823,7 +826,7 @@ async def _patch_summonerspells(changes: dict, new_patch: NewPatch, old_patch: N
 
 
 async def _add_changes_summonerspell(spell: NewSummonerspell, diff: list) -> None:
-    spell.changes.extend(patch_note_changes(diff))
+    spell.changes.extend(diff)
     spell.validated = False
 
 

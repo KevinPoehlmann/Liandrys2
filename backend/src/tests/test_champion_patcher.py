@@ -5,7 +5,7 @@ import pytest
 from src.server.loader.champion_builder import champion_stats, loaded_spells
 from src.server.loader.champion_patcher import _note_lines, patch_champion, spells_from_document, used_names
 from src.server.models.ability import Ability
-from src.server.models.change import Change
+from src.server.models.change import Change, patch_note
 from src.server.models.enums import ChangeSource
 from src.server.models.json_validation import ChampionJson
 from src.tests.test_champion_builder import VEIGAR_RANKS, fixture, raw_champion
@@ -162,7 +162,7 @@ class TestValidation():
 
 
     def test_named_in_the_patch_notes_only_unvalidates(self, veigar, old_raw, new_raw):
-        result = patch(veigar, old_raw, new_raw, {"Baleful Strike": ["Now pierces"], "General": ["Splash art updated"]})
+        result = patch(veigar, old_raw, new_raw, {"Baleful Strike": [patch_note("Now pierces")], "General": [patch_note("Splash art updated")]})
 
         assert result.unvalidated["Baleful Strike"] == ["named in the patch notes only"]
         assert result.champion.q.changes == [Change(source=ChangeSource.PATCH_NOTES, text="Now pierces")]
@@ -171,10 +171,10 @@ class TestValidation():
 
     def test_two_part_abilities_match_either_name(self):
         # 26.21: Lee Sin's "Safeguard / Iron Will" appears as "Safeguard"
-        notes = {"Safeguard": ["Cooldown increased"], "Iron Will": ["Bug fix"], "Tempest": ["Other"]}
+        notes = {"Safeguard": [patch_note("Cooldown increased")], "Iron Will": [patch_note("Bug fix")], "Tempest": [patch_note("Other")]}
 
-        assert _note_lines(notes, "Safeguard / Iron Will") == ["Cooldown increased", "Bug fix"]
-        assert notes == {"Tempest": ["Other"]}
+        assert _note_lines(notes, "Safeguard / Iron Will") == [patch_note("Cooldown increased"), patch_note("Bug fix")]
+        assert notes == {"Tempest": [patch_note("Other")]}
 
 
     def test_an_unvalidated_ability_stays_unvalidated(self, veigar, old_raw, new_raw):

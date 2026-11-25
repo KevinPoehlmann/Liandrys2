@@ -9,7 +9,7 @@ from src.server.loader.cdragon import SpellValues
 from src.server.loader.champion_builder import (SLOTS, LoadedSpell, apply_loader_part, champion_stats,
                                                 last_changed_patch, loaded_spells)
 from src.server.models.ability import Ability
-from src.server.models.change import Change, patch_note_changes
+from src.server.models.change import Change
 from src.server.models.champion import NewChampion, RawChampion
 from src.server.models.enums import ChangeSource
 from src.server.models.json_validation import ChampionJson
@@ -47,8 +47,8 @@ class PatchedChampion:
 
 
 def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: RawChampion, entry: ChampionJson,
-                   patch_notes: dict[str, list[str]]) -> PatchedChampion:
-    """`patch_notes` are this champion's wiki lines per ability name; lines under other headings belong to the champion."""
+                   patch_notes: dict[str, list[Change]]) -> PatchedChampion:
+    """`patch_notes` are this champion's patch note changes per ability name; lines under other headings belong to the champion."""
     champion = NewChampion.parse_obj(old.dict(exclude={"id"}))
     champion.patch, champion.hotfix = raw.patch, raw.hotfix
     champion.last_changed = last_changed_patch(raw.champion_data) or old.last_changed
@@ -67,7 +67,7 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
             lines += _note_lines(notes, container.name)
         if slot in max_ranks:
             _set_max_rank(container, max_ranks[slot], diff)
-        container.changes = _data_changes(diff.lines) + patch_note_changes(lines)
+        container.changes = _data_changes(diff.lines) + lines
         reasons = unvalidating_reasons(slot, used_names(container, slot), diffs)
         if lines and not diff.lines:
             reasons.append("named in the patch notes only")
@@ -75,13 +75,13 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
             container.validated = False
             unvalidated[container.name] = reasons
 
-    champion.changes += patch_note_changes([line for lines in notes.values() for line in lines])
+    champion.changes += [line for lines in notes.values() for line in lines]
     apply_loader_part(champion, new_spells)
     champion.validated = all(container.validated for _, container in _containers(champion))
     return PatchedChampion(champion, unvalidated)
 
 
-def _note_lines(notes: dict[str, list[str]], name: str) -> list[str]:
+def _note_lines(notes: dict[str, list[Change]], name: str) -> list[Change]:
     # Two-part abilities ("Safeguard / Iron Will") appear in the patch notes under either part.
     names = [name] + [part.strip() for part in name.split(" / ")] if " / " in name else [name]
     return [line for alias in names for line in notes.pop(alias, [])]
