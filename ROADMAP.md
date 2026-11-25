@@ -37,8 +37,6 @@ The loader only collects data (numbers, named values, texts, cast times) and bui
 - [ ] Ammo abilities: `mAmmoRechargeTime` (52 spells, Zyra W) is not read
 - [ ] Fiddlesticks' missile speed is 0 (wiki 1750; attack spell `FiddleSticksBasicAttack`, probably case)
 - [ ] Karthus has his cast offset only in `critAttacks` (wiki 0.04375); the basic attack's default 0 is used, the cross-check warns
-- [ ] Vayne's attack speed ratio is 0.67 in CDragon, the wiki has 0.658 (her base attack speed). Check in the practice tool
-- [ ] Levels 19/20 (practice tool): interpolations continue past 18 by default (`mScalePastDefaultMaxLevel` only appears as `false`; the wiki agrees for Darius' bleed). Breakpoint formulas continue too, unconfirmed: Tibbers' HP (fixture 4000 at 19/20, translator 4350/4700), Annie E's movement speed (fixture stops at 18, CDragon continues)
 - [ ] Abilities without a cooldown in CDragon (Annie E: no `Cooldown`/`cooldownTime` at all, wiki 10 s, probably set by a script): the loader gives `cooldownTime = 0` silently. Warn in the patch log when a ranked ability's cooldown is 0, so the hand-owned `cooldown` formula gets filled in
 
 **Later in this phase:**

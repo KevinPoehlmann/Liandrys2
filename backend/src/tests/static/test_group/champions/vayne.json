@@ -25,7 +25,7 @@
   "mana_regen": 1.4,
   "mana_regen_per_lvl": 0.08,
   "attackspeed": 0.658,
-  "attackspeed_ratio": 0.658,
+  "attackspeed_ratio": 0.67,
   "attackspeed_per_lvl": 0.02799999952316284,
   "attack_windup": 0.17544,
   "windup_modifier": 1.0,
