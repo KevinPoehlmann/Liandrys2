@@ -13,6 +13,7 @@ from urllib.error import URLError, HTTPError
 import src.server.database as db
 import src.server.loader.webscraper2 as ws
 from src.server.loader.champion_source import WIKI_API
+from src.server.loader.names import NameDictionary
 from src.server.loader.patch_notes import fetch_patch_page, hotfix_dates, page_text, parse_patch_notes, patch_page_params
 
 from src.server.loader.helper import (
@@ -55,8 +56,7 @@ debug_logger = logging.getLogger("liandrys.debug")
 
 URLS = info_loader().urls
 PATHS = info_loader().paths
-ITEM_WIKI_NAMES = info_loader().itemWikiNames
-RUNE_WIKI_NAMES = info_loader().runeWikiNames
+WIKI_NAMES: dict[str, NameDictionary] = {}  # set by patchloader for each load
 RUNE_STAT_SHARDS = info_loader().runeStatShards
 
 
@@ -314,7 +314,7 @@ async def _load_all_summonerspells(summonerspell_list: list[SummonerspellJson], 
 async def _load_champion(champion_json: ChampionJson, session: SafeSession, patch: NewPatch) -> None:
     if await db.exists_champion_by_name(champion_json.name, patch.patch, patch.hotfix):
         return
-    champion_wiki = await _fetch_wiki_html(champion_json.name, "Champion", patch, session)
+    champion_wiki = await _fetch_wiki_html(_wiki_name("champions", champion_json.id_, champion_json.name), "Champion", patch, session)
     if not champion_wiki:
         return
     try:
@@ -353,7 +353,7 @@ async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, pa
     if await db.exists_item_by_item_id(item_id, patch.patch, patch.hotfix):
         return
     
-    item_wiki = await _fetch_wiki_html(item_json.name, "Item", patch, session)
+    item_wiki = await _fetch_wiki_html(_wiki_name("items", item_id, item_json.name), "Item", patch, session)
     if not item_wiki:
         if not item_json.maps.get("11", False) or item_id.startswith("15"):
             patch.item_count -= 1
@@ -387,7 +387,7 @@ async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: NewPatc
     if await db.exists_rune_by_name(rune_class.rune.name, patch.patch, patch.hotfix):
         return
     
-    rune_wiki = await _fetch_wiki_html(rune_class.rune.name, "Rune", patch, session)
+    rune_wiki = await _fetch_wiki_html(_wiki_name("runes", str(rune_class.rune.id_), rune_class.rune.name), "Rune", patch, session)
     if not rune_wiki:
         return
     try:
@@ -416,7 +416,8 @@ async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: Sa
     if await db.exists_summonerspell_by_key(summonerspell_json.key, patch.patch, patch.hotfix):
         return
     
-    summonerspell_wiki = await _fetch_wiki_html(summonerspell_json.name, "Summonerspell", patch, session)
+    summonerspell_wiki = await _fetch_wiki_html(_wiki_name("summonerspells", summonerspell_json.id_, summonerspell_json.name), "Summonerspell",
+                                               patch, session)
     if not summonerspell_wiki:
         if "CLASSIC" not in summonerspell_json.modes:
             patch.summonerspell_count -= 1
@@ -473,18 +474,18 @@ async def _load_rune_stat_shards(patch: NewPatch) -> None:
 
 
 
-async def _fetch_wiki_html(name: str, type_: str, patch: NewPatch, session: SafeSession) -> str:
-    wiki_names_map = {
-        "Item": ITEM_WIKI_NAMES,
-        "Rune": RUNE_WIKI_NAMES,
-    }
+def _wiki_name(type_: str, ddragon_id: str, name: str) -> str:
+    names = WIKI_NAMES.get(type_)
+    return names.wiki_name(ddragon_id, name) if names else name
 
-    resolved_name = wiki_names_map.get(type_, {}).get(name, name)
-    wiki_url = URLS.wiki + resolved_name
+
+async def _fetch_wiki_html(name: str, type_: str, patch: NewPatch, session: SafeSession) -> str:
+    """`name` is the wiki page."""
+    wiki_url = URLS.wiki + name
 
     try:
-        html = _load_cached_html(type_, resolved_name, patch)
-        _delete_cached_html(type_, resolved_name, patch)
+        html = _load_cached_html(type_, name, patch)
+        _delete_cached_html(type_, name, patch)
         return html
     except FileNotFoundError:
         pass
@@ -849,12 +850,10 @@ async def _clean_up(patch: NewPatch) -> None:
 
 def _reload_info_loader() -> None:
     """Reloads the info_loader module to refresh URLs and paths."""
-    global URLS, PATHS, ITEM_WIKI_NAMES, RUNE_WIKI_NAMES
+    global URLS, PATHS
     info = info_loader()
     URLS = info.urls
     PATHS = info.paths
-    ITEM_WIKI_NAMES = info.itemWikiNames
-    RUNE_WIKI_NAMES = info.runeWikiNames
 
 
 

@@ -29,7 +29,6 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching (in progress), (3) summoner spells, (4) items incl. actives, (5) runes.
 
 **Next (champions patching):**
-- [ ] **Name dictionary** wiki ⇔ Data Dragon for all four types, used when fetching and when matching patch notes. Champions: match by name, then by Data Dragon id (`{{ci|Nunu}}` is the id of "Nunu & Willump"). Merge the existing `itemWikiNames`/`runeWikiNames` from `info.json`
 - [ ] **Translator: `AbilityResourceByCoefficientCalculationPart`** (decided over a diff workaround). Ryze W's `WDamageCalc = BaseDamage + 0.6 × AP + 0.03 × bonus mana` is untranslated today, so the 26.21 change 0.6 ⇒ 0.7 is invisible to the diff (it compares only the structure of untranslated calculations). Translated, it becomes a named value and the normal path applies. Check which other unknown part types the 16.21 data has (`unsupported` over all champions)
 - [ ] Hotfixes (decided: overwrite the patch, see decisions). Open: does `hotfix` stay part of a document's identity or become "last updated"
 

@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, Mock
 from urllib.error import HTTPError
 
 from src.server.loader.helper import RuneClass
+from src.server.loader.names import DDragonName, NameDictionary
 from src.server.loader.patchloader2 import (
     load_data,
     check_patch_available,
@@ -26,6 +27,7 @@ from src.server.loader.patchloader2 import (
     _load_rune_stat_shards,
     _load_summonerspell,
     _fetch_wiki_html,
+    _wiki_name,
     _load_image,
     _load_image_rune,
     _load_rune_tree_images,
@@ -306,10 +308,6 @@ async def test_load_all_runes_calls_each(mocker, patch_with_hotfix):
     rune_list = ["Conqueror", "Electrocute"]
     mock_session = AsyncMock()
 
-    """ # Mock info_loader and wiki names
-    mock_info_loader = mocker.patch("src.server.loader.patchloader2.info_loader")
-    mock_info_loader.return_value.runeWikiNames = {"Conqueror": "Conqueror", "Electrocute": "Electrocute"} """
-
     # Patch _load_rune
     mocked_load_rune = mocker.patch("src.server.loader.patchloader2._load_rune", new=AsyncMock())
     mocker.patch("src.server.loader.patchloader2._load_rune_stat_shards", new=AsyncMock())
@@ -450,20 +448,24 @@ async def test_load_summonerspell_success(mocker, patch_with_hotfix, smite):
 
 
 
-@pytest.mark.asyncio
-async def test_fetch_wiki_html_uses_name_mapping(mocker, patch_with_hotfix):
-    session = AsyncMock()
-    session.get_html.return_value = "<html>mapped</html>"
+def test_wiki_name_comes_from_the_name_dictionary(mocker):
+    names = NameDictionary({"3153": "Blade of the Ruined King"}, [DDragonName("3153", "Blade of The Ruined King")])
+    mocker.patch("src.server.loader.patchloader2.WIKI_NAMES", {"items": names})
 
+    assert _wiki_name("items", "3153", "Blade of The Ruined King") == "Blade of the Ruined King"
+    assert _wiki_name("runes", "8010", "Jack Of All Trades") == "Jack Of All Trades"
+
+
+@pytest.mark.asyncio
+async def test_fetch_wiki_html_fetches_the_given_page(mocker, patch_with_hotfix):
+    session = AsyncMock()
+    session.get_html.return_value = "<html>page</html>"
     mocker.patch("src.server.loader.patchloader2.URLS.wiki", "https://wiki/")
-    mocker.patch("src.server.loader.patchloader2.info_loader", return_value=mocker.Mock(
-        itemWikiNames={"Fancy Sword": "Fancy_Sword_Wiki"}
-    ))
 
     result = await _fetch_wiki_html("Fancy Sword", "Item", patch_with_hotfix, session)
 
     session.get_html.assert_called_once_with("https://wiki/Fancy Sword")
-    assert result == "<html>mapped</html>"
+    assert result == "<html>page</html>"
 
 @pytest.mark.asyncio
 async def test_fetch_wiki_html_raises_loaderror_on_http_error(mocker, patch_with_hotfix):
@@ -477,9 +479,6 @@ async def test_fetch_wiki_html_raises_loaderror_on_http_error(mocker, patch_with
     )
 
     mocker.patch("src.server.loader.patchloader2.URLS.wiki", "https://wiki/")
-    mocker.patch("src.server.loader.patchloader2.info_loader", return_value=mocker.Mock(
-        itemWikiNames={}
-    ))
 
     with pytest.raises(LoadError) as exc:
         await _fetch_wiki_html("MissingItem", "Item", patch_with_hotfix, session)

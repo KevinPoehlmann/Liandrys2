@@ -56,13 +56,11 @@
         "summoner spell haste": "summonerspell_haste",
         "tenacity percent": "tenacity_percent"
     },
-    "itemWikiNames": {
-        "Blade of The Ruined King": "Blade of the Ruined King",
-        "Kalista's Black Spear": "Black Spear",
-        "Slightly Magical Footwear": "Slightly Magical Boots"
-    },
-    "runeWikiNames": {
-        "Jack Of All Trades": "Jack of All Trades"
+    "wikiNames": {
+        "champions": {},
+        "items": {},
+        "runes": {},
+        "summonerspells": {}
     },
     "maps": {
         "11": "SR",

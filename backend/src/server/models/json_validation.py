@@ -226,8 +226,7 @@ class InfoJson(BaseModel):
     paths: PathJson
     urls: UrlJson
     itemStatDict: dict
-    itemWikiNames: dict
-    runeWikiNames: dict
+    wikiNames: dict[str, dict[str, str]]  # type ⇒ Data Dragon id ⇒ wiki page, only where the automatic lookup fails
     maps: dict
     abilityStats: dict
     runeStatShards: list[StatShardJson]

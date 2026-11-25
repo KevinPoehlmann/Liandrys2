@@ -1,10 +1,12 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 import src.server.loader.patchloader as loader
+from src.server.loader.names import DDragonName, NameDictionary
 from src.server.loader.patchexceptions import LoadError, PatcherError
 from src.server.models.json_validation import ChampionJson
 from src.server.models.patch import NewPatch
@@ -23,8 +25,10 @@ class FakeSession:
 
     def __init__(self, responses: dict[str, dict]) -> None:
         self.responses = responses
+        self.urls: list[str] = []
 
     async def get_json(self, url: str) -> dict | str:
+        self.urls.append(url)
         return next((data for part, data in self.responses.items() if part in url), "")
 
 
@@ -179,6 +183,15 @@ class TestLoadAllChampions():
 
 
     @pytest.mark.asyncio
+    async def test_wiki_templates_are_fetched_by_wiki_name(self, session, patch, database):
+        names = NameDictionary({"Veigar": "Tiny Master of Evil"}, [DDragonName("Veigar", "Veigar")])
+
+        await loader.load_all_champions([veigar_entry()], session, patch, names)
+
+        assert any("gapprefix=Data+Tiny+Master+of+Evil%2F" in url for url in session.urls)
+
+
+    @pytest.mark.asyncio
     async def test_missing_build_stops_before_any_champion(self, session, patch, database):
         del session.responses["content-metadata.json"]
 
@@ -186,6 +199,38 @@ class TestLoadAllChampions():
             await loader.load_all_champions([veigar_entry()], session, patch)
 
         database.add_champion.assert_not_called()
+
+
+class TestNameDictionaries():
+
+    @pytest.mark.asyncio
+    async def test_without_the_wiki_data_dragons_names_stay(self, monkeypatch, loggers):
+        monkeypatch.setattr(loader, "load_name_dictionaries", AsyncMock(side_effect=LoadError(404, "down", "", "", "")))
+        old_loader = Mock()
+        monkeypatch.setattr(loader, "old", old_loader)
+
+        result = await loader.name_dictionaries(FakeSession({}), [veigar_entry()], [], [], [])
+
+        assert result["champions"].wiki_name("Veigar", "Veigar") == "Veigar"
+        assert old_loader.WIKI_NAMES is result
+        assert "Wiki names not loaded" in loggers["patch"].warning.call_args.args[0]
+
+
+    @pytest.mark.asyncio
+    async def test_only_summoners_rift_objects_are_looked_up(self, monkeypatch):
+        lookup = AsyncMock(return_value={})
+        monkeypatch.setattr(loader, "load_name_dictionaries", lookup)
+        monkeypatch.setattr(loader, "old", Mock())
+        items = [("1001", SimpleNamespace(name="Boots", maps={"11": True})),
+                 ("3901", SimpleNamespace(name="Fire at Will", maps={"11": False}))]
+        spells = [SimpleNamespace(id_="SummonerFlash", name="Flash", modes=["CLASSIC", "ARAM"]),
+                  SimpleNamespace(id_="SummonerSnowball", name="Mark", modes=["ARAM"])]
+
+        await loader.name_dictionaries(FakeSession({}), [], items, [], spells)
+
+        entries = lookup.call_args.args[1]
+        assert entries["items"] == [DDragonName("1001", "Boots")]
+        assert entries["summonerspells"] == [DDragonName("SummonerFlash", "Flash")]
 
 
 class TestFetchChampionList():
@@ -220,10 +265,11 @@ class TestLoadFreshDatabase():
     def champions(self, monkeypatch) -> None:
         monkeypatch.setattr(loader, "fetch_champion_list", AsyncMock(return_value=[veigar_entry()]))
         monkeypatch.setattr(loader, "load_all_champions", AsyncMock(side_effect=self._count_one))
+        monkeypatch.setattr(loader, "name_dictionaries", AsyncMock(return_value={"champions": NameDictionary()}))
 
 
     @staticmethod
-    async def _count_one(champions, session, patch) -> None:
+    async def _count_one(champions, session, patch, names) -> None:
         patch.loaded_champion_count += 1
 
 

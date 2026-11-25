@@ -13,13 +13,14 @@ from src.server.loader.champion_builder import SLOTS, LoadedSpell, build_champio
 from src.server.loader.champion_patcher import patch_champion, spells_from_document
 from src.server.loader.champion_source import (cdragon_version, fetch_build, fetch_champion_data, fetch_strings,
                                                load_raw_champion)
-from src.server.loader.helper import SafeSession, patch_sort_key, riot_to_wiki_patch
+from src.server.loader.helper import RuneClass, SafeSession, info_loader, patch_sort_key, riot_to_wiki_patch
 from src.server.loader.images import load_champion_images
+from src.server.loader.names import DDragonName, NameDictionary, ddragon_notes, load_name_dictionaries
 from src.server.loader.patch_notes import fetch_patch_page, parse_patch_notes
 from src.server.loader.patchexceptions import LoadError, PatcherError
 from src.server.models.change import Change
 from src.server.models.champion import Champion, NewChampion, RawChampion
-from src.server.models.json_validation import ChampionJson, ChampionsJson
+from src.server.models.json_validation import ChampionJson, ChampionsJson, ItemJson, SummonerspellJson
 from src.server.models.patch import NewPatch
 from src.server.utils.logger import attach_fallback_logfile, finalize_load_logfile
 
@@ -65,12 +66,13 @@ async def load_fresh_database(patches: dict[str, list[datetime]]) -> None:
         session = SafeSession(aio_session)
         champions = await fetch_champion_list(session, patch_name)
         items, runes, summonerspells = await old._list_other_data(patch_name, session)
+        names = await name_dictionaries(session, champions, items, runes, summonerspells)
         patch = await _resumed_or_new_patch(patch_name, hotfix, NewPatch(
             patch=patch_name, hotfix=hotfix, champion_count=len(champions), item_count=len(items),
             rune_count=len(runes), summonerspell_count=len(summonerspells)))
 
         results = await asyncio.gather(
-            load_all_champions(champions, session, patch),
+            load_all_champions(champions, session, patch, names["champions"]),
             old._load_all_items(items, session, patch),
             old._load_all_runes(runes, session, patch),
             old._load_all_summonerspells(summonerspells, session, patch),
@@ -102,7 +104,28 @@ async def fetch_champion_list(session: SafeSession, patch: str) -> list[Champion
     return [ChampionJson(**champion) for champion in ChampionsJson(**data).data.values()]
 
 
-async def load_all_champions(champions: list[ChampionJson], session: SafeSession, patch: NewPatch) -> None:
+async def name_dictionaries(session: SafeSession, champions: list[ChampionJson], items: list[tuple[str, ItemJson]],
+                            runes: list[RuneClass], summonerspells: list[SummonerspellJson]) -> dict[str, NameDictionary]:
+    """Also handed to patchloader2, which loads items, runes and summoner spells for now.
+    Only Summoner's Rift: other modes' objects (Arena vouchers, Poro Toss, ...) keep Data Dragon's name."""
+    entries = {
+        "champions": [DDragonName(champion.id_, champion.name) for champion in champions],
+        "items": [DDragonName(item_id, item.name) for item_id, item in items if item.maps.get("11")],
+        "runes": [DDragonName(str(rune.rune.id_), rune.rune.name) for rune in runes],
+        "summonerspells": [DDragonName(spell.id_, spell.name) for spell in summonerspells if "CLASSIC" in spell.modes],
+    }
+    try:
+        names = await load_name_dictionaries(session, entries, info_loader().wikiNames)
+    except (LoadError, RuntimeError) as e:
+        # Without the wiki the old behavior stays: Data Dragon's names.
+        patch_logger.warning(f"[PATCH] [NAMES] Wiki names not loaded, Data Dragon's names are used: {e}")
+        names = {type_: NameDictionary() for type_ in entries}
+    old.WIKI_NAMES = names
+    return names
+
+
+async def load_all_champions(champions: list[ChampionJson], session: SafeSession, patch: NewPatch,
+                             names: NameDictionary = NameDictionary()) -> None:
     version = cdragon_version(patch.patch)
     build = await fetch_build(session, version)
     strings = await fetch_strings(session, version)
@@ -111,7 +134,8 @@ async def load_all_champions(champions: list[ChampionJson], session: SafeSession
 
     async def load(entry: ChampionJson) -> None:
         async with semaphore:
-            await load_champion(entry, session, patch, build, strings, champion_data.get(entry.id_, {}))
+            await load_champion(entry, session, patch, build, strings, champion_data.get(entry.id_, {}),
+                                names.wiki_name(entry.id_, entry.name))
 
     results = await asyncio.gather(*(load(entry) for entry in champions), return_exceptions=True)
     for entry, result in zip(champions, results):
@@ -130,17 +154,18 @@ async def _champion_data_or_nothing(session: SafeSession) -> dict[str, dict]:
 
 
 async def load_champion(entry: ChampionJson, session: SafeSession, patch: NewPatch, build: str,
-                        strings: dict[str, str], champion_data: dict | None = None) -> None:
+                        strings: dict[str, str], champion_data: dict | None = None, wiki_name: str | None = None) -> None:
     if await db.exists_champion_by_name(entry.name, patch.patch, patch.hotfix):
         return
-    raw = await _stored_raw_champion(entry, session, patch, build, strings, champion_data)
+    raw = await _stored_raw_champion(entry, session, patch, build, strings, champion_data, wiki_name)
     await _store_champion(build_champion(raw, entry), raw, session, patch)
     load_logger.info(f"[CHAMPION] {entry.name} ✔ Loaded successfully")
 
 
 async def _stored_raw_champion(entry: ChampionJson, session: SafeSession, patch: NewPatch, build: str,
-                               strings: dict[str, str], champion_data: dict | None) -> RawChampion:
-    raw = await load_raw_champion(session, patch.patch, patch.hotfix, entry.id_, entry.name, build, strings, champion_data)
+                               strings: dict[str, str], champion_data: dict | None, wiki_name: str | None) -> RawChampion:
+    raw = await load_raw_champion(session, patch.patch, patch.hotfix, entry.id_, wiki_name or entry.name, build, strings,
+                                  champion_data)
     if not raw.wiki:
         patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] No wiki data templates found")
     if not raw.champion_data:
@@ -182,7 +207,9 @@ async def load_patch(patch_name: str, hotfix: datetime | None, old_patch: NewPat
                          item_count=old_patch.item_count, rune_count=old_patch.rune_count,
                          summonerspell_count=old_patch.summonerspell_count)
         champions = await fetch_champion_list(session, patch_name)
-        await patch_all_champions(champions, notes.get("champions", {}), session, patch, old_patch)
+        names = await name_dictionaries(session, champions, *await old._list_other_data(patch_name, session))
+        notes = ddragon_notes(notes, names)
+        await patch_all_champions(champions, notes.get("champions", {}), session, patch, old_patch, names["champions"])
         await old._patch_items(notes.get("items", {}), patch, old_patch, session)
         await old._patch_runes(notes.get("runes", {}), patch, old_patch, session)
         await old._patch_summonerspells(notes.get("summonerspells", {}), patch, old_patch, session)
@@ -194,9 +221,9 @@ async def load_patch(patch_name: str, hotfix: datetime | None, old_patch: NewPat
 
 
 async def patch_all_champions(champions: list[ChampionJson], notes: dict, session: SafeSession, patch: NewPatch,
-                              old_patch: NewPatch) -> None:
+                              old_patch: NewPatch, names: NameDictionary = NameDictionary()) -> None:
     """Champions of the old patch are patched forward, new ones get a first load.
-    `notes` are the patch notes' {"changed": {champion: {ability: [lines]}}}."""
+    `notes` are the patch notes' {"changed": {champion: {ability: [lines]}}}, with Data Dragon's names."""
     version = cdragon_version(patch.patch)
     build = await fetch_build(session, version)
     strings = await fetch_strings(session, version)
@@ -209,12 +236,13 @@ async def patch_all_champions(champions: list[ChampionJson], notes: dict, sessio
     async def load(entry: ChampionJson) -> None:
         async with semaphore:
             data = champion_data.get(entry.id_, {})
+            wiki_name = names.wiki_name(entry.id_, entry.name)
             if entry.id_ not in previous:
-                await load_champion(entry, session, patch, build, strings, data)
+                await load_champion(entry, session, patch, build, strings, data, wiki_name)
                 return
-            old_champion = previous[entry.id_]
-            champion_notes = notes.get("changed", {}).get(old_champion.name, {})
-            await patch_one_champion(entry, old_champion, champion_notes, session, patch, old_patch, build, strings, data)
+            champion_notes = notes.get("changed", {}).get(entry.name, {})
+            await patch_one_champion(entry, previous[entry.id_], champion_notes, session, patch, old_patch, build,
+                                     strings, data, wiki_name)
 
     results = await asyncio.gather(*(load(entry) for entry in champions), return_exceptions=True)
     for entry, result in zip(champions, results):
@@ -225,10 +253,10 @@ async def patch_all_champions(champions: list[ChampionJson], notes: dict, sessio
 
 async def patch_one_champion(entry: ChampionJson, old_champion: Champion, notes: dict[str, list[Change]],
                              session: SafeSession, patch: NewPatch, old_patch: NewPatch, build: str,
-                             strings: dict[str, str], champion_data: dict) -> None:
+                             strings: dict[str, str], champion_data: dict, wiki_name: str | None = None) -> None:
     if await db.exists_champion_by_name(entry.name, patch.patch, patch.hotfix):
         return
-    raw = await _stored_raw_champion(entry, session, patch, build, strings, champion_data)
+    raw = await _stored_raw_champion(entry, session, patch, build, strings, champion_data, wiki_name)
     result = patch_champion(old_champion, await _old_spells(old_champion, old_patch), raw, entry, notes)
     for name, reasons in result.unvalidated.items():
         patch_logger.info(f"[CHAMPION] [PATCH] [{entry.name}] {name} unvalidated: {'; '.join(reasons)}")
