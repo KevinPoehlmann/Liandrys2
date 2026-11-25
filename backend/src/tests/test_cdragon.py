@@ -377,6 +377,66 @@ class TestCalculations():
             "Calc": "refers to PBonusIncrease of another spell (EliseSpiderEInitial)"}
 
 
+    def test_level_list(self):
+        # Lux P in 16.21: entry 0 is unused, levels 1–18 are 30–200 like the wiki, and the list continues to 20.
+        part = {"values": [20.0 + 10 * index for index in range(31)], "__type": "ByCharLevelFormulaCalculationPart"}
+
+        formula = translate_calculation({"__type": "GameCalculation", "mFormulaParts": [part]})
+
+        assert formula == f"by_level({', '.join(map(str, range(30, 230, 10)))})"
+
+
+    def test_short_level_lists_are_reported(self):
+        spell = named_level_spell({"values": [1.0] * 19, "__type": "ByCharLevelFormulaCalculationPart"}, {})
+
+        assert spell_values(spell, max_rank=0).unsupported == {"Calc": "level list with only 19 entries"}
+
+
+    def test_effect_amounts_become_named_values(self):
+        # Fizz Q in 16.21 (wiki: 10/25/40/55/70 + 55 % AP). Unreferenced effect amounts are stale and stay out.
+        spell = named_level_spell({"mEffectIndex": 1, "__type": "EffectValueCalculationPart"}, {})
+        spell["mEffectAmount"] = [{"value": [0.0, 10.0, 25.0, 40.0, 55.0, 70.0, 85.0]}, {},
+                                  {"value": [550.0, 650.0, 750.0, 850.0, 950.0, 1050.0, 1150.0]}]
+
+        values = spell_values(spell, max_rank=5).values
+
+        assert values["Calc"] == "Effect1Amount"
+        assert values["Effect1Amount"] == "by_rank(10, 25, 40, 55, 70)"
+        assert "Effect3Amount" not in values
+
+
+    def test_missing_effect_amounts_are_reported(self):
+        spell = named_level_spell({"mEffectIndex": 2, "__type": "EffectValueCalculationPart"}, {})
+        spell["mEffectAmount"] = [{"value": [1.0] * 7}, {}]
+
+        assert spell_values(spell, max_rank=5).unsupported == {"Effect2Amount": "refers to the missing effect amount 2"}
+
+
+    def test_conditional_picks_a_calculation_by_buff(self):
+        # Shen P in 16.21 (buff name shortened); Jax W has no default, the other side is 0.
+        requirement = {"mBuffName": "{7dfdcd99}", "__type": "HasBuffCastRequirement"}
+        shen = {"mSimpleTooltipCalculationDisplay": 5, "mDefaultGameCalculation": "Base",
+                "mConditionalGameCalculation": "Empowered", "mConditionalCalculationRequirements": requirement,
+                "__type": "GameCalculationConditional"}
+        jax = {"mConditionalGameCalculation": "TotalDamage",
+               "mConditionalCalculationRequirements": requirement | {"mInvertResult": True},
+               "__type": "GameCalculationConditional"}
+
+        assert translate_calculation(shen) == "Empowered if stacks_h_7dfdcd99 > 0 else Base"
+        assert translate_calculation(jax) == "TotalDamage if stacks_h_7dfdcd99 == 0 else 0"
+
+
+    def test_combined_conditions_are_reported(self):
+        # Zed P in 16.21: no cooldown buff and the target below a health percent.
+        spell = {"mSpellCalculations": {"FinalDamage": {
+            "mConditionalGameCalculation": "TotalDamage",
+            "mConditionalCalculationRequirements": {"__type": "HasAllSubRequirementsCastRequirement"},
+            "__type": "GameCalculationConditional"}}}
+
+        assert spell_values(spell, max_rank=0).unsupported == {
+            "FinalDamage": "condition HasAllSubRequirementsCastRequirement"}
+
+
     def test_sums_inside_products_keep_their_parentheses(self):
         sum_part = {"__type": "SumOfSubPartsCalculationPart", "mSubparts": [
             {"__type": "NamedDataValueCalculationPart", "mDataValue": "A"},

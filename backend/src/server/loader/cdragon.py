@@ -86,8 +86,11 @@ def spell_values(spell: dict, max_rank: int) -> SpellValues:
     for name, (sources, first_rank) in SPELL_FIELDS.items():
         # Always present, so `cooldown: "cooldownTime"` and `cost: "mana"` resolve even for free spells.
         _add(result, name, lambda: _rank_value(_spell_field(spell, sources), max_rank, first_rank))
+    calculations = spell.get("mSpellCalculations") or {}
+    for index in sorted(_effect_indices(calculations)):
+        _add(result, _effect_name(index), lambda: _rank_value(_effect_amount(spell, index), max_rank))
     data_values = dict(result.values)
-    for name, calculation in (spell.get("mSpellCalculations") or {}).items():
+    for name, calculation in calculations.items():
         _add(result, name, lambda: translate_calculation(with_numbers(calculation, data_values)))
         if readable := value_name(name):
             result.calculations[readable] = calculation
@@ -101,6 +104,28 @@ def _spell_field(spell: dict, sources: tuple[str, ...]) -> list[float]:
         if values:
             return values
     return []
+
+
+def _effect_indices(node) -> set[int]:
+    """Indices into mEffectAmount, Riot's old per-rank lists, that a calculation reads (Fizz Q: index 1)."""
+    if isinstance(node, list):
+        return set().union(*(_effect_indices(item) for item in node))
+    if not isinstance(node, dict):
+        return set()
+    own = {node.get("mEffectIndex", 0)} if part_type(node) == "EffectValueCalculationPart" else set()
+    return own.union(*(_effect_indices(value) for value in node.values()))
+
+
+def _effect_name(index: int) -> str:
+    # Riot's tooltips call mEffectAmount[0] @Effect1Amount@.
+    return f"Effect{index}Amount"
+
+
+def _effect_amount(spell: dict, index: int) -> list[float]:
+    amounts = spell.get("mEffectAmount") or []
+    if not 1 <= index <= len(amounts) or not (values := amounts[index - 1].get("value")):
+        raise UnsupportedCalculation(f"refers to the missing effect amount {index}")
+    return values
 
 
 def _add(result: SpellValues, name: str, translate) -> None:
@@ -205,11 +230,26 @@ def translate_calculation(calculation: dict) -> str:
             formula = _sum(calculation.get("mFormulaParts", []))
         case "GameCalculationModified":
             formula = _name(calculation["mModifiedGameCalculation"])
+        case "GameCalculationConditional":
+            formula = _conditional(calculation)
         case other:
             raise UnsupportedCalculation(f"calculation type {other}")
     if "mMultiplier" in calculation:
         formula = f"{_factor(formula)} * {_factor(_part(calculation['mMultiplier']))}"
     return formula
+
+
+def _conditional(calculation: dict) -> str:
+    # The caster's buff picks the calculation (Jax W while empowered); without a default the other side is 0.
+    if unknown := [name for name in calculation if name.startswith("{")]:
+        raise UnsupportedCalculation(f"conditional calculation with unknown field {unknown[0]}")
+    requirement = calculation.get("mConditionalCalculationRequirements", {})
+    if requirement.get("__type") != "HasBuffCastRequirement":
+        raise UnsupportedCalculation(f"condition {requirement.get('__type')}")
+    comparison = "== 0" if requirement.get("mInvertResult") else "> 0"
+    default = calculation.get("mDefaultGameCalculation")
+    return (f"{_name(calculation['mConditionalGameCalculation'])} if {_buff_stacks(requirement)} {comparison} "
+            f"else {_name(default) if default else '0'}")
 
 
 def _sum(parts: list[dict]) -> str:
@@ -244,6 +284,10 @@ def _part(part: dict) -> str:
             return _by_level(_interpolation(part))
         case "ByCharLevelBreakpointsCalculationPart":
             return _by_level(_breakpoints(part))
+        case "ByCharLevelFormulaCalculationPart":
+            return _by_level(_level_list(part))
+        case "EffectValueCalculationPart":
+            return _effect_name(part.get("mEffectIndex", 0))
         case "SpellCalculationCalculationPart":  # another calculation of the same spell
             return _name(part["mSpellCalculationKey"])
         case "BuffCounterByNamedDataValueCalculationPart":
@@ -348,6 +392,14 @@ def _breakpoints(part: dict) -> list[float]:
         value += per_level + _clean(point.get("mAdditionalBonusAtThisLevel", 0))
         values.append(value)
     return values
+
+
+def _level_list(part: dict) -> list[float]:
+    # A ready value per level, indexed by the level itself: entry 0 is unused (Lux P 30–200 = entries 1–18).
+    values = part.get("values", [])
+    if len(values) <= MAX_LEVEL:
+        raise UnsupportedCalculation(f"level list with only {len(values)} entries")
+    return [_clean(value) for value in values[1:MAX_LEVEL + 1]]
 
 
 def _clean(value: float) -> float:

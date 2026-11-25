@@ -153,6 +153,12 @@ class TestVariables():
         assert evaluate_formula(formula, context) == pytest.approx(72)
 
 
+    @pytest.mark.parametrize("buff, result", [("tumble", 100), ("final_hour", 0)])
+    def test_conditional_on_a_buff(self, vayne, buff, result):
+        # The loader's translation of Riot's GameCalculationConditional (Jax W while empowered).
+        assert evaluate_formula(f"ad if stacks_{buff} > 0 else 0", FormulaContext(source=vayne)) == result
+
+
     @pytest.mark.parametrize("stacks, result", [(49, 0), (50, 1), (149, 2)])
     def test_builtin_floor(self, vayne, stacks, result):
         vayne.buff_stacks["evil"] = stacks
