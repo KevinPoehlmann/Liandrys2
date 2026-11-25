@@ -2,7 +2,7 @@
 import re
 from dataclasses import dataclass, field
 
-from src.server.simulation.formula import COOLDOWN_MULTIPLIER, MAX_LEVEL, STACKS_PREFIX, TARGET_PREFIX
+from src.server.simulation.formula import COOLDOWN_MULTIPLIER, ELAPSED_PREFIX, MAX_LEVEL, STACKS_PREFIX, TARGET_PREFIX
 
 
 # Riot's level formulas are defined up to 18 and continue to 19 and 20 (roles). The bin files only store
@@ -49,10 +49,13 @@ GUESSED_PART_TYPES = (
 # Buff names CommunityDragon only knows as hashes, found among the strings of the champion's own data (16.21).
 GUESSED_BUFF_NAMES = (
     "ApheliosPBuffAD", "ApheliosPBuffAP", "ApheliosPBuffAS", "AurelionSolPassive", "BelvethPassiveStacks",
-    "BelvethVsJax_JaxQuestReward", "DravenPassiveStacks", "Feast", "GarenWPassive", "GwenP", "HeightenedLearning",
-    "KindredMarkOfTheKindredStackCounter", "KSanteRConversionArmor", "KSanteRConversionHealth",
-    "KSanteRConversionMagicResist", "LockeRStack", "NasusQStacks", "SennaPassiveStacks", "ShyvanaPassive", "SmolderP",
-    "SmolderQPassive", "SonaPassiveAccelerandoCount", "SwainSoulCounter", "ThreshPassiveSoulsGain",
+    "BelvethVsJax_JaxQuestReward", "DravenPassiveStacks", "EliseR", "Feast", "GarenWPassive", "GwenP",
+    "HeightenedLearning", "JaxRPassiveAttack", "JaxW", "KaisaQEvolved", "KarmaMantra", "KhazixEEvo", "KhazixQEvo",
+    "KhazixREvo", "KhazixWEvo", "KindredMarkOfTheKindredStackCounter", "KSanteRConversionArmor",
+    "KSanteRConversionHealth", "KSanteRConversionMagicResist", "LockeRStack", "NasusQStacks", "RellW_MountUp",
+    "SennaPassiveStacks", "ShenSpiritShadowQuestReward", "ShyvanaPassive", "SmolderP", "SmolderQPassive",
+    "SonaPassiveAccelerandoCount", "SwainSoulCounter", "ThreshPassiveSoulsGain", "UdyrEActivation",
+    "ZedSpiritShadowQuestReward",
 )
 # Fields of the named level parts: Riot's numeric field -> the field naming the data value that holds the number.
 NAMED_INTERPOLATION = {"mStartValue": "StartDataValue", "mEndValue": "EndDataValue"}
@@ -296,6 +299,8 @@ def _part(part: dict) -> str:
             if "mCoefficient" not in part:
                 raise UnsupportedCalculation("buff counter without coefficient")
             return _scaled(part["mCoefficient"], _buff_stacks(part))
+        case "PercentageOfBuffNameElapsed":  # Rell W ramps up over the first half of her mount buff
+            return _scaled(part.get("Coefficient", 0), _buff_elapsed(part))
         case "CooldownMultiplierCalculationPart":  # Riot's haste factor, values with it are already hasted
             return COOLDOWN_MULTIPLIER
         case "ExternalNamedDataValueCalculationPart":
@@ -327,8 +332,17 @@ def _buff_stacks(part: dict) -> str:
     # mIconKey and mScalingTagKey only style the tooltip. A hashed field could make it count another unit's buff.
     if unknown := [name for name in part if name.startswith("{")]:
         raise UnsupportedCalculation(f"buff counter with unknown field {unknown[0]}")
-    buff = part["mBuffName"]
-    return STACKS_PREFIX + _name(BUFF_NAMES_BY_HASH.get(buff, buff))
+    return STACKS_PREFIX + _buff_name(part["mBuffName"])
+
+
+def _buff_elapsed(part: dict) -> str:
+    if unknown := [name for name in part if name.startswith("{")]:
+        raise UnsupportedCalculation(f"elapsed buff part with unknown field {unknown[0]}")
+    return ELAPSED_PREFIX + _buff_name(part["buffName"])
+
+
+def _buff_name(buff: str) -> str:
+    return _name(BUFF_NAMES_BY_HASH.get(buff, buff))
 
 
 def _resource(part: dict) -> str:

@@ -19,6 +19,7 @@ class BuffInstance:
     last_interval: int | None = None
     next_interval: int | None = None
     rate: float = 1.0  # how fast the duration runs out, see Buff.slowed_while
+    duration: int = 0  # ticks of the last (re)application at rate 1, for `elapsed_<buff>`
     snapshots: dict[int, float] = field(default_factory=dict)  # values of snapshot stat modifiers, by index
     cast: int | None = None  # the cast instance that applied it last; its interval ticks belong to that cast
     values: dict[str, float] = field(default_factory=dict)  # the applying cast's parameters (Tides of Blood's charge)

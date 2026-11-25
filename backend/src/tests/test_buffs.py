@@ -48,6 +48,26 @@ class TestBuffInstances():
         assert vayne.get_buff_stacks("final_hour") == 0
 
 
+    def test_elapsed_share_of_the_duration(self, vayne):
+        assert vayne.get_buff_elapsed("final_hour") == 0
+        vayne.apply_buff("final_hour", vayne, 1, 0)
+
+        vayne.current_tick = FINAL_HOUR_RANK_1_TICKS // 4
+        assert vayne.get_buff_elapsed("final_hour") == pytest.approx(0.25, abs=0.01)
+
+        vayne.apply_buff("final_hour", vayne, 1, vayne.current_tick)
+        assert vayne.get_buff_elapsed("final_hour") == 0
+
+
+    def test_slowed_buff_elapses_slower(self, vayne):
+        # What the simulation does when a slowing buff starts at tick 0 with rate 0.5.
+        instance = vayne.apply_buff("final_hour", vayne, 1, 0)
+        instance.end, instance.rate = 2 * FINAL_HOUR_RANK_1_TICKS, 0.5
+
+        vayne.current_tick = FINAL_HOUR_RANK_1_TICKS
+        assert vayne.get_buff_elapsed("final_hour") == pytest.approx(0.5)
+
+
     def test_stacks_are_capped_at_max_stacks(self, vayne, darius):
         for _ in range(4):
             darius.apply_buff("silver_bolts", vayne, 1, 0)

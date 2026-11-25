@@ -259,6 +259,14 @@ class Character():
         instance = self.active_buffs.get(buff)
         return instance.stacks if instance else 0
 
+    def get_buff_elapsed(self, buff: str) -> float:
+        """Share of the buff's duration that has run out, 0 to 1; a slowed duration runs out slower."""
+        instance = self.active_buffs.get(buff)
+        if instance is None or instance.end is None or instance.duration == 0:
+            return 0.0
+        remaining = (instance.end - self.current_tick) * instance.rate
+        return min(max(1 - remaining / instance.duration, 0.0), 1.0)
+
     def get_max_rank(self, slot: ActionType) -> int:
         return getattr(self.ability_dict[slot][0], "maxrank", 0) if slot in self.ability_dict else 0
 
@@ -317,11 +325,12 @@ class Character():
         end = self._buff_end(definition, replace(source.formula_context(slot), event_values=values or {}), tick)
         instance = self.active_buffs.get(name)
         if instance is None:
-            instance = BuffInstance(definition, source, slot, 0, tick, end)
+            instance = BuffInstance(definition, source, slot, 0, tick, end, duration=end - tick if end else 0)
             self.active_buffs[name] = instance
         elif definition.refresh:
             instance.end = end
             instance.rate = 1.0
+            instance.duration = end - tick if end else 0
         instance.stacks += stacks
         if definition.max_stacks:
             instance.stacks = min(instance.stacks, definition.max_stacks)

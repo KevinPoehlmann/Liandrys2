@@ -273,12 +273,14 @@ class TestCalculations():
 
 
     def test_guessed_buff_names_match_their_hashes(self):
-        # Guards against typos: each guess must hash to a buff hash seen in 16.21.
+        # Guards against typos: each guess must hash to a buff hash seen in 16.21 (counters, conditions, elapsed parts).
         assert set(BUFF_NAMES_BY_HASH) == {
             "{eb906dca}", "{f79080ae}", "{f6907f1b}", "{c9372c6b}", "{7f3c01cf}", "{a8a3dd7a}", "{577427b5}",
             "{8682fc00}", "{9e10ce18}", "{9d0c98ec}", "{79ba1a32}", "{64290302}", "{6244221a}", "{5eb30a0d}",
             "{e3b83f84}", "{b5c3348f}", "{1b1d7345}", "{e88568f8}", "{bba88b2a}", "{098531db}", "{32bcea5d}",
-            "{1705b20f}", "{0dc6979e}", "{5fbfbf13}"}
+            "{1705b20f}", "{0dc6979e}", "{5fbfbf13}", "{93251bfb}", "{1e75ffdf}", "{12395d09}", "{89ae79fa}",
+            "{752d125a}", "{0f374711}", "{99a499bd}", "{7bcf22fa}", "{ff849683}", "{7dfdcd99}", "{ecbd8e2e}",
+            "{5a8747c2}", "{c295b00e}"}
 
 
     def test_unknown_fields_on_buff_counters_are_reported(self):
@@ -413,7 +415,7 @@ class TestCalculations():
 
 
     def test_conditional_picks_a_calculation_by_buff(self):
-        # Shen P in 16.21 (buff name shortened); Jax W has no default, the other side is 0.
+        # Shen P in 16.21 (Shen vs. Zed quest reward); Jax W has no default, the other side is 0.
         requirement = {"mBuffName": "{7dfdcd99}", "__type": "HasBuffCastRequirement"}
         shen = {"mSimpleTooltipCalculationDisplay": 5, "mDefaultGameCalculation": "Base",
                 "mConditionalGameCalculation": "Empowered", "mConditionalCalculationRequirements": requirement,
@@ -422,8 +424,24 @@ class TestCalculations():
                "mConditionalCalculationRequirements": requirement | {"mInvertResult": True},
                "__type": "GameCalculationConditional"}
 
-        assert translate_calculation(shen) == "Empowered if stacks_h_7dfdcd99 > 0 else Base"
-        assert translate_calculation(jax) == "TotalDamage if stacks_h_7dfdcd99 == 0 else 0"
+        assert translate_calculation(shen) == "Empowered if stacks_ShenSpiritShadowQuestReward > 0 else Base"
+        assert translate_calculation(jax) == "TotalDamage if stacks_ShenSpiritShadowQuestReward == 0 else 0"
+
+
+    def test_elapsed_share_of_a_buff(self):
+        # Rell W in 16.21: ramps from 20 % to 100 % over the first half of her mount buff.
+        elapsed = {"buffName": "{5a8747c2}", "Coefficient": 2.0, "__type": "PercentageOfBuffNameElapsed"}
+        calculation = {"__type": "GameCalculation", "mFormulaParts": [
+            {"mCeiling": 1.0, "mFloor": 0.2, "mSubparts": [elapsed], "__type": "ClampSubPartsCalculationPart"}]}
+
+        assert translate_calculation(calculation) == "min(max(2 * elapsed_RellW_MountUp, 0.2), 1)"
+
+
+    def test_unknown_fields_on_elapsed_parts_are_reported(self):
+        part = {"buffName": "Buff", "Coefficient": 2.0, "{12345678}": True, "__type": "PercentageOfBuffNameElapsed"}
+        spell = {"mSpellCalculations": {"Ramp": {"__type": "GameCalculation", "mFormulaParts": [part]}}}
+
+        assert spell_values(spell, max_rank=0).unsupported == {"Ramp": "elapsed buff part with unknown field {12345678}"}
 
 
     def test_combined_conditions_are_reported(self):

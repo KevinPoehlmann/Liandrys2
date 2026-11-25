@@ -12,6 +12,7 @@ MAX_LEVEL = 20
 TARGET_PREFIX = "target_"
 OWNER_PREFIX = "owner_"
 STACKS_PREFIX = "stacks_"
+ELAPSED_PREFIX = "elapsed_"
 COOLDOWN_MULTIPLIER = "cooldown_multiplier"
 
 
@@ -29,6 +30,7 @@ class StatSource(Protocol):
     def get_base_stat(self, stat: Stat) -> float: ...
     def get_rank(self, slot: ActionType) -> int: ...
     def get_buff_stacks(self, buff: str) -> int: ...
+    def get_buff_elapsed(self, buff: str) -> float: ...
     def get_cooldown(self, slot: ActionType) -> float: ...
     def get_cooldown_multiplier(self, slot: ActionType) -> float: ...
 
@@ -200,6 +202,8 @@ class FormulaNamespace(Mapping[str, float]):
     def _read(actor: StatSource, name: str) -> float:
         if name.startswith(STACKS_PREFIX):
             return actor.get_buff_stacks(name.removeprefix(STACKS_PREFIX))
+        if name.startswith(ELAPSED_PREFIX):
+            return actor.get_buff_elapsed(name.removeprefix(ELAPSED_PREFIX))
         if name in STAT_VARIABLES:
             return STAT_VARIABLES[name](actor)
         raise KeyError(name)

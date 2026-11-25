@@ -16,6 +16,7 @@ class FakeSource:
     base_stats: dict[Stat, float] = field(default_factory=dict)
     ranks: dict[ActionType, int] = field(default_factory=dict)
     buff_stacks: dict[str, int] = field(default_factory=dict)
+    buff_elapsed: dict[str, float] = field(default_factory=dict)
 
     def get_stat(self, stat: Stat) -> float:
         return self.stats.get(stat, 0)
@@ -28,6 +29,9 @@ class FakeSource:
 
     def get_buff_stacks(self, buff: str) -> int:
         return self.buff_stacks.get(buff, 0)
+
+    def get_buff_elapsed(self, buff: str) -> float:
+        return self.buff_elapsed.get(buff, 0)
 
     def get_cooldown(self, slot: ActionType) -> float:
         return {ActionType.Q: 4.5}[slot]
@@ -114,6 +118,14 @@ class TestVariables():
         assert evaluate_formula("level + rank + stacks", context) == 11
         assert evaluate_formula("rank_q * 10 + rank_w", context) == 31
         assert evaluate_formula("stacks_tumble", context) == 1
+
+
+    def test_elapsed_share_of_a_buff(self, vayne, darius):
+        vayne.buff_elapsed = {"tumble": 0.25}
+        context = FormulaContext(source=vayne, target=darius)
+
+        assert evaluate_formula("2 * elapsed_tumble", context) == 0.5
+        assert evaluate_formula("elapsed_final_hour + target_elapsed_tumble", context) == 0
 
 
     def test_inactive_buff_has_zero_stacks(self, vayne):
