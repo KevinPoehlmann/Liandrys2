@@ -3,7 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from src.server.loader.cdragon import bin_field, field_hash, format_number, spell_values, translate_calculation
+from src.server.loader.cdragon import (BUFF_NAMES_BY_HASH, bin_field, field_hash, format_number, part_type, spell_values,
+                                       translate_calculation)
 
 
 CDRAGON = Path(__file__).parent / "static" / "cdragon"
@@ -13,6 +14,14 @@ def load_spell(champion: str, script_name: str) -> dict:
     data = json.loads((CDRAGON / f"{champion}.bin.json").read_text(encoding="utf-8"))
     return next(record["mSpell"] for record in data.values()
                 if isinstance(record, dict) and record.get("mScriptName") == script_name)
+
+
+def named_level_spell(part: dict, data_values: dict) -> dict:
+    """A spell whose calculation "Calc" is one part reading data values; a number stands for all ranks."""
+    def values(value):
+        return [value] * 7 if isinstance(value, (int, float)) else value
+    return {"DataValues": [{"name": name, "values": values(value)} for name, value in data_values.items()],
+            "mSpellCalculations": {"Calc": {"__type": "GameCalculation", "mFormulaParts": [part]}}}
 
 
 class TestFormatNumber():
@@ -90,10 +99,10 @@ class TestRankValues():
         assert values == {"cooldownTime": "0", "mana": "0"}
 
 
-    def test_hashed_names_are_skipped(self):
+    def test_hashed_names_get_a_readable_name(self):
         spell = {"DataValues": [{"name": "{7d38e7d6}", "values": [1] * 7}]}
 
-        assert "{7d38e7d6}" not in spell_values(spell, max_rank=5).values
+        assert spell_values(spell, max_rank=5).values == {"h_7d38e7d6": "1", "cooldownTime": "0", "mana": "0"}
 
 
 class TestCalculations():
@@ -229,9 +238,48 @@ class TestCalculations():
         assert spell_values(spell, max_rank=5).unsupported == {"MaximumHeal": "ability resource 4 with formula 0"}
 
 
+    def test_buff_counters(self):
+        # Draven P (gold × 1), Kindred's marks (× 0.05) and Thresh W (ShieldPerSoul × souls) in 16.21.
+        calculation = {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "BuffCounterByCoefficientCalculationPart", "mBuffName": "DravenPassiveGoldEarned",
+             "mCoefficient": 1.0},
+            {"__type": "BuffCounterByCoefficientCalculationPart", "mBuffName": "{64290302}",
+             "mCoefficient": 0.05000000074505806, "mIconKey": "%i:kindredPassiveIcon%"},
+            {"__type": "BuffCounterByNamedDataValueCalculationPart", "mBuffName": "{5fbfbf13}",
+             "mDataValue": "ShieldPerSoul", "mScalingTagKey": "font color='#0bf7de'"}]}
+
+        assert translate_calculation(calculation) == "stacks_DravenPassiveGoldEarned + " \
+            "0.05 * stacks_KindredMarkOfTheKindredStackCounter + ShieldPerSoul * stacks_ThreshPassiveSoulsGain"
+
+
+    def test_unknown_buff_hashes_get_hashed_names(self):
+        # K'Sante E's shield on an ally; no string in his data hashes to the buff.
+        calculation = {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "BuffCounterByCoefficientCalculationPart", "mBuffName": "{7a26bd77}", "mCoefficient": 0.1}]}
+
+        assert translate_calculation(calculation) == "0.1 * stacks_h_7a26bd77"
+
+
+    def test_guessed_buff_names_match_their_hashes(self):
+        # Guards against typos: each guess must hash to a buff hash seen in 16.21.
+        assert set(BUFF_NAMES_BY_HASH) == {
+            "{eb906dca}", "{f79080ae}", "{f6907f1b}", "{c9372c6b}", "{7f3c01cf}", "{a8a3dd7a}", "{577427b5}",
+            "{8682fc00}", "{9e10ce18}", "{9d0c98ec}", "{79ba1a32}", "{64290302}", "{6244221a}", "{5eb30a0d}",
+            "{e3b83f84}", "{b5c3348f}", "{1b1d7345}", "{e88568f8}", "{bba88b2a}", "{098531db}", "{32bcea5d}",
+            "{1705b20f}", "{0dc6979e}", "{5fbfbf13}"}
+
+
+    def test_unknown_fields_on_buff_counters_are_reported(self):
+        spell = {"mSpellCalculations": {"Damage": {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "BuffCounterByCoefficientCalculationPart", "mBuffName": "Stacks", "mCoefficient": 1.0,
+             "{12345678}": True}]}}}
+
+        assert spell_values(spell, max_rank=5).unsupported == {"Damage": "buff counter with unknown field {12345678}"}
+
+
     def test_unknown_parts_are_reported_not_guessed(self):
         spell = {"mSpellCalculations": {
-            "Stacks": {"__type": "GameCalculation", "mFormulaParts": [{"__type": "BuffCounterByCoefficientCalculationPart"}]},
+            "Stacks": {"__type": "GameCalculation", "mFormulaParts": [{"__type": "CooldownMultiplierCalculationPart"}]},
             "Shred": {"__type": "GameCalculation", "mFormulaParts": [
                 {"__type": "StatByCoefficientCalculationPart", "mStat": 10, "mCoefficient": 1.0}]},
         }}
@@ -239,15 +287,82 @@ class TestCalculations():
         result = spell_values(spell, max_rank=5)
 
         assert "Stacks" not in result.values and "Shred" not in result.values
-        assert result.unsupported == {"Stacks": "part type BuffCounterByCoefficientCalculationPart",
+        assert result.unsupported == {"Stacks": "part type CooldownMultiplierCalculationPart",
                                       "Shred": "stat 10 with formula 0"}
 
 
-    def test_references_to_hashed_names_are_reported(self):
+    def test_references_to_hashed_names_use_the_readable_name(self):
         values = spell_values(load_spell("vladimir", "VladimirQ"), max_rank=5)
 
-        assert "EmpoweredHealTooltip" not in values.values
-        assert values.unsupported["EmpoweredHealTooltip"] == "refers to the hashed name {097cda4f}"
+        assert values.values["EmpoweredHealTooltip"] == "h_097cda4f * 1"
+        assert values.values["h_097cda4f"].startswith("by_level(30, ")
+        assert "h_097cda4f" in values.calculations
+
+
+    def test_references_to_other_calculations(self):
+        # Zed P: % of the target's max HP, the percent itself is a hashed calculation.
+        spell = {"mSpellCalculations": {
+            "{6a1a62e9}": {"__type": "GameCalculation", "mFormulaParts": [
+                {"__type": "NamedDataValueCalculationPart", "mDataValue": "PercentDamage"}]},
+            "TotalDamage": {"__type": "GameCalculation", "mFormulaParts": [
+                {"__type": "StatBySubPartCalculationPart", "mStat": 12, "{a8cb9c14}": True,
+                 "mSubpart": {"__type": "{f3cbe7b2}", "mSpellCalculationKey": "{6a1a62e9}"}}]}}}
+
+        values = spell_values(spell, max_rank=5).values
+
+        assert values["TotalDamage"] == "h_6a1a62e9 * target_max_hp"
+        assert values["h_6a1a62e9"] == "PercentDamage"
+
+
+    def test_named_interpolation(self):
+        # Kayn P in 16.23 (wiki: 20 to 40 % by level), with rounder numbers.
+        spell = named_level_spell({"StartDataValue": "Min", "EndDataValue": "Max", "__type": "{ee18a47b}"},
+                                  {"Min": 10, "Max": 61})
+
+        assert spell_values(spell, max_rank=0).values["Calc"] == f"by_level({', '.join(map(str, range(10, 68, 3)))})"
+
+
+    def test_named_linear_by_level(self):
+        # Irelia P in 16.23; wiki: 10 to 61 by level (+ 20 % bonus AD).
+        spell = named_level_spell({"{91d404a5}": "OnHitBaseDamage", "{b2cd0eb0}": "OnHitPerLevel", "__type": "{b22609db}"},
+                                  {"OnHitBaseDamage": 10, "OnHitPerLevel": 3})
+
+        assert spell_values(spell, max_rank=0).values["Calc"] == f"by_level({', '.join(map(str, range(10, 68, 3)))})"
+
+
+    def test_named_breakpoints(self):
+        # Gragas P's cooldown in 16.23; wiki: 12 to 6 at levels 1, 6, 11 and 16. The empty value counts as 0.
+        breakpoints = [{"level": level, "{ae9b464d}": "Bonus", "{b0d8b2ac}": "PerLevel", "__type": "{0333530c}"}
+                       for level in (6, 11, 16)]
+        spell = named_level_spell({"{91d404a5}": "Level1Value", "{bbd778a2}": "PerLevel", "{9823b29a}": breakpoints,
+                                   "__type": "{4ce08984}"}, {"Level1Value": 12, "Bonus": -2, "PerLevel": None})
+
+        expected = ["12"] * 5 + ["10"] * 5 + ["8"] * 5 + ["6"] * 5
+        assert spell_values(spell, max_rank=0).values["Calc"] == f"by_level({', '.join(expected)})"
+
+
+    def test_named_level_parts_need_one_value_for_all_ranks(self):
+        spell = named_level_spell({"StartDataValue": "Min", "EndDataValue": "Max", "__type": "{ee18a47b}"},
+                                  {"Min": 10, "Max": [61, 62, 63, 64, 65, 66, 67]})
+
+        assert spell_values(spell, max_rank=5).unsupported == {"Calc": "level formula with Max, which differs by rank"}
+
+
+    def test_unknown_fields_on_named_level_parts_are_reported(self):
+        spell = named_level_spell({"StartDataValue": "Min", "EndDataValue": "Max", "{12345678}": False,
+                                   "__type": "{ee18a47b}"}, {"Min": 10, "Max": 61})
+
+        assert spell_values(spell, max_rank=0).unsupported == {
+            "Calc": "ByCharLevelNamedDataValuesInterpolationCalculationPart with unknown field {12345678}"}
+
+
+    def test_values_of_other_spells_are_reported(self):
+        # Elise R in 16.23 reads a value of her spider form's E.
+        spell = named_level_spell({"SourceObject": "Characters/Elise/Spells/EliseSpiderEAbility/EliseSpiderEInitial",
+                                   "DataValue": "PBonusIncrease", "__type": "{9e9e2e5c}"}, {})
+
+        assert spell_values(spell, max_rank=0).unsupported == {
+            "Calc": "refers to PBonusIncrease of another spell (EliseSpiderEInitial)"}
 
 
     def test_sums_inside_products_keep_their_parentheses(self):
@@ -275,3 +390,8 @@ class TestHashedFields():
         assert bin_field(record, "baseHPModifiable") == 1
         assert bin_field(record, "arBaseModifiable") == 2
         assert bin_field(record, "arPerLevelModifiable", 0) == 0
+
+
+    def test_guessed_part_type_names(self):
+        assert part_type({"__type": "{4ce08984}"}) == "ByCharLevelNamedDataValueBreakpointsCalculationPart"
+        assert part_type({"__type": "NumberCalculationPart"}) == "NumberCalculationPart"

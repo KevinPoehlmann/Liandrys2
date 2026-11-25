@@ -2,8 +2,10 @@ import copy
 
 import pytest
 
+from src.server.loader.cdragon import field_hash
 from src.server.loader.champion_builder import champion_stats, loaded_spells
-from src.server.loader.champion_patcher import _note_lines, patch_champion, spells_from_document, used_names
+from src.server.loader.champion_patcher import (_calculation_names, _note_lines, patch_champion, spells_from_document,
+                                                used_names)
 from src.server.models.ability import Ability
 from src.server.models.change import Change, patch_note
 from src.server.models.enums import ChangeSource
@@ -52,6 +54,22 @@ def patch(veigar, old_raw, new_raw, notes=None, old_spells=None):
 
 def texts(container) -> list[str]:
     return [change.text for change in container.changes]
+
+
+def damage_props(ability) -> list:
+    return [action.props for stage in ability.stages for rule in stage.rules for action in rule.actions
+            if "Damage" in str(getattr(action.props, "amount", ""))]
+
+
+def hide_name(raw, script_name: str, name: str) -> str:
+    """How the old patch looked while CommunityDragon only knew the name's hash."""
+    hashed = f"{{{field_hash(name)}}}"
+    data_value(raw.cdragon, script_name, name)["name"] = hashed
+    for calculation in spell(raw.cdragon, script_name).get("mSpellCalculations", {}).values():
+        for part in calculation.get("mFormulaParts", []):
+            if part.get("mDataValue") == name:
+                part["mDataValue"] = hashed
+    return f"h_{field_hash(name)}"
 
 
 class TestCopyForward():
@@ -186,6 +204,38 @@ class TestValidation():
         assert not result.champion.validated
 
 
+class TestRenames():
+
+    def test_a_learned_name_is_a_rename(self, veigar, old_raw, new_raw):
+        hashed = hide_name(old_raw, "VeigarBalefulStrike", "BaseDamage")
+
+        result = patch(veigar, old_raw, new_raw)
+
+        assert result.champion.q.validated
+        assert texts(result.champion.q) == [f"{hashed}: renamed to BaseDamage"]
+
+
+    def test_hand_made_formulas_follow_the_rename(self, veigar, old_raw, new_raw):
+        hashed = hide_name(old_raw, "VeigarBalefulStrike", "BaseDamage")
+        for props in damage_props(veigar.q):
+            props.amount = f"{hashed} + APRatio * ap"
+
+        result = patch(veigar, old_raw, new_raw)
+
+        assert result.champion.q.validated
+        assert {props.amount for props in damage_props(result.champion.q)} == {"BaseDamage + APRatio * ap"}
+
+
+    def test_other_slots_follow_the_rename(self, veigar, old_raw, new_raw):
+        hashed = hide_name(old_raw, "VeigarPassive", "DarkMatterCDRIncrement")
+        veigar.w.cooldown = veigar.w.cooldown.replace("passive.DarkMatterCDRIncrement", f"passive.{hashed}")
+
+        result = patch(veigar, old_raw, new_raw)
+
+        assert result.champion.w.validated
+        assert "passive.DarkMatterCDRIncrement * floor(" in result.champion.w.cooldown
+
+
 class TestStats():
 
     def test_stat_changes_are_lines_but_keep_validation(self, veigar, old_raw, new_raw):
@@ -219,6 +269,14 @@ def test_used_names_skip_texts(veigar):
     veigar.q.rules = []
 
     assert "BaseDamage" not in used_names(veigar.q, "q").get("q", set())
+
+
+def test_named_level_parts_reference_their_data_values():
+    # Akali P in 16.23, the fields only known by hash.
+    part = {"{91d404a5}": "Level1MS", "{bbd778a2}": "PerLevel", "__type": "{4ce08984}",
+            "{9823b29a}": [{"level": 6, "{ae9b464d}": "Bonus", "{b0d8b2ac}": "PerLevel", "__type": "{0333530c}"}]}
+
+    assert _calculation_names({"mFormulaParts": [part]}) == {"Level1MS", "PerLevel", "Bonus"}
 
 
 def test_old_documents_hold_plain_lines():

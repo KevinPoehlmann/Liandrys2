@@ -2,7 +2,7 @@
 import re
 from dataclasses import dataclass, field
 
-from src.server.simulation.formula import MAX_LEVEL, TARGET_PREFIX
+from src.server.simulation.formula import MAX_LEVEL, STACKS_PREFIX, TARGET_PREFIX
 
 
 # Riot's level formulas are defined up to 18 and continue to 19 and 20 (roles). The bin files only store
@@ -10,6 +10,7 @@ from src.server.simulation.formula import MAX_LEVEL, TARGET_PREFIX
 RIOT_MAX_LEVEL = 18
 SIMPLE_TERM = re.compile(r"^-?[\w.]+$")
 FUNCTION_NAME = re.compile(r"^\w+(?=\()")
+HASHED_NAME = re.compile(r"^\{([0-9a-f]{8})\}$")
 
 # (mStat, mStatFormula) -> our variable. mStatFormula: 0 total, 1 base, 2 bonus.
 # Only ids checked against known values; anything else is reported instead of guessed.
@@ -37,6 +38,29 @@ TARGET_STAT_FLAG = "{a8cb9c14}"
 # with such a part in 16.21 uses mana, and the one other resource (Tryndamere's fury, mAbilityResource 4) is reported.
 RESOURCE_VARIABLES = {0: "max_mana", 1: "base_mana", 2: "bonus_mana"}
 
+# Part types CommunityDragon only knows as hashes. The names are guesses confirmed by their hash (see decisions).
+GUESSED_PART_TYPES = (
+    "SpellCalculationCalculationPart",
+    "ByCharLevelNamedDataValuesInterpolationCalculationPart",
+    "ByCharLevelNamedDataValueBreakpointsCalculationPart",
+    "ByCharLevelNamedDataValuesCalculationPart",
+    "ExternalNamedDataValueCalculationPart",
+)
+# Buff names CommunityDragon only knows as hashes, found among the strings of the champion's own data (16.21).
+GUESSED_BUFF_NAMES = (
+    "ApheliosPBuffAD", "ApheliosPBuffAP", "ApheliosPBuffAS", "AurelionSolPassive", "BelvethPassiveStacks",
+    "BelvethVsJax_JaxQuestReward", "DravenPassiveStacks", "Feast", "GarenWPassive", "GwenP", "HeightenedLearning",
+    "KindredMarkOfTheKindredStackCounter", "KSanteRConversionArmor", "KSanteRConversionHealth",
+    "KSanteRConversionMagicResist", "LockeRStack", "NasusQStacks", "SennaPassiveStacks", "ShyvanaPassive", "SmolderP",
+    "SmolderQPassive", "SonaPassiveAccelerandoCount", "SwainSoulCounter", "ThreshPassiveSoulsGain",
+)
+# Fields of the named level parts: Riot's numeric field -> the field naming the data value that holds the number.
+NAMED_INTERPOLATION = {"mStartValue": "StartDataValue", "mEndValue": "EndDataValue"}
+NAMED_LINEAR = {"mLevel1Value": "Level1DataValue", "mInitialBonusPerLevel": "BonusPerLevelDataValue"}
+NAMED_BREAKPOINTS = {"mLevel1Value": "Level1DataValue", "mInitialBonusPerLevel": "InitialBonusPerLevelDataValue"}
+NAMED_BREAKPOINT = {"mAdditionalBonusAtThisLevel": "AdditionalBonusAtThisLevelDataValue",
+                    "mBonusPerLevelAtAndAfter": "BonusPerLevelAtAndAfterDataValue"}
+
 
 # Spell fields kept under Riot's old field names: the fields to read, live first, and the index of rank 1 (mana lists
 # have no rank 0). The old lists are stale copies Riot no longer updates (Darius Q in 26.21: cooldownTime 9–5,
@@ -62,10 +86,11 @@ def spell_values(spell: dict, max_rank: int) -> SpellValues:
     for name, (sources, first_rank) in SPELL_FIELDS.items():
         # Always present, so `cooldown: "cooldownTime"` and `cost: "mana"` resolve even for free spells.
         _add(result, name, lambda: _rank_value(_spell_field(spell, sources), max_rank, first_rank))
+    data_values = dict(result.values)
     for name, calculation in (spell.get("mSpellCalculations") or {}).items():
-        _add(result, name, lambda: translate_calculation(calculation))
-        if name.isidentifier():
-            result.calculations[name] = calculation
+        _add(result, name, lambda: translate_calculation(with_numbers(calculation, data_values)))
+        if readable := value_name(name):
+            result.calculations[readable] = calculation
     return result
 
 
@@ -79,12 +104,21 @@ def _spell_field(spell: dict, sources: tuple[str, ...]) -> list[float]:
 
 
 def _add(result: SpellValues, name: str, translate) -> None:
-    if not name.isidentifier():
-        return  # hashed names like {7d38e7d6} can't be referenced; they stay in the raw data
+    if not (name := value_name(name)):
+        return
     try:
         result.values[name] = translate()
     except UnsupportedCalculation as error:
         result.unsupported[name] = str(error)
+
+
+def value_name(name: str) -> str | None:
+    """The name formulas use: Riot's name, or h_<hash> where CommunityDragon only knows the hash ({097cda4f})."""
+    if name.isidentifier():
+        return name
+    if hashed := HASHED_NAME.match(name):
+        return f"h_{hashed[1]}"
+    return None
 
 
 def bin_field(record: dict, name: str, default=None):
@@ -98,6 +132,54 @@ def field_hash(name: str) -> str:
     for byte in name.lower().encode():
         value = ((value ^ byte) * 0x01000193) & 0xFFFFFFFF
     return f"{value:08x}"
+
+
+PART_TYPES_BY_HASH = {f"{{{field_hash(name)}}}": name for name in GUESSED_PART_TYPES}
+BUFF_NAMES_BY_HASH = {f"{{{field_hash(name)}}}": name for name in GUESSED_BUFF_NAMES}
+
+
+def part_type(part: dict) -> str | None:
+    """The part's type by name, also where CommunityDragon only knows its hash ({4ce08984})."""
+    return PART_TYPES_BY_HASH.get(part.get("__type"), part.get("__type"))
+
+
+def with_numbers(node, data_values: dict[str, str]):
+    """Riot's named level parts are its level parts with their numbers stored as data values (Gnar P, Akali P).
+    Replacing the names by the numbers lets the level parts translate them."""
+    if isinstance(node, list):
+        return [with_numbers(item, data_values) for item in node]
+    if not isinstance(node, dict):
+        return node
+    node = {key: with_numbers(value, data_values) for key, value in node.items()}
+    match part_type(node):
+        case "ByCharLevelNamedDataValuesInterpolationCalculationPart":
+            return {"__type": "ByCharLevelInterpolationCalculationPart"} | _numbers(node, NAMED_INTERPOLATION, data_values)
+        case "ByCharLevelNamedDataValuesCalculationPart":
+            return {"__type": "ByCharLevelBreakpointsCalculationPart"} | _numbers(node, NAMED_LINEAR, data_values)
+        case "ByCharLevelNamedDataValueBreakpointsCalculationPart":
+            breakpoints = [{"mLevel": point.get("level", 1)} | _numbers(point, NAMED_BREAKPOINT, data_values, {"level"})
+                           for point in bin_field(node, "DataValueBreakpoints", [])]
+            return ({"__type": "ByCharLevelBreakpointsCalculationPart", "mBreakpoints": breakpoints}
+                    | _numbers(node, NAMED_BREAKPOINTS, data_values, {"DataValueBreakpoints"}))
+    return node
+
+
+def _numbers(node: dict, fields: dict[str, str], data_values: dict[str, str],
+             other_fields: frozenset[str] = frozenset()) -> dict:
+    known = {"__type"} | {key for name in (*fields.values(), *other_fields) for key in (name, f"{{{field_hash(name)}}}")}
+    if unknown := [key for key in node if key not in known]:
+        raise UnsupportedCalculation(f"{part_type(node)} with unknown field {unknown[0]}")
+    return {numeric: _data_number(name, data_values) for numeric, field_name in fields.items()
+            if (name := bin_field(node, field_name)) is not None}
+
+
+def _data_number(name: str, data_values: dict[str, str]) -> float:
+    if (value := data_values.get(value_name(name) or "")) is None:
+        raise UnsupportedCalculation(f"refers to the missing data value {name}")
+    try:
+        return float(value)
+    except ValueError:
+        raise UnsupportedCalculation(f"level formula with {name}, which differs by rank") from None
 
 
 def format_number(value: float) -> str:
@@ -137,7 +219,7 @@ def _sum(parts: list[dict]) -> str:
 
 
 def _part(part: dict) -> str:
-    match part.get("__type"):
+    match part_type(part):
         case "NamedDataValueCalculationPart":
             return _name(part["mDataValue"])
         case "NumberCalculationPart":
@@ -162,14 +244,25 @@ def _part(part: dict) -> str:
             return _by_level(_interpolation(part))
         case "ByCharLevelBreakpointsCalculationPart":
             return _by_level(_breakpoints(part))
+        case "SpellCalculationCalculationPart":  # another calculation of the same spell
+            return _name(part["mSpellCalculationKey"])
+        case "BuffCounterByNamedDataValueCalculationPart":
+            return f"{_name(part['mDataValue'])} * {_buff_stacks(part)}"
+        case "BuffCounterByCoefficientCalculationPart":
+            if "mCoefficient" not in part:
+                raise UnsupportedCalculation("buff counter without coefficient")
+            return _scaled(part["mCoefficient"], _buff_stacks(part))
+        case "ExternalNamedDataValueCalculationPart":
+            spell = part.get("SourceObject", "").rsplit("/", 1)[-1]
+            raise UnsupportedCalculation(f"refers to {part.get('DataValue')} of another spell ({spell})")
         case other:
             raise UnsupportedCalculation(f"part type {other}")
 
 
 def _name(name: str) -> str:
-    if not name.isidentifier():
-        raise UnsupportedCalculation(f"refers to the hashed name {name}")
-    return name
+    if not (translated := value_name(name)):
+        raise UnsupportedCalculation(f"refers to the unreadable name {name}")
+    return translated
 
 
 def _stat(part: dict) -> str:
@@ -182,6 +275,14 @@ def _stat(part: dict) -> str:
         raise UnsupportedCalculation(f"stat part with unknown field {unknown[0]}")
     prefix = TARGET_PREFIX if part.get(TARGET_STAT_FLAG) else ""
     return prefix + STAT_VARIABLES[key]
+
+
+def _buff_stacks(part: dict) -> str:
+    # mIconKey and mScalingTagKey only style the tooltip. A hashed field could make it count another unit's buff.
+    if unknown := [name for name in part if name.startswith("{")]:
+        raise UnsupportedCalculation(f"buff counter with unknown field {unknown[0]}")
+    buff = part["mBuffName"]
+    return STACKS_PREFIX + _name(BUFF_NAMES_BY_HASH.get(buff, buff))
 
 
 def _resource(part: dict) -> str:

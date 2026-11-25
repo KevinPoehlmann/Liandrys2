@@ -3,9 +3,13 @@ CommunityDragon's data decides per ability whether it stays validated (ROADMAP, 
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Iterator
 
-from src.server.loader.cdragon import SpellValues
+from pydantic import BaseModel
+
+from src.server.loader.cdragon import (HASHED_NAME, NAMED_BREAKPOINT, NAMED_BREAKPOINTS, NAMED_INTERPOLATION,
+                                       NAMED_LINEAR, SpellValues, field_hash, value_name)
 from src.server.loader.champion_builder import (SLOTS, LoadedSpell, apply_loader_part, champion_stats,
                                                 last_changed_patch, loaded_spells)
 from src.server.models.ability import Ability
@@ -22,7 +26,10 @@ LOADED_SLOTS = ("passive",) + SLOTS
 NOT_HAND_MADE = {"name", "description", "assumptions", "values", "tooltip", "raw_stats", "changes", "validated",
                  "image", "maxrank", "key", "rank_from"}
 NAME = re.compile(r"\b(?:([a-z]\w*)\.)?([A-Za-z_]\w*)\b")
-CALCULATION_REFERENCES = {"mDataValue", "mModifiedGameCalculation"}
+# Fields that name another value of the same spell, by hash because some are only known as hashes ({91d404a5}).
+CALCULATION_REFERENCES = {field_hash(name) for name in (
+    "mDataValue", "mModifiedGameCalculation", "mSpellCalculationKey", *NAMED_INTERPOLATION.values(),
+    *NAMED_LINEAR.values(), *NAMED_BREAKPOINTS.values(), *NAMED_BREAKPOINT.values())}
 
 
 @dataclass
@@ -31,6 +38,7 @@ class SpellDiff:
     added: set[str] = field(default_factory=set)
     removed: set[str] = field(default_factory=set)
     reshaped: set[str] = field(default_factory=set)  # calculations whose structure changed, not just their numbers
+    renamed: dict[str, str] = field(default_factory=dict)  # h_<hash> -> the name CDragon learned for it
     tooltip_changed: bool = False
     old: SpellValues = field(default_factory=SpellValues)
     new: SpellValues = field(default_factory=SpellValues)
@@ -55,6 +63,7 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
     max_ranks = {slot: spell.maxrank for slot, spell in zip(SLOTS, entry.spells)}
     new_spells = loaded_spells(raw, max_ranks)
     diffs = {slot: spell_diff(old_spells[slot], new_spells[slot]) for slot in LOADED_SLOTS if slot in old_spells}
+    renames = {slot: diff.renamed for slot, diff in diffs.items() if diff.renamed}
 
     notes = dict(patch_notes)
     unvalidated = {}
@@ -68,6 +77,8 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
         if slot in max_ranks:
             _set_max_rank(container, max_ranks[slot], diff)
         container.changes = _data_changes(diff.lines) + lines
+        if renames:
+            _rename_hand_made(container, slot, renames)
         reasons = unvalidating_reasons(slot, used_names(container, slot), diffs)
         if lines and not diff.lines:
             reasons.append("named in the patch notes only")
@@ -95,14 +106,16 @@ def spells_from_document(champion: NewChampion) -> dict[str, LoadedSpell]:
 
 
 def spell_diff(old: LoadedSpell, new: LoadedSpell) -> SpellDiff:
-    diff = SpellDiff(old=old.values, new=new.values)
-    old_names, new_names = _names(old.values), _names(new.values)
+    renamed = _renames(_names(old.values), _names(new.values))
+    diff = SpellDiff(old=_with_renames(old.values, renamed), new=new.values, renamed=renamed)
+    diff.lines = [f"{hashed}: renamed to {name}" for hashed, name in sorted(renamed.items())]
+    old_names, new_names = _names(diff.old), _names(diff.new)
     diff.added, diff.removed = new_names - old_names, old_names - new_names
     diff.reshaped = {name for name in old_names & new_names
-                     if name in old.values.calculations and name in new.values.calculations
-                     and _shape(old.values.calculations[name]) != _shape(new.values.calculations[name])}
+                     if name in diff.old.calculations and name in diff.new.calculations
+                     and _shape(diff.old.calculations[name]) != _shape(diff.new.calculations[name])}
     for name in sorted(old_names | new_names):
-        before, after = _shown(old.values, name), _shown(new.values, name)
+        before, after = _shown(diff.old, name), _shown(diff.new, name)
         if name in diff.added:
             diff.lines.append(f"{name}: new ({after})")
         elif name in diff.removed:
@@ -134,6 +147,58 @@ def unvalidating_reasons(own_slot: str, used: dict[str, set[str]], diffs: dict[s
         reasons += [f"{prefix}{name} changed its structure" for name in sorted(diff.reshaped)
                     if _breaks_rules(name, names, diff)]
     return reasons
+
+
+def _renames(old_names: set[str], new_names: set[str]) -> dict[str, str]:
+    # CDragon learned a name it only knew as a hash: the new name hashes to the old h_<hash>.
+    by_hash = {f"h_{field_hash(name)}": name for name in new_names - old_names}
+    return {name: by_hash[name] for name in old_names - new_names if name in by_hash}
+
+
+def _with_renames(values: SpellValues, renamed: dict[str, str]) -> SpellValues:
+    if not renamed:
+        return values
+    renames = {None: renamed}
+    return SpellValues(values={renamed.get(name, name): rename_names(formula, renames)
+                               for name, formula in values.values.items()},
+                       unsupported={renamed.get(name, name): why for name, why in values.unsupported.items()},
+                       calculations={renamed.get(name, name): calc for name, calc in values.calculations.items()})
+
+
+def rename_names(text: str, renames: dict[str | None, dict[str, str]], own_slot: str | None = None) -> str:
+    """Renames the value names in a formula: a bare name belongs to `own_slot`, `q.X` to Q."""
+    def rename(match: re.Match) -> str:
+        prefix, name = match[1], match[2]
+        if prefix and prefix not in SLOT_PREFIXES:
+            return match[0]
+        new = renames.get(prefix or own_slot, {}).get(name, name)
+        return f"{prefix}.{new}" if prefix else new
+    return NAME.sub(rename, text)
+
+
+def _rename_hand_made(container: Ability | Passive, slot: str, renames: dict[str, dict[str, str]]) -> None:
+    for name in container.__fields__.keys() - NOT_HAND_MADE:
+        _set_if_changed(container, name, _renamed(getattr(container, name), slot, renames))
+
+
+def _renamed(value, slot: str, renames: dict[str, dict[str, str]]):
+    if isinstance(value, Enum):  # str enums are strings too, but never formulas
+        return value
+    if isinstance(value, str):
+        return rename_names(value, renames, slot)
+    if isinstance(value, list):
+        return [_renamed(item, slot, renames) for item in value]
+    if isinstance(value, dict):
+        return {key: _renamed(item, slot, renames) for key, item in value.items()}
+    if isinstance(value, BaseModel):
+        for name in value.__fields__:
+            _set_if_changed(value, name, _renamed(getattr(value, name), slot, renames))
+    return value
+
+
+def _set_if_changed(model: BaseModel, name: str, value) -> None:
+    if getattr(model, name) != value:
+        setattr(model, name, value)
 
 
 def _breaks_rules(name: str, used: set[str], diff: SpellDiff) -> bool:
@@ -180,19 +245,27 @@ def _shown(values: SpellValues, name: str) -> str:
 
 
 def _shape(value):
-    """The calculation without its numbers: equal shapes mean only numbers changed."""
+    """The calculation without its numbers: equal shapes mean only numbers changed. Names and fields count by their
+    hash, so a name CDragon just learned ({6a1a62e9} ⇒ PercentDamage) doesn't change the shape either."""
+    if isinstance(value, str):
+        return _hash_of(value)
     if isinstance(value, bool) or not isinstance(value, (int, float, dict, list)):
         return value
     if isinstance(value, dict):
-        return {key: _shape(item) for key, item in value.items()}
+        return {_hash_of(key): _shape(item) for key, item in value.items()}
     if isinstance(value, list):
         return [_shape(item) for item in value]
     return None
 
 
+def _hash_of(text: str) -> str:
+    return hashed[1] if (hashed := HASHED_NAME.match(text)) else field_hash(text)
+
+
 def _calculation_names(calculation) -> set[str]:
     if isinstance(calculation, dict):
-        names = {value for key, value in calculation.items() if key in CALCULATION_REFERENCES and isinstance(value, str)}
+        names = {value_name(value) for key, value in calculation.items()
+                 if _hash_of(key) in CALCULATION_REFERENCES and isinstance(value, str)} - {None}
         return names.union(*(_calculation_names(value) for value in calculation.values()))
     if isinstance(calculation, list):
         return set().union(*(_calculation_names(item) for item in calculation))
