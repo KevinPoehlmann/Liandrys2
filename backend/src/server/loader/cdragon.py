@@ -2,7 +2,7 @@
 import re
 from dataclasses import dataclass, field
 
-from src.server.simulation.formula import MAX_LEVEL
+from src.server.simulation.formula import MAX_LEVEL, TARGET_PREFIX
 
 
 # Riot's level formulas are defined up to 18 and continue to 19 and 20 (roles). The bin files only store
@@ -19,12 +19,20 @@ STAT_VARIABLES = {
     (2, 0): "ad", (2, 1): "base_ad", (2, 2): "bonus_ad",
     (4, 2): "bonus_attackspeed",  # Bel'Veth E, Aphelios Severum Q
     (6, 0): "mr", (6, 2): "bonus_mr",
-    (7, 0): "movespeed",
+    (7, 0): "movespeed", (7, 2): "bonus_movespeed",  # Hecarim P: 12–24 % bonus MS as AD; Janna P: 30 % as damage
     (8, 0): "crit_chance",  # Caitlyn's headshot, Ashe's passive
     (9, 0): "crit_damage", (9, 2): "bonus_crit_damage",  # Garen E: 1 + CritMod × (stat 9 − 1); Ashe P: × (1 + bonus)
     (12, 0): "max_hp", (12, 1): "base_hp", (12, 2): "bonus_hp",
+    (13, 0): "current_hp",  # Kindred W: % of the target's current HP
+    (14, 0): "current_hp_percent",  # Zac's costs: HPCost × max HP × stat 14 = 8 % current HP
+    (15, 0): "missing_hp",  # Ekko W: % of the target's missing HP
+    (16, 0): "missing_hp_percent",  # Olaf W: shield of 17.5 % missing HP = stat 16 × max HP × 0.175
+    (18, 0): "life_steal",  # Ambessa R: heal 15–20 % (+ 50 % life steal)
     (29, 0): "lethality",  # Pyke R: 1.5 lethality
+    (31, 2): "bonus_attack_range",  # Urgot W: "autonomous attack range scales with bonus attack range"
 }
+# Set on a stat part that reads the target's stat (Zed P, Aurora P: % of the target's max HP). Name still unknown.
+TARGET_STAT_FLAG = "{a8cb9c14}"
 # mStatFormula of a resource part -> our variable. Mana is the only resource the simulation knows; every champion
 # with such a part in 16.21 uses mana, and the one other resource (Tryndamere's fury, mAbilityResource 4) is reported.
 RESOURCE_VARIABLES = {0: "max_mana", 1: "base_mana", 2: "bonus_mana"}
@@ -168,7 +176,12 @@ def _stat(part: dict) -> str:
     key = (part.get("mStat", 0), part.get("mStatFormula", 0))
     if key not in STAT_VARIABLES:
         raise UnsupportedCalculation(f"stat {key[0]} with formula {key[1]}")
-    return STAT_VARIABLES[key]
+    # A hashed field could change whose stat is read, like the target flag did.
+    unknown = [name for name in part if name.startswith("{") and name != TARGET_STAT_FLAG]
+    if unknown:
+        raise UnsupportedCalculation(f"stat part with unknown field {unknown[0]}")
+    prefix = TARGET_PREFIX if part.get(TARGET_STAT_FLAG) else ""
+    return prefix + STAT_VARIABLES[key]
 
 
 def _resource(part: dict) -> str:

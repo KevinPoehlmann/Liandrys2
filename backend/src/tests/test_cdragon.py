@@ -190,6 +190,37 @@ class TestCalculations():
         assert translate_calculation(calculation) == "crit_damage + bonus_crit_damage"
 
 
+    def test_health_life_steal_movespeed_and_range_stats(self):
+        # Shapes from Zac's costs, Olaf W, Ambessa R, Hecarim P and Urgot W in 16.21.
+        calculation = {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 14, "mCoefficient": 1.0},
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 16, "mCoefficient": 1.0},
+            {"__type": "StatByNamedDataValueCalculationPart", "mStat": 18, "mDataValue": "LifeStealScaling"},
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 7, "mStatFormula": 2, "mCoefficient": 0.3},
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 31, "mStatFormula": 2, "mCoefficient": 1.0}]}
+
+        assert translate_calculation(calculation) == "current_hp_percent + missing_hp_percent + " \
+            "LifeStealScaling * life_steal + 0.3 * bonus_movespeed + bonus_attack_range"
+
+
+    def test_target_stats(self):
+        # Kindred W (target's current HP), Ekko W (target's missing HP) and Zed P (target's max HP) in 16.21.
+        calculation = {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 13, "mCoefficient": 0.01, "{a8cb9c14}": True},
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 15, "mCoefficient": 0.03, "{a8cb9c14}": True},
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 12, "mCoefficient": 0.02, "{a8cb9c14}": True}]}
+
+        assert translate_calculation(calculation) == \
+            "0.01 * target_current_hp + 0.03 * target_missing_hp + 0.02 * target_max_hp"
+
+
+    def test_unknown_fields_on_stat_parts_are_reported(self):
+        spell = {"mSpellCalculations": {"Damage": {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 12, "mCoefficient": 0.1, "{12345678}": True}]}}}
+
+        assert spell_values(spell, max_rank=5).unsupported == {"Damage": "stat part with unknown field {12345678}"}
+
+
     def test_other_resources_than_mana_are_reported(self):
         # Tryndamere Q heals per fury.
         spell = {"mSpellCalculations": {"MaximumHeal": {"__type": "GameCalculation", "mFormulaParts": [
@@ -202,14 +233,14 @@ class TestCalculations():
         spell = {"mSpellCalculations": {
             "Stacks": {"__type": "GameCalculation", "mFormulaParts": [{"__type": "BuffCounterByCoefficientCalculationPart"}]},
             "Shred": {"__type": "GameCalculation", "mFormulaParts": [
-                {"__type": "StatByCoefficientCalculationPart", "mStat": 31, "mCoefficient": 1.0}]},
+                {"__type": "StatByCoefficientCalculationPart", "mStat": 10, "mCoefficient": 1.0}]},
         }}
 
         result = spell_values(spell, max_rank=5)
 
         assert "Stacks" not in result.values and "Shred" not in result.values
         assert result.unsupported == {"Stacks": "part type BuffCounterByCoefficientCalculationPart",
-                                      "Shred": "stat 31 with formula 0"}
+                                      "Shred": "stat 10 with formula 0"}
 
 
     def test_references_to_hashed_names_are_reported(self):

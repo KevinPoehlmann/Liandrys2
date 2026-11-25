@@ -55,6 +55,10 @@ def _missing_hp(source: StatSource) -> float:
 def _missing_hp_percent(source: StatSource) -> float:
     return _missing_hp(source) / source.get_stat(Stat.HP)
 
+# Slows push total movement speed below base; what scales with bonus movement speed doesn't go negative (Hecarim P).
+def _bonus_movespeed(source: StatSource) -> float:
+    return max(0.0, _bonus(Stat.MOVESPEED)(source))
+
 
 STAT_VARIABLES: dict[str, Callable[[StatSource], float]] = {
     "ad": _total(Stat.AD), "base_ad": _base(Stat.AD), "bonus_ad": _bonus(Stat.AD),
@@ -63,18 +67,21 @@ STAT_VARIABLES: dict[str, Callable[[StatSource], float]] = {
     "mr": _total(Stat.MR), "bonus_mr": _bonus(Stat.MR),
     "max_hp": _total(Stat.HP), "base_hp": _base(Stat.HP), "bonus_hp": _bonus(Stat.HP),
     "current_hp": lambda source: source.current_hp,
+    "current_hp_percent": lambda source: source.current_hp / source.get_stat(Stat.HP),
     "missing_hp": _missing_hp,
     "missing_hp_percent": _missing_hp_percent,
     "max_mana": _total(Stat.MANA), "base_mana": _base(Stat.MANA), "bonus_mana": _bonus(Stat.MANA),
     "attackspeed": _total(Stat.ATTACKSPEED_P), "bonus_attackspeed": _total(Stat.BONUS_ATTACKSPEED_P),
     "lethality": _total(Stat.LETHALITY),
+    "life_steal": _total(Stat.LIFE_STEAL_P),
     "armor_pen_percent": _total(Stat.ARMOR_PEN_P),
     "magic_pen": _total(Stat.MAGIC_PEN),
     "magic_pen_percent": _total(Stat.MAGIC_PEN_P),
     "ability_haste": _total(Stat.ABILITY_HASTE),
     "crit_chance": _total(Stat.CRIT_P),
     "crit_damage": _total(Stat.CRIT_DAMAGE), "bonus_crit_damage": _bonus(Stat.CRIT_DAMAGE),
-    "movespeed": _total(Stat.MOVESPEED),
+    "movespeed": _total(Stat.MOVESPEED), "bonus_movespeed": _bonus_movespeed,
+    "bonus_attack_range": _bonus(Stat.ATTACK_RANGE),
     "is_champion": lambda source: 1 if source.is_champion else 0,  # 0 for pets (Thornmail's Grievous Wounds)
     "ranged": lambda source: 1 if source.is_ranged else 0,  # melee/ranged values (Mist's Edge)
 }

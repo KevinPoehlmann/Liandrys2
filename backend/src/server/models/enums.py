@@ -28,6 +28,7 @@ class Stat(str, Enum):
     AP = "ap"
     ARMOR = "armor"
     ARMOR_PEN_P = "armor penetration percent"
+    ATTACK_RANGE = "attackrange"  # the champion field's name, so get_base_stat finds it
     ATTACKSPEED_P = "attackspeed"
     CRIT_P = "critical strike chance percent"
     CRIT_DAMAGE = "crit_damage"

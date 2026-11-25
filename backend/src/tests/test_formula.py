@@ -78,6 +78,24 @@ class TestVariables():
         assert evaluate_formula("current_hp", context) == 900
         assert evaluate_formula("missing_hp", context) == 300
         assert evaluate_formula("missing_hp_percent", context) == 0.25
+        assert evaluate_formula("current_hp_percent", context) == 0.75
+
+
+    def test_bonus_movespeed_stops_at_zero(self):
+        hasted = FakeSource(stats={Stat.MOVESPEED: 420}, base_stats={Stat.MOVESPEED: 345})
+        slowed = FakeSource(stats={Stat.MOVESPEED: 200}, base_stats={Stat.MOVESPEED: 345})
+
+        assert evaluate_formula("bonus_movespeed", FormulaContext(source=hasted)) == 75
+        assert evaluate_formula("bonus_movespeed", FormulaContext(source=slowed)) == 0
+
+
+    def test_life_steal_and_bonus_attack_range(self):
+        source = FakeSource(stats={Stat.LIFE_STEAL_P: 0.1, Stat.ATTACK_RANGE: 650},
+                            base_stats={Stat.ATTACK_RANGE: 350})
+        context = FormulaContext(source=source)
+
+        assert evaluate_formula("life_steal", context) == 0.1
+        assert evaluate_formula("bonus_attack_range", context) == 300
 
 
     def test_target_variables_read_the_target(self, vayne, darius):
