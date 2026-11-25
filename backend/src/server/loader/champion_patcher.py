@@ -8,8 +8,8 @@ from typing import Iterator
 
 from pydantic import BaseModel
 
-from src.server.loader.cdragon import (HASHED_NAME, NAMED_BREAKPOINT, NAMED_BREAKPOINTS, NAMED_INTERPOLATION,
-                                       NAMED_LINEAR, SpellValues, field_hash, value_name)
+from src.server.loader.cdragon import (NAMED_BREAKPOINT, NAMED_BREAKPOINTS, NAMED_INTERPOLATION, NAMED_LINEAR,
+                                       SpellValues, field_hash, name_hash, value_name)
 from src.server.loader.champion_builder import (SLOTS, LoadedSpell, apply_loader_part, champion_stats,
                                                 last_changed_patch, loaded_spells)
 from src.server.models.ability import Ability
@@ -248,24 +248,20 @@ def _shape(value):
     """The calculation without its numbers: equal shapes mean only numbers changed. Names and fields count by their
     hash, so a name CDragon just learned ({6a1a62e9} ⇒ PercentDamage) doesn't change the shape either."""
     if isinstance(value, str):
-        return _hash_of(value)
+        return name_hash(value)
     if isinstance(value, bool) or not isinstance(value, (int, float, dict, list)):
         return value
     if isinstance(value, dict):
-        return {_hash_of(key): _shape(item) for key, item in value.items()}
+        return {name_hash(key): _shape(item) for key, item in value.items()}
     if isinstance(value, list):
         return [_shape(item) for item in value]
     return None
 
 
-def _hash_of(text: str) -> str:
-    return hashed[1] if (hashed := HASHED_NAME.match(text)) else field_hash(text)
-
-
 def _calculation_names(calculation) -> set[str]:
     if isinstance(calculation, dict):
         names = {value_name(value) for key, value in calculation.items()
-                 if _hash_of(key) in CALCULATION_REFERENCES and isinstance(value, str)} - {None}
+                 if name_hash(key) in CALCULATION_REFERENCES and isinstance(value, str)} - {None}
         return names.union(*(_calculation_names(value) for value in calculation.values()))
     if isinstance(calculation, list):
         return set().union(*(_calculation_names(item) for item in calculation))

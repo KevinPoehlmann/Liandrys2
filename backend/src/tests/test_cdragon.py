@@ -105,6 +105,24 @@ class TestRankValues():
         assert spell_values(spell, max_rank=5).values == {"h_7d38e7d6": "1", "cooldownTime": "0", "mana": "0"}
 
 
+    def test_names_starting_with_a_digit_get_an_underscore(self):
+        # Kled W in 16.21
+        spell = {"DataValues": [{"name": "4HitMaxHealthDamage", "values": [4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0]}],
+                 "mSpellCalculations": {"PercentDamage": {"__type": "GameCalculation", "mFormulaParts": [
+                     {"mDataValue": "4HitMaxHealthDamage", "__type": "NamedDataValueCalculationPart"}]}}}
+
+        values = spell_values(spell, max_rank=5).values
+
+        assert values["_4HitMaxHealthDamage"] == "by_rank(4.5, 5, 5.5, 6, 6.5)"
+        assert values["PercentDamage"] == "_4HitMaxHealthDamage"
+
+
+    def test_names_that_stay_unreadable(self):
+        spell = {"DataValues": [{"name": "", "values": [1] * 7}, {"name": "Max Damage", "values": [1] * 7}]}
+
+        assert spell_values(spell, max_rank=5).values == {"cooldownTime": "0", "mana": "0"}
+
+
 class TestCalculations():
 
     def test_named_values_with_stat_ratio(self):
@@ -315,7 +333,7 @@ class TestCalculations():
 
     def test_references_to_other_calculations(self):
         # Zed P: % of the target's max HP, the percent itself is a hashed calculation.
-        spell = {"mSpellCalculations": {
+        spell = {"DataValues": [{"name": "PercentDamage", "values": [0.1] * 7}], "mSpellCalculations": {
             "{6a1a62e9}": {"__type": "GameCalculation", "mFormulaParts": [
                 {"__type": "NamedDataValueCalculationPart", "mDataValue": "PercentDamage"}]},
             "TotalDamage": {"__type": "GameCalculation", "mFormulaParts": [
@@ -442,6 +460,21 @@ class TestCalculations():
         spell = {"mSpellCalculations": {"Ramp": {"__type": "GameCalculation", "mFormulaParts": [part]}}}
 
         assert spell_values(spell, max_rank=0).unsupported == {"Ramp": "elapsed buff part with unknown field {12345678}"}
+
+
+    def test_data_values_are_found_like_riot_finds_them(self):
+        # Riot compares the hash of the lowercased name: Fiora Q's calculation reads `BADRatio`, the value is `bADRatio`.
+        spell = {"DataValues": [{"name": "bADRatio", "values": [1] * 7}, {"name": "slowDuration", "values": [1] * 7},
+                                {"name": "SlowDuration", "values": [2] * 7}],
+                 "mSpellCalculations": {name: {"__type": "GameCalculation", "mFormulaParts": [
+                     {"__type": "NamedDataValueCalculationPart", "mDataValue": name}]}
+                     for name in ("BADRatio", "SlowDuration", "Missing")}}
+
+        result = spell_values(spell, max_rank=5)
+
+        assert result.values["BADRatio"] == "bADRatio"
+        assert result.values["SlowDuration"] == "SlowDuration"
+        assert result.unsupported == {"Missing": "refers to the missing data value Missing"}
 
 
     def test_combined_conditions_are_reported(self):

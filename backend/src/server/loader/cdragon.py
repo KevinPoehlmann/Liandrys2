@@ -92,9 +92,9 @@ def spell_values(spell: dict, max_rank: int) -> SpellValues:
     calculations = spell.get("mSpellCalculations") or {}
     for index in sorted(_effect_indices(calculations)):
         _add(result, _effect_name(index), lambda: _rank_value(_effect_amount(spell, index), max_rank))
-    data_values = dict(result.values)
+    data_values = DataValues(dict(result.values), [value.get("name", "") for value in spell.get("DataValues") or []])
     for name, calculation in calculations.items():
-        _add(result, name, lambda: translate_calculation(with_numbers(calculation, data_values)))
+        _add(result, name, lambda: translate_calculation(data_values.resolve(calculation)))
         if readable := value_name(name):
             result.calculations[readable] = calculation
     return result
@@ -141,9 +141,12 @@ def _add(result: SpellValues, name: str, translate) -> None:
 
 
 def value_name(name: str) -> str | None:
-    """The name formulas use: Riot's name, or h_<hash> where CommunityDragon only knows the hash ({097cda4f})."""
+    """The name formulas use: Riot's name, or h_<hash> where CommunityDragon only knows the hash ({097cda4f}).
+    A name starting with a digit gets a leading underscore (Kled W's _4HitMaxHealthDamage)."""
     if name.isidentifier():
         return name
+    if name[:1].isdigit() and f"_{name}".isidentifier():
+        return f"_{name}"
     if hashed := HASHED_NAME.match(name):
         return f"h_{hashed[1]}"
     return None
@@ -152,6 +155,11 @@ def value_name(name: str) -> str | None:
 def bin_field(record: dict, name: str, default=None):
     """A field by its name, or by its hash where CommunityDragon doesn't know the name yet ({726ee5cd} = arBaseModifiable)."""
     return record.get(name, record.get(f"{{{field_hash(name)}}}", default))
+
+
+def name_hash(name: str) -> str:
+    """Riot's hash of a name, also for names CommunityDragon only knows as the hash ({097cda4f})."""
+    return hashed[1] if (hashed := HASHED_NAME.match(name)) else field_hash(name)
 
 
 def field_hash(name: str) -> str:
@@ -171,43 +179,58 @@ def part_type(part: dict) -> str | None:
     return PART_TYPES_BY_HASH.get(part.get("__type"), part.get("__type"))
 
 
-def with_numbers(node, data_values: dict[str, str]):
-    """Riot's named level parts are its level parts with their numbers stored as data values (Gnar P, Akali P).
-    Replacing the names by the numbers lets the level parts translate them."""
-    if isinstance(node, list):
-        return [with_numbers(item, data_values) for item in node]
-    if not isinstance(node, dict):
+class DataValues:
+    """A spell's data values as calculations refer to them. Riot finds them by the hash of the lowercased name,
+    so Fiora Q's `BADRatio` reads her `bADRatio`; an exact name wins (Lissandra has `slowDuration` and `SlowDuration`)."""
+
+    def __init__(self, values: dict[str, str], riot_names: list[str]) -> None:
+        self.values = values
+        self.names: dict[str, str] = {}
+        for riot_name in riot_names:
+            if (name := value_name(riot_name)) in values:
+                self.names.setdefault(f"{{{name_hash(riot_name)}}}", name)
+                self.names[riot_name] = name
+
+    def name(self, riot_name: str) -> str:
+        if name := self.names.get(riot_name) or self.names.get(f"{{{name_hash(riot_name)}}}"):
+            return name
+        raise UnsupportedCalculation(f"refers to the missing data value {riot_name}")
+
+    def resolve(self, node):
+        """References become the data value's own name. Riot's named level parts are its level parts with their
+        numbers stored as data values (Gnar P, Akali P); replacing the names by the numbers lets them translate."""
+        if isinstance(node, list):
+            return [self.resolve(item) for item in node]
+        if not isinstance(node, dict):
+            return node
+        node = {key: self.resolve(value) for key, value in node.items()}
+        if "mDataValue" in node:
+            node["mDataValue"] = self.name(node["mDataValue"])
+        match part_type(node):
+            case "ByCharLevelNamedDataValuesInterpolationCalculationPart":
+                return {"__type": "ByCharLevelInterpolationCalculationPart"} | self._numbers(node, NAMED_INTERPOLATION)
+            case "ByCharLevelNamedDataValuesCalculationPart":
+                return {"__type": "ByCharLevelBreakpointsCalculationPart"} | self._numbers(node, NAMED_LINEAR)
+            case "ByCharLevelNamedDataValueBreakpointsCalculationPart":
+                breakpoints = [{"mLevel": point.get("level", 1)} | self._numbers(point, NAMED_BREAKPOINT, {"level"})
+                               for point in bin_field(node, "DataValueBreakpoints", [])]
+                return ({"__type": "ByCharLevelBreakpointsCalculationPart", "mBreakpoints": breakpoints}
+                        | self._numbers(node, NAMED_BREAKPOINTS, {"DataValueBreakpoints"}))
         return node
-    node = {key: with_numbers(value, data_values) for key, value in node.items()}
-    match part_type(node):
-        case "ByCharLevelNamedDataValuesInterpolationCalculationPart":
-            return {"__type": "ByCharLevelInterpolationCalculationPart"} | _numbers(node, NAMED_INTERPOLATION, data_values)
-        case "ByCharLevelNamedDataValuesCalculationPart":
-            return {"__type": "ByCharLevelBreakpointsCalculationPart"} | _numbers(node, NAMED_LINEAR, data_values)
-        case "ByCharLevelNamedDataValueBreakpointsCalculationPart":
-            breakpoints = [{"mLevel": point.get("level", 1)} | _numbers(point, NAMED_BREAKPOINT, data_values, {"level"})
-                           for point in bin_field(node, "DataValueBreakpoints", [])]
-            return ({"__type": "ByCharLevelBreakpointsCalculationPart", "mBreakpoints": breakpoints}
-                    | _numbers(node, NAMED_BREAKPOINTS, data_values, {"DataValueBreakpoints"}))
-    return node
 
+    def _numbers(self, node: dict, fields: dict[str, str], other_fields: frozenset[str] = frozenset()) -> dict:
+        names = (*fields.values(), *other_fields)
+        known = {"__type"} | {key for name in names for key in (name, f"{{{field_hash(name)}}}")}
+        if unknown := [key for key in node if key not in known]:
+            raise UnsupportedCalculation(f"{part_type(node)} with unknown field {unknown[0]}")
+        return {numeric: self._number(name) for numeric, field_name in fields.items()
+                if (name := bin_field(node, field_name)) is not None}
 
-def _numbers(node: dict, fields: dict[str, str], data_values: dict[str, str],
-             other_fields: frozenset[str] = frozenset()) -> dict:
-    known = {"__type"} | {key for name in (*fields.values(), *other_fields) for key in (name, f"{{{field_hash(name)}}}")}
-    if unknown := [key for key in node if key not in known]:
-        raise UnsupportedCalculation(f"{part_type(node)} with unknown field {unknown[0]}")
-    return {numeric: _data_number(name, data_values) for numeric, field_name in fields.items()
-            if (name := bin_field(node, field_name)) is not None}
-
-
-def _data_number(name: str, data_values: dict[str, str]) -> float:
-    if (value := data_values.get(value_name(name) or "")) is None:
-        raise UnsupportedCalculation(f"refers to the missing data value {name}")
-    try:
-        return float(value)
-    except ValueError:
-        raise UnsupportedCalculation(f"level formula with {name}, which differs by rank") from None
+    def _number(self, riot_name: str) -> float:
+        try:
+            return float(self.values[self.name(riot_name)])
+        except ValueError:
+            raise UnsupportedCalculation(f"level formula with {riot_name}, which differs by rank") from None
 
 
 def format_number(value: float) -> str:

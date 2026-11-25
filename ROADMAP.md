@@ -35,9 +35,6 @@ The loader only collects data (numbers, named values, texts, cast times) and bui
   - Buff counters: ✅ `stacks_<buff>`, 24 of 26 hashed buff names guessed (see decisions). Left: a buff name learned later (`stacks_h_x` ⇒ `stacks_Name`) shows up as a changed value instead of a rename; two K'Sante buffs are still unknown
   - ✅ `EffectValue` (13) and `ByCharLevelFormula` (12), see decisions. Left: 2 K'Sante missiles reference an effect amount they don't have
   - ✅ `GameCalculationConditional` (13 of 14), see decisions. Left: Zed P's `FinalDamage` (inverted buff check + the target's HP percent, unknown flag `{353099b0}`); Elise R's second buff `{e6fdcc5d}` is still unknown
-  - A name that isn't an identifier (`4HitMaxHealthDamage`, 1) is reported as unreadable
-  - Tryndamere Q's fury (`mAbilityResource` 4)
-  - 17 references to data values that don't exist in the spell (Fiora/Kennen/Xayah `BADRatio`, Galio, Maokai, Soraka, …): Riot leftovers or 0 in game? Check one against the wiki
 - [ ] Hotfixes (decided: overwrite the patch, see decisions). Open: does `hotfix` stay part of a document's identity or become "last updated"
 
 **Open from the 16.20 → 16.21 run** (throwaway DB `liandrys-patchtest`, port 27018, kept for further runs and Phase 4):
