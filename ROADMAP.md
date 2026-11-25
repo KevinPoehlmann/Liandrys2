@@ -30,7 +30,6 @@ The loader only collects data (numbers, named values, texts, cast times) and bui
 
 **Next (champions patching):**
 - [ ] **Translator: remaining unknown parts** (16.21 survey over all 173 champions, count = calculations). Each one hides number changes from the diff the same way Ryze W did. Biggest first:
-  - Stat 9 = crit damage (35 total + 7 bonus; Garen E/Akshan E `(stat9 − 1) × CritMod`, Ashe P `crit chance × (1 + bonus stat9)`). The simulation has no crit damage stat yet (`CRIT_DAMAGE = 2.0` constant)
   - Stats still unverified: 31 bonus (3, attack range? Urgot), 14 (3, current HP? Zac's costs), 7 bonus (2, bonus movespeed: Hecarim, Janna), 18 (omnivamp? Ambessa R), 10 (ability haste? Jhin E), 16 (Olaf W)
   - `BuffCounterByNamedDataValue` (27) / `BuffCounterByCoefficient` (18): value × stacks of a buff, buff names mostly hashed
   - `CooldownMultiplier` (15, Aphelios Q), `ByCharLevelFormula` (12, a ready list of values per level: Braum, Graves P), `EffectValue` (12, old `mEffectIndex`: Fizz Q, Jarvan), `GameCalculationConditional` (11, picks a calculation by a buff: Jax, Kai'Sa Q, Karma Q)

@@ -21,6 +21,7 @@ STAT_VARIABLES = {
     (6, 0): "mr", (6, 2): "bonus_mr",
     (7, 0): "movespeed",
     (8, 0): "crit_chance",  # Caitlyn's headshot, Ashe's passive
+    (9, 0): "crit_damage", (9, 2): "bonus_crit_damage",  # Garen E: 1 + CritMod × (stat 9 − 1); Ashe P: × (1 + bonus)
     (12, 0): "max_hp", (12, 1): "base_hp", (12, 2): "bonus_hp",
     (29, 0): "lethality",  # Pyke R: 1.5 lethality
 }

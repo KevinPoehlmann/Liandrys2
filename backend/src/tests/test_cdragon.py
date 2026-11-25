@@ -181,6 +181,15 @@ class TestCalculations():
             "CriticalStrikeScaling * crit_chance + 1.5 * lethality + 0.4 * bonus_attackspeed"
 
 
+    def test_crit_damage(self):
+        # Shapes from Garen E (crit: 1 + CritMod × (stat 9 − 1)) and Ashe P (crit chance × (1 + bonus stat 9)) in 16.21.
+        calculation = {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 9, "mCoefficient": 1},
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 9, "mStatFormula": 2, "mCoefficient": 1}]}
+
+        assert translate_calculation(calculation) == "crit_damage + bonus_crit_damage"
+
+
     def test_other_resources_than_mana_are_reported(self):
         # Tryndamere Q heals per fury.
         spell = {"mSpellCalculations": {"MaximumHeal": {"__type": "GameCalculation", "mFormulaParts": [

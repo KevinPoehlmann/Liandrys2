@@ -30,6 +30,7 @@ class Stat(str, Enum):
     ARMOR_PEN_P = "armor penetration percent"
     ATTACKSPEED_P = "attackspeed"
     CRIT_P = "critical strike chance percent"
+    CRIT_DAMAGE = "crit_damage"
     ENERGY = "energy"
     GOLD_P_10 = "gold per 10 seconds"
     HEAL_N_SHIELD_P = "heal and shield power percent"

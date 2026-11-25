@@ -212,7 +212,8 @@ class TestChampionStats():
     # The fixtures were filled from the wiki; their base stats are still current for these three.
     STATS = ["hp", "hp_per_lvl", "ad", "ad_per_lvl", "mana", "mana_per_lvl", "movementspeed", "armor", "armor_per_lvl", "mr",
              "mr_per_lvl", "attackrange", "hp_regen", "hp_regen_per_lvl", "mana_regen", "mana_regen_per_lvl", "attackspeed",
-             "attackspeed_ratio", "attackspeed_per_lvl", "attack_windup", "missile_speed", "range_type", "adaptive_type"]
+             "attackspeed_ratio", "attackspeed_per_lvl", "crit_damage", "attack_windup", "missile_speed", "range_type",
+             "adaptive_type"]
 
     @pytest.mark.parametrize("champion", ["veigar", "darius", "riven"])
     def test_match_the_wiki(self, load_champion, champion):
@@ -234,6 +235,14 @@ class TestChampionStats():
         cdragon["Characters/Veigar/CharacterRecords/Root"]["basicAttack"] = {}
 
         assert champion_stats(cdragon)["attack_windup"] == 0.3
+
+
+    def test_crit_damage_per_champion(self):
+        # Ashe's crits deal no extra damage (1.0 in 16.21); everyone else has 2.0.
+        cdragon = fixture("veigar.bin.json")
+        cdragon["Characters/Veigar/CharacterRecords/Root"]["critDamageMultiplier"] = 1.0
+
+        assert champion_stats(cdragon)["crit_damage"] == 1.0
 
 
     def test_windup_modifier_defaults_to_one(self):

@@ -154,6 +154,7 @@ def champion_stats(cdragon: dict) -> dict:
         "mana_regen": stat(resource, "arBaseStaticRegenModifiable"), "mana_regen_per_lvl": stat(resource, "arRegenPerLevelModifiable"),
         "attackspeed": attack_speed, "attackspeed_ratio": stat(record, "attackSpeedRatioModifiable", attack_speed),
         "attackspeed_per_lvl": stat(record, "attackSpeedPerLevelModifiable") / 100,
+        "crit_damage": record.get("critDamageMultiplier", 2.0),
         "attack_windup": _attack_windup(record.get("basicAttack", {})),
         "windup_modifier": record.get("basicAttack", {}).get("mAttackDelayCastOffsetPercentAttackSpeedRatio", 1.0),
         "missile_speed": _missile_speed(cdragon, record),

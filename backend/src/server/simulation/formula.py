@@ -73,6 +73,7 @@ STAT_VARIABLES: dict[str, Callable[[StatSource], float]] = {
     "magic_pen_percent": _total(Stat.MAGIC_PEN_P),
     "ability_haste": _total(Stat.ABILITY_HASTE),
     "crit_chance": _total(Stat.CRIT_P),
+    "crit_damage": _total(Stat.CRIT_DAMAGE), "bonus_crit_damage": _bonus(Stat.CRIT_DAMAGE),
     "movespeed": _total(Stat.MOVESPEED),
     "is_champion": lambda source: 1 if source.is_champion else 0,  # 0 for pets (Thornmail's Grievous Wounds)
     "ranged": lambda source: 1 if source.is_ranged else 0,  # melee/ranged values (Mist's Edge)

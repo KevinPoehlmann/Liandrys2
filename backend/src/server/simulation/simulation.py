@@ -47,7 +47,6 @@ QueueEntry = RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
 DEFAULT_DISTANCE = 100
 # Statuses that are crowd control; Grievous Wounds and untargetability aren't.
 CROWD_CONTROL = set(StatusType) - {StatusType.GRIEVOUS_WOUNDS, StatusType.UNTARGETABLE, StatusType.REPLACE, StatusType.ERROR}
-CRIT_DAMAGE = 2.0
 
 
 def travel_time(distance: float, speed: float, acceleration: float = 0, max_speed: float = 0) -> float:
@@ -495,10 +494,14 @@ class Simulation():
 
     @staticmethod
     def _crit_factor(crit: bool | None, owner: Character) -> float:
-        # Crits deal 200 % (since V26.01); without a choice the expected value is used.
+        # A base of 1.0 (Ashe) means crits deal no extra damage, even with bonus crit damage (practice tool, Infinity
+        # Edge); her passive still reads that bonus. Without a choice the expected value is used.
+        if owner.get_base_stat(Stat.CRIT_DAMAGE) <= 1:
+            return 1
+        crit_damage = owner.get_stat(Stat.CRIT_DAMAGE)
         if crit is not None:
-            return CRIT_DAMAGE if crit else 1
-        return 1 + min(owner.get_stat(Stat.CRIT_P), 1) * (CRIT_DAMAGE - 1)
+            return crit_damage if crit else 1
+        return 1 + min(owner.get_stat(Stat.CRIT_P), 1) * (crit_damage - 1)
 
 
     @staticmethod

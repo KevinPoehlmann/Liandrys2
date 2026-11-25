@@ -65,6 +65,13 @@ class TestVariables():
         assert evaluate_formula("bonus_mana", context) == 300
 
 
+    def test_crit_damage_variables(self):
+        context = FormulaContext(source=FakeSource(stats={Stat.CRIT_DAMAGE: 2.3}, base_stats={Stat.CRIT_DAMAGE: 2.0}))
+
+        assert evaluate_formula("crit_damage", context) == 2.3
+        assert evaluate_formula("bonus_crit_damage", context) == pytest.approx(0.3)
+
+
     def test_hp_variables(self, darius):
         context = FormulaContext(source=darius)
 

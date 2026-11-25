@@ -120,12 +120,12 @@ Pages: Adaptive_force
 ## Critical strikes
 Pages: Critical_strike
 
-- Crit damage 200% (since V26.01; 175% before). Bonus crit damage stacks additively.
+- Crit damage 200% (since V26.01; 175% before). Bonus crit damage stacks additively (Infinity Edge +30%). Some champions differ: Ashe's crits deal no extra damage (CDragon `critDamageMultiplier` 1.0), her passive adds `crit chance × (1 + bonus crit damage)` to every attack instead, crits included, and her crits stay at 100 % with Infinity Edge too (practice tool, 2026-11-25: 139 AD, 25 % crit chance, 184 normal / 185 crit); Jhin, Yasuo and Yone deal reduced crit damage through their passives.
 - Crit chance stacks additively, max 100%.
 - Crits are pseudo-random (failure streak, capped at 5), not independent rolls. Expected value per attack: `1 + chance × (critMultiplier − 1)`.
 - Some abilities always crit (Ashe Q, Jhin 4th shot, …), some never (Fiora's first passive attack, …). Ability damage that scales with crit chance is not a crit.
 
-**Simulation:** ✓ `Action.crit` picks a crit per attack (True/False); without a choice the expected value is used. Only damage with `can_crit` crits (the attack itself, Darius W's bonus; not Vayne Q's bonus, not on-hit damage). ⚠ The UI threshold (pick below e.g. 5 attacks, expected value above) and the probability of k crits with the pseudo-random algorithm are Phase 5. ⚠ No bonus crit damage (Infinity Edge) yet.
+**Simulation:** ✓ `Action.crit` picks a crit per attack (True/False); without a choice the expected value is used. Only damage with `can_crit` crits (the attack itself, Darius W's bonus; not Vayne Q's bonus, not on-hit damage). ⚠ The UI threshold (pick below e.g. 5 attacks, expected value above) and the probability of k crits with the pseudo-random algorithm are Phase 5. ✓ Crit damage is a stat (`Stat.CRIT_DAMAGE`): the champion's base from CDragon (`crit_damage`, default 2.0) plus bonus from items and buffs. ✓ A base of 1.0 (Ashe) means crits deal no extra damage, even with bonus crit damage; formulas still see the bonus (her passive).
 
 ## Ability haste and cooldowns
 Pages: Haste (redirect from Ability_haste)

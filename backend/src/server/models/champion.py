@@ -43,6 +43,7 @@ class NewChampion(BaseModel):
     attackspeed: float
     attackspeed_ratio: float
     attackspeed_per_lvl: float
+    crit_damage: float = 2.0  # Ashe 1.0; the default keeps documents from before the field loadable
     attack_windup: float
     windup_modifier: float
     missile_speed: float

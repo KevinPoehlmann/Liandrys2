@@ -1,6 +1,6 @@
 import pytest
 
-from src.server.models.enums import ActionType, Actor, EffectType, OriginKind, to_ticks
+from src.server.models.enums import ActionType, Actor, EffectType, OriginKind, Stat, to_ticks
 from src.server.models.result import Origin
 from src.server.models.request import Action, Rank
 from src.server.simulation.character import Character
@@ -66,6 +66,30 @@ class TestCriticalStrikes():
         sim.do_combo([action(ActionType.BA, crit)])
 
         assert damage(sim, OriginKind.ATTACK, "BA") == [(RIVEN_HIT_TICK, pytest.approx(physical(factor * RIVEN_AD, DARIUS_ARMOR)))]
+
+
+    @pytest.mark.parametrize("crit, factor", [(None, 1 + CRIT_CHANCE * (2.3 - 1)), (True, 2.3)])
+    def test_bonus_crit_damage_adds_to_the_base(self, riven, darius, crit, factor):
+        # Infinity Edge: +30 % crit damage.
+        riven.items[0].stats[Stat.CRIT_DAMAGE] = 0.3
+        sim = Simulation(riven, darius)
+
+        sim.do_combo([action(ActionType.BA, crit)])
+
+        assert damage(sim, OriginKind.ATTACK, "BA") == [(RIVEN_HIT_TICK, pytest.approx(physical(factor * RIVEN_AD, DARIUS_ARMOR)))]
+
+
+    @pytest.mark.parametrize("crit", [None, True])
+    def test_base_crit_damage_one_ignores_the_bonus(self, riven, darius, crit):
+        # Ashe (base 1.0) with Infinity Edge, practice tool: 184 normal, 185 crit. Her passive still reads the bonus.
+        riven.champion.crit_damage = 1.0
+        riven.items[0].stats[Stat.CRIT_DAMAGE] = 0.3
+        sim = Simulation(riven, darius)
+
+        sim.do_combo([action(ActionType.BA, crit)])
+
+        assert damage(sim, OriginKind.ATTACK, "BA") == [(RIVEN_HIT_TICK, pytest.approx(physical(RIVEN_AD, DARIUS_ARMOR)))]
+        assert riven.get_stat(Stat.CRIT_DAMAGE) - riven.get_base_stat(Stat.CRIT_DAMAGE) == pytest.approx(0.3)
 
 
     def test_on_hit_damage_doesnt_crit(self, load_champion, load_item, darius):
