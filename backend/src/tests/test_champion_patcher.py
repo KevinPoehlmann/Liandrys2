@@ -10,6 +10,7 @@ from src.server.models.ability import Ability
 from src.server.models.change import Change, patch_note
 from src.server.models.enums import ChangeSource
 from src.server.models.json_validation import ChampionJson
+from src.server.models.rule import Buff
 from src.tests.test_champion_builder import VEIGAR_RANKS, fixture, raw_champion
 
 
@@ -234,6 +235,38 @@ class TestRenames():
 
         assert result.champion.w.validated
         assert "passive.DarkMatterCDRIncrement * floor(" in result.champion.w.cooldown
+
+
+    def test_a_learned_buff_name_is_a_rename(self, veigar, old_raw, new_raw):
+        hashed = count_buff(old_raw, new_raw, "VeigarPhenomenalEvil")
+
+        result = patch(veigar, old_raw, new_raw)
+
+        assert result.champion.q.validated
+        assert texts(result.champion.q) == [f"Buff {hashed}: renamed to VeigarPhenomenalEvil"]
+        assert result.champion.q.values["TotalDamage"].endswith("+ stacks_VeigarPhenomenalEvil")
+
+
+    def test_hand_made_buffs_follow_the_rename_in_every_slot(self, veigar, old_raw, new_raw):
+        hashed = count_buff(old_raw, new_raw, "VeigarPhenomenalEvil")
+        veigar.passive.buffs = [Buff(name=hashed)]
+        for props in damage_props(veigar.q):
+            props.amount = f"TotalDamage + target_stacks_{hashed} + elapsed_{hashed}"
+
+        result = patch(veigar, old_raw, new_raw)
+
+        assert [buff.name for buff in result.champion.passive.buffs] == ["VeigarPhenomenalEvil"]
+        assert {props.amount for props in damage_props(result.champion.q)} == {
+            "TotalDamage + target_stacks_VeigarPhenomenalEvil + elapsed_VeigarPhenomenalEvil"}
+
+
+def count_buff(old_raw, new_raw, buff: str) -> str:
+    """Veigar Q's TotalDamage counts the buff, which the old patch only knew as a hash."""
+    for raw, name in ((old_raw, f"{{{field_hash(buff)}}}"), (new_raw, buff)):
+        total = spell(raw.cdragon, "VeigarBalefulStrike")["mSpellCalculations"]["TotalDamage"]
+        total["mFormulaParts"].append({"__type": "BuffCounterByCoefficientCalculationPart", "mBuffName": name,
+                                       "mCoefficient": 1.0})
+    return f"h_{field_hash(buff)}"
 
 
 class TestStats():

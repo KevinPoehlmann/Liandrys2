@@ -18,7 +18,7 @@ from src.server.models.champion import NewChampion, RawChampion
 from src.server.models.enums import ChangeSource
 from src.server.models.json_validation import ChampionJson
 from src.server.models.passive import Passive
-from src.server.simulation.formula import SLOT_PREFIXES
+from src.server.simulation.formula import ELAPSED_PREFIX, OWNER_PREFIX, SLOT_PREFIXES, STACKS_PREFIX, TARGET_PREFIX
 
 
 LOADED_SLOTS = ("passive",) + SLOTS
@@ -26,6 +26,7 @@ LOADED_SLOTS = ("passive",) + SLOTS
 NOT_HAND_MADE = {"name", "description", "assumptions", "values", "tooltip", "raw_stats", "changes", "validated",
                  "image", "maxrank", "key", "rank_from"}
 NAME = re.compile(r"\b(?:([a-z]\w*)\.)?([A-Za-z_]\w*)\b")
+BUFF_COUNTER = re.compile(rf"\b(?:{STACKS_PREFIX}|{ELAPSED_PREFIX})(\w+)")
 # Fields that name another value of the same spell, by hash because some are only known as hashes ({91d404a5}).
 CALCULATION_REFERENCES = {field_hash(name) for name in (
     "mDataValue", "mModifiedGameCalculation", "mSpellCalculationKey", *NAMED_INTERPOLATION.values(),
@@ -39,6 +40,7 @@ class SpellDiff:
     removed: set[str] = field(default_factory=set)
     reshaped: set[str] = field(default_factory=set)  # calculations whose structure changed, not just their numbers
     renamed: dict[str, str] = field(default_factory=dict)  # h_<hash> -> the name CDragon learned for it
+    renamed_buffs: dict[str, str] = field(default_factory=dict)  # the same for buffs the formulas count
     tooltip_changed: bool = False
     old: SpellValues = field(default_factory=SpellValues)
     new: SpellValues = field(default_factory=SpellValues)
@@ -64,6 +66,8 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
     new_spells = loaded_spells(raw, max_ranks)
     diffs = {slot: spell_diff(old_spells[slot], new_spells[slot]) for slot in LOADED_SLOTS if slot in old_spells}
     renames = {slot: diff.renamed for slot, diff in diffs.items() if diff.renamed}
+    # Buffs belong to the champion, not a slot: Q's values may count a buff the passive applies.
+    buffs = buff_renames({old: new for diff in diffs.values() for old, new in diff.renamed_buffs.items()})
 
     notes = dict(patch_notes)
     unvalidated = {}
@@ -77,8 +81,8 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
         if slot in max_ranks:
             _set_max_rank(container, max_ranks[slot], diff)
         container.changes = _data_changes(diff.lines) + lines
-        if renames:
-            _rename_hand_made(container, slot, renames)
+        if renames or buffs:
+            _rename_hand_made(container, slot, renames, buffs)
         reasons = unvalidating_reasons(slot, used_names(container, slot), diffs)
         if lines and not diff.lines:
             reasons.append("named in the patch notes only")
@@ -107,8 +111,11 @@ def spells_from_document(champion: NewChampion) -> dict[str, LoadedSpell]:
 
 def spell_diff(old: LoadedSpell, new: LoadedSpell) -> SpellDiff:
     renamed = _renames(_names(old.values), _names(new.values))
-    diff = SpellDiff(old=_with_renames(old.values, renamed), new=new.values, renamed=renamed)
+    renamed_buffs = _renames(_buffs(old.values), _buffs(new.values))
+    diff = SpellDiff(old=_with_renames(old.values, renamed, renamed_buffs), new=new.values, renamed=renamed,
+                     renamed_buffs=renamed_buffs)
     diff.lines = [f"{hashed}: renamed to {name}" for hashed, name in sorted(renamed.items())]
+    diff.lines += [f"Buff {hashed}: renamed to {name}" for hashed, name in sorted(renamed_buffs.items())]
     old_names, new_names = _names(diff.old), _names(diff.new)
     diff.added, diff.removed = new_names - old_names, old_names - new_names
     diff.reshaped = {name for name in old_names & new_names
@@ -155,44 +162,60 @@ def _renames(old_names: set[str], new_names: set[str]) -> dict[str, str]:
     return {name: by_hash[name] for name in old_names - new_names if name in by_hash}
 
 
-def _with_renames(values: SpellValues, renamed: dict[str, str]) -> SpellValues:
-    if not renamed:
+def _buffs(values: SpellValues) -> set[str]:
+    return {match[1] for formula in values.values.values() for match in BUFF_COUNTER.finditer(formula)}
+
+
+def buff_renames(renamed: dict[str, str]) -> dict[str, str]:
+    """Every word that names a renamed buff: the buff itself (`Buff.name`, `ApplyBuff.buff`) and the formula
+    variables that read it, also on the target or owner."""
+    return renamed | {f"{owner}{kind}{old}": f"{owner}{kind}{new}" for old, new in renamed.items()
+                      for owner in ("", TARGET_PREFIX, OWNER_PREFIX) for kind in (STACKS_PREFIX, ELAPSED_PREFIX)}
+
+
+def _with_renames(values: SpellValues, renamed: dict[str, str], renamed_buffs: dict[str, str]) -> SpellValues:
+    if not renamed and not renamed_buffs:
         return values
-    renames = {None: renamed}
-    return SpellValues(values={renamed.get(name, name): rename_names(formula, renames)
+    renames, buffs = {None: renamed}, buff_renames(renamed_buffs)
+    return SpellValues(values={renamed.get(name, name): rename_names(formula, renames, buffs=buffs)
                                for name, formula in values.values.items()},
                        unsupported={renamed.get(name, name): why for name, why in values.unsupported.items()},
                        calculations={renamed.get(name, name): calc for name, calc in values.calculations.items()})
 
 
-def rename_names(text: str, renames: dict[str | None, dict[str, str]], own_slot: str | None = None) -> str:
-    """Renames the value names in a formula: a bare name belongs to `own_slot`, `q.X` to Q."""
+def rename_names(text: str, renames: dict[str | None, dict[str, str]], own_slot: str | None = None,
+                 buffs: dict[str, str] | None = None) -> str:
+    """Renames the value names in a formula: a bare name belongs to `own_slot`, `q.X` to Q. `buffs` (from
+    `buff_renames`) hold for every slot."""
     def rename(match: re.Match) -> str:
         prefix, name = match[1], match[2]
         if prefix and prefix not in SLOT_PREFIXES:
             return match[0]
         new = renames.get(prefix or own_slot, {}).get(name, name)
-        return f"{prefix}.{new}" if prefix else new
+        if prefix:
+            return f"{prefix}.{new}"
+        return (buffs or {}).get(new, new)
     return NAME.sub(rename, text)
 
 
-def _rename_hand_made(container: Ability | Passive, slot: str, renames: dict[str, dict[str, str]]) -> None:
+def _rename_hand_made(container: Ability | Passive, slot: str, renames: dict[str, dict[str, str]],
+                      buffs: dict[str, str]) -> None:
     for name in container.__fields__.keys() - NOT_HAND_MADE:
-        _set_if_changed(container, name, _renamed(getattr(container, name), slot, renames))
+        _set_if_changed(container, name, _renamed(getattr(container, name), slot, renames, buffs))
 
 
-def _renamed(value, slot: str, renames: dict[str, dict[str, str]]):
+def _renamed(value, slot: str, renames: dict[str, dict[str, str]], buffs: dict[str, str]):
     if isinstance(value, Enum):  # str enums are strings too, but never formulas
         return value
     if isinstance(value, str):
-        return rename_names(value, renames, slot)
+        return rename_names(value, renames, slot, buffs)
     if isinstance(value, list):
-        return [_renamed(item, slot, renames) for item in value]
+        return [_renamed(item, slot, renames, buffs) for item in value]
     if isinstance(value, dict):
-        return {key: _renamed(item, slot, renames) for key, item in value.items()}
+        return {key: _renamed(item, slot, renames, buffs) for key, item in value.items()}
     if isinstance(value, BaseModel):
         for name in value.__fields__:
-            _set_if_changed(value, name, _renamed(getattr(value, name), slot, renames))
+            _set_if_changed(value, name, _renamed(getattr(value, name), slot, renames, buffs))
     return value
 
 
