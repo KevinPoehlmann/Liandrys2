@@ -17,10 +17,16 @@ STAT_VARIABLES = {
     (0, 0): "ap", (0, 2): "bonus_ap",
     (1, 0): "armor", (1, 2): "bonus_armor",
     (2, 0): "ad", (2, 1): "base_ad", (2, 2): "bonus_ad",
+    (4, 2): "bonus_attackspeed",  # Bel'Veth E, Aphelios Severum Q
     (6, 0): "mr", (6, 2): "bonus_mr",
     (7, 0): "movespeed",
-    (12, 0): "max_hp", (12, 2): "bonus_hp",
+    (8, 0): "crit_chance",  # Caitlyn's headshot, Ashe's passive
+    (12, 0): "max_hp", (12, 1): "base_hp", (12, 2): "bonus_hp",
+    (29, 0): "lethality",  # Pyke R: 1.5 lethality
 }
+# mStatFormula of a resource part -> our variable. Mana is the only resource the simulation knows; every champion
+# with such a part in 16.21 uses mana, and the one other resource (Tryndamere's fury, mAbilityResource 4) is reported.
+RESOURCE_VARIABLES = {0: "max_mana", 1: "base_mana", 2: "bonus_mana"}
 
 
 # Spell fields kept under Riot's old field names: the fields to read, live first, and the index of rank 1 (mana lists
@@ -133,6 +139,8 @@ def _part(part: dict) -> str:
             if "mCoefficient" not in part:
                 raise UnsupportedCalculation("stat part without coefficient")
             return _scaled(part["mCoefficient"], _stat(part))
+        case "AbilityResourceByCoefficientCalculationPart":
+            return _scaled(part.get("mCoefficient", 0), _resource(part))
         case "StatBySubPartCalculationPart":
             return f"{_factor(_part(part['mSubpart']))} * {_stat(part)}"
         case "ProductOfSubPartsCalculationPart":
@@ -160,6 +168,13 @@ def _stat(part: dict) -> str:
     if key not in STAT_VARIABLES:
         raise UnsupportedCalculation(f"stat {key[0]} with formula {key[1]}")
     return STAT_VARIABLES[key]
+
+
+def _resource(part: dict) -> str:
+    resource, formula = part.get("mAbilityResource", 0), part.get("mStatFormula", 0)
+    if resource != 0 or formula not in RESOURCE_VARIABLES:
+        raise UnsupportedCalculation(f"ability resource {resource} with formula {formula}")
+    return RESOURCE_VARIABLES[formula]
 
 
 def _scaled(coefficient: float, variable: str) -> str:

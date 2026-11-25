@@ -29,7 +29,13 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching (in progress), (3) summoner spells, (4) items incl. actives, (5) runes.
 
 **Next (champions patching):**
-- [ ] **Translator: `AbilityResourceByCoefficientCalculationPart`** (decided over a diff workaround). Ryze W's `WDamageCalc = BaseDamage + 0.6 × AP + 0.03 × bonus mana` is untranslated today, so the 26.21 change 0.6 ⇒ 0.7 is invisible to the diff (it compares only the structure of untranslated calculations). Translated, it becomes a named value and the normal path applies. Check which other unknown part types the 16.21 data has (`unsupported` over all champions)
+- [ ] **Translator: remaining unknown parts** (16.21 survey over all 173 champions, count = calculations). Each one hides number changes from the diff the same way Ryze W did. Biggest first:
+  - Stat 9 = crit damage (35 total + 7 bonus; Garen E/Akshan E `(stat9 − 1) × CritMod`, Ashe P `crit chance × (1 + bonus stat9)`). The simulation has no crit damage stat yet (`CRIT_DAMAGE = 2.0` constant)
+  - Stats still unverified: 31 bonus (3, attack range? Urgot), 14 (3, current HP? Zac's costs), 7 bonus (2, bonus movespeed: Hecarim, Janna), 18 (omnivamp? Ambessa R), 10 (ability haste? Jhin E), 16 (Olaf W)
+  - `BuffCounterByNamedDataValue` (27) / `BuffCounterByCoefficient` (18): value × stacks of a buff, buff names mostly hashed
+  - `CooldownMultiplier` (15, Aphelios Q), `ByCharLevelFormula` (12, a ready list of values per level: Braum, Graves P), `EffectValue` (12, old `mEffectIndex`: Fizz Q, Jarvan), `GameCalculationConditional` (11, picks a calculation by a buff: Jax, Kai'Sa Q, Karma Q)
+  - Hashed part types: `{ee18a47b}` (13, interpolation between two named values: Gnar, Kayn P), `{f3cbe7b2}` (6, refers to another calculation), `{4ce08984}` (4, breakpoints from named values: Akali, Bel'Veth P)
+  - Tryndamere Q's fury (`mAbilityResource` 4) and ~20 references to hashed names (Gwen P, Briar P, Varus Q, …)
 - [ ] Hotfixes (decided: overwrite the patch, see decisions). Open: does `hotfix` stay part of a document's identity or become "last updated"
 
 **Open from the 16.20 → 16.21 run** (throwaway DB `liandrys-patchtest`, port 27018, kept for further runs and Phase 4):

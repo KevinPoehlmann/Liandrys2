@@ -606,6 +606,8 @@ class Character():
 
 
     def get_stat(self, stat: Stat) -> float:
+        if stat == Stat.BONUS_ATTACKSPEED_P:
+            return self._get_bonus_attackspeed()
         if stat.value.startswith("bonus "):
             return self._get_bonus_stat(Stat.from_str(stat.value.removeprefix("bonus ")))
         
@@ -622,10 +624,13 @@ class Character():
         raw = flat * (1 + self._get_bonus_stat(Stat.MOVESPEED_P)) * self._get_slow_value()
         return soft_cap_movespeed(raw)
 
+    # Attack speed growth per level counts as bonus attack speed, unlike the growth of other stats.
+    def _get_bonus_attackspeed(self) -> float:
+        growth = self.champion.attackspeed_per_lvl * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
+        return growth + self._get_bonus_stat(Stat.ATTACKSPEED_P)
+
     def _get_attackspeed(self) -> float:
-        bonus = self.champion.attackspeed_per_lvl * (self.level - 1) * (0.7025 + 0.0175 * (self.level - 1))
-        bonus += self._get_bonus_stat(Stat.ATTACKSPEED_P)
-        result = self.champion.attackspeed + self.champion.attackspeed_ratio * bonus
+        result = self.champion.attackspeed + self.champion.attackspeed_ratio * self._get_bonus_attackspeed()
         result *= self._get_cripple_value()
         return result
     

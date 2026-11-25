@@ -57,6 +57,14 @@ class TestVariables():
         assert evaluate_formula("bonus_ad", context) == 30
 
 
+    def test_mana_variables(self):
+        context = FormulaContext(source=FakeSource(stats={Stat.MANA: 1200}, base_stats={Stat.MANA: 900}))
+
+        assert evaluate_formula("max_mana", context) == 1200
+        assert evaluate_formula("base_mana", context) == 900
+        assert evaluate_formula("bonus_mana", context) == 300
+
+
     def test_hp_variables(self, darius):
         context = FormulaContext(source=darius)
 

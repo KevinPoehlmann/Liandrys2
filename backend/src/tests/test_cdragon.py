@@ -159,18 +159,48 @@ class TestCalculations():
         assert values["TibbersTotalHP"].endswith(") * TibbersModeSpecificHPMod + 0.5 * ap + 1.5 * bonus_hp")
 
 
+    def test_mana_ratios(self):
+        # Ryze W in 16.21: BaseDamage + 0.6 AP + 3 % bonus mana.
+        calculation = {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "NamedDataValueCalculationPart", "mDataValue": "BaseDamage"},
+            {"__type": "StatByCoefficientCalculationPart", "mCoefficient": 0.6000000238418579},
+            {"__type": "AbilityResourceByCoefficientCalculationPart", "mCoefficient": 0.029999999329447746, "mStatFormula": 2},
+            {"__type": "AbilityResourceByCoefficientCalculationPart", "mCoefficient": 0.019999999552965164}]}
+
+        assert translate_calculation(calculation) == "BaseDamage + 0.6 * ap + 0.03 * bonus_mana + 0.02 * max_mana"
+
+
+    def test_crit_chance_lethality_and_bonus_attackspeed(self):
+        # Shapes from Caitlyn's headshot, Pyke R and Bel'Veth E in 16.21.
+        calculation = {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "StatByNamedDataValueCalculationPart", "mStat": 8, "mDataValue": "CriticalStrikeScaling"},
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 29, "mCoefficient": 1.5},
+            {"__type": "StatByCoefficientCalculationPart", "mStat": 4, "mStatFormula": 2, "mCoefficient": 0.4000000059604645}]}
+
+        assert translate_calculation(calculation) == \
+            "CriticalStrikeScaling * crit_chance + 1.5 * lethality + 0.4 * bonus_attackspeed"
+
+
+    def test_other_resources_than_mana_are_reported(self):
+        # Tryndamere Q heals per fury.
+        spell = {"mSpellCalculations": {"MaximumHeal": {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "AbilityResourceByCoefficientCalculationPart", "mCoefficient": 1.0, "mAbilityResource": 4}]}}}
+
+        assert spell_values(spell, max_rank=5).unsupported == {"MaximumHeal": "ability resource 4 with formula 0"}
+
+
     def test_unknown_parts_are_reported_not_guessed(self):
         spell = {"mSpellCalculations": {
             "Stacks": {"__type": "GameCalculation", "mFormulaParts": [{"__type": "BuffCounterByCoefficientCalculationPart"}]},
             "Shred": {"__type": "GameCalculation", "mFormulaParts": [
-                {"__type": "StatByCoefficientCalculationPart", "mStat": 29, "mCoefficient": 1.0}]},
+                {"__type": "StatByCoefficientCalculationPart", "mStat": 31, "mCoefficient": 1.0}]},
         }}
 
         result = spell_values(spell, max_rank=5)
 
         assert "Stacks" not in result.values and "Shred" not in result.values
         assert result.unsupported == {"Stacks": "part type BuffCounterByCoefficientCalculationPart",
-                                      "Shred": "stat 29 with formula 0"}
+                                      "Shred": "stat 31 with formula 0"}
 
 
     def test_references_to_hashed_names_are_reported(self):

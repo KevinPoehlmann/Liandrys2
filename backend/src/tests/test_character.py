@@ -48,6 +48,13 @@ class TestCharacter():
         result = aatrox_with_items._get_attackspeed()
         assert round(result, 3) == 0.916
 
+    def test_bonus_attackspeed_includes_the_growth_per_level(self, aatrox_with_items):
+        champion = aatrox_with_items.champion
+        bonus = aatrox_with_items.get_stat(Stat.BONUS_ATTACKSPEED_P)
+
+        assert bonus > aatrox_with_items._get_bonus_stat(Stat.ATTACKSPEED_P)
+        assert champion.attackspeed + champion.attackspeed_ratio * bonus == pytest.approx(0.916, abs=0.001)
+
     @pytest.mark.parametrize("dmg_sub_type, output", [
         (DamageSubType.PHYSIC, (0, 0)),
         (DamageSubType.MAGIC, (0, 0)),
