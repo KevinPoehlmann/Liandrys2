@@ -1012,14 +1012,16 @@ class Character():
         if slot not in self.ability_dict:
             raise DataError(f"{slot.value} has no cooldown")
         ability = self.ability_dict[slot][0]
-        cooldown = evaluate_formula(ability.cooldown, self.formula_context(slot))
+        return evaluate_formula(ability.cooldown, self.formula_context(slot)) * self.get_cooldown_multiplier(slot)
+
+    def get_cooldown_multiplier(self, slot: ActionType) -> float:
         if slot in SUMMONER_SLOTS:
-            return cooldown * 100 / (100 + self._get_bonus_stat(Stat.SUMMONER_HASTE))
+            return 100 / (100 + self._get_bonus_stat(Stat.SUMMONER_HASTE))
         if slot in ITEM_SLOTS:
-            return cooldown  # only item haste would shorten it, and nothing gives that today
+            return 1  # only item haste would shorten it, and nothing gives that today
         haste = 100 / (100 + self._get_bonus_stat(Stat.ABILITY_HASTE))
         reduction = 1 - (self.get_stat(SLOT_COOLDOWN_REDUCTION[slot]) if slot in SLOT_COOLDOWN_REDUCTION else 0)
-        return cooldown * haste * reduction
+        return haste * reduction
 
     def _defer_cooldown(self, buff: str, slot: ActionType, cooldown_ticks: int, cast_end: int) -> None:
         # Until the buff is gone the cooldown can't start; its latest possible start is the end of the buff's full duration.

@@ -252,6 +252,18 @@ class TestCalculations():
             "0.05 * stacks_KindredMarkOfTheKindredStackCounter + ShieldPerSoul * stacks_ThreshPassiveSoulsGain"
 
 
+    def test_cooldown_multiplier(self):
+        # Miss Fortune's Love Tap refund (as multiplier) and Rakan Q's cooldown (as part) in 16.21.
+        refund = {"__type": "GameCalculation", "mMultiplier": {"__type": "CooldownMultiplierCalculationPart"},
+                  "mFormulaParts": [{"__type": "NamedDataValueCalculationPart", "mDataValue": "LoveTapBaseRefund"}]}
+        cooldown = {"__type": "GameCalculation", "mFormulaParts": [{"__type": "ProductOfSubPartsCalculationPart",
+            "mPart1": {"__type": "NamedDataValueCalculationPart", "mDataValue": "BaseCDActual"},
+            "mPart2": {"__type": "CooldownMultiplierCalculationPart"}}]}
+
+        assert translate_calculation(refund) == "LoveTapBaseRefund * cooldown_multiplier"
+        assert translate_calculation(cooldown) == "BaseCDActual * cooldown_multiplier"
+
+
     def test_unknown_buff_hashes_get_hashed_names(self):
         # K'Sante E's shield on an ally; no string in his data hashes to the buff.
         calculation = {"__type": "GameCalculation", "mFormulaParts": [
@@ -279,7 +291,7 @@ class TestCalculations():
 
     def test_unknown_parts_are_reported_not_guessed(self):
         spell = {"mSpellCalculations": {
-            "Stacks": {"__type": "GameCalculation", "mFormulaParts": [{"__type": "CooldownMultiplierCalculationPart"}]},
+            "Stacks": {"__type": "GameCalculation", "mFormulaParts": [{"__type": "{12345678}"}]},
             "Shred": {"__type": "GameCalculation", "mFormulaParts": [
                 {"__type": "StatByCoefficientCalculationPart", "mStat": 10, "mCoefficient": 1.0}]},
         }}
@@ -287,7 +299,7 @@ class TestCalculations():
         result = spell_values(spell, max_rank=5)
 
         assert "Stacks" not in result.values and "Shred" not in result.values
-        assert result.unsupported == {"Stacks": "part type CooldownMultiplierCalculationPart",
+        assert result.unsupported == {"Stacks": "part type {12345678}",
                                       "Shred": "stat 10 with formula 0"}
 
 

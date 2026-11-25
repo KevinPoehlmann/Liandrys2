@@ -2,7 +2,7 @@
 import re
 from dataclasses import dataclass, field
 
-from src.server.simulation.formula import MAX_LEVEL, STACKS_PREFIX, TARGET_PREFIX
+from src.server.simulation.formula import COOLDOWN_MULTIPLIER, MAX_LEVEL, STACKS_PREFIX, TARGET_PREFIX
 
 
 # Riot's level formulas are defined up to 18 and continue to 19 and 20 (roles). The bin files only store
@@ -252,6 +252,8 @@ def _part(part: dict) -> str:
             if "mCoefficient" not in part:
                 raise UnsupportedCalculation("buff counter without coefficient")
             return _scaled(part["mCoefficient"], _buff_stacks(part))
+        case "CooldownMultiplierCalculationPart":  # Riot's haste factor, values with it are already hasted
+            return COOLDOWN_MULTIPLIER
         case "ExternalNamedDataValueCalculationPart":
             spell = part.get("SourceObject", "").rsplit("/", 1)[-1]
             raise UnsupportedCalculation(f"refers to {part.get('DataValue')} of another spell ({spell})")

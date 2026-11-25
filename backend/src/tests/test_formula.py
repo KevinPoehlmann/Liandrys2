@@ -32,6 +32,9 @@ class FakeSource:
     def get_cooldown(self, slot: ActionType) -> float:
         return {ActionType.Q: 4.5}[slot]
 
+    def get_cooldown_multiplier(self, slot: ActionType) -> float:
+        return {ActionType.Q: 0.75}[slot]
+
 
 @pytest.fixture
 def vayne():
@@ -128,6 +131,15 @@ class TestVariables():
     def test_cooldown_needs_a_slot(self, vayne):
         with pytest.raises(FormulaError):
             evaluate_formula("cooldown", FormulaContext(source=vayne))
+
+
+    def test_cooldown_multiplier_is_the_haste_factor_of_the_formulas_slot(self, vayne):
+        # Miss Fortune's Love Tap refunds LoveTapBaseRefund × the haste factor of her W.
+        context = FormulaContext(source=vayne, slot=ActionType.Q)
+
+        assert evaluate_formula("2 * cooldown_multiplier", context) == 1.5
+        with pytest.raises(FormulaError):
+            evaluate_formula("cooldown_multiplier", FormulaContext(source=vayne))
 
 
     def test_elapsed_is_a_variable(self, vayne):

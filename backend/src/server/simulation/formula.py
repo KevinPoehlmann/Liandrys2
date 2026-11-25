@@ -12,6 +12,7 @@ MAX_LEVEL = 20
 TARGET_PREFIX = "target_"
 OWNER_PREFIX = "owner_"
 STACKS_PREFIX = "stacks_"
+COOLDOWN_MULTIPLIER = "cooldown_multiplier"
 
 
 class FormulaError(DataError):
@@ -29,6 +30,7 @@ class StatSource(Protocol):
     def get_rank(self, slot: ActionType) -> int: ...
     def get_buff_stacks(self, buff: str) -> int: ...
     def get_cooldown(self, slot: ActionType) -> float: ...
+    def get_cooldown_multiplier(self, slot: ActionType) -> float: ...
 
 
 class ValueSource(Protocol):
@@ -162,7 +164,9 @@ class FormulaNamespace(Mapping[str, float]):
         if name in self._fixed:
             return self._fixed[name]
         if name == "cooldown":
-            return self._cooldown()
+            return self._slot_value(name, self._context.source.get_cooldown)
+        if name == COOLDOWN_MULTIPLIER:
+            return self._slot_value(name, self._context.source.get_cooldown_multiplier)
         if name.startswith(TARGET_PREFIX):
             return self._read_other(self._context.target, TARGET_PREFIX, name)
         if name.startswith(OWNER_PREFIX):
@@ -180,11 +184,12 @@ class FormulaNamespace(Mapping[str, float]):
             return SlotValues(self._context, SLOT_PREFIXES[name])
         raise KeyError(name)
 
-    def _cooldown(self) -> float:
-        # Seconds after haste and cooldown reduction, e.g. Vladimir's Crimson Rush fills with Transfusion's cooldown.
+    def _slot_value(self, name: str, read: Callable[[ActionType], float]) -> float:
+        # `cooldown` is in seconds after haste (Vladimir's Crimson Rush fills with Transfusion's cooldown);
+        # `cooldown_multiplier` is Riot's haste factor for its own values (Miss Fortune's Love Tap refund).
         if self._context.slot is None:
-            raise KeyError("cooldown")
-        return self._context.source.get_cooldown(self._context.slot)
+            raise KeyError(name)
+        return read(self._context.slot)
 
     def _read_other(self, actor: StatSource | None, prefix: str, name: str) -> float:
         if actor is None:

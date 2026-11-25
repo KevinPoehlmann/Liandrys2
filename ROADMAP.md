@@ -33,7 +33,7 @@ The loader only collects data (numbers, named values, texts, cast times) and bui
   - Stats still unverified, both tooltip/mode only: 4 total (3: Kai'Sa E's `tooltipOnly` charge time `Effect3 − 0.4 × stat 4` is outdated, the wiki has `1.2 / (1 + bonus AS)`; Kalista P converts stat 4 above 6.0 to AD in a game mode; Bel'Veth Q display), 10 (1: Jhin E recharge `base × (1 + stat 10)`, the tooltip shows "24 (= 24 + 0)" and the 0 stayed in the practice tool with ability haste, crit chance, crit damage, movement speed and attack speed bought; probably the removed cooldown reduction stat, always 0 now. Translating it as 0 would be possible, but nothing needs it)
   - Hashes: ✅ `h_<hash>` names, references, renames while patching and the structural hashes (see decisions). Left: Elise R reads a value of her spider E (`ExternalNamedDataValueCalculationPart`, the only one outside `BotData`); needs the extra abilities. Hashed buff names (39) need the editor
   - Buff counters: ✅ `stacks_<buff>`, 24 of 26 hashed buff names guessed (see decisions). Left: a buff name learned later (`stacks_h_x` ⇒ `stacks_Name`) shows up as a changed value instead of a rename; two K'Sante buffs are still unknown
-  - `CooldownMultiplier` (17, Aphelios Q), `GameCalculationConditional` (14, picks a calculation by a buff: Jax, Kai'Sa Q, Karma Q), `EffectValue` (13, old `mEffectIndex`: Fizz Q, Jarvan), `ByCharLevelFormula` (12, a ready list of values per level: Braum, Graves P), `PercentageOfBuffNameElapsed` (3)
+  - `GameCalculationConditional` (14, picks a calculation by a buff: Jax, Kai'Sa Q, Karma Q), `EffectValue` (13, old `mEffectIndex`: Fizz Q, Jarvan), `ByCharLevelFormula` (12, a ready list of values per level: Braum, Graves P), `PercentageOfBuffNameElapsed` (3)
   - A name that isn't an identifier (`4HitMaxHealthDamage`, 1) is reported as unreadable
   - Tryndamere Q's fury (`mAbilityResource` 4)
   - 17 references to data values that don't exist in the spell (Fiora/Kennen/Xayah `BADRatio`, Galio, Maokai, Soraka, …): Riot leftovers or 0 in game? Check one against the wiki
@@ -66,7 +66,8 @@ The loader only collects data (numbers, named values, texts, cast times) and bui
 ## Phase 4: Admin side complete
 
 - [ ] **Rule editor** for the new format: rules (trigger, conditions, actions), buffs, stats, inputs, stages, pets, `Custom`. Values reference the named values from the loader. The current editor still has only the old effect components
-- [ ] **Data checks on PUT:** run each changed ability once in a mini simulation (dummy target, all ranks), reject with a clear message on error
+- [ ] **Data checks on PUT:** run each changed ability once in a mini simulation (dummy target, all ranks), reject with a clear message on error. Warn (don't reject) when a `cooldown` formula uses `cooldown_multiplier` or a value built with it (Aphelios' `GravitumQCD`): the Character applies haste again
+- [ ] Aphelios: only Q, W and R, and his abilities don't rank up; he levels stats instead (`ApheliosPBuffAD/AS/AP` stacks × `ADPerRank` …), his Q cooldowns scale with level, and his weapons are five Q spells of their own. Check how `rank`, the slots and the editor fit him before his data entry
 - [ ] Editor: field for `Champion.adaptive_type` (only if the loader can't scrape it)
 - [ ] Editor: show save errors (400/422); update `originalChampion` after saving; load `/enum` once and `provide` it
 - [ ] PUT without changes should not be an error (today: 400)
