@@ -12,7 +12,7 @@ from src.server.simulation.simulation import Simulation
 from src.tests.helpers import regenerated_health
 
 
-# Expected values are calculated by hand from the patch 15.12.1 fixtures, not by the simulation.
+# Expected values are calculated by hand from the patch 16.23.1 fixtures, not by the simulation.
 # Stat growth at level 6: (6 - 1) * (0.7025 + 0.0175 * (6 - 1)) = 3.95
 GROWTH_LVL_6 = 3.95
 DARIUS_AD = 64 + 5 * GROWTH_LVL_6
@@ -32,7 +32,7 @@ Q_RANK_3 = 110 + 1.2 * DARIUS_AD
 Q_CAST_TICKS = to_ticks(0.75)
 Q_HEAL_PERCENT = 0.15
 Q_HANDLE = 0.35
-Q_RANK_3_COOLDOWN_TICKS = to_ticks(7)
+Q_RANK_3_COOLDOWN_TICKS = to_ticks(6.5)
 W_RANK_1 = 0.4 * DARIUS_AD
 W_COOLDOWN_TICKS = to_ticks(5)
 E_CAST_TICKS = to_ticks(0.25)

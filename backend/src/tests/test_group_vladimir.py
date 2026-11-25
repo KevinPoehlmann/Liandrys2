@@ -21,10 +21,10 @@ from src.server.simulation.simulation import DEFAULT_DISTANCE, Simulation
 from src.tests.helpers import regenerated_health
 
 
-# Expected values are calculated by hand from the patch 15.12.1 fixtures (live wiki values), not by the simulation.
+# Expected values are calculated by hand from the patch 16.23.1 fixtures (live wiki values), not by the simulation.
 # Stat growth at level 6: (6 - 1) * (0.7025 + 0.0175 * (6 - 1)) = 3.95
 GROWTH_LVL_6 = 3.95
-VLADIMIR_BASE_HP = 607 + 110 * GROWTH_LVL_6
+VLADIMIR_BASE_HP = 600 + 110 * GROWTH_LVL_6
 VLADIMIR_MOVESPEED = 330
 DARIUS_MR = 32 + 2.05 * GROWTH_LVL_6
 

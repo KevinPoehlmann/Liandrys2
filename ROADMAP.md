@@ -29,12 +29,7 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching (in progress), (3) summoner spells, (4) items incl. actives, (5) runes.
 
 **Next (champions patching):**
-- [ ] **Translator: remaining unknown parts** (16.21 survey over all 173 champions, count = calculations). Each one hides number changes from the diff the same way Ryze W did. Biggest first:
-  - Stats still unverified, both tooltip/mode only: 4 total (3: Kai'Sa E's `tooltipOnly` charge time `Effect3 − 0.4 × stat 4` is outdated, the wiki has `1.2 / (1 + bonus AS)`; Kalista P converts stat 4 above 6.0 to AD in a game mode; Bel'Veth Q display), 10 (1: Jhin E recharge `base × (1 + stat 10)`, the tooltip shows "24 (= 24 + 0)" and the 0 stayed in the practice tool with ability haste, crit chance, crit damage, movement speed and attack speed bought; probably the removed cooldown reduction stat, always 0 now. Translating it as 0 would be possible, but nothing needs it)
-  - Hashes: ✅ `h_<hash>` names, references, renames while patching and the structural hashes (see decisions). Left: Elise R reads a value of her spider E (`ExternalNamedDataValueCalculationPart`, the only one outside `BotData`); needs the extra abilities. Hashed buff names (39) need the editor
-  - Buff counters: ✅ `stacks_<buff>`, 24 of 26 hashed buff names guessed (see decisions). Left: a buff name learned later (`stacks_h_x` ⇒ `stacks_Name`) shows up as a changed value instead of a rename; two K'Sante buffs are still unknown
-  - ✅ `EffectValue` (13) and `ByCharLevelFormula` (12), see decisions. Left: 2 K'Sante missiles reference an effect amount they don't have
-  - ✅ `GameCalculationConditional` (13 of 14), see decisions. Left: Zed P's `FinalDamage` (inverted buff check + the target's HP percent, unknown flag `{353099b0}`); Elise R's second buff `{e6fdcc5d}` is still unknown
+- [ ] Buff counters: a buff name learned later (`stacks_h_x` ⇒ `stacks_Name`) shows up as a changed value instead of a rename, unlike `h_x` ⇒ `Name`
 - [ ] Hotfixes (decided: overwrite the patch, see decisions). Open: does `hotfix` stay part of a document's identity or become "last updated"
 
 **Open from the 16.20 → 16.21 run** (throwaway DB `liandrys-patchtest`, port 27018, kept for further runs and Phase 4):
@@ -44,7 +39,7 @@ The loader only collects data (numbers, named values, texts, cast times) and bui
 - [ ] Karthus has his cast offset only in `critAttacks` (wiki 0.04375); the basic attack's default 0 is used, the cross-check warns
 - [ ] Vayne's attack speed ratio is 0.67 in CDragon, the wiki has 0.658 (her base attack speed). Check in the practice tool
 - [ ] Levels 19/20 (practice tool): interpolations continue past 18 by default (`mScalePastDefaultMaxLevel` only appears as `false`; the wiki agrees for Darius' bleed). Breakpoint formulas continue too, unconfirmed: Tibbers' HP (fixture 4000 at 19/20, translator 4350/4700), Annie E's movement speed (fixture stops at 18, CDragon continues)
-- [ ] Refresh the fixture `values` from the loader (current patch) and update the expectations, each checked against the wiki. Known changes: Annie Q (80–240 ⇒ 80–260) and W (70–250 ⇒ 70–230), Vayne W (6–10 % / 50–110 ⇒ 4–10 % / 40–100), Urgot R cooldown (120/90/60 ⇒ 100/85/70), Annie E cooldown (check `Cooldown.values`)
+- [ ] Abilities without a cooldown in CDragon (Annie E: no `Cooldown`/`cooldownTime` at all, wiki 10 s, probably set by a script): the loader gives `cooldownTime = 0` silently. Warn in the patch log when a ranked ability's cooldown is 0, so the hand-owned `cooldown` formula gets filled in
 
 **Later in this phase:**
 - [ ] Named values per ability with stable names (`BaseDamage`, `ADRatio`, …) for the other three types; the rule editor (Phase 4) offers them for selection
@@ -77,6 +72,7 @@ The loader only collects data (numbers, named values, texts, cast times) and bui
   - Validating copies the hand-made part (rules, buffs, stages, …) forward into every later patch that is still unvalidated; `values` stay per patch. A later patch that was already edited by hand is not overwritten silently (hint, you decide). The later patches stay unvalidated, they have their own `changes`
   - Idea: also copy backward into older patches as long as the ability had no `changes` in between (first entry in 26.30 also fills 26.29, … until the patch after which a change appears)
 - [ ] Migration (needed from the fresh load on): `schema_version` per document, an ordered list of migrations, `update_many` instead of one-by-one updates, migrations for all types
+- [ ] Translator leftovers that need the editor or the extra abilities (all reported by the loader, see decisions "Translator: what stays reported"): 39 hashed buff names (two K'Sante buff counters, Elise R's `{e6fdcc5d}`), Elise R's `ExternalNamedDataValue` (her spider E)
 - [ ] Log view: probably fixed once the loader is async (Phase 3); also handle the polling race at start
 
 AI drafts as a pilot, in Claude Code sessions on the Pro subscription (no API key, no app integration yet; the rule editor stays for review and for the cases the AI gets wrong):

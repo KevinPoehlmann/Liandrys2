@@ -134,7 +134,7 @@ class TestConquerorStacks():
 
         sim.do_combo([blue(ActionType.R), blue(ActionType.Q)])
 
-        assert damage_values(sim, "Q") == [pytest.approx(magic(160 + 0.8 * 2 * CONQUEROR_FORCE_LVL_6))]
+        assert damage_values(sim, "Q") == [pytest.approx(magic(170 + 0.8 * 2 * CONQUEROR_FORCE_LVL_6))]
 
 
     def test_heals_from_the_hit_after_the_12th_stack(self, load_champion):

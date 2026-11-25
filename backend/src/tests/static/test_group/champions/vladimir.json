@@ -2,20 +2,20 @@
   "key": "8",
   "name": "Vladimir",
   "champion_id": "Vladimir",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "last_changed": "15.11.1",
   "range_type": "Ranged",
   "adaptive_type": "magic",
   "resource_type": "Crimson Rush",
-  "hp": 607.0,
+  "hp": 600.0,
   "hp_per_lvl": 110,
   "ad": 55.0,
   "ad_per_lvl": 3.0,
   "mana": 2.0,
   "mana_per_lvl": 0.0,
   "movementspeed": 330,
-  "armor": 27,
+  "armor": 24.0,
   "armor_per_lvl": 4.5,
   "mr": 30.0,
   "mr_per_lvl": 1.3,
@@ -37,6 +37,8 @@
     "values": {
       "HPforAP": "30",
       "APRatioBonusHP": "1.6",
+      "cooldownTime": "0",
+      "mana": "0",
       "ApproximateAPBonusAvoidingRecursion": "((bonus_hp + APRatioBonusHP * (-1 * ap)) * (0.01 * 3.333)) * 1.06",
       "ApproximateHPBonusAvoidingRecursion": "(bonus_ap + (0.01 * 3.333) * (-1 * bonus_hp)) * (1.06 * APRatioBonusHP)"
     },
@@ -120,14 +122,16 @@
       "DamagePercentAmp": "85",
       "FrenzyDuration": "2.5",
       "MinionHealPercent": "35",
+      "cooldownTime": "by_rank(9, 7.9, 6.8, 5.7, 4.6)",
+      "mana": "0",
       "BaseDamageTooltip": "BaseDamage + 0.6 * ap",
       "BaseHealTooltip": "BaseHeal + HealAPRatio * ap",
       "EmpoweredDamageTooltip": "BaseDamageTooltip * 1.85",
       "EmpoweredHealPercentTooltip": "EmpoweredHealPercent * 1",
+      "h_097cda4f": "by_level(30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220)",
+      "EmpoweredHealTooltip": "h_097cda4f * 1",
       "EmpoweredHealPercent": "(5 + 0.04 * ap) * 0.01",
-      "MovementSpeedOnQ2": "by_level(10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 30, 30, 30, 30, 30, 40, 40, 40, 40, 40)",
-      "cooldownTime": "by_rank(9, 7.9, 6.8, 5.7, 4.6)",
-      "mana": "0"
+      "MovementSpeedOnQ2": "by_level(10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 30, 30, 30, 30, 30, 40, 40, 40, 40, 40)"
     },
     "raw_stats": {
       "cast time": "0.25",
@@ -354,9 +358,10 @@
       "VampPercent": "0.3",
       "HasteBoost": "0.375",
       "HasteDuration": "1",
+      "cooldownTime": "by_rank(28, 25, 22, 19, 16)",
+      "mana": "0",
       "TotalDamage": "BaseDamage + BonusHealthRatio * bonus_hp",
-      "TotalHeal": "TotalDamage * VampPercent",
-      "cooldownTime": "by_rank(28, 25, 22, 19, 16)"
+      "TotalHeal": "TotalDamage * VampPercent"
     },
     "raw_stats": {
       "cast time": "none",
@@ -524,11 +529,11 @@
       "MaxChannelTime": "1.5",
       "TimetoRampMaxDamage": "1",
       "BaseMaxDamage": "by_rank(60, 90, 120, 150, 180)",
+      "cooldownTime": "by_rank(13, 11, 9, 7, 5)",
+      "mana": "0",
       "MinDamageTooltip": "BaseDamage + 0.015 * max_hp + 0.35 * ap",
       "MaxDamageTooltip": "BaseMaxDamage + 0.06 * max_hp + 0.8 * ap",
-      "ChargeHealthTooltip": "0.08 * max_hp",
-      "cooldownTime": "by_rank(13, 11, 9, 7, 5)",
-      "mana": "0"
+      "ChargeHealthTooltip": "0.08 * max_hp"
     },
     "raw_stats": {
       "cast time": "none",
@@ -726,10 +731,10 @@
       "VampPercentFirstChamp": "100",
       "Duration": "4",
       "VampPercentAdditionalChamp": "40",
-      "Damage": "BaseDamage + 0.7 * ap",
-      "SecondaryHealingTooltip": "Damage * 0.4",
       "cooldownTime": "120",
-      "mana": "0"
+      "mana": "0",
+      "Damage": "BaseDamage + 0.7 * ap",
+      "SecondaryHealingTooltip": "Damage * 0.4"
     },
     "raw_stats": {
       "cast time": "none",

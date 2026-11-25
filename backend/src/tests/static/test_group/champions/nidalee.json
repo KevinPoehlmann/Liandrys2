@@ -2,8 +2,8 @@
   "key": "76",
   "name": "Nidalee",
   "champion_id": "Nidalee",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "last_changed": "26.21.1",
   "range_type": "Ranged",
   "adaptive_type": "magic",
@@ -34,7 +34,10 @@
     "name": "Prowl",
     "description": "Innate: Riven's ability casts generate a stack of Charge for 6 seconds, refreshing on subsequent casts and stacking up to 3 times. Riven's basic attacks are empowered to each consume a stack to deal bonus physical damage equal to 30% – 60% (based on level) AD, reduced to「 50% 」「 15% – 30% (based on level) AD 」against structures.\n\n\n\nThe bonus damage is affected by  critical strike modifiers and applies  life steal at 100% effectiveness.",
     "static_cooldown": "0",
-    "values": {},
+    "values": {
+      "cooldownTime": "0",
+      "mana": "0"
+    },
     "raw_stats": {},
     "changes": [],
     "validated": true,
@@ -131,10 +134,11 @@
       "SpearMaximumDamage": "by_rank(227.5, 292.5, 357.5, 422.5, 487.5)",
       "DamageMulti": "3.25",
       "RangeThreshold": "525",
+      "cooldownTime": "6",
+      "mana": "by_rank(50, 55, 60, 65, 70)",
       "HumanMinimumDamage": "SpearMinimumDamage + SpearMinimumAPRatio * ap",
       "HumanMaximumDamage": "HumanMinimumDamage * DamageMulti",
-      "cooldownTime": "6",
-      "mana": "by_rank(50, 55, 60, 65, 70)"
+      "h_38f95809": "TooltipCougarMinimumDamage"
     },
     "cooldown_starts_after": null,
     "cooldown_starts_on_cast": false,
@@ -263,10 +267,10 @@
       "BaseDamagePerTick": "by_rank(10, 20, 30, 40, 50)",
       "TrapLifetime": "120",
       "TotalFlatDamage": "by_rank(40, 80, 120, 160, 200)",
-      "MaxTraps": "by_level(4, 4, 4, 4, 4, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 10, 10, 10, 10, 10) + ModesBonusMaxTraps",
-      "DamagePerSecond": "BaseDamagePerTick + 0.05 * ap",
       "cooldownTime": "by_rank(13, 12, 11, 10, 9)",
-      "mana": "by_rank(30, 35, 40, 45, 50)"
+      "mana": "by_rank(30, 35, 40, 45, 50)",
+      "MaxTraps": "by_level(4, 4, 4, 4, 4, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 10, 10, 10, 10, 10) + ModesBonusMaxTraps",
+      "DamagePerSecond": "BaseDamagePerTick + 0.05 * ap"
     },
     "cooldown_starts_after": null,
     "cooldown_starts_on_cast": false,
@@ -533,10 +537,10 @@
       "MaxHealThreshold": "0.05",
       "BonusAS": "by_rank(0.2, 0.3, 0.4, 0.5, 0.6)",
       "ASDuration": "7",
-      "TotalHealing": "BaseHeal + 0.35 * ap",
-      "MaxHealing": "TotalHealing * (1 + MaxHealMult)",
       "cooldownTime": "12",
-      "mana": "by_rank(50, 55, 60, 65, 70)"
+      "mana": "by_rank(50, 55, 60, 65, 70)",
+      "TotalHealing": "BaseHeal + 0.35 * ap",
+      "MaxHealing": "TotalHealing * (1 + MaxHealMult)"
     },
     "cooldown_starts_after": null,
     "cooldown_starts_on_cast": false,
@@ -646,11 +650,11 @@
       "SwipeDamage": "by_rank(70, 130, 190, 250)",
       "SwipeADRatio": "0.7",
       "SwipeAPRatio": "0.55",
+      "cooldownTime": "3",
+      "mana": "0",
       "TotalPounceDamage": "PounceDamage + PounceADRatio * bonus_ad + PounceAPRatio * ap",
       "TotalSwipeDamage": "SwipeDamage + SwipeADRatio * bonus_ad + SwipeAPRatio * ap",
-      "TotalTakedownDamage": "TakedownBaseDamage + TakedownADRatio * ad + TakedownAPRatio * ap",
-      "cooldownTime": "3",
-      "mana": "0"
+      "TotalTakedownDamage": "TakedownBaseDamage + TakedownADRatio * ad + TakedownAPRatio * ap"
     },
     "cooldown_starts_after": null,
     "cooldown_starts_on_cast": false,

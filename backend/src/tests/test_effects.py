@@ -9,7 +9,7 @@ from src.server.simulation.simulation import DEFAULT_DISTANCE, Simulation
 
 # Expected values are calculated by hand from the fixtures. Stat growth at level 6: 3.95
 DARIUS_MR = 32 + 2.05 * 3.95
-Q_RANK_3 = 160
+Q_RANK_3 = 170
 Q_HIT_TICK = to_ticks(0.25) + to_ticks(DEFAULT_DISTANCE / 1400)
 
 

@@ -2,8 +2,8 @@
   "key": "45",
   "name": "Veigar",
   "champion_id": "Veigar",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "last_changed": "15.9.1",
   "range_type": "Ranged",
   "adaptive_type": "magic",
@@ -41,6 +41,8 @@
       "dQKillStacksLarge": "3",
       "PStacksPerDarkMatterCDR": "50",
       "DarkMatterCDRIncrement": "0.1",
+      "cooldownTime": "0",
+      "mana": "0",
       "APPerStack": "1"
     },
     "raw_stats": {},
@@ -124,9 +126,9 @@
     "values": {
       "APRatio": "by_rank(0.5, 0.55, 0.6, 0.65, 0.7)",
       "BaseDamage": "by_rank(80, 120, 160, 200, 240)",
-      "TotalDamage": "BaseDamage + APRatio * ap",
       "cooldownTime": "by_rank(6, 5.5, 5, 4.5, 4)",
-      "mana": "by_rank(30, 35, 40, 45, 50)"
+      "mana": "by_rank(30, 35, 40, 45, 50)",
+      "TotalDamage": "BaseDamage + APRatio * ap"
     },
     "raw_stats": {
       "cast time": "0.25",
@@ -209,8 +211,9 @@
       "BaseDamage": "by_rank(85, 140, 195, 250, 305)",
       "ImpactDelay": "1.2",
       "BaseCooldown": "8",
-      "TotalDamage": "BaseDamage + APRatio * ap",
-      "mana": "by_rank(60, 65, 70, 75, 80)"
+      "cooldownTime": "0",
+      "mana": "by_rank(60, 65, 70, 75, 80)",
+      "TotalDamage": "BaseDamage + APRatio * ap"
     },
     "raw_stats": {
       "cast time": "0.25",
@@ -373,10 +376,10 @@
       "APRatio": "by_rank(0.65, 0.7, 0.75)",
       "BaseDamage": "by_rank(175, 250, 325)",
       "MaxExecuteMult": "2",
-      "MinDamage": "BaseDamage + APRatio * ap",
-      "MaxDamage": "MinDamage * 2",
       "cooldownTime": "by_rank(120, 90, 60)",
-      "mana": "100"
+      "mana": "100",
+      "MinDamage": "BaseDamage + APRatio * ap",
+      "MaxDamage": "MinDamage * 2"
     },
     "raw_stats": {
       "cast time": "0.25",

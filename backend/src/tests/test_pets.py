@@ -11,7 +11,7 @@ from src.server.simulation.pet import PetCharacter
 from src.server.simulation.simulation import Simulation
 
 
-# Expected values are calculated by hand from the patch 15.12.1 fixtures (see test_group_annie.py).
+# Expected values are calculated by hand from the patch 16.23.1 fixtures (see test_group_annie.py).
 GROWTH_LVL_6 = 3.95
 ANNIE_MAX_HP = 560 + 96 * GROWTH_LVL_6
 DARIUS_MR = 32 + 2.05 * GROWTH_LVL_6

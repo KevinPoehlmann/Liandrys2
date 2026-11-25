@@ -2,8 +2,8 @@
   "key": "92",
   "name": "Riven",
   "champion_id": "Riven",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "last_changed": "14.24.1",
   "range_type": "Melee",
   "adaptive_type": "physical",
@@ -38,6 +38,8 @@
       "Charges": "3",
       "TowerRatio": "0.5",
       "MonsterBonusDamage": "50",
+      "cooldownTime": "0",
+      "mana": "0",
       "TotalDamage": "by_level(0.3, 0.308823529412, 0.317647058824, 0.326470588235, 0.335294117647, 0.344117647059, 0.352941176471, 0.361764705882, 0.370588235294, 0.379411764706, 0.388235294118, 0.397058823529, 0.405882352941, 0.414705882353, 0.423529411765, 0.432352941176, 0.441176470588, 0.45, 0.458823529412, 0.467647058824) * ad"
     },
     "raw_stats": {},
@@ -156,9 +158,9 @@
     "values": {
       "BaseDamage": "by_rank(45, 75, 105, 135, 165)",
       "ADRatio": "by_rank(0.6, 0.65, 0.7, 0.75, 0.8)",
-      "FirstSlashDamage": "BaseDamage + ADRatio * bonus_ad",
       "cooldownTime": "13",
-      "mana": "0"
+      "mana": "0",
+      "FirstSlashDamage": "BaseDamage + ADRatio * bonus_ad"
     },
     "raw_stats": {
       "cast time": "none",
@@ -345,9 +347,9 @@
     "values": {
       "StunDuration": "0.75",
       "BaseDamage": "by_rank(65, 95, 125, 155, 185)",
-      "TotalDamage": "BaseDamage + bonus_ad",
       "cooldownTime": "by_rank(11, 10, 9, 8, 7)",
-      "mana": "0"
+      "mana": "0",
+      "TotalDamage": "BaseDamage + bonus_ad"
     },
     "raw_stats": {
       "cast time": "0.25",
@@ -433,9 +435,9 @@
       "ShieldAmount": "by_rank(70, 95, 120, 145, 170)",
       "BaseShieldAmount": "by_rank(70, 95, 120, 145, 170)",
       "ShieldDuration": "1.5",
-      "TotalShield": "ShieldAmount + 1.1 * bonus_ad",
       "cooldownTime": "by_rank(10, 9, 8, 7, 6)",
-      "mana": "0"
+      "mana": "0",
+      "TotalShield": "ShieldAmount + 1.1 * bonus_ad"
     },
     "raw_stats": {
       "cast time": "none",
@@ -503,11 +505,11 @@
       "Duration": "15",
       "PercentBonusAD": "0.2",
       "TooltipAttackRange": "75",
+      "cooldownTime": "by_rank(120, 90, 60)",
+      "mana": "0",
       "MinDamage": "MinBase + 0.55 * bonus_ad",
       "MaxDamage": "MaxBase + 1.65 * bonus_ad",
-      "BonusAD": "PercentBonusAD * ad",
-      "cooldownTime": "by_rank(120, 90, 60)",
-      "mana": "0"
+      "BonusAD": "PercentBonusAD * ad"
     },
     "raw_stats": {
       "cast time": "0.25",

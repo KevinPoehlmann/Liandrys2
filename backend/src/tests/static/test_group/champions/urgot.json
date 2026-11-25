@@ -2,8 +2,8 @@
   "key": "6",
   "name": "Urgot",
   "champion_id": "Urgot",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "last_changed": "25.06.1",
   "range_type": "Ranged",
   "adaptive_type": "physical",
@@ -36,10 +36,14 @@
     "static_cooldown": "0",
     "values": {
       "LegWarningTime": "2.5",
+      "cooldownTime": "0",
+      "mana": "0",
       "PerLegCD": "by_level(30, 30, 30, 30, 30, 20, 20, 20, 10, 10, 5, 5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5)",
       "ADDamage": "by_level(0.4, 0.4, 0.4, 0.4, 0.4, 0.52, 0.52, 0.52, 0.64, 0.64, 0.76, 0.76, 0.88, 0.88, 1, 1, 1, 1, 1, 1) * ad",
       "PercentHPRatio": "by_level(0.02, 0.02, 0.02, 0.02, 0.02, 0.03, 0.03, 0.03, 0.04, 0.04, 0.05, 0.05, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06)",
-      "MonsterCap": "by_level(100, 115.294117647, 130.588235294, 145.882352941, 161.176470588, 176.470588235, 191.764705882, 207.058823529, 222.352941176, 237.647058824, 252.941176471, 268.235294118, 283.529411765, 298.823529412, 314.117647059, 329.411764706, 344.705882353, 360, 375.294117647, 390.588235294)"
+      "MonsterCap": "by_level(100, 115.294117647, 130.588235294, 145.882352941, 161.176470588, 176.470588235, 191.764705882, 207.058823529, 222.352941176, 237.647058824, 252.941176471, 268.235294118, 283.529411765, 298.823529412, 314.117647059, 329.411764706, 344.705882353, 360, 375.294117647, 390.588235294)",
+      "TriggerRange": "650 + bonus_attack_range",
+      "CastRange": "700 + bonus_attack_range"
     },
     "raw_stats": {},
     "changes": [],
@@ -74,9 +78,9 @@
       "DelayOnMissileLaunch": "0.1",
       "WHalterDuration": "0.3",
       "AoERadius": "210",
-      "TotalDamage": "BaseDamage + 0.7 * ad",
-      "cooldownTime": "13",
-      "mana": "0"
+      "cooldownTime": "by_rank(10, 9.5, 9, 8.5, 8)",
+      "mana": "70",
+      "TotalDamage": "BaseDamage + 0.7 * ad"
     },
     "raw_stats": {
       "cast time": "none",
@@ -122,9 +126,10 @@
       "Duration": "by_rank(4, 4, 4, 4, 25000)",
       "MoveSpeedMod": "125",
       "MoveSpeedDuration": "0.5",
-      "DamagePerShot": "BaseDamage + ADRatioTT * ad",
       "cooldownTime": "by_rank(12, 9, 6, 3, 0)",
-      "mana": "by_rank(40, 30, 20, 10, 0)"
+      "mana": "by_rank(40, 30, 20, 10, 0)",
+      "DamagePerShot": "BaseDamage + ADRatioTT * ad",
+      "RangeCheck": "450 + bonus_attack_range"
     },
     "raw_stats": {
       "cast time": "0.25",
@@ -273,10 +278,10 @@
       "MinimumDashRange": "450",
       "ThrowDistance": "100",
       "WHalterDuration": "1.5",
+      "cooldownTime": "by_rank(16, 15.5, 15, 14.5, 14)",
+      "mana": "by_rank(60, 70, 80, 90, 100)",
       "ETotalShieldHealth": "EShieldBaseHealth + EShieldbADRatio * bonus_ad + EShieldBonusHealthRatio * bonus_hp",
-      "EDamage": "EBaseDamage + bonus_ad",
-      "cooldownTime": "by_rank(10, 9, 8, 7, 6)",
-      "mana": "0"
+      "EDamage": "EBaseDamage + bonus_ad"
     },
     "raw_stats": {
       "cast time": "none",
@@ -321,9 +326,9 @@
       "RHealthThreshold": "25",
       "RChannelTimeReel": "1",
       "RFearRadius": "600",
-      "RCalculatedDamage": "RBaseDamage + RBonusADRatio * bonus_ad",
-      "cooldownTime": "by_rank(120, 90, 60)",
-      "mana": "0"
+      "cooldownTime": "by_rank(100, 85, 70)",
+      "mana": "100",
+      "RCalculatedDamage": "RBaseDamage + RBonusADRatio * bonus_ad"
     },
     "raw_stats": {
       "cast time": "0.25",

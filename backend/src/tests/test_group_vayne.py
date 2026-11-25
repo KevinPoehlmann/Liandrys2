@@ -8,7 +8,7 @@ from src.server.simulation.character import Character
 from src.server.simulation.simulation import Simulation
 
 
-# Expected values are calculated by hand from the patch 15.12.1 fixtures, not by the simulation.
+# Expected values are calculated by hand from the patch 16.23.1 fixtures, not by the simulation.
 # Stat growth at level 6: (6 - 1) * (0.7025 + 0.0175 * (6 - 1)) = 3.95
 GROWTH_LVL_6 = 3.95
 VAYNE_AD = 60 + 2.35 * GROWTH_LVL_6
@@ -17,8 +17,8 @@ DARIUS_MAX_HP = 652 + 114 * GROWTH_LVL_6
 ANNIE_ARMOR_LVL_1 = 23
 
 Q_RANK_3 = 0.95
-W_RANK_1_PERCENT = 0.06
-W_RANK_1_MINIMUM = 50
+W_RANK_1_PERCENT = 0.04
+W_RANK_1_MINIMUM = 40
 E_RANK_1 = 50
 R_RANK_1_AD = 35
 

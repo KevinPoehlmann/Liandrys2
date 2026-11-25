@@ -17,7 +17,7 @@ from src.server.simulation.simulation import DEFAULT_DISTANCE, Simulation
 from src.tests.helpers import regenerated_health
 
 
-# Expected values are calculated by hand from the patch 15.12.1 fixtures, not by the simulation.
+# Expected values are calculated by hand from the patch 16.23.1 fixtures, not by the simulation.
 # Stat growth at level 6: (6 - 1) * (0.7025 + 0.0175 * (6 - 1)) = 3.95
 GROWTH_LVL_6 = 3.95
 ANNIE_MAX_HP = 560 + 96 * GROWTH_LVL_6
@@ -25,10 +25,10 @@ ANNIE_ARMOR = 23 + 4 * GROWTH_LVL_6
 ANNIE_MOVESPEED = 335
 DARIUS_MR = 32 + 2.05 * GROWTH_LVL_6
 VAYNE_AD = 60 + 2.35 * GROWTH_LVL_6
-VAYNE_MR = 30 + 1.3 * GROWTH_LVL_6
+VAYNE_MR = 33 + 1.1 * GROWTH_LVL_6
 
 R_RANK_1_MAGIC_PEN = 0.1
-Q_RANK_3 = 160
+Q_RANK_3 = 170
 CAST_TICKS = to_ticks(0.25)
 Q_TRAVEL_TICKS = to_ticks(DEFAULT_DISTANCE / 1400)  # 3 ticks
 STUN_LVL_6 = 1.5
