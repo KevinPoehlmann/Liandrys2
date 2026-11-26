@@ -691,9 +691,11 @@ async def test_hotfix_others_changes_the_named_objects_in_place(mocker, loaded_p
     notes = {"items": {"changed": {"Sheen": [patch_note("Cost reduced"), patch_note("Damage increased")]}},
              "summonerspells": {"changed": {"Ghost": [patch_note("Cooldown reduced")]}}}
 
-    await hotfix_others(notes, loaded_patch)
+    hotfixed_at = datetime(2026, 11, 22, 18, 0)
+    await hotfix_others(notes, loaded_patch, hotfixed_at)
 
-    assert [change.text for change in sheen.changes] == ["Cost reduced", "Damage increased"]
+    assert [(change.text, change.hotfix) for change in sheen.changes] == [("Cost reduced", None),
+                                                                          ("Damage increased", hotfixed_at)]
     assert not sheen.validated and not ghost.validated
     assert thornmail.validated
     update_item.assert_called_once_with(sheen)

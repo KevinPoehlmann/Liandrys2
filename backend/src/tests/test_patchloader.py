@@ -382,14 +382,15 @@ class TestHotfixOneChampion():
     async def test_compares_with_its_own_patch_and_keeps_earlier_lines(self, session, patch, database, veigar,
                                                                        stored_raw):
         strings = fixture("veigar.strings.json")["entries"]
-        await loader.hotfix_one_champion(veigar_entry(), veigar, {}, session, patch, BUILD, strings, {})
+        hotfixed_at = datetime(2026, 11, 22, 18, 0)
+        await loader.hotfix_one_champion(veigar_entry(), veigar, {}, session, patch, hotfixed_at, BUILD, strings, {})
 
         database.fetch_raw_champion.assert_called_once_with("Veigar", "16.23.1")
         champion = database.update_champion.call_args.args[0]
         assert champion.id == veigar.id
         assert [change.text for change in champion.changes] == ["Base health increased"]
-        assert [change.text for change in champion.q.changes] == [
-            "BaseDamage: by_rank(70, 120, 160, 200, 240) ⇒ by_rank(80, 120, 160, 200, 240)"]
+        assert [(change.text, change.hotfix) for change in champion.q.changes] == [
+            ("BaseDamage: by_rank(70, 120, 160, 200, 240) ⇒ by_rank(80, 120, 160, 200, 240)", hotfixed_at)]
         assert patch.changed_champion_count == 0  # already changed in this patch
 
 

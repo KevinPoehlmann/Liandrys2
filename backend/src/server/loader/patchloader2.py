@@ -30,6 +30,7 @@ from src.server.models.json_validation import (
     SummonerspellsJson,
     SummonerspellJson
 )
+from src.server.models.change import with_hotfix_lines
 from src.server.models.enums import Stat
 from src.server.models.image import Image
 from src.server.models.item import NewItem
@@ -534,7 +535,7 @@ async def _add_changes_summonerspell(spell: NewSummonerspell, diff: list) -> Non
     spell.validated = False
 
 
-async def hotfix_others(notes: dict, patch: NewPatch) -> None:
+async def hotfix_others(notes: dict, patch: NewPatch, hotfixed_at: datetime) -> None:
     """Items, runes and summoner spells named in a hotfix get its lines and lose their validation, in place."""
     types = {"items": (db.fetch_items_by_patch, db.update_item), "runes": (db.fetch_runes_by_patch, db.update_rune),
              "summonerspells": (db.fetch_summonerspells_by_patch, db.update_summonerspell)}
@@ -550,7 +551,7 @@ async def hotfix_others(notes: dict, patch: NewPatch) -> None:
             if not document.changes:
                 counter = f"changed_{type_[:-1]}_count"
                 setattr(patch, counter, getattr(patch, counter) + 1)
-            document.changes += [line for line in changed[document.name] if line not in document.changes]
+            document.changes = with_hotfix_lines(document.changes, changed[document.name], hotfixed_at)
             document.validated = False
             await update(document)
             load_logger.info(f"[{type_.upper()}] {document.name} ✔ Hotfixed")

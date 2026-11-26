@@ -3,6 +3,7 @@ CommunityDragon's data decides per ability whether it stays validated (ROADMAP, 
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import Iterator
 
@@ -13,7 +14,7 @@ from src.server.loader.cdragon import (NAMED_BREAKPOINT, NAMED_BREAKPOINTS, NAME
 from src.server.loader.champion_builder import (SLOTS, LoadedSpell, apply_loader_part, champion_stats,
                                                 last_changed_patch, loaded_spells)
 from src.server.models.ability import Ability
-from src.server.models.change import Change
+from src.server.models.change import Change, with_hotfix_lines
 from src.server.models.champion import NewChampion, RawChampion
 from src.server.models.enums import ChangeSource
 from src.server.models.json_validation import ChampionJson
@@ -60,17 +61,13 @@ def has_changes(champion: NewChampion) -> bool:
     return bool(champion.changes) or any(container.changes for _, container in _containers(champion))
 
 
-def keep_earlier_changes(champion: NewChampion, earlier: NewChampion) -> None:
+def keep_earlier_changes(champion: NewChampion, earlier: NewChampion, hotfixed_at: datetime) -> None:
     """A hotfix adds its lines to the ones its patch already brought."""
-    champion.changes = _merged(earlier.changes, champion.changes)
+    champion.changes = with_hotfix_lines(earlier.changes, champion.changes, hotfixed_at)
     before = dict(_containers(earlier))
     for slot, container in _containers(champion):
         if slot in before:
-            container.changes = _merged(before[slot].changes, container.changes)
-
-
-def _merged(earlier: list[Change], new: list[Change]) -> list[Change]:
-    return earlier + [change for change in new if change not in earlier]
+            container.changes = with_hotfix_lines(before[slot].changes, container.changes, hotfixed_at)
 
 
 def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: RawChampion, entry: ChampionJson,

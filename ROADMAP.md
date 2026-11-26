@@ -28,9 +28,6 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 
 The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching (in progress), (3) summoner spells, (4) items incl. actives, (5) runes.
 
-**Next (champions patching):**
-- [ ] Mark hotfix lines (decided): `Change.hotfix: datetime | None = None` (`None` = came with the patch, else the hotfix run's date), so after a hotfix the editor shows which lines are new since the patch was entered. Set by `keep_earlier_changes` and `hotfix_others`; the default keeps old documents loading
-
 **Open from the 16.20 → 16.21 run** (throwaway DB `liandrys-patchtest`, port 27018, kept for further runs and Phase 4):
 - [ ] An extra ability whose numbers live in another slot's values (Nidalee's Pounce uses R's `PounceDamage`) is unvalidated as "patch notes only" although the data line exists on R
 - [ ] Ammo abilities: `mAmmoRechargeTime` (52 spells, Zyra W) is not read

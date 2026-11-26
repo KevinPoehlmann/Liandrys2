@@ -307,7 +307,7 @@ async def patch_one_champion(entry: ChampionJson, old_champion: Champion, notes:
 async def load_hotfix(patch: Patch, hotfix: Hotfix) -> Patch:
     """Overwrites the patch: champions are compared with their own raw data, the other types get the wiki's lines."""
     _log_section(f"Hotfix for patch {patch.patch}: build {hotfix.build}, wiki hotfixes {hotfix.wiki_dates}")
-    start = time.monotonic()
+    start, hotfixed_at = time.monotonic(), datetime.now()
     async with aiohttp.ClientSession(timeout=TIMEOUT) as aio_session:
         session = SafeSession(aio_session)
         wikitext = await fetch_patch_page(session, riot_to_wiki_patch(patch.patch))
@@ -317,9 +317,9 @@ async def load_hotfix(patch: Patch, hotfix: Hotfix) -> Patch:
         champion_notes = notes["champions"]["changed"]
         if not hotfix.build_changed:
             champions = [entry for entry in champions if entry.name in champion_notes]
-        await hotfix_all_champions(champions, champion_notes, session, patch, names["champions"])
-        await old.hotfix_others(notes, patch)
-    patch.build, patch.updated_at = hotfix.build, datetime.now()
+        await hotfix_all_champions(champions, champion_notes, session, patch, hotfixed_at, names["champions"])
+        await old.hotfix_others(notes, patch, hotfixed_at)
+    patch.build, patch.updated_at = hotfix.build, hotfixed_at
     patch.update_totals()
     await db.upsert_patch(patch)
     load_logger.info(f"[LOAD] Hotfixed {len(champions)} champions in {time.monotonic() - start:.2f} seconds")
@@ -327,7 +327,7 @@ async def load_hotfix(patch: Patch, hotfix: Hotfix) -> Patch:
 
 
 async def hotfix_all_champions(champions: list[ChampionJson], notes: dict, session: SafeSession, patch: Patch,
-                               names: NameDictionary = NameDictionary()) -> None:
+                               hotfixed_at: datetime, names: NameDictionary = NameDictionary()) -> None:
     """`notes` are the hotfixes' {champion: {ability: [lines]}}, with Data Dragon's names."""
     version = cdragon_version(patch.patch)
     build = await fetch_build(session, version)
@@ -339,15 +339,16 @@ async def hotfix_all_champions(champions: list[ChampionJson], notes: dict, sessi
         if entry.id_ not in current:
             patch_logger.warning(f"[CHAMPION] [HOTFIX] [{entry.name}] Not in patch {patch.patch}, skipped")
             return
-        await hotfix_one_champion(entry, current[entry.id_], notes.get(entry.name, {}), session, patch, build,
-                                  strings, champion_data.get(entry.id_, {}), names.wiki_name(entry.id_, entry.name))
+        await hotfix_one_champion(entry, current[entry.id_], notes.get(entry.name, {}), session, patch, hotfixed_at,
+                                  build, strings, champion_data.get(entry.id_, {}),
+                                  names.wiki_name(entry.id_, entry.name))
 
     await _each_champion(champions, load, "hotfix")
 
 
 async def hotfix_one_champion(entry: ChampionJson, current: Champion, notes: dict[str, list[Change]],
-                              session: SafeSession, patch: Patch, build: str, strings: dict[str, str],
-                              champion_data: dict, wiki_name: str | None = None) -> None:
+                              session: SafeSession, patch: Patch, hotfixed_at: datetime, build: str,
+                              strings: dict[str, str], champion_data: dict, wiki_name: str | None = None) -> None:
     old_spells = await _old_spells(current, patch)  # read before the new download replaces the raw data
     raw = await _stored_raw_champion(entry, session, patch, build, strings, champion_data, wiki_name)
     result = patch_champion(current, old_spells, raw, entry, notes)
@@ -355,7 +356,7 @@ async def hotfix_one_champion(entry: ChampionJson, current: Champion, notes: dic
         patch_logger.info(f"[CHAMPION] [HOTFIX] [{entry.name}] {name} unvalidated: {'; '.join(reasons)}")
     if result.changed and not has_changes(current):
         patch.changed_champion_count += 1
-    keep_earlier_changes(result.champion, current)
+    keep_earlier_changes(result.champion, current, hotfixed_at)
     await db.update_champion(Champion(id=current.id, **result.champion.dict()))
     load_logger.info(f"[CHAMPION] {entry.name} ✔ Hotfixed")
 

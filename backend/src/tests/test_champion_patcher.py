@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 
 import pytest
 
@@ -103,6 +104,9 @@ class TestCopyForward():
         assert patch(veigar, old_raw, new_raw).champion.q.changes == []
 
 
+HOTFIXED_AT = datetime(2026, 11, 22, 18, 0)
+
+
 class TestHotfix():
 
     def test_keeps_the_lines_its_patch_brought(self, veigar, old_raw, new_raw):
@@ -111,7 +115,7 @@ class TestHotfix():
         data_value(new_raw.cdragon, "VeigarBalefulStrike", "BaseDamage")["values"][1] = 90
 
         champion = patch(veigar, old_raw, new_raw).champion
-        keep_earlier_changes(champion, veigar)
+        keep_earlier_changes(champion, veigar, HOTFIXED_AT)
 
         assert texts(champion) == ["Base health increased"]
         assert texts(champion.q) == ["Cooldown reduced",
@@ -122,9 +126,22 @@ class TestHotfix():
         veigar.q.changes = [patch_note("Damage increased")]
 
         champion = patch(veigar, old_raw, new_raw, notes={"Baleful Strike": [patch_note("Damage increased")]}).champion
-        keep_earlier_changes(champion, veigar)
+        keep_earlier_changes(champion, veigar, HOTFIXED_AT)
 
         assert texts(champion.q) == ["Damage increased"]
+
+
+    def test_marks_only_the_new_lines_with_the_run(self, veigar, old_raw, new_raw):
+        earlier_run = datetime(2026, 11, 21, 18, 0)
+        veigar.q.changes = [patch_note("Cooldown reduced"), patch_note("Mana cost reduced").copy(
+            update={"hotfix": earlier_run})]
+        notes = {"Baleful Strike": [patch_note("Mana cost reduced"), patch_note("Range increased")]}
+
+        champion = patch(veigar, old_raw, new_raw, notes=notes).champion
+        keep_earlier_changes(champion, veigar, HOTFIXED_AT)
+
+        assert [(change.text, change.hotfix) for change in champion.q.changes] == [
+            ("Cooldown reduced", None), ("Mana cost reduced", earlier_run), ("Range increased", HOTFIXED_AT)]
 
 
     def test_has_changes_looks_into_every_container(self, veigar):
