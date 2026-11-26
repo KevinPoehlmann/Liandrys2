@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field, root_validator
-from datetime import datetime
 
 from src.server.models.change import Change
 from src.server.models.ability import ItemActive
@@ -16,7 +15,6 @@ class NewItem(BaseModel):
     item_id: str
     name: str
     patch: str
-    hotfix: datetime | None = None
     gold: int
     into: list[str]
     from_: list[str]

@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field, validator
-from datetime import datetime
 
 from src.server.models.change import Change
 from src.server.models.passive import Passive
@@ -11,7 +10,6 @@ class NewRune(BaseModel):
     rune_id: int
     name: str
     patch: str
-    hotfix: datetime | None = None
     tree: str
     tree_id: int
     row: int

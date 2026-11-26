@@ -10,7 +10,6 @@
         <p><strong>Item ID:</strong> {{ item?.item_id }}</p>
         <p><strong>ID:</strong> {{ item?._id }}</p>
         <p><strong>Patch:</strong> {{ item?.patch }}</p>
-        <p><strong>Hotfix:</strong> {{ item?.hotfix || '—' }}</p>
       </div>
     </div>
 

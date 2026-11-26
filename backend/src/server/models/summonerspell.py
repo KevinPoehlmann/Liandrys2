@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from datetime import datetime
 
 from src.server.models.change import Change
 from src.server.models.ability import Ability
@@ -12,7 +11,6 @@ class NewSummonerspell(BaseModel):
     key: str
     name: str
     patch: str
-    hotfix: datetime | None = None
 
     ability: Ability
 

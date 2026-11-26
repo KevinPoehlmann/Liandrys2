@@ -68,7 +68,7 @@ async def test_wiki_templates_with_revision(veigar_session):
 async def test_raw_champion_keeps_everything(veigar_session):
     strings = fixture("veigar.strings.json")["entries"]
 
-    raw = await load_raw_champion(veigar_session, "16.23.1", None, "Veigar", "Veigar", BUILD, strings)
+    raw = await load_raw_champion(veigar_session, "16.23.1", "Veigar", "Veigar", BUILD, strings)
 
     assert (raw.champion_id, raw.patch, raw.build) == ("Veigar", "16.23.1", BUILD)
     assert raw.cdragon == fixture("veigar.bin.json")
@@ -78,7 +78,7 @@ async def test_raw_champion_keeps_everything(veigar_session):
 
 async def test_missing_champion_is_a_load_error():
     with pytest.raises(LoadError) as error:
-        await load_raw_champion(FakeSession({}), "16.23.1", None, "Nobody", "Nobody", BUILD, {})
+        await load_raw_champion(FakeSession({}), "16.23.1", "Nobody", "Nobody", BUILD, {})
 
     assert error.value.code == 404
     assert error.value.url.endswith("/16.23/game/data/characters/nobody/nobody.bin.json")
@@ -113,6 +113,6 @@ async def test_missing_module_is_a_load_error():
 
 
 async def test_raw_champion_keeps_its_champion_data(veigar_session):
-    raw = await load_raw_champion(veigar_session, "16.23.1", None, "Veigar", "Veigar", BUILD, {}, {"changes": "V26.07"})
+    raw = await load_raw_champion(veigar_session, "16.23.1", "Veigar", "Veigar", BUILD, {}, {"changes": "V26.07"})
 
     assert raw.champion_data == {"changes": "V26.07"}

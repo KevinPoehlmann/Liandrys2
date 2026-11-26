@@ -3,11 +3,10 @@ import logging
 import os
 
 from bson import ObjectId
-from datetime import datetime
 from motor.core import AgnosticCollection, AgnosticDatabase
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pymongo.collation import Collation
-from pymongo.errors import InvalidURI
+from pymongo.errors import DuplicateKeyError, InvalidURI
 from pymongo.results import UpdateResult
 
 from src.server.models.patch import NewPatch, Patch
@@ -23,7 +22,7 @@ from src.server.models.enums import Map
 patch_logger = logging.getLogger("patch_logger")
 
 # Patches are strings, so without numeric ordering "15.9.1" sorts after "15.10.1".
-PATCH_ORDER = {"sort": [("patch", -1), ("hotfix", -1)], "collation": Collation(locale="en", numericOrdering=True)}
+PATCH_ORDER = {"sort": [("patch", -1)], "collation": Collation(locale="en", numericOrdering=True)}
 
 
 def connect_database() -> AgnosticDatabase:
@@ -44,12 +43,25 @@ def connect_database() -> AgnosticDatabase:
 
 
 async def setup_indexes() -> None:
-    await patch_collection.create_index([("patch", 1), ("hotfix", 1)], unique=True, name="patch_index")
-    await champion_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="champion_index")
-    await item_collection.create_index([("item_id", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="item_index")
-    await rune_collection.create_index([("name", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="rune_index")
-    await summonerspell_collection.create_index([("key", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="summonerspell_index")
-    await raw_champion_collection.create_index([("champion_id", 1), ("patch", 1), ("hotfix", 1)], unique=True, name="raw_champion_index")
+    await _unique_index(patch_collection, ["patch"], "patch_index")
+    await _unique_index(champion_collection, ["name", "patch"], "champion_index")
+    await _unique_index(item_collection, ["item_id", "patch"], "item_index")
+    await _unique_index(rune_collection, ["name", "patch"], "rune_index")
+    await _unique_index(summonerspell_collection, ["key", "patch"], "summonerspell_index")
+    await _unique_index(raw_champion_collection, ["champion_id", "patch"], "raw_champion_index")
+
+
+async def _unique_index(collection: AgnosticCollection, fields: list[str], name: str) -> None:
+    keys = [(field, 1) for field in fields]
+    existing = (await collection.index_information()).get(name)
+    if existing and existing["key"] != keys:
+        # Until 16.23 the hotfix was part of every key; a hotfix now overwrites its patch.
+        await collection.drop_index(name)
+    try:
+        await collection.create_index(keys, unique=True, name=name)
+    except DuplicateKeyError:
+        patch_logger.error(f"[DB] {collection.name} has several documents per {fields} (old hotfix copies), "
+                           f"index {name} not created. Clear the old patches.")
 
 
 
@@ -66,22 +78,21 @@ raw_champion_collection: AgnosticCollection = database.raw_champions
 
 
 
-async def clear_patch(patch: str, hotfix: datetime | None) -> dict[str, int]:
-    #TODO add hotfix on delete_many
+async def clear_patch(patch: str) -> dict[str, int]:
     champion_result, item_result, rune_result, spell_result, patch_result = await asyncio.gather(
-        champion_collection.delete_many({"patch": patch, "hotfix": hotfix}),
-        item_collection.delete_many({"patch": patch, "hotfix": hotfix}),
-        rune_collection.delete_many({"patch": patch, "hotfix": hotfix}),
-        summonerspell_collection.delete_many({"patch": patch, "hotfix": hotfix}),
-        patch_collection.delete_one({"patch": patch, "hotfix": hotfix})
+        champion_collection.delete_many({"patch": patch}),
+        item_collection.delete_many({"patch": patch}),
+        rune_collection.delete_many({"patch": patch}),
+        summonerspell_collection.delete_many({"patch": patch}),
+        patch_collection.delete_one({"patch": patch})
     )
     # Then: double check nothing is left
     champion_left, item_left, rune_left, spell_left, patch_left = await asyncio.gather(
-        champion_collection.count_documents({"patch": patch, "hotfix": hotfix}),
-        item_collection.count_documents({"patch": patch, "hotfix": hotfix}),
-        rune_collection.count_documents({"patch": patch, "hotfix": hotfix}),
-        summonerspell_collection.count_documents({"patch": patch, "hotfix": hotfix}),
-        patch_collection.count_documents({"patch": patch, "hotfix": hotfix})
+        champion_collection.count_documents({"patch": patch}),
+        item_collection.count_documents({"patch": patch}),
+        rune_collection.count_documents({"patch": patch}),
+        summonerspell_collection.count_documents({"patch": patch}),
+        patch_collection.count_documents({"patch": patch})
     )
 
     cleanup_successful = all(x == 0 for x in [champion_left, item_left, rune_left, spell_left])
@@ -106,7 +117,7 @@ async def add_patch(patch: NewPatch) -> str:
 
 async def upsert_patch(patch: NewPatch) -> str:
     result = await patch_collection.update_one(
-        {"patch": patch.patch, "hotfix": patch.hotfix},
+        {"patch": patch.patch},
         {"$set": patch.dict(exclude={"id"})},
         upsert=True
     )
@@ -115,7 +126,7 @@ async def upsert_patch(patch: NewPatch) -> str:
         return result.upserted_id
     else:
         # Find the existing document to get its _id
-        doc = await patch_collection.find_one({"patch": patch.patch, "hotfix": patch.hotfix})
+        doc = await patch_collection.find_one({"patch": patch.patch})
         assert doc is not None
         return doc["_id"]
 
@@ -155,12 +166,12 @@ async def clear_patches_collection() -> bool:
 
 async def upsert_raw_champion(raw: RawChampion) -> None:
     # A reload of the same patch (hotfix build, newer wiki revision) replaces the old download.
-    key = {"champion_id": raw.champion_id, "patch": raw.patch, "hotfix": raw.hotfix}
+    key = {"champion_id": raw.champion_id, "patch": raw.patch}
     await raw_champion_collection.replace_one(key, raw.dict(), upsert=True)
 
 
-async def fetch_raw_champion(champion_id: str, patch: str, hotfix: datetime | None) -> RawChampion | None:
-    document = await raw_champion_collection.find_one({"champion_id": champion_id, "patch": patch, "hotfix": hotfix})
+async def fetch_raw_champion(champion_id: str, patch: str) -> RawChampion | None:
+    document = await raw_champion_collection.find_one({"champion_id": champion_id, "patch": patch})
     return RawChampion.parse_obj(document) if document else None
 
 
@@ -171,15 +182,15 @@ async def add_champion(champion: NewChampion) -> str:
     return result.inserted_id
 
 
-async def exists_champion_by_name(name: str, patch: str, hotfix: datetime | None) -> bool:
-    count = await champion_collection.count_documents({"name": name, "patch": patch, "hotfix": hotfix}, limit=1)
+async def exists_champion_by_name(name: str, patch: str) -> bool:
+    count = await champion_collection.count_documents({"name": name, "patch": patch}, limit=1)
     return count > 0
 
 
-async def fetch_champions_by_patch(patch: str, hotfix: datetime | None) -> list[Champion]:
+async def fetch_champions_by_patch(patch: str) -> list[Champion]:
     champions = []
     cursor = champion_collection.find(
-        {"patch":patch, "hotfix":hotfix},
+        {"patch": patch},
         sort=[("name", 1)])
     async for document in cursor:
         champion = Champion.parse_obj(document)
@@ -187,10 +198,10 @@ async def fetch_champions_by_patch(patch: str, hotfix: datetime | None) -> list[
     return champions
 
 
-async def fetch_short_champions_by_patch(patch: str, hotfix: datetime | None) -> list[ShortChampion]:
+async def fetch_short_champions_by_patch(patch: str) -> list[ShortChampion]:
     champions = []
     cursor = champion_collection.find(
-        {"patch":patch, "hotfix":hotfix},
+        {"patch": patch},
         {
             "_id": 1,
             "name": 1,
@@ -246,15 +257,15 @@ async def add_item(item: NewItem) -> str:
     return result.inserted_id
 
 
-async def exists_item_by_item_id(item_id: str, patch: str, hotfix: datetime | None) -> bool:
-    count = await item_collection.count_documents({"item_id": item_id, "patch": patch, "hotfix": hotfix}, limit=1)
+async def exists_item_by_item_id(item_id: str, patch: str) -> bool:
+    count = await item_collection.count_documents({"item_id": item_id, "patch": patch}, limit=1)
     return count > 0
 
 
-async def fetch_items_by_patch(patch: str, hotfix: datetime | None) -> list[Item]:
+async def fetch_items_by_patch(patch: str) -> list[Item]:
     items = []
     cursor = item_collection.find(
-        {"patch":patch, "hotfix":hotfix},
+        {"patch": patch},
         sort=[("name", 1)])
     async for document in cursor:
         item = Item.parse_obj(document)
@@ -262,8 +273,8 @@ async def fetch_items_by_patch(patch: str, hotfix: datetime | None) -> list[Item
     return items
 
 
-async def fetch_short_items_by_patch(patch: str, hotfix: datetime | None, map: Map | None = None) -> list[ShortItem]:
-    query = {"patch": patch, "hotfix": hotfix}
+async def fetch_short_items_by_patch(patch: str, map: Map | None = None) -> list[ShortItem]:
+    query = {"patch": patch}
     if map:
         query["maps"] = map.value
 
@@ -296,15 +307,15 @@ async def add_rune(rune: NewRune) -> str:
     return result.inserted_id
 
 
-async def exists_rune_by_name(name: str, patch: str, hotfix: datetime | None) -> bool:
-    count = await rune_collection.count_documents({"name": name, "patch": patch, "hotfix": hotfix}, limit=1)
+async def exists_rune_by_name(name: str, patch: str) -> bool:
+    count = await rune_collection.count_documents({"name": name, "patch": patch}, limit=1)
     return count > 0
 
 
-async def fetch_runes_by_patch(patch: str, hotfix: datetime | None) -> list[Rune]:
+async def fetch_runes_by_patch(patch: str) -> list[Rune]:
     runes = []
     cursor = rune_collection.find(
-        {"patch":patch, "hotfix":hotfix},
+        {"patch": patch},
         sort=[("name", 1)])
     async for document in cursor:
         rune = Rune.parse_obj(document)
@@ -312,10 +323,10 @@ async def fetch_runes_by_patch(patch: str, hotfix: datetime | None) -> list[Rune
     return runes
 
 
-async def fetch_short_runes_by_patch(patch: str, hotfix: datetime | None) -> list[ShortRune]:
+async def fetch_short_runes_by_patch(patch: str) -> list[ShortRune]:
     runes = []
     cursor = rune_collection.find(
-        {"patch":patch, "hotfix":hotfix},
+        {"patch": patch},
         {"_id": 1, "rune_id": 1, "name": 1, "tree": 1, "tree_id": 1, "row": 1, "slot": 1, "validated": 1, "image": 1},
         sort=[("name", 1)])
     async for document in cursor:
@@ -345,15 +356,15 @@ async def add_summonerspell(summonerspell: NewSummonerspell) -> str:
     return result.inserted_id
 
 
-async def exists_summonerspell_by_key(key: str, patch: str, hotfix: datetime | None) -> bool:
-    count = await summonerspell_collection.count_documents({"key": key, "patch": patch, "hotfix": hotfix}, limit=1)
+async def exists_summonerspell_by_key(key: str, patch: str) -> bool:
+    count = await summonerspell_collection.count_documents({"key": key, "patch": patch}, limit=1)
     return count > 0
 
 
-async def fetch_summonerspells_by_patch(patch: str, hotfix: datetime | None) -> list[Summonerspell]:
+async def fetch_summonerspells_by_patch(patch: str) -> list[Summonerspell]:
     summonerspells = []
     cursor = summonerspell_collection.find(
-        {"patch":patch, "hotfix":hotfix},
+        {"patch": patch},
         sort=[("name", 1)])
     async for document in cursor:
         summonerspell = Summonerspell.parse_obj(document)
@@ -361,8 +372,8 @@ async def fetch_summonerspells_by_patch(patch: str, hotfix: datetime | None) -> 
     return summonerspells
 
 
-async def fetch_short_summonerspells_by_patch(patch: str, hotfix: datetime | None, map: Map | None = None) -> list[ShortSummonerspell]:
-    query = {"patch": patch, "hotfix": hotfix}
+async def fetch_short_summonerspells_by_patch(patch: str, map: Map | None = None) -> list[ShortSummonerspell]:
+    query = {"patch": patch}
     if map:
         query["maps"] = map.value
 

@@ -27,7 +27,7 @@ def build_champion(raw: RawChampion, entry: ChampionJson) -> NewChampion:
     abilities = {slot: _new_ability(spells[slot], ddragon_spell.name, ddragon_spell.maxrank, ddragon_spell.image)
                  for slot, ddragon_spell in zip(SLOTS, entry.spells)}
     champion = NewChampion(
-        key=entry.key, name=entry.name, champion_id=raw.champion_id, patch=raw.patch, hotfix=raw.hotfix,
+        key=entry.key, name=entry.name, champion_id=raw.champion_id, patch=raw.patch,
         last_changed=last_changed_patch(raw.champion_data),
         resource_type=ResourceType.from_str(entry.partype), image=entry.image,
         passive=ChampionPassive(name=spells["passive"].name or entry.passive.name, image=entry.passive.image),

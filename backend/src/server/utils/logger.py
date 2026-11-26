@@ -1,7 +1,6 @@
 import logging
 import time
 
-from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
@@ -53,19 +52,15 @@ def _attach_load_logfile(patch_name: str) -> None:
 
 
 
-def attach_logfile(patch: str, hotfix: datetime | None = None) -> None:
+def attach_logfile(patch: str) -> None:
     name = patch.replace(".", "-")
-    if hotfix:
-        name += f"-hotfix-{hotfix.date().isoformat()}"
     _attach_patch_logfile(name)
     _attach_load_logfile(name)
 
 
 
-def finalize_load_logfile(patch: str, hotfix: datetime | None = None) -> None:
+def finalize_load_logfile(patch: str) -> None:
     name = patch.replace(".", "-")
-    if hotfix:
-        name += f"-hotfix-{hotfix.date().isoformat()}"
 
     current_path = LOG_DIR / "load_current.log"
     final_path = LOG_DIR / f"load_{name}.log"

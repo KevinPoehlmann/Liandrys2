@@ -1,4 +1,3 @@
-from datetime import datetime
 from fastapi import APIRouter, HTTPException
 
 
@@ -18,8 +17,8 @@ admin = APIRouter()
 
 
 @router.get("/all/{patch}")
-async def get_summonerspells(patch: str, hotfix: datetime | None = None, map: Map | None = None) -> list[ShortSummonerspell]:
-    summonerspells = await fetch_short_summonerspells_by_patch(patch, hotfix, map)
+async def get_summonerspells(patch: str, map: Map | None = None) -> list[ShortSummonerspell]:
+    summonerspells = await fetch_short_summonerspells_by_patch(patch, map)
     if not summonerspells:
         raise HTTPException(status_code=404, detail=f"No summonerspells found for patch. {patch} !")
     return summonerspells

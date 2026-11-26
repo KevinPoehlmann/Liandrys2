@@ -67,6 +67,33 @@ def parse_patch_notes(wikitext: str, hotfix: datetime | None = None) -> dict[str
     return notes
 
 
+def notes_with_hotfixes(wikitext: str) -> dict[str, dict]:
+    """A patch loaded after its hotfixes already has their numbers, so their lines come with it."""
+    notes = parse_patch_notes(wikitext)
+    for hotfix in hotfix_dates(wikitext):
+        _merge_changes(notes, parse_patch_notes(wikitext, hotfix))
+    return notes
+
+
+def hotfix_notes(wikitext: str, hotfixes: list[datetime]) -> dict[str, dict]:
+    """Several hotfixes in one set of notes; an object named in two of them keeps the lines of both."""
+    notes = {type_: _empty_notes() for type_ in SECTIONS}
+    for hotfix in sorted(hotfixes):
+        _merge_changes(notes, parse_patch_notes(wikitext, hotfix))
+    return notes
+
+
+def _merge_changes(notes: dict[str, dict], other: dict[str, dict]) -> None:
+    for type_, type_notes in other.items():
+        changed = notes[type_]["changed"]
+        for name, changes in type_notes["changed"].items():
+            if isinstance(changes, dict):  # champions: per ability
+                for label, lines in changes.items():
+                    changed.setdefault(name, {}).setdefault(label, []).extend(lines)
+            else:
+                changed.setdefault(name, []).extend(changes)
+
+
 def hotfix_dates(wikitext: str) -> list[datetime]:
     titles = list(_hotfix_sections(wikitext))
     if not titles:

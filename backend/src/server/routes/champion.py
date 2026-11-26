@@ -1,6 +1,5 @@
 import logging
 
-from datetime import datetime
 from fastapi import APIRouter, HTTPException
 
 
@@ -23,8 +22,8 @@ admin = APIRouter()
 
 
 @router.get("/all/{patch}")
-async def get_champions(patch: str, hotfix: datetime | None = None) -> list[ShortChampion]:
-    response = await fetch_short_champions_by_patch(patch, hotfix)
+async def get_champions(patch: str) -> list[ShortChampion]:
+    response = await fetch_short_champions_by_patch(patch)
     if not response:
         raise HTTPException(status_code=404, detail=f"No champions found for patch. {patch} !")
     return response

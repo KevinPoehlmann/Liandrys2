@@ -4,8 +4,8 @@ import pytest
 
 from src.server.loader.cdragon import field_hash
 from src.server.loader.champion_builder import champion_stats, loaded_spells
-from src.server.loader.champion_patcher import (_calculation_names, _note_lines, patch_champion, spells_from_document,
-                                                used_names)
+from src.server.loader.champion_patcher import (_calculation_names, _note_lines, has_changes, keep_earlier_changes,
+                                                patch_champion, spells_from_document, used_names)
 from src.server.models.ability import Ability
 from src.server.models.change import Change, patch_note
 from src.server.models.enums import ChangeSource
@@ -101,6 +101,36 @@ class TestCopyForward():
         veigar.q.changes = [Change(source=ChangeSource.PATCH_NOTES, text="from the last patch")]
 
         assert patch(veigar, old_raw, new_raw).champion.q.changes == []
+
+
+class TestHotfix():
+
+    def test_keeps_the_lines_its_patch_brought(self, veigar, old_raw, new_raw):
+        veigar.changes = [patch_note("Base health increased")]
+        veigar.q.changes = [patch_note("Cooldown reduced")]
+        data_value(new_raw.cdragon, "VeigarBalefulStrike", "BaseDamage")["values"][1] = 90
+
+        champion = patch(veigar, old_raw, new_raw).champion
+        keep_earlier_changes(champion, veigar)
+
+        assert texts(champion) == ["Base health increased"]
+        assert texts(champion.q) == ["Cooldown reduced",
+                                     "BaseDamage: by_rank(80, 120, 160, 200, 240) ⇒ by_rank(90, 120, 160, 200, 240)"]
+
+
+    def test_a_line_seen_twice_is_kept_once(self, veigar, old_raw, new_raw):
+        veigar.q.changes = [patch_note("Damage increased")]
+
+        champion = patch(veigar, old_raw, new_raw, notes={"Baleful Strike": [patch_note("Damage increased")]}).champion
+        keep_earlier_changes(champion, veigar)
+
+        assert texts(champion.q) == ["Damage increased"]
+
+
+    def test_has_changes_looks_into_every_container(self, veigar):
+        assert not has_changes(veigar)
+        veigar.e.changes = [patch_note("Radius increased")]
+        assert has_changes(veigar)
 
 
 class TestValidation():

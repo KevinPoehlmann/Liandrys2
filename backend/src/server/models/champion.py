@@ -18,7 +18,6 @@ class NewChampion(BaseModel):
     name: str
     champion_id: str
     patch: str
-    hotfix: datetime | None = None
     last_changed: str | None = None  # the old wiki scraper's "last changed"; Module:ChampionData will fill it
 
     range_type: RangeType
@@ -82,7 +81,6 @@ class RawChampion(BaseModel):
     """Everything the loader downloaded for one champion and patch, unchanged. Never read by the user API."""
     champion_id: str
     patch: str
-    hotfix: datetime | None = None
     build: str  # CommunityDragon's content version, "16.23.8406595+branch.releases-16-23.content.release"
     fetched_at: datetime
     cdragon: dict  # the whole <champion>.bin.json; untyped on purpose, Riot adds fields every patch

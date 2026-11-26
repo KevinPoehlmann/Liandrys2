@@ -1,4 +1,3 @@
-from datetime import datetime
 from fastapi import APIRouter, HTTPException
 
 
@@ -18,8 +17,8 @@ admin = APIRouter()
 
 
 @router.get("/all/{patch}")
-async def get_runes(patch: str, hotfix: datetime | None = None) -> list[ShortRune]:
-    runes = await fetch_short_runes_by_patch(patch, hotfix)
+async def get_runes(patch: str) -> list[ShortRune]:
+    runes = await fetch_short_runes_by_patch(patch)
     if not runes:
         raise HTTPException(status_code=404, detail=f"No runes found for patch. {patch} !")
     return runes

@@ -2,7 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from src.server.loader.patch_notes import hotfix_dates, page_text, parse_patch_notes, wikitext_to_text
+from src.server.loader.patch_notes import (hotfix_dates, hotfix_notes, notes_with_hotfixes, page_text, parse_patch_notes,
+                                           wikitext_to_text)
 from src.server.models.change import patch_note
 
 
@@ -137,6 +138,33 @@ def test_a_hotfix_sorts_its_entries_by_template_and_skips_mode_changes(load_wiki
 
 def test_a_missing_hotfix_gives_no_notes(load_wikitext):
     notes = parse_patch_notes(load_wikitext("V26.21"), datetime(2026, 10, 30))
+
+    assert all(not type_notes["changed"] for type_notes in notes.values())
+
+
+def test_several_hotfixes_keep_the_lines_of_each():
+    wikitext = ("|Release = January {{NumberSup|8}}, 2025\n== Hotfixes ==\n"
+                "=== January 10th Hotfix ===\n;{{ii|Sheen}}\n* Damage increased.\n"
+                ";{{ci|Briar}}\n* {{ai|Head Rush|Briar}}\n** Cooldown reduced.\n"
+                "=== January 13th Hotfix ===\n;{{ii|Sheen}}\n* Cost reduced.\n"
+                ";{{ci|Briar}}\n* {{ai|Head Rush|Briar}}\n** Damage increased.\n== See Also ==")
+
+    notes = hotfix_notes(wikitext, [datetime(2025, 1, 13), datetime(2025, 1, 10)])
+
+    assert texts(notes["items"]["changed"]["Sheen"]) == ["Damage increased.", "Cost reduced."]
+    assert texts(notes["champions"]["changed"]["Briar"]["Head Rush"]) == ["Cooldown reduced.", "Damage increased."]
+
+
+def test_a_patch_takes_the_hotfixes_already_on_the_wiki(load_wikitext):
+    notes = notes_with_hotfixes(load_wikitext("V26.21"))
+
+    assert texts(notes["champions"]["changed"]["Varus"]["Piercing Arrow"])[-1] == (
+        "Minimum base damage increased to 50 to 250 from 50 to 230.")
+    assert notes["champions"]["changed"].keys() > {"Varus"}  # the main part is still there
+
+
+def test_no_hotfixes_give_empty_notes(load_wikitext):
+    notes = hotfix_notes(load_wikitext("V26.21"), [])
 
     assert all(not type_notes["changed"] for type_notes in notes.values())
 

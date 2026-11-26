@@ -100,27 +100,9 @@ def load_item():
 
 
 @pytest.fixture()
-def patch_with_hotfix() -> NewPatch:
+def loaded_patch() -> NewPatch:
     patch = NewPatch(
         patch="15.7.1",
-        hotfix=datetime(2024, 4, 6, 12, 0),
-        champion_count=170,
-        item_count=435,
-        rune_count=63,
-        summonerspell_count=18,
-        loaded_champion_count=170,
-        loaded_item_count=435,
-        loaded_rune_count=63,
-        loaded_summonerspell_count=18,
-    )
-    return patch
-
-
-@pytest.fixture()
-def patch_without_hotfix() -> NewPatch:
-    patch = NewPatch(
-        patch="15.7.1",
-        hotfix=None,
         champion_count=170,
         item_count=435,
         rune_count=63,

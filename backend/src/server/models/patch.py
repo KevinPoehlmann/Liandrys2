@@ -6,7 +6,8 @@ from src.server.models.pydanticid import PydanticObjectId
 class NewPatch(BaseModel):
     patch: str
     timestamp: datetime = Field(default_factory=datetime.now)
-    hotfix: datetime | None = None
+    build: str | None = None  # CommunityDragon's content build; a new build within the patch is a hotfix
+    updated_at: datetime | None = None  # the last hotfix run
     validated: bool = False
 
     cached_documents: int = 0

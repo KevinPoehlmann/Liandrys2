@@ -7,14 +7,14 @@
       <label for="patchSelect" class="font-semibold">Patch:</label>
       <select
         id="patchSelect"
-        v-model="selectedPatchKey"
+        v-model="selectedPatch"
         @change="fetchAllData"
         class="border rounded px-2 py-1"
       >
         <option
-          v-for="(patch, i) in patches"
-          :key="i"
-          :value="patchKey(patch)"
+          v-for="patch in patches"
+          :key="patch.patch"
+          :value="patch.patch"
         >
           {{ patchLabel(patch) }}
         </option>
@@ -78,7 +78,7 @@ const router = useRouter()
 
 const patches = ref([])
 const maps = ref([])
-const selectedPatchKey = ref("")
+const selectedPatch = ref("")
 const selectedMapKey = ref("")
 const onlyShowInvalid = ref(false)
 
@@ -110,7 +110,7 @@ onMounted(async () => {
   const { data } = await axios.get("/patch/all")
   patches.value = data
   if (patches.value.length > 0) {
-    selectedPatchKey.value = patchKey(patches.value[0])
+    selectedPatch.value = patches.value[0].patch
     await fetchAllData()
   }
   const  enumRes  = await axios.get("/enum/")
@@ -118,17 +118,8 @@ onMounted(async () => {
   selectedMapKey.value = maps.value[0]
 })
 
-function patchKey(patch) {
-  return `${patch.patch}_${patch.hotfix}`
-}
-
 function patchLabel(patch) {
-  return patch.hotfix ? `${patch.patch} (Hotfix ${new Date(patch.hotfix).toLocaleString()})` : patch.patch
-}
-
-function parseSelected() {
-  const [patch, hotfix] = selectedPatchKey.value.split("_")
-  return { patch, hotfix: hotfix === "null" ? null : hotfix }
+  return patch.updated_at ? `${patch.patch} (hotfix ${new Date(patch.updated_at).toLocaleString()})` : patch.patch
 }
 
 function imageUrl(image) {
@@ -144,14 +135,10 @@ function filtered(list) {
 }
 
 async function fetchAllData() {
-  const { patch, hotfix } = parseSelected()
+  const patch = selectedPatch.value
 
   const fetch = async (type, target) => {
-    const url = hotfix
-      ? `/${type}/all/${patch}?hotfix=${hotfix}`
-      : `/${type}/all/${patch}`
-
-    const res = await axios.get(url)
+    const res = await axios.get(`/${type}/all/${patch}`)
     target.value = res.data
   }
 

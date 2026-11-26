@@ -8,7 +8,7 @@
           <select v-model="selectedPatchOption" class="p-1 rounded bg-white dark:bg-gray-700">
             <option
               v-for="entry in patchOptions"
-              :key="entry.patch + '-' + (entry.hotfix || 'base')"
+              :key="entry.patch"
               :value="entry"
             >
               {{ entry.label }}
@@ -172,33 +172,17 @@ onMounted(async () => {
   const latest = await latestRes.json()
   const all = await allRes.json()
   const mapEnums = await enumRes.json()
-  const options = []
-
-  for (const patch of all) {
-    if (patch.hotfix) {
-      options.push({
-        label: `${patch.patch} (${formatDateLabel(patch.hotfix)})`,
-        patch: patch.patch,
-        hotfix: patch.hotfix
-      })
-    }
-    else {
-      options.push({
-        label: `${patch.patch}`,
-        patch: patch.patch,
-        hotfix: null
-      })
-    }
-  }
+  const options = all.map(patch => ({
+    label: patch.updated_at ? `${patch.patch} (hotfix ${formatDateLabel(patch.updated_at)})` : patch.patch,
+    patch: patch.patch
+  }))
   patchOptions.value = options
   mapOptions.value = mapEnums.map(m => m.value)
   //selectedMapOption.value = mapOptions.value[0]
   selectedMapOption.value = "SR"
 
   // Select latest as default
-  const latestMatch = options.find(p =>
-    p.patch === latest.patch && (latest.hotfix ? p.hotfix === latest.hotfix : p.hotfix === null)
-  )
+  const latestMatch = options.find(p => p.patch === latest.patch)
   selectedPatchOption.value = latestMatch || options[0]
   await loadPatchData()
   for (const config of [blueConfig, redConfig]) {
@@ -209,14 +193,14 @@ onMounted(async () => {
 
 
 async function loadPatchData() {
-  const { patch, hotfix } = selectedPatchOption.value
+  const { patch } = selectedPatchOption.value
   const map = selectedMapOption.value
 
   const [championList, itemList, runeList, summonerspellList] = await Promise.all([
-    fetch(buildUrl('/champion/all', patch, { hotfix })).then(res => res.json()),
-    fetch(buildUrl('/item/all', patch, { hotfix, map })).then(res => res.json()),
-    fetch(buildUrl('/rune/all', patch, { hotfix })).then(res => res.json()),
-    fetch(buildUrl('/summonerspell/all', patch, { hotfix, map })).then(res => res.json())
+    fetch(buildUrl('/champion/all', patch)).then(res => res.json()),
+    fetch(buildUrl('/item/all', patch, { map })).then(res => res.json()),
+    fetch(buildUrl('/rune/all', patch)).then(res => res.json()),
+    fetch(buildUrl('/summonerspell/all', patch, { map })).then(res => res.json())
   ])
   champions.value = championList
   items.value = itemList

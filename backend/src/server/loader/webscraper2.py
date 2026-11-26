@@ -5,7 +5,6 @@ import unicodedata
 
 from bs4 import BeautifulSoup, Tag
 from dataclasses import dataclass
-from datetime import datetime
 from src.server.loader.helper import (
     wiki_to_riot_patch,
     RuneClass,
@@ -46,7 +45,7 @@ class AttackspeedStats():
 
 
 
-def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewChampion | None:
+def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str) -> NewChampion | None:
     soup = BeautifulSoup(wiki_html, "lxml")
 
     # Wiki-only data
@@ -75,7 +74,6 @@ def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str, hot
         name=champion_json.name,
         champion_id=champion_json.id_,
         patch=patch,
-        hotfix=hotfix,
         last_changed=last_changed,
         range_type=range_type,
         resource_type=ResourceType.from_str(champion_json.partype),
@@ -290,12 +288,11 @@ def _scrape_ability_stats(block: Tag) -> dict[str, str]:
     return stats
 
 
-def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewItem:   
+def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str) -> NewItem:   
     item = NewItem(
         item_id=item_id,
         name=item_json.name,
         patch=patch,
-        hotfix=hotfix,
         gold=item_json.gold.total,
         into=item_json.into,
         from_=item_json.from_,
@@ -473,7 +470,7 @@ def _scrape_item_element_text(content: Tag) -> str:
 
 
 
-def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str, hotfix: datetime | None = None) -> NewRune:
+def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str) -> NewRune:
     soup = BeautifulSoup(wiki_html, "lxml")
     try:
         passive = _scrape_rune_passive(soup)
@@ -487,7 +484,6 @@ def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str,
         rune_id=rune_class.rune.id_,
         name=rune_class.rune.name,
         patch=patch,
-        hotfix=hotfix,
         tree=rune_class.tree,
         tree_id=rune_class.tree_id,
         row=rune_class.row,
@@ -530,7 +526,7 @@ def _scrape_rune_summoner_stats(rune_content: Tag) -> dict[str, str]:
 
 
 
-def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, patch: str, hotfix: datetime | None = None) -> NewSummonerspell:
+def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, patch: str) -> NewSummonerspell:
     soup = BeautifulSoup(wiki_html, "lxml")
     maps = []
     for mode in summonerspell_json.modes:
@@ -554,7 +550,6 @@ def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, 
         key=summonerspell_json.id_,
         name=summonerspell_json.name,
         patch=patch,
-        hotfix=hotfix,
         ability=active,
         maps=maps,
         image=summonerspell_json.image

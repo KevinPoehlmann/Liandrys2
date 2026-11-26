@@ -9,19 +9,14 @@ from urllib.error import HTTPError
 from src.server.loader.helper import RuneClass
 from src.server.loader.names import DDragonName, NameDictionary
 from src.server.loader.patchloader2 import (
-    load_data,
     check_patch_available,
     _fetch_riot_patch_list,
     _get_newer_patches,
-    _check_wiki_for_hotfixes,
-    _get_newer_hotfixes,
-    _load_fresh_database,
-    _list_data,
-    _load_all_champions,
+    wiki_hotfix_dates,
+    hotfix_others,
     _load_all_items,
     _load_all_runes,
     _load_all_summonerspells,
-    _load_champion,
     _load_item,
     _load_rune,
     _load_rune_stat_shards,
@@ -31,10 +26,6 @@ from src.server.loader.patchloader2 import (
     _load_image,
     _load_image_rune,
     _load_rune_tree_images,
-    _load_all_patches,
-    _load_patch,
-    _patch_champions,
-    _add_changes_champion,
     _patch_items,
     _add_changes_item,
     _patch_runes,
@@ -98,195 +89,54 @@ def test_get_newer_patches_with_unlisted_patch():
         _get_newer_patches(MockPatch(), patches)
 
 
-@pytest.mark.asyncio
-async def test_check_wiki_for_hotfixes(mocker):
+def test_wiki_hotfix_dates(mocker):
     wikitext = "|Release = March {{NumberSup|31}}, 2025\n== Hotfixes ==\n=== April 1st Hotfix ===\n== See Also =="
     response = mocker.Mock()
     response.json.return_value = {"query": {"pages": [{"revisions": [{"slots": {"main": {"content": wikitext}}}]}]}}
     get = mocker.patch("src.server.loader.patchloader2.requests.get", return_value=response)
 
-    result = await _check_wiki_for_hotfixes(["15.7.1"])
-
-    assert result == {"15.7.1": [datetime(2025, 4, 1)]}
+    assert wiki_hotfix_dates("15.7.1") == [datetime(2025, 4, 1)]
     assert get.call_args.kwargs["params"]["titles"] == "V25.07"
 
 
-@pytest.mark.asyncio
-async def test_check_wiki_for_hotfixes_missing_page(mocker):
+def test_wiki_hotfix_dates_missing_page(mocker):
     response = mocker.Mock()
     response.json.return_value = {"query": {"pages": [{"title": "V25.07", "missing": True}]}}
     mocker.patch("src.server.loader.patchloader2.requests.get", return_value=response)
 
     with pytest.raises(PatcherError):
-        await _check_wiki_for_hotfixes(["15.7.1"])
+        wiki_hotfix_dates("15.7.1")
 
-@pytest.mark.asyncio
-async def test_check_wiki_for_hotfixes_invalid_response(mocker):
-    mock_response = mocker.Mock()
-    mock_response.raise_for_status.side_effect = requests.RequestException("Not Found")
 
-    mocker.patch("src.server.loader.patchloader2.requests.get", return_value=mock_response)
+def test_wiki_hotfix_dates_invalid_response(mocker):
+    response = mocker.Mock()
+    response.raise_for_status.side_effect = requests.RequestException("Not Found")
+    mocker.patch("src.server.loader.patchloader2.requests.get", return_value=response)
 
     with pytest.raises(PatcherError):
-        await _check_wiki_for_hotfixes(["15.7.1"])
-
-
-
-@pytest.mark.parametrize("hotfix_list, expected", [
-    (
-        [datetime(2024, 4, 6, 13, 0), datetime(2024, 4, 6, 11, 0)],
-        {"15.7.1": [datetime(2024, 4, 6, 13, 0)]}
-    ),
-    (
-        [datetime(2024, 4, 6, 14, 0), datetime(2024, 4, 6, 13, 0)],
-        {"15.7.1": [datetime(2024, 4, 6, 14, 0), datetime(2024, 4, 6, 13, 0)]}
-    ),
-    (
-        [datetime(2024, 4, 6, 12, 0), datetime(2024, 4, 6, 11, 0)],
-        {}
-    ),
-])
-def test_get_newer_hotfixes_with_hotfix_param(patch_with_hotfix, hotfix_list, expected):
-    hotfixes = {"15.7.1": hotfix_list}
-    result = _get_newer_hotfixes(patch_with_hotfix, hotfixes)
-    assert result == expected
-
-@pytest.mark.parametrize("hotfix_list, expected", [
-    (
-        [datetime(2024, 4, 6, 13, 0), datetime(2024, 4, 6, 11, 0)],
-        {"15.7.1": [datetime(2024, 4, 6, 13, 0)]}
-    ),
-    (
-        [],
-        {"15.7.1": []}
-    ),
-])
-def test_get_newer_hotfixes_without_dbpatch(hotfix_list, expected):
-    hotfixes = {"15.7.1": hotfix_list}
-    result = _get_newer_hotfixes(None, hotfixes)
-    assert result == expected
-
-@pytest.mark.parametrize("hotfix_list, expected", [
-    (
-        [datetime(2024, 4, 6, 13, 0), datetime(2024, 4, 6, 11, 0)],
-        {"15.7.1": [datetime(2024, 4, 6, 13, 0), datetime(2024, 4, 6, 11, 0)]}
-    ),
-    (
-        [datetime(2024, 4, 6, 11, 0)],
-        {"15.7.1": [datetime(2024, 4, 6, 11, 0)]}
-    ),
-    (
-        [],
-        {}
-    )
-])
-def test_get_newer_hotfixes_without_hotfix_param(patch_without_hotfix, hotfix_list, expected):
-    hotfixes = {"15.7.1": hotfix_list}
-    result = _get_newer_hotfixes(patch_without_hotfix, hotfixes)
-    assert result == expected
-
-def test_get_newer_hotfixes_keeps_incomplete_patch(patch_with_hotfix):
-    patch_with_hotfix.loaded_champion_count = 100
-    patch_with_hotfix.update_totals()
-    hotfixes = {"15.7.1": [datetime(2024, 4, 6, 12, 0), datetime(2024, 4, 6, 11, 0)]}
-    result = _get_newer_hotfixes(patch_with_hotfix, hotfixes)
-    assert result == {"15.7.1": [datetime(2024, 4, 6, 12, 0)]}
-
+        wiki_hotfix_dates("15.7.1")
 
 
 @pytest.mark.asyncio
-async def test_check_patch_available(mocker):
-    mocker.patch("src.server.loader.patchloader2._fetch_riot_patch_list", return_value=["15.7.1", "15.6.1"])
-    mocker.patch("src.server.loader.patchloader2.db.fetch_patch_latest", return_value=mocker.Mock(patch="15.6.1", hotfix=None))
-    #mocker.patch("src.server.loader.patchloader2._get_newer_patches", return_value=["15.7.1"])
-    mocker.patch("src.server.loader.patchloader2._check_wiki_for_hotfixes", return_value={"15.7.1": [], "15.6.1": []})
+async def test_check_patch_available_skips_the_loaded_patch(mocker, loaded_patch):
+    mocker.patch("src.server.loader.patchloader2._fetch_riot_patch_list", return_value=["15.9.1", "15.8.1", "15.7.1"])
+    mocker.patch("src.server.loader.patchloader2.db.fetch_patch_latest", return_value=loaded_patch)
 
-    result = await check_patch_available()
-    assert result == {"15.7.1": [], "15.6.1": []}
-
+    assert await check_patch_available() == ["15.8.1", "15.9.1"]
 
 
 @pytest.mark.asyncio
-async def test_load_fresh_database_success(mocker):
-    mock_patch = "15.7.1"
-    mock_hotfix = datetime(2024, 4, 8)
-    hotfixes = {mock_patch: [mock_hotfix]}
+async def test_check_patch_available_resumes_an_unfinished_patch(mocker, loaded_patch):
+    loaded_patch.loaded_champion_count = 100
+    loaded_patch.update_totals()
+    mocker.patch("src.server.loader.patchloader2._fetch_riot_patch_list", return_value=["15.8.1", "15.7.1"])
+    mocker.patch("src.server.loader.patchloader2.db.fetch_patch_latest", return_value=loaded_patch)
 
-    # Mock _list_data to return dummy objects
-    mocker.patch("src.server.loader.patchloader2._list_data", return_value=(
-        ["Ahri", "Garen"],            # champion_list
-        [("1001", "item")],          # item_list
-        ["rune"],                    # rune_list
-        ["Flash"],                   # summoner_list
-    ))
-
-    # Mock all loading functions (don't actually load anything)
-    mocker.patch("src.server.loader.patchloader2._load_all_champions", new=AsyncMock())
-    mocker.patch("src.server.loader.patchloader2._load_all_items", new=AsyncMock())
-    mocker.patch("src.server.loader.patchloader2._load_all_runes", new=AsyncMock())
-    mocker.patch("src.server.loader.patchloader2._load_all_summonerspells", new=AsyncMock())
-    mocker.patch("src.server.loader.patchloader2.db.fetch_patch_latest", new=AsyncMock(return_value=None))
-
-    # Mock db.add_patch
-    mock_upsert_patch = mocker.patch("src.server.loader.patchloader2.db.upsert_patch", new=AsyncMock())
-
-    # Run the function
-    await _load_fresh_database(hotfixes)
-
-    # Assert patch was added
-    assert mock_upsert_patch.called
-
-@pytest.mark.asyncio
-async def test_load_fresh_database_failure_saves_incomplete_patch(mocker):
-    mock_patch = "15.7.1"
-    mock_hotfix = datetime(2024, 4, 8)
-    hotfixes = {mock_patch: [mock_hotfix]}
-
-    # Return data
-    mocker.patch("src.server.loader.patchloader2._list_data", return_value=(["Ahri"], [], [], []))
-
-    # Inject a LoadError in one of the loaders
-    mocker.patch("src.server.loader.patchloader2._load_all_champions", new=AsyncMock(side_effect=LoadError(500, "fail", "url", "Champion", "Ahri")))
-    mocker.patch("src.server.loader.patchloader2._load_all_items", new=AsyncMock())
-    mocker.patch("src.server.loader.patchloader2._load_all_runes", new=AsyncMock())
-    mocker.patch("src.server.loader.patchloader2._load_all_summonerspells", new=AsyncMock())
-    mocker.patch("src.server.loader.patchloader2.db.fetch_patch_latest", new=AsyncMock(return_value=None))
-
-    mock_upsert_patch = mocker.patch("src.server.loader.patchloader2.db.upsert_patch", new=AsyncMock())
-
-    await _load_fresh_database(hotfixes)
-
-    # The incomplete patch is saved so the next load can resume it
-    saved_patch = mock_upsert_patch.call_args.args[0]
-    assert saved_patch.loaded_total_count < saved_patch.total_count
-
+    assert await check_patch_available() == ["15.7.1", "15.8.1"]
 
 
 @pytest.mark.asyncio
-async def test_load_all_champions_calls_each(mocker, patch_with_hotfix):
-    # Given
-    champion_list = [
-        "Ahri",
-        "Garen",
-        "Akali"
-    ]
-    mock_session = AsyncMock()
-
-    # Patch _load_champion
-    mocked_load = mocker.patch("src.server.loader.patchloader2._load_champion", new=AsyncMock())
-
-    # When
-    await _load_all_champions(champion_list, mock_session, patch_with_hotfix)
-
-    # Then
-    assert mocked_load.call_count == len(champion_list)
-    mocked_load.assert_any_call("Ahri", mock_session, patch_with_hotfix)
-    mocked_load.assert_any_call("Garen", mock_session, patch_with_hotfix)
-    mocked_load.assert_any_call("Akali", mock_session, patch_with_hotfix)
-
-
-@pytest.mark.asyncio
-async def test_load_all_items_calls_each(mocker, patch_with_hotfix):
+async def test_load_all_items_calls_each(mocker, loaded_patch):
     # Given
     item_list = [("1001", "ItemA"), ("1002", "ItemB")]
     mock_session = AsyncMock()
@@ -295,16 +145,16 @@ async def test_load_all_items_calls_each(mocker, patch_with_hotfix):
     mocked_load_item = mocker.patch("src.server.loader.patchloader2._load_item", new=AsyncMock())
 
     # When
-    await _load_all_items(item_list, mock_session, patch_with_hotfix)
+    await _load_all_items(item_list, mock_session, loaded_patch)
 
     # Then
     assert mocked_load_item.call_count == len(item_list)
-    mocked_load_item.assert_any_call("1001", "ItemA", mock_session, patch_with_hotfix)
-    mocked_load_item.assert_any_call("1002", "ItemB", mock_session, patch_with_hotfix)
+    mocked_load_item.assert_any_call("1001", "ItemA", mock_session, loaded_patch)
+    mocked_load_item.assert_any_call("1002", "ItemB", mock_session, loaded_patch)
 
 
 @pytest.mark.asyncio
-async def test_load_all_runes_calls_each(mocker, patch_with_hotfix):
+async def test_load_all_runes_calls_each(mocker, loaded_patch):
     rune_list = ["Conqueror", "Electrocute"]
     mock_session = AsyncMock()
 
@@ -312,60 +162,32 @@ async def test_load_all_runes_calls_each(mocker, patch_with_hotfix):
     mocked_load_rune = mocker.patch("src.server.loader.patchloader2._load_rune", new=AsyncMock())
     mocker.patch("src.server.loader.patchloader2._load_rune_stat_shards", new=AsyncMock())
 
-    await _load_all_runes(rune_list, mock_session, patch_with_hotfix)
+    await _load_all_runes(rune_list, mock_session, loaded_patch)
 
     assert mocked_load_rune.call_count == len(rune_list)
-    mocked_load_rune.assert_any_call("Conqueror", mock_session, patch_with_hotfix)
-    mocked_load_rune.assert_any_call("Electrocute", mock_session, patch_with_hotfix)
+    mocked_load_rune.assert_any_call("Conqueror", mock_session, loaded_patch)
+    mocked_load_rune.assert_any_call("Electrocute", mock_session, loaded_patch)
 
 
 @pytest.mark.asyncio
-async def test_load_all_summonerspells_calls_each(mocker, patch_with_hotfix):
+async def test_load_all_summonerspells_calls_each(mocker, loaded_patch):
     summoner_list = ["Flash", "Ignite"]
     mock_session = AsyncMock()
 
     # Patch _load_summonerspell
     mocked_load_spell = mocker.patch("src.server.loader.patchloader2._load_summonerspell", new=AsyncMock())
 
-    await _load_all_summonerspells(summoner_list, mock_session, patch_with_hotfix)
+    await _load_all_summonerspells(summoner_list, mock_session, loaded_patch)
 
     assert mocked_load_spell.call_count == len(summoner_list)
-    mocked_load_spell.assert_any_call("Flash", mock_session, patch_with_hotfix)
-    mocked_load_spell.assert_any_call("Ignite", mock_session, patch_with_hotfix)
+    mocked_load_spell.assert_any_call("Flash", mock_session, loaded_patch)
+    mocked_load_spell.assert_any_call("Ignite", mock_session, loaded_patch)
 
 
 
 
 @pytest.mark.asyncio
-async def test_load_champion_success(mocker, patch_with_hotfix, aatrox):
-    session = AsyncMock()
-    
-    # Mock preloaded ChampionJson (from list_data)
-    mock_champion_json = mocker.Mock()
-    mock_champion_json.name = "Ahri"
-    mock_champion_json.image.full = "ahri.png"
-    mock_champion_json.passive.image.full = "passive.png"
-    spell_mock = mocker.Mock()
-    spell_mock.image.full = "q.png"
-    mock_champion_json.spells = [spell_mock, spell_mock, spell_mock]
-
-    mocker.patch("src.server.loader.patchloader2.db.exists_champion_by_name", return_value=False)
-
-    # Patch _fetch_wiki_html
-    mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>ahri</html>")
-
-    # Patch create_champion and dependencies
-    mocker.patch("src.server.loader.patchloader2.ws.scrape_champion", return_value=aatrox)
-    mocker.patch("src.server.loader.patchloader2._load_image", new=AsyncMock())
-    mock_add = mocker.patch("src.server.loader.patchloader2.db.add_champion", new=AsyncMock())
-
-    await _load_champion(mock_champion_json, session, patch_with_hotfix)
-
-    assert mock_add.called
-
-
-@pytest.mark.asyncio
-async def test_load_item_success(mocker, patch_with_hotfix):
+async def test_load_item_success(mocker, loaded_patch):
     item_id = "3031"
     item_json = mocker.Mock()
     item_json.name = "Infinity Edge"
@@ -394,14 +216,14 @@ async def test_load_item_success(mocker, patch_with_hotfix):
     mocker.patch("src.server.loader.patchloader2._load_image", new=AsyncMock())
     mock_add = mocker.patch("src.server.loader.patchloader2.db.add_item", new=AsyncMock())
 
-    await _load_item(item_id, item_json, session, patch_with_hotfix)
+    await _load_item(item_id, item_json, session, loaded_patch)
     assert ws_create_item.called
 
     assert mock_add.call_count == 1
 
 
 @pytest.mark.asyncio
-async def test_load_rune_success(mocker, patch_with_hotfix):
+async def test_load_rune_success(mocker, loaded_patch):
     rune = mocker.Mock()
     rune.name = "Electrocute"
     rune.icon = "path/to/electrocute.png"
@@ -417,18 +239,17 @@ async def test_load_rune_success(mocker, patch_with_hotfix):
     class DummyRune:
         name = "Mock Rune"
         patch = "14.12"
-        hotfix = None
         validated = True
     mocker.patch("src.server.loader.patchloader2.ws.scrape_rune", return_value=DummyRune())
     mock_add = mocker.patch("src.server.loader.patchloader2.db.add_rune", new=AsyncMock())
 
-    await _load_rune(rune_class, session, patch_with_hotfix)
+    await _load_rune(rune_class, session, loaded_patch)
 
     assert mock_add.called
 
 
 @pytest.mark.asyncio
-async def test_load_summonerspell_success(mocker, patch_with_hotfix, smite):
+async def test_load_summonerspell_success(mocker, loaded_patch, smite):
     spell_json = mocker.Mock()
     spell_json.name = "Flash"
     spell_json.image = mocker.Mock(full="flash.png")
@@ -442,7 +263,7 @@ async def test_load_summonerspell_success(mocker, patch_with_hotfix, smite):
     mocker.patch("src.server.loader.patchloader2._load_image", new=AsyncMock())
     mock_add = mocker.patch("src.server.loader.patchloader2.db.add_summonerspell", new=AsyncMock())
 
-    await _load_summonerspell(spell_json, session, patch_with_hotfix)
+    await _load_summonerspell(spell_json, session, loaded_patch)
 
     assert mock_add.called
 
@@ -457,18 +278,18 @@ def test_wiki_name_comes_from_the_name_dictionary(mocker):
 
 
 @pytest.mark.asyncio
-async def test_fetch_wiki_html_fetches_the_given_page(mocker, patch_with_hotfix):
+async def test_fetch_wiki_html_fetches_the_given_page(mocker, loaded_patch):
     session = AsyncMock()
     session.get_html.return_value = "<html>page</html>"
     mocker.patch("src.server.loader.patchloader2.URLS.wiki", "https://wiki/")
 
-    result = await _fetch_wiki_html("Fancy Sword", "Item", patch_with_hotfix, session)
+    result = await _fetch_wiki_html("Fancy Sword", "Item", loaded_patch, session)
 
     session.get_html.assert_called_once_with("https://wiki/Fancy Sword")
     assert result == "<html>page</html>"
 
 @pytest.mark.asyncio
-async def test_fetch_wiki_html_raises_loaderror_on_http_error(mocker, patch_with_hotfix):
+async def test_fetch_wiki_html_raises_loaderror_on_http_error(mocker, loaded_patch):
     session = AsyncMock()
     session.get_html.side_effect = HTTPError(
         url="https://wiki/missing",
@@ -481,7 +302,7 @@ async def test_fetch_wiki_html_raises_loaderror_on_http_error(mocker, patch_with
     mocker.patch("src.server.loader.patchloader2.URLS.wiki", "https://wiki/")
 
     with pytest.raises(LoadError) as exc:
-        await _fetch_wiki_html("MissingItem", "Item", patch_with_hotfix, session)
+        await _fetch_wiki_html("MissingItem", "Item", loaded_patch, session)
 
     assert exc.value.code == 404
     assert exc.value.name == "MissingItem"
@@ -561,225 +382,8 @@ async def test_load_image_rune(mocker):
 
 
 @pytest.mark.asyncio
-async def test_load_patch(mocker):
-    patch_str = "15.8.1"
-    hotfix = datetime(2025, 4, 10)
-    old_patch = NewPatch(patch="15.8.0", hotfix=None)
-
-    # Mocks
-    wikitext = "=== Champions ==="
-    mock_fetch_page = mocker.patch("src.server.loader.patchloader2.fetch_patch_page", return_value=wikitext)
-    mock_parse_notes = mocker.patch(
-        "src.server.loader.patchloader2.parse_patch_notes",
-        return_value={
-            "champions": {},
-            "items": {},
-            "runes": {},
-            "summonerspells": {}
-        }
-    )
-
-    mock_patch_champions = mocker.patch("src.server.loader.patchloader2._patch_champions", return_value=None)
-    mock_patch_items = mocker.patch("src.server.loader.patchloader2._patch_items", return_value=None)
-    mock_patch_runes = mocker.patch("src.server.loader.patchloader2._patch_runes", return_value=None)
-    mock_patch_summoners = mocker.patch("src.server.loader.patchloader2._patch_summonerspells", return_value=None)
-
-    mock_upsert_patch = mocker.patch("src.server.loader.patchloader2.db.upsert_patch")
-
-    await _load_patch(patch_str, hotfix, old_patch)
-
-    mock_fetch_page.assert_called_once_with(mocker.ANY, "V25.08")
-    mock_parse_notes.assert_called_once_with(wikitext, hotfix)
-    mock_patch_champions.assert_called_once()
-    mock_patch_items.assert_called_once()
-    mock_patch_runes.assert_called_once()
-    mock_patch_summoners.assert_called_once()
-    mock_upsert_patch.assert_called_once()
-
-
-
-@pytest.mark.asyncio
-async def test_patch_champions(mocker):
-    patch_obj = NewPatch(patch="15.8.1", hotfix=datetime(2025, 4, 10))
-    session = AsyncMock()
-
-    # Champion currently in DB
-    existing = NewChampion(
-        name="Ahri",
-        champion_id="Ahri",
-        key="103",
-        patch="15.8.0",
-        hotfix=None,
-        image=Image(
-            full="Ahri.png",
-            group="champions"
-        ),
-        validated=True,
-        changes=[],
-        passive=ChampionPassive(
-            name="ahri heal",
-            image=Image(
-            full="Black Cleaver.png",
-            group="passives"
-            )
-        ),
-        q=ChampionAbility(
-            name="q",
-            maxrank=5,
-            image=Image(
-                full="Black Cleaver.png",
-                group="items"
-            ),
-        ),
-        w=ChampionAbility(
-            name="w",
-            maxrank=5,
-            image=Image(
-                full="Black Cleaver.png",
-                group="items"
-            ),
-        ),
-        e=ChampionAbility(
-            name="e",
-            maxrank=5,
-            image=Image(
-                full="Black Cleaver.png",
-                group="items"
-            ),
-        ),
-        r=ChampionAbility(
-            name="r",
-            maxrank=3,
-            image=Image(
-                full="Black Cleaver.png",
-                group="items"
-            ),
-        ),
-        attackspeed=0.625,
-        attackspeed_per_lvl=0.02,
-        attackspeed_ratio=0.625,
-        attack_windup=0.2,
-        windup_modifier=1.0,
-        missile_speed=1500,
-        hp=600, hp_per_lvl=100, mana=300, mana_per_lvl=50,
-        ad=53, ad_per_lvl=3, armor=20, armor_per_lvl=4,
-        mr=30, mr_per_lvl=1.3, movementspeed=330,
-        attackrange=550, hp_regen=6, hp_regen_per_lvl=0.6,
-        mana_regen=8, mana_regen_per_lvl=1.2,
-        range_type=RangeType.RANGED, resource_type="Mana",
-        last_changed="15.7"
-    )
-
-    # Mock Riot API champion list
-    riot_champion_data = {
-        "id": "Milio",
-        "key": "901",
-        "name": "Milio",
-        "title": "",
-        "image": {
-            "full": "Milio.png",
-            "group": "champions"
-        },
-        "stats": {
-            "hp": 560, "hpperlevel": 88,
-            "mp": 340, "mpperlevel": 50,
-            "attackdamage": 50, "attackdamageperlevel": 3,
-            "armor": 22, "armorperlevel": 4.5,
-            "spellblock": 30, "spellblockperlevel": 1.3,
-            "movespeed": 330, "attackrange": 550,
-            "hpregen": 6, "hpregenperlevel": 0.6,
-            "mpregen": 8, "mpregenperlevel": 1.2,
-            "attackspeed": 0.625, "attackspeedperlevel": 2,
-            "crit": 0, "critperlevel": 0,
-        },
-        "partype": "Mana",
-        "spells": [],
-        "passive": {
-            "name": "warmness",
-            "description": "warm",
-            "image": {
-                "full": "Milio.png",
-                "group": "champions"
-            },
-        },
-        "skins": [], "lore": "", "blurb": "",
-        "allytips": [], "enemytips": [],
-        "tags": [], "info": {}, "recommended": []
-    }
-
-    mocker.patch("src.server.loader.patchloader2.db.fetch_champions_by_patch", return_value=[existing])
-    mock_add_champion = mocker.patch("src.server.loader.patchloader2.db.add_champion")
-    mock_load_champion = mocker.patch("src.server.loader.patchloader2._load_champion")
-    session.get_json.return_value = riot_champion_data
-
-    changes = {
-        "new": ["Milio"],
-        "changed": {"Ahri": {"Q": [patch_note("Cooldown increased")]}},
-        "deleted": []
-    }
-
-    await _patch_champions(changes, patch_obj, patch_obj, session)
-
-    mock_load_champion.assert_called_once()
-    mock_add_champion.assert_called()
-
-
-@pytest.mark.asyncio
-async def test_add_changes_champion_applies_correct_diffs():
-    # Setup dummy abilities and passive
-    passive = ChampionPassive(name="Void Shift", image=Image(full="", group=""))
-    q = ChampionAbility(name="Call of the Void", image=Image(full="", group=""), maxrank=5)
-    w = ChampionAbility(name="Null Zone", image=Image(full="", group=""), maxrank=5)
-    e = ChampionAbility(name="Malefic Visions", image=Image(full="", group=""), maxrank=5)
-    r = ChampionAbility(name="Nether Grasp", image=Image(full="", group=""), maxrank=3)
-
-    champ = NewChampion(
-        name="Malzahar",
-        key="90",
-        champion_id="Malzahar",
-        patch="15.8.1",
-        hotfix=None,
-        validated=True,
-        changes=[],
-        image=Image(full="", group=""),
-        hp=500, hp_per_lvl=90, mana=375, mana_per_lvl=30,
-        ad=55, ad_per_lvl=3.3, armor=18, armor_per_lvl=4.5,
-        mr=30, mr_per_lvl=1.3, movementspeed=335,
-        attackrange=500, hp_regen=6, hp_regen_per_lvl=0.6,
-        mana_regen=8, mana_regen_per_lvl=0.8,
-        attackspeed=0.625, attackspeed_per_lvl=2,
-        attackspeed_ratio=0.625, attack_windup=0.2,
-        windup_modifier=1.0, missile_speed=1400,
-        passive=passive, q=q, w=w, e=e, r=r,
-        range_type=RangeType.RANGED, resource_type="Mana",
-        last_changed="15.7"
-    )
-
-    # Mock diff with matching and non-matching entries
-    diff = {
-        "Call of the Void": [patch_note("Now silences for 1.5s instead of 1s")],
-        "Void Shift": [patch_note("Cooldown reduced from 30 to 20")],
-        "Some Untracked Label": [patch_note("General tooltip updated")]
-    }
-
-    await _add_changes_champion(champ, diff)
-
-    # Ability-specific changes
-    assert [change.text for change in champ.q.changes] == ["Now silences for 1.5s instead of 1s"]
-    assert champ.q.validated is False
-
-    assert [change.text for change in champ.passive.changes] == ["Cooldown reduced from 30 to 20"]
-    assert champ.passive.validated is False
-
-    # Remaining diff line gets added to general changes
-    assert [change.text for change in champ.changes] == ["General tooltip updated"]
-    assert champ.validated is False
-
-
-
-@pytest.mark.asyncio
 async def test_patch_items(mocker):
-    patch_obj = NewPatch(patch="15.8.1", hotfix=datetime(2025, 4, 10))
+    patch_obj = NewPatch(patch="15.8.1")
     session = AsyncMock()
 
     # Existing item in DB
@@ -787,7 +391,6 @@ async def test_patch_items(mocker):
         item_id="3071",
         name="Black Cleaver",
         patch="15.8.0",
-        hotfix=None,
         gold=3000,
         into=[],
         from_=[],
@@ -878,7 +481,7 @@ async def test_patch_items(mocker):
 
 @pytest.mark.asyncio
 async def test_patch_runes(mocker):
-    patch_obj = NewPatch(patch="15.8.1", hotfix=datetime(2025, 4, 10))
+    patch_obj = NewPatch(patch="15.8.1")
     session = AsyncMock()
 
     # Mock existing rune
@@ -886,7 +489,6 @@ async def test_patch_runes(mocker):
         rune_id=8126,
         name="Cheap Shot",
         patch="15.8.0",
-        hotfix=None,
         tree="Domination",
         tree_id=8100,
         row=0,
@@ -963,7 +565,7 @@ def test_find_rune_not_found():
 
 @pytest.mark.asyncio
 async def test_patch_summonerspells(mocker):
-    patch_obj = NewPatch(patch="15.8.1", hotfix=datetime(2025, 4, 10))
+    patch_obj = NewPatch(patch="15.8.1")
     session = AsyncMock()
 
     # Mocks
@@ -1063,14 +665,37 @@ async def test_patch_summonerspells(mocker):
 
 
 @pytest.mark.asyncio
-async def test_load_rune_stat_shards_as_stat_modifiers(mocker, patch_with_hotfix):
+async def test_load_rune_stat_shards_as_stat_modifiers(mocker, loaded_patch):
     mocker.patch("src.server.loader.patchloader2.db.exists_rune_by_name", new=AsyncMock(return_value=False))
     mock_add = mocker.patch("src.server.loader.patchloader2.db.add_rune", new=AsyncMock())
 
-    await _load_rune_stat_shards(patch_with_hotfix)
+    await _load_rune_stat_shards(loaded_patch)
 
     stats = {call.args[0].name: call.args[0].passive.stats for call in mock_add.call_args_list}
     [movement_speed] = stats["Flex Movementspeed"]
     assert (movement_speed.stat, movement_speed.formula) == (Stat.MOVESPEED_P, "0.02")  # 2 %, stored as a fraction
     [scaling_health] = stats["Defense Scaling Health"]
     assert (scaling_health.stat, scaling_health.formula) == (Stat.HP, "10 * level")
+
+
+@pytest.mark.asyncio
+async def test_hotfix_others_changes_the_named_objects_in_place(mocker, loaded_patch):
+    sheen = SimpleNamespace(name="Sheen", changes=[patch_note("Cost reduced")], validated=True)
+    thornmail = SimpleNamespace(name="Thornmail", changes=[], validated=True)
+    ghost = SimpleNamespace(name="Ghost", changes=[], validated=True)
+    for type_, documents in (("items", [sheen, thornmail]), ("runes", []), ("summonerspells", [ghost])):
+        mocker.patch(f"src.server.loader.patchloader2.db.fetch_{type_}_by_patch", new=AsyncMock(return_value=documents))
+    update_item = mocker.patch("src.server.loader.patchloader2.db.update_item", new=AsyncMock())
+    mocker.patch("src.server.loader.patchloader2.db.update_rune", new=AsyncMock())
+    mocker.patch("src.server.loader.patchloader2.db.update_summonerspell", new=AsyncMock())
+    notes = {"items": {"changed": {"Sheen": [patch_note("Cost reduced"), patch_note("Damage increased")]}},
+             "summonerspells": {"changed": {"Ghost": [patch_note("Cooldown reduced")]}}}
+
+    await hotfix_others(notes, loaded_patch)
+
+    assert [change.text for change in sheen.changes] == ["Cost reduced", "Damage increased"]
+    assert not sheen.validated and not ghost.validated
+    assert thornmail.validated
+    update_item.assert_called_once_with(sheen)
+    # Sheen already changed in this patch, Ghost is new to the count.
+    assert (loaded_patch.changed_item_count, loaded_patch.changed_summonerspell_count) == (0, 1)

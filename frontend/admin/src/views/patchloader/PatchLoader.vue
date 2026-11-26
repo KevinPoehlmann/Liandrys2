@@ -6,7 +6,8 @@
     <div class="bg-white p-4 rounded shadow">
       <h2 class="font-semibold text-lg">Current Patch</h2>
       <p>Patch: {{ currentPatch?.patch || "—" }}</p>
-      <p>Hotfix: {{ currentPatch?.hotfix || "—" }}</p>
+      <p>Build: {{ currentPatch?.build || "—" }}</p>
+      <p>Last hotfix: {{ currentPatch?.updated_at ? new Date(currentPatch.updated_at).toLocaleString() : "—" }}</p>
       <div v-if="patchLoadStatus === 'no-patch'" class="rounded-md bg-blue-100 p-4 text-blue-800 border border-blue-300">
         No patch loaded yet. Run the patch loader to begin.
       </div>
@@ -26,11 +27,10 @@
       <button @click="fetchAvailable" class="bg-blue-600 text-white py-2 px-4 rounded" :disabled="checking">
         {{ checking ? "Checking..." : "Check for Updates" }}
       </button>
-      <div v-if="available && Object.keys(available).length > 0" class="mt-2">
+      <div v-if="hasUpdates" class="mt-2">
         <ul class="list-disc ml-6">
-          <li v-for="(hotfixes, patch) in available" :key="patch">
-            <strong>{{ patch }}</strong> – Hotfixes: {{ hotfixes.join(', ') || "None" }}
-          </li>
+          <li v-if="available.hotfix"><strong>Hotfix for {{ currentPatch?.patch }}</strong> – {{ hotfixLabel(available.hotfix) }}</li>
+          <li v-for="patch in available.patches" :key="patch"><strong>{{ patch }}</strong></li>
         </ul>
       </div>
       <p v-else-if="available">No updates available.</p>
@@ -38,7 +38,7 @@
 
     <!-- Load Button -->
     <div>
-      <button @click="loadPatch" class="bg-green-600 text-white py-2 px-4 rounded" :disabled="isLoading || !available || Object.keys(available).length === 0">
+      <button @click="loadPatch" class="bg-green-600 text-white py-2 px-4 rounded" :disabled="isLoading || !hasUpdates">
         {{ isLoading ? "Loading Patch..." : "Load New Patch" }}
       </button>
     </div>
@@ -76,12 +76,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import axios from 'axios'
 
 const currentPatch = ref(null)
 const patchLoadStatus = ref("")
 const available = ref(null)
+const hasUpdates = computed(() => Boolean(available.value?.patches.length || available.value?.hotfix))
 const checking = ref(false)
 const log = ref("")
 const logBox = ref(null)
@@ -121,8 +122,15 @@ async function fetchCurrentPatch() {
 async function fetchAvailable() {
   checking.value = true
   const { data } = await axios.get("/admin/patch/status")
-  available.value = data.patches
+  available.value = data
   checking.value = false
+}
+
+function hotfixLabel(hotfix) {
+  const parts = []
+  if (hotfix.build_changed) parts.push(`new build ${hotfix.build}`)
+  if (hotfix.wiki_dates.length) parts.push(`wiki: ${hotfix.wiki_dates.map(date => new Date(date).toLocaleDateString()).join(', ')}`)
+  return parts.join(', ')
 }
 
 async function loadPatch() {

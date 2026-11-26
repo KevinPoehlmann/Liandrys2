@@ -1,4 +1,3 @@
-from datetime import datetime
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import ValidationError
 
@@ -10,8 +9,7 @@ from src.server.database import (
     clear_patch 
 )
 
-from src.server.loader.patchloader import load_data, patch_load_lock
-from src.server.loader.patchloader2 import check_patch_available
+from src.server.loader.patchloader import check_updates, load_data, patch_load_lock
 from src.server.models.patch import NewPatch, Patch
 
 
@@ -39,13 +37,14 @@ async def get_all_patches() -> list[Patch]:
 @admin.get("/status")
 async def get_status() -> dict:
     try:
-        patches = await check_patch_available()
+        patches, hotfix = await check_updates()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Patch check failed: {e}")
 
-    msg = "Updates available!" if patches else "Everything is up to date!"
+    msg = "Updates available!" if patches or hotfix else "Everything is up to date!"
     return {
         "patches": patches,
+        "hotfix": hotfix,
         "msg": msg
     }
 
@@ -64,8 +63,8 @@ async def delete_all_patches() -> bool:
 
 
 @admin.delete("/{patch}")
-async def delete_patch(patch: str, hotfix: datetime | None = None):
-    response = await clear_patch(patch, hotfix)
+async def delete_patch(patch: str):
+    response = await clear_patch(patch)
     if not response:
         raise HTTPException(status_code=400, detail=f"Something went wrong")
     return response

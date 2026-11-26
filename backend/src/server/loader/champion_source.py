@@ -88,11 +88,11 @@ def parse_champion_data(text: str) -> dict[str, dict]:
     return {entry["apiname"]: entry for entry in parse_lua_table(text).values() if "apiname" in entry}
 
 
-async def load_raw_champion(session: SafeSession, patch: str, hotfix: datetime | None, champion_id: str, champion_name: str,
+async def load_raw_champion(session: SafeSession, patch: str, champion_id: str, champion_name: str,
                             build: str, strings: dict[str, str], champion_data: dict | None = None) -> RawChampion:
     cdragon = await fetch_champion_bin(session, cdragon_version(patch), champion_id)
     return RawChampion(
-        champion_id=champion_id, patch=patch, hotfix=hotfix, build=build, fetched_at=datetime.now(),
+        champion_id=champion_id, patch=patch, build=build, fetched_at=datetime.now(),
         cdragon=cdragon, strings=champion_strings(strings, cdragon),
         wiki=await fetch_wiki_templates(session, champion_name), champion_data=champion_data or {},
     )

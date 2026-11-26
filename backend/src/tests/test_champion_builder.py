@@ -107,7 +107,7 @@ class TestBuildChampion():
 
 
     def test_patch_comes_from_the_raw_data(self, veigar):
-        assert (veigar.patch, veigar.hotfix) == ("16.23.1", None)
+        assert veigar.patch == "16.23.1"
 
 
     def test_abilities_start_with_the_default_structure_and_no_rules(self, veigar):

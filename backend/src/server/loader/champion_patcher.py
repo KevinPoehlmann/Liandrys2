@@ -53,14 +53,31 @@ class PatchedChampion:
 
     @property
     def changed(self) -> bool:
-        return bool(self.champion.changes) or any(container.changes for _, container in _containers(self.champion))
+        return has_changes(self.champion)
+
+
+def has_changes(champion: NewChampion) -> bool:
+    return bool(champion.changes) or any(container.changes for _, container in _containers(champion))
+
+
+def keep_earlier_changes(champion: NewChampion, earlier: NewChampion) -> None:
+    """A hotfix adds its lines to the ones its patch already brought."""
+    champion.changes = _merged(earlier.changes, champion.changes)
+    before = dict(_containers(earlier))
+    for slot, container in _containers(champion):
+        if slot in before:
+            container.changes = _merged(before[slot].changes, container.changes)
+
+
+def _merged(earlier: list[Change], new: list[Change]) -> list[Change]:
+    return earlier + [change for change in new if change not in earlier]
 
 
 def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: RawChampion, entry: ChampionJson,
                    patch_notes: dict[str, list[Change]]) -> PatchedChampion:
     """`patch_notes` are this champion's patch note changes per ability name; lines under other headings belong to the champion."""
     champion = NewChampion.parse_obj(old.dict(exclude={"id"}))
-    champion.patch, champion.hotfix = raw.patch, raw.hotfix
+    champion.patch = raw.patch
     champion.last_changed = last_changed_patch(raw.champion_data) or old.last_changed
     max_ranks = {slot: spell.maxrank for slot, spell in zip(SLOTS, entry.spells)}
     new_spells = loaded_spells(raw, max_ranks)

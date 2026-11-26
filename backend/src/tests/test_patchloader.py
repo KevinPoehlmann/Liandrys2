@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
@@ -8,8 +9,12 @@ import pytest
 import src.server.loader.patchloader as loader
 from src.server.loader.names import DDragonName, NameDictionary
 from src.server.loader.patchexceptions import LoadError, PatcherError
+from src.server.models.change import patch_note
+from src.server.models.champion import Champion, RawChampion
 from src.server.models.json_validation import ChampionJson
 from src.server.models.patch import NewPatch
+from src.server.loader.champion_builder import champion_stats
+from src.tests.test_champion_builder import raw_champion
 
 
 CDRAGON = Path(__file__).parent / "static" / "cdragon"
@@ -151,6 +156,12 @@ class TestLoadAllChampions():
         assert database.upsert_raw_champion.call_args.args[0].champion_data["apiname"] == "Veigar"
         assert database.add_champion.call_args.args[0].last_changed == "16.7.1"
 
+    @pytest.mark.asyncio
+    async def test_the_patch_remembers_the_build(self, session, patch, database):
+        await loader.load_all_champions([veigar_entry()], session, patch)
+
+        assert patch.build and patch.build == database.upsert_raw_champion.call_args.args[0].build
+
 
     @pytest.mark.asyncio
     async def test_missing_module_is_only_a_warning(self, session, patch, database, loggers):
@@ -275,10 +286,10 @@ class TestLoadFreshDatabase():
 
     @pytest.mark.asyncio
     async def test_counts_and_stores_the_patch(self, database, old_loader, champions):
-        await loader.load_fresh_database({"16.23.1": []})
+        await loader.load_fresh_database(["16.23.1"])
 
         patch = database.upsert_patch.call_args.args[0]
-        assert (patch.patch, patch.hotfix) == ("16.23.1", None)
+        assert patch.patch == "16.23.1"
         assert (patch.champion_count, patch.item_count, patch.total_count) == (1, 1, 2)
         assert patch.loaded_total_count == 1
         old_loader._load_all_items.assert_called_once()
@@ -288,7 +299,7 @@ class TestLoadFreshDatabase():
     async def test_a_failing_type_still_stores_the_patch(self, database, old_loader, champions, loggers):
         old_loader._load_all_items.side_effect = RuntimeError("wiki down")
 
-        await loader.load_fresh_database({"16.23.1": []})
+        await loader.load_fresh_database(["16.23.1"])
 
         database.upsert_patch.assert_called_once()
         assert "wiki down" in loggers["patch"].error.call_args.args[0]
@@ -299,6 +310,105 @@ class TestLoadFreshDatabase():
         unfinished = NewPatch(patch="16.23.1", champion_count=1, loaded_champion_count=0, cached_documents=3)
         database.fetch_patch_latest.return_value = unfinished
 
-        await loader.load_fresh_database({"16.23.1": []})
+        await loader.load_fresh_database(["16.23.1"])
 
         assert database.upsert_patch.call_args.args[0] is unfinished
+
+
+class TestPendingHotfix():
+
+    @pytest.fixture
+    def sources(self, monkeypatch) -> Mock:
+        wiki = Mock(return_value=[])
+        monkeypatch.setattr(loader, "fetch_build", AsyncMock(return_value=BUILD))
+        monkeypatch.setattr(loader.old, "wiki_hotfix_dates", wiki)
+        return wiki
+
+
+    @pytest.mark.asyncio
+    async def test_same_build_and_no_wiki_hotfix_is_nothing(self, sources):
+        assert await loader.pending_hotfix(NewPatch(patch="16.23.1", build=BUILD)) is None
+
+
+    @pytest.mark.asyncio
+    async def test_a_new_build_is_a_hotfix(self, sources):
+        hotfix = await loader.pending_hotfix(NewPatch(patch="16.23.1", build="16.23.1000"))
+
+        assert (hotfix.build, hotfix.build_changed, hotfix.wiki_dates) == (BUILD, True, [])
+
+
+    @pytest.mark.asyncio
+    async def test_only_wiki_hotfixes_after_the_last_run_day_count(self, sources):
+        sources.return_value = [datetime(2026, 11, 20), datetime(2026, 11, 22)]
+        patch = NewPatch(patch="16.23.1", build=BUILD, updated_at=datetime(2026, 11, 20, 18, 0))
+
+        hotfix = await loader.pending_hotfix(patch)
+
+        assert (hotfix.build_changed, hotfix.wiki_dates) == (False, [datetime(2026, 11, 22)])
+
+
+    @pytest.mark.asyncio
+    async def test_without_a_run_the_load_day_counts(self, sources):
+        # The load already took the earlier wiki hotfixes with it.
+        sources.return_value = [datetime(2026, 11, 20), datetime(2026, 11, 22)]
+        patch = NewPatch(patch="16.23.1", build=BUILD, timestamp=datetime(2026, 11, 21, 9, 0))
+
+        hotfix = await loader.pending_hotfix(patch)
+
+        assert hotfix.wiki_dates == [datetime(2026, 11, 22)]
+
+
+class TestHotfixOneChampion():
+
+    @pytest.fixture
+    def veigar(self, load_champion) -> Champion:
+        champion = load_champion("veigar").copy(update=champion_stats(raw_champion("Veigar").cdragon))
+        champion.changes = [patch_note("Base health increased")]
+        return champion
+
+
+    @pytest.fixture
+    def stored_raw(self, database) -> RawChampion:
+        raw = raw_champion("Veigar")
+        for spell in raw.cdragon.values():
+            if isinstance(spell, dict) and spell.get("mScriptName") == "VeigarBalefulStrike":
+                next(value for value in spell["mSpell"]["DataValues"] if value["name"] == "BaseDamage")["values"][1] = 70
+        database.fetch_raw_champion = AsyncMock(return_value=raw)
+        database.update_champion = AsyncMock()
+        return raw
+
+
+    @pytest.mark.asyncio
+    async def test_compares_with_its_own_patch_and_keeps_earlier_lines(self, session, patch, database, veigar,
+                                                                       stored_raw):
+        strings = fixture("veigar.strings.json")["entries"]
+        await loader.hotfix_one_champion(veigar_entry(), veigar, {}, session, patch, BUILD, strings, {})
+
+        database.fetch_raw_champion.assert_called_once_with("Veigar", "16.23.1")
+        champion = database.update_champion.call_args.args[0]
+        assert champion.id == veigar.id
+        assert [change.text for change in champion.changes] == ["Base health increased"]
+        assert [change.text for change in champion.q.changes] == [
+            "BaseDamage: by_rank(70, 120, 160, 200, 240) ⇒ by_rank(80, 120, 160, 200, 240)"]
+        assert patch.changed_champion_count == 0  # already changed in this patch
+
+
+class TestLoadData():
+
+    @pytest.mark.asyncio
+    async def test_the_hotfix_comes_before_the_next_patch(self, database, monkeypatch):
+        latest = NewPatch(patch="16.22.1")
+        hotfixed = NewPatch(patch="16.22.1", build=BUILD)
+        hotfix = loader.Hotfix(BUILD, True)
+        database.fetch_patch_latest.return_value = latest
+        monkeypatch.setattr(loader.old, "_reload_info_loader", Mock())
+        monkeypatch.setattr(loader, "check_updates", AsyncMock(return_value=(["16.23.1"], hotfix)))
+        load_hotfix = AsyncMock(return_value=hotfixed)
+        load_patches = AsyncMock()
+        monkeypatch.setattr(loader, "load_hotfix", load_hotfix)
+        monkeypatch.setattr(loader, "load_patches", load_patches)
+
+        await loader.load_data()
+
+        load_hotfix.assert_called_once_with(latest, hotfix)
+        load_patches.assert_called_once_with(["16.23.1"], hotfixed)

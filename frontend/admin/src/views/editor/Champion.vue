@@ -11,7 +11,6 @@
         <p><strong>ID:</strong> {{ champion?._id }}</p>
         <p><strong>Champion ID:</strong> {{ champion?.champion_id }}</p>
         <p><strong>Patch:</strong> {{ champion?.patch }}</p>
-        <p><strong>Hotfix:</strong> {{ champion?.hotfix || '—' }}</p>
         <p><strong>Last Changed:</strong> {{ champion?.last_changed }}</p>
       </div>
     </div>
