@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.server.loader.champion_builder import (apply_loader_part, build_champion, champion_stats, initial_structure,
-                                                loaded_spells, wiki_mismatches)
+from src.server.loader.champion_builder import (SLOTS, apply_loader_part, build_champion, champion_stats,
+                                                initial_structure, loaded_spells, missing_cooldowns, wiki_mismatches)
 from src.server.loader.champion_source import champion_strings, parse_champion_data, parse_wiki_templates
 from src.server.models.champion import RawChampion
 from src.server.models.enums import AdaptiveType, RangeType, ResourceType
@@ -184,6 +184,33 @@ class TestWikiCrossCheck():
         assert wiki_mismatches(veigar_with_champion_data(), {}) == []
 
 
+class TestMissingCooldowns():
+
+    @pytest.fixture
+    def veigar(self):
+        veigar = build_champion(raw_champion("Veigar"), ChampionJson(**fixture("veigar.ddragon.json")))
+        for slot in SLOTS:
+            getattr(veigar, slot).values["cooldownTime"] = "by_rank(8, 7, 6, 5, 4)"
+        return veigar
+
+
+    def test_loaded_cooldowns_are_not_missing(self, veigar):
+        assert missing_cooldowns(veigar) == []
+
+
+    def test_zero_cooldown_on_the_default_is_missing(self, veigar):
+        # Annie E: CDragon has no cooldown at all, the game sets 10 s by script
+        veigar.e.values["cooldownTime"] = "0"
+        assert missing_cooldowns(veigar) == ["e"]
+
+
+    def test_a_hand_entered_cooldown_silences_it(self, veigar):
+        veigar.e.values["cooldownTime"] = veigar.w.values["cooldownTime"] = "0"
+        veigar.e.cooldown = "10"
+        veigar.w.cooldown = "0"  # confirmed: no cooldown (Vayne W)
+        assert missing_cooldowns(veigar) == []
+
+
 class TestApplyLoaderPart():
 
     def test_overwrites_values_and_tooltips_only(self, load_champion, veigar_spells):
@@ -273,6 +300,16 @@ class TestChampionStats():
         attack = next(r for r in nidalee.values() if isinstance(r, dict) and r.get("mScriptName") == "NidaleeBasicAttack")
         del attack["mSpell"]["mMissileSpec"]
         assert champion_stats(nidalee)["range_type"] == RangeType.MELEE
+
+
+    def test_ranged_champion_without_missile_stays_ranged(self):
+        # Azir, Thresh, Senna, Vel'Koz, Zeri: ranged, but their attacks hit at once. Only form champions list both types.
+        veigar = fixture("veigar.bin.json")
+        attack = next(r for r in veigar.values() if isinstance(r, dict) and r.get("mScriptName") == "VeigarBasicAttack")
+        del attack["mSpell"]["mMissileSpec"]
+
+        stats = champion_stats(veigar)
+        assert (stats["range_type"], stats["missile_speed"]) == (RangeType.RANGED, 0)
 
 
     def test_crit_damage_per_champion(self):

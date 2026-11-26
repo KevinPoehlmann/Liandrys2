@@ -175,6 +175,17 @@ class TestLoadAllChampions():
 
 
     @pytest.mark.asyncio
+    async def test_missing_cooldowns_are_logged(self, session, patch, database, loggers, monkeypatch):
+        monkeypatch.setattr(loader, "missing_cooldowns", Mock(return_value=["w"]))
+
+        await loader.load_all_champions([veigar_entry()], session, patch)
+
+        warnings = [call.args[0] for call in loggers["patch"].warning.call_args_list]
+        assert any(warning.startswith("[CHAMPION] [COOLDOWN] [Veigar] W Dark Matter:") for warning in warnings)
+        database.add_champion.assert_called_once()
+
+
+    @pytest.mark.asyncio
     async def test_mismatches_are_logged(self, session, patch, database, loggers, monkeypatch):
         monkeypatch.setattr(loader, "wiki_mismatches", Mock(return_value=["hp: wiki 1, CDragon 2"]))
 

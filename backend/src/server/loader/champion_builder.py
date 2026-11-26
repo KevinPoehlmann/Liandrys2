@@ -16,6 +16,7 @@ from src.server.models.passive import ChampionPassive, Passive
 
 
 SLOTS = ("q", "w", "e", "r")
+DEFAULT_COOLDOWN = "cooldownTime"
 WIKI_SLOTS = {"Q": "q", "W": "w", "E": "e", "R": "r", "I": "passive"}  # the wiki calls the passive "I" (innate)
 REDIRECT = re.compile(r"#REDIRECT \[\[(.+?)\]\]")
 
@@ -70,6 +71,14 @@ def wiki_mismatches(champion: NewChampion, champion_data: dict) -> list[str]:
         if name in champion_data and ours and champion_data[name].lower() != ours.value.lower():
             mismatches.append(f"{field}: wiki {champion_data[name]}, CDragon {ours.value}")
     return mismatches
+
+
+def missing_cooldowns(champion: NewChampion) -> list[str]:
+    """Slots still on the default cooldown although CDragon's is 0. Often a script sets the real one (Annie E, Lux Q,
+    Tahm Kench R), so it has to be entered by hand; "0" there confirms an ability without a cooldown (Vayne W)."""
+    return [slot for slot in SLOTS
+            if (ability := getattr(champion, slot)).cooldown == DEFAULT_COOLDOWN
+            and ability.values.get(DEFAULT_COOLDOWN) == "0"]
 
 
 def _wiki_windup(stats: dict) -> float | None:
@@ -208,7 +217,7 @@ def apply_loader_part(champion: NewChampion, spells: dict[str, LoadedSpell]) -> 
 def initial_structure(ability: Ability, values: dict[str, str]) -> None:
     """A newly loaded ability starts with the defaults that fit almost every ability; afterwards they are hand-owned."""
     ability.cost = "mana"
-    ability.cooldown = "cooldownTime"
+    ability.cooldown = DEFAULT_COOLDOWN
     if "maxAmmo" in values:
         ability.charges = "maxAmmo"
         ability.recharge = "ammoRechargeTime"

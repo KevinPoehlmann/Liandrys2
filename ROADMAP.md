@@ -29,8 +29,7 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching (in progress), (3) summoner spells, (4) items incl. actives, (5) runes.
 
 **Open from the 16.20 → 16.21 run** (throwaway DB `liandrys-patchtest`, port 27018, kept for further runs and Phase 4):
-- [ ] Karthus has his cast offset only in `critAttacks` (wiki 0.04375); the basic attack's default 0 is used, the cross-check warns
-- [ ] Abilities without a cooldown in CDragon (Annie E: no `Cooldown`/`cooldownTime` at all, wiki 10 s, probably set by a script): the loader gives `cooldownTime = 0` silently. Warn in the patch log when a ranked ability's cooldown is 0, so the hand-owned `cooldown` formula gets filled in
+- [ ] Karthus Q loads `KarthusLayWasteA1` (2 ammo, cooldown 0) instead of `KarthusLayWaste` (1 s), so it gets charges and a `[COOLDOWN]` warning; check which spell the record's Q slot should map to
 
 **Then, one type at a time, each complete like the champions (first load from CDragon/wiki, patching, hotfixes, real run on the throwaway DB):**
 - [ ] (3) Summoner spells
@@ -136,6 +135,7 @@ Ideas collected for later; mostly frontend.
 - `database.py`: wrong logger name, extra `id` field on update, `clear_patch` ignores `patch_left`
 - `logger.py`: duplicate formatter, handlers attached twice, `read_text` without encoding
 - Routes: duplicate `parse_from_request`, enum endpoints duplicating `/enum`
+- Crit windup: a crit uses the timing of its `critAttacks` slot (practice tool: Karthus' crit leaves ~0.07 s later, see decisions "Windup checked"). Load a `crit_windup` per champion and use it when an attack crits; a new champion field, so decide the format first
 - Decide: champion stats `int` vs `float` (Pydantic v1 silently truncates floats in `int` fields)
 - ~~Manual effect data lives per patch: fixes in older patches don't reach newer ones~~ (Phase 4: validating copies forward)
 - Roles (live patch): top laners reach level 20 (formulas already expect 20 values; the user UI still caps at 18), and each role brings small perks that the request has to ask for

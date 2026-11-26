@@ -12,7 +12,8 @@ import aiohttp
 
 import src.server.database as db
 import src.server.loader.patchloader2 as old
-from src.server.loader.champion_builder import SLOTS, LoadedSpell, build_champion, loaded_spells, wiki_mismatches
+from src.server.loader.champion_builder import (SLOTS, LoadedSpell, build_champion, loaded_spells, missing_cooldowns,
+                                                wiki_mismatches)
 from src.server.loader.champion_patcher import has_changes, keep_earlier_changes, patch_champion, spells_from_document
 from src.server.loader.champion_source import (cdragon_version, fetch_build, fetch_champion_data, fetch_strings,
                                                load_raw_champion)
@@ -221,12 +222,19 @@ async def _stored_raw_champion(entry: ChampionJson, session: SafeSession, patch:
 
 
 async def _store_champion(champion: NewChampion, raw: RawChampion, session: SafeSession, patch: NewPatch) -> None:
+    _warn_missing_cooldowns(champion)
     for mismatch in wiki_mismatches(champion, raw.champion_data):
         patch_logger.warning(f"[CHAMPION] [WIKI] [{champion.name}] {mismatch}")
     for failure in await load_champion_images(session, champion, raw, cdragon_version(patch.patch)):
         patch_logger.warning(f"[CHAMPION] [IMAGE] [{champion.name}] {failure}")
     await db.add_champion(champion)
     patch.loaded_champion_count += 1
+
+
+def _warn_missing_cooldowns(champion: NewChampion) -> None:
+    for slot in missing_cooldowns(champion):
+        patch_logger.warning(f"[CHAMPION] [COOLDOWN] [{champion.name}] {slot.upper()} {getattr(champion, slot).name}: "
+                             f"CDragon has no cooldown, enter it by hand (\"0\" if it has none)")
 
 
 async def load_patches(patches: list[str], latest: NewPatch) -> None:
@@ -356,6 +364,7 @@ async def hotfix_one_champion(entry: ChampionJson, current: Champion, notes: dic
         patch_logger.info(f"[CHAMPION] [HOTFIX] [{entry.name}] {name} unvalidated: {'; '.join(reasons)}")
     if result.changed and not has_changes(current):
         patch.changed_champion_count += 1
+    _warn_missing_cooldowns(result.champion)
     keep_earlier_changes(result.champion, current, hotfixed_at)
     await db.update_champion(Champion(id=current.id, **result.champion.dict()))
     load_logger.info(f"[CHAMPION] {entry.name} ✔ Hotfixed")
