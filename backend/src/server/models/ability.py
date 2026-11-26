@@ -18,6 +18,7 @@ class Ability(BaseModel):
     cooldown: str = "0"
     cast_time: str = "0"
     recharge: str = "0"
+    charges: str = "0"  # 0: no charges, `recharge` is the time per charge
     cooldown_starts_after: str | None = None
     cooldown_starts_on_cast: bool = False
     usable_during_cc: bool = False  # Cleanse: only suppression and stasis block it

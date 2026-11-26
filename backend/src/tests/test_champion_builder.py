@@ -203,9 +203,18 @@ class TestApplyLoaderPart():
     def test_initial_structure_points_to_the_loaded_values(self, load_champion):
         ability = load_champion("veigar").q
 
-        initial_structure(ability)
+        initial_structure(ability, {})
 
         assert (ability.cost, ability.cooldown) == ("mana", "cooldownTime")
+        assert (ability.charges, ability.recharge) == ("0", "0")
+
+
+    def test_initial_structure_points_to_loaded_charges(self, load_champion):
+        ability = load_champion("veigar").q
+
+        initial_structure(ability, {"maxAmmo": "2", "ammoRechargeTime": "by_rank(16, 14.5, 13, 11.5, 10)"})
+
+        assert (ability.charges, ability.recharge) == ("maxAmmo", "ammoRechargeTime")
 
 
 class TestChampionStats():
@@ -235,6 +244,35 @@ class TestChampionStats():
         cdragon["Characters/Veigar/CharacterRecords/Root"]["basicAttack"] = {}
 
         assert champion_stats(cdragon)["attack_windup"] == 0.3
+
+
+    def test_missile_of_a_named_attack_in_other_case(self):
+        # Fiddlesticks: record `Fiddlesticks`, attack named in `mAttackName` as `FiddleSticksBasicAttack`.
+        cdragon = fixture("veigar.bin.json")
+        cdragon["Characters/Veigar/CharacterRecords/Root"]["basicAttack"] = {"mAttackName": "VEIGARBasicAttack"}
+
+        assert champion_stats(cdragon)["missile_speed"] == 1500
+
+
+    def test_missile_speed_of_accelerating_and_instant_attacks(self):
+        cdragon = fixture("veigar.bin.json")
+        spell = next(r for r in cdragon.values() if isinstance(r, dict) and r.get("mScriptName") == "VeigarBasicAttack")["mSpell"]
+        spell["mMissileSpec"]["movementComponent"] = {"mInitialSpeed": 2000.0, "mMaxSpeed": 3000.0, "mAcceleration": -15000.0}
+        assert champion_stats(cdragon)["missile_speed"] == 2000  # Ivern
+
+        del spell["mMissileSpec"]
+        spell["missileSpeed"] = 1000.0
+        assert champion_stats(cdragon)["missile_speed"] == 0  # Thresh: no missile, the old field is stale
+
+
+    def test_form_champion_is_ranged_only_with_a_missile(self):
+        # Jayce and Nidalee both list Ranged and Melee; Jayce's record is his hammer.
+        nidalee = fixture("nidalee.bin.json")
+        assert champion_stats(nidalee)["range_type"] == RangeType.RANGED
+
+        attack = next(r for r in nidalee.values() if isinstance(r, dict) and r.get("mScriptName") == "NidaleeBasicAttack")
+        del attack["mSpell"]["mMissileSpec"]
+        assert champion_stats(nidalee)["range_type"] == RangeType.MELEE
 
 
     def test_crit_damage_per_champion(self):

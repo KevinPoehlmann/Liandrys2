@@ -93,6 +93,22 @@ class TestRankValues():
         assert (values["cooldownTime"], values["mana"]) == ("by_rank(8, 7)", "by_rank(40, 50)")
 
 
+    def test_charges_are_read_like_the_cooldown(self):
+        # 16.21 Zyra W
+        spell = {"mAmmoRechargeTime": [17.5, 16, 14.5, 13, 11.5, 10, 8.5], "mMaxAmmo": [2] * 7}
+
+        values = spell_values(spell, max_rank=5).values
+
+        assert (values["ammoRechargeTime"], values["maxAmmo"]) == ("by_rank(16, 14.5, 13, 11.5, 10)", "2")
+
+
+    def test_a_recharge_time_without_charges_is_left_out(self):
+        # 16.21 Rengar Q: a single ammo is just the cooldown
+        spell = {"mAmmoRechargeTime": [6, 6, 5.5, 5, 4.5, 4, 4], "mMaxAmmo": [1] * 7}
+
+        assert "ammoRechargeTime" not in spell_values(spell, max_rank=5).values
+
+
     def test_spell_fields_are_always_present(self):
         values = spell_values({}, max_rank=5).values
 

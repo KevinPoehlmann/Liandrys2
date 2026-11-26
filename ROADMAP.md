@@ -29,9 +29,6 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching (in progress), (3) summoner spells, (4) items incl. actives, (5) runes.
 
 **Open from the 16.20 → 16.21 run** (throwaway DB `liandrys-patchtest`, port 27018, kept for further runs and Phase 4):
-- [ ] An extra ability whose numbers live in another slot's values (Nidalee's Pounce uses R's `PounceDamage`) is unvalidated as "patch notes only" although the data line exists on R
-- [ ] Ammo abilities: `mAmmoRechargeTime` (52 spells, Zyra W) is not read
-- [ ] Fiddlesticks' missile speed is 0 (wiki 1750; attack spell `FiddleSticksBasicAttack`, probably case)
 - [ ] Karthus has his cast offset only in `critAttacks` (wiki 0.04375); the basic attack's default 0 is used, the cross-check warns
 - [ ] Abilities without a cooldown in CDragon (Annie E: no `Cooldown`/`cooldownTime` at all, wiki 10 s, probably set by a script): the loader gives `cooldownTime = 0` silently. Warn in the patch log when a ranked ability's cooldown is 0, so the hand-owned `cooldown` formula gets filled in
 
@@ -88,6 +85,7 @@ AI drafts as a pilot, in Claude Code sessions on the Pro subscription (no API ke
 - [ ] Crits in the UI: pick crit/no crit per attack below a threshold (e.g. 5 attacks) and show how likely that number of crits is (pseudo-random algorithm, docs/league-mechanics.md); expected value above (`Action.crit` = None)
 - [ ] Item groups from `limitations` ("Limited to 1 Spellblade item"): reject two items of one group when picking items
 - [ ] Scenario inputs in the UI: stack configuration (placeholder today, e.g. Veigar Q kills) and checkboxes like "wall behind the target" (Vayne E `terrain`)
+- [ ] Starting form for form champions (Elise, Gnar, Jayce, Kayle, Nidalee): the user picks the form the fight starts in. The champion's stats are the form of its CDragon record (Jayce: hammer, melee, missile 0). The other form's range, range type and missile speed (Jayce's `JayceRangedAttack` 2000, Draven's script missiles `DravenAttackP_*` 1600) aren't loaded yet; decide the data format (form stats per champion vs. stages with stat overrides) before
 - [ ] Ability points: lowering the level should drop excess points
 - [ ] Ignore outdated simulation responses (race when clicking fast)
 - [ ] Error display: show what doesn't work instead of a blank page. A `getJson(url, what)` wrapper in `utils/fetch.ts` for every fetch (today `onMounted`/`loadPatchData` check neither `res.ok` nor errors), an error bar naming the function ("could not load items for patch 25.1", error id), reactions per `code` (e.g. "Veigar Q isn't entered yet"), and `app.config.errorHandler` as the last net for render errors

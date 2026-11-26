@@ -7,7 +7,7 @@ from src.server.loader.cdragon import field_hash
 from src.server.loader.champion_builder import champion_stats, loaded_spells
 from src.server.loader.champion_patcher import (_calculation_names, _note_lines, has_changes, keep_earlier_changes,
                                                 patch_champion, spells_from_document, used_names)
-from src.server.models.ability import Ability
+from src.server.models.ability import Ability, ExtraAbility
 from src.server.models.change import Change, patch_note
 from src.server.models.enums import ChangeSource
 from src.server.models.json_validation import ChampionJson
@@ -52,6 +52,10 @@ def patch(veigar, old_raw, new_raw, notes=None, old_spells=None):
     old_spells = old_spells or loaded_spells(old_raw, VEIGAR_RANKS)
     entry = ChampionJson(**fixture("veigar.ddragon.json"))
     return patch_champion(veigar, old_spells, new_raw, entry, notes or {})
+
+
+def extra_ability(champion) -> ExtraAbility:
+    return ExtraAbility(**champion.r.dict() | {"name": "Cougar Pounce", "validated": True}, key="pounce", rank_from="r")
 
 
 def texts(container) -> list[str]:
@@ -233,6 +237,26 @@ class TestValidation():
         assert result.unvalidated["Baleful Strike"] == ["named in the patch notes only"]
         assert result.champion.q.changes == [Change(source=ChangeSource.PATCH_NOTES, text="Now pierces")]
         assert texts(result.champion) == ["Splash art updated"]
+
+
+    def test_an_extra_ability_is_backed_by_the_data_of_the_slot_it_ranks_with(self, veigar, old_raw, new_raw):
+        # 16.21: Nidalee's Pounce damage changed in R's PounceDamage
+        veigar.extra_abilities = [extra_ability(veigar)]
+        data_value(new_raw.cdragon, "VeigarR", "BaseDamage")["values"][1] = 200
+
+        result = patch(veigar, old_raw, new_raw, {"Cougar Pounce": [patch_note("Base damage reduced")]})
+
+        assert result.champion.extra_abilities[0].validated
+        assert texts(result.champion.extra_abilities[0]) == ["Base damage reduced"]
+
+
+    def test_an_extra_ability_named_in_the_patch_notes_only_unvalidates(self, veigar, old_raw, new_raw):
+        veigar.extra_abilities = [extra_ability(veigar)]
+        data_value(new_raw.cdragon, "VeigarBalefulStrike", "BaseDamage")["values"][1] = 90
+
+        result = patch(veigar, old_raw, new_raw, {"Cougar Pounce": [patch_note("Now pierces")]})
+
+        assert result.unvalidated["Cougar Pounce"] == ["named in the patch notes only"]
 
 
     def test_two_part_abilities_match_either_name(self):

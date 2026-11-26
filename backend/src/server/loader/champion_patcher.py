@@ -13,7 +13,7 @@ from src.server.loader.cdragon import (NAMED_BREAKPOINT, NAMED_BREAKPOINTS, NAME
                                        SpellValues, field_hash, name_hash, value_name)
 from src.server.loader.champion_builder import (SLOTS, LoadedSpell, apply_loader_part, champion_stats,
                                                 last_changed_patch, loaded_spells)
-from src.server.models.ability import Ability
+from src.server.models.ability import Ability, ExtraAbility
 from src.server.models.change import Change, with_hotfix_lines
 from src.server.models.champion import NewChampion, RawChampion
 from src.server.models.enums import ChangeSource
@@ -98,7 +98,7 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
         if renames or buffs:
             _rename_hand_made(container, slot, renames, buffs)
         reasons = unvalidating_reasons(slot, used_names(container, slot), diffs)
-        if lines and not diff.lines:
+        if lines and not _data_lines_behind(container, diff, diffs):
             reasons.append("named in the patch notes only")
         if container.validated and reasons:
             container.validated = False
@@ -108,6 +108,14 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
     apply_loader_part(champion, new_spells)
     champion.validated = all(container.validated for _, container in _containers(champion))
     return PatchedChampion(champion, unvalidated)
+
+
+def _data_lines_behind(container: Ability | Passive, diff: SpellDiff, diffs: dict[str, SpellDiff]) -> list[str]:
+    # An extra ability has no spell of its own: CDragon keeps its numbers in the spell it ranks with
+    # (Nidalee's Pounce damage is R's PounceDamage).
+    if isinstance(container, ExtraAbility):
+        return diffs.get(container.rank_from.value, SpellDiff()).lines
+    return diff.lines
 
 
 def _note_lines(notes: dict[str, list[Change]], name: str) -> list[Change]:

@@ -82,7 +82,7 @@ def _wiki_windup(stats: dict) -> float | None:
 
 def _new_ability(spell: "LoadedSpell", ddragon_name: str, max_rank: int, image: Image) -> ChampionAbility:
     ability = ChampionAbility(name=spell.name or ddragon_name, maxrank=max_rank, image=image)
-    initial_structure(ability)
+    initial_structure(ability, spell.values.values)
     return ability
 
 
@@ -158,7 +158,7 @@ def champion_stats(cdragon: dict) -> dict:
         "attack_windup": _attack_windup(record.get("basicAttack", {})),
         "windup_modifier": record.get("basicAttack", {}).get("mAttackDelayCastOffsetPercentAttackSpeedRatio", 1.0),
         "missile_speed": _missile_speed(cdragon, record),
-        "range_type": RangeType(record.get("purchaseIdentities", ["Melee"])[0]),  # Nidalee lists both, her base form first
+        "range_type": _range_type(cdragon, record),
         "adaptive_type": AdaptiveType.MAGIC if record.get("mAdaptiveForceToAbilityPowerWeight") else AdaptiveType.PHYSICAL,
     }
 
@@ -172,10 +172,25 @@ def _attack_windup(attack: dict) -> float:
 
 
 def _missile_speed(cdragon: dict, record: dict) -> float:
-    # The spell's `missileSpeed` field is outdated; the missile's movement component holds the real speed.
-    attack = next((r for r in cdragon.values() if isinstance(r, dict)
-                   and r.get("mScriptName") == f"{record['mCharacterName']}BasicAttack"), {})
-    return attack.get("mSpell", {}).get("mMissileSpec", {}).get("movementComponent", {}).get("mSpeed", 0.0)
+    # Only the missile's movement component is real; the spell's `missileSpeed` is outdated (Veigar 1100 instead of 1500)
+    # and set on attacks without a missile too (Riven, Thresh). No missile spec = the attack hits at once.
+    # Accelerating missiles start at their initial speed, which is what the wiki lists (Aurelion Sol, Ivern).
+    movement = _attack_spell(cdragon, record).get("mSpell", {}).get("mMissileSpec", {}).get("movementComponent", {})
+    return movement.get("mSpeed", movement.get("mInitialSpeed", 0.0))
+
+
+def _range_type(cdragon: dict, record: dict) -> RangeType:
+    # Form champions (Elise, Gnar, Jayce, Kayle, Nidalee) list both; the record holds one form, which its attack tells.
+    identities = record.get("purchaseIdentities", ["Melee"])
+    if len(identities) == 1:
+        return RangeType(identities[0])
+    return RangeType.RANGED if _missile_speed(cdragon, record) else RangeType.MELEE
+
+
+def _attack_spell(cdragon: dict, record: dict) -> dict:
+    # Riot names the attack only when it isn't the default; the game hashes names in lower case (FiddleSticksBasicAttack).
+    name = record.get("basicAttack", {}).get("mAttackName", f"{record['mCharacterName']}BasicAttack").lower()
+    return next((r for r in cdragon.values() if isinstance(r, dict) and r.get("mScriptName", "").lower() == name), {})
 
 
 def _character_record(cdragon: dict) -> dict:
@@ -190,7 +205,10 @@ def apply_loader_part(champion: NewChampion, spells: dict[str, LoadedSpell]) -> 
         container.tooltip = spell.tooltip
 
 
-def initial_structure(ability: Ability) -> None:
+def initial_structure(ability: Ability, values: dict[str, str]) -> None:
     """A newly loaded ability starts with the defaults that fit almost every ability; afterwards they are hand-owned."""
     ability.cost = "mana"
     ability.cooldown = "cooldownTime"
+    if "maxAmmo" in values:
+        ability.charges = "maxAmmo"
+        ability.recharge = "ammoRechargeTime"

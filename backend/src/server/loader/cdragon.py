@@ -69,6 +69,8 @@ NAMED_BREAKPOINT = {"mAdditionalBonusAtThisLevel": "AdditionalBonusAtThisLevelDa
 # have no rank 0). The old lists are stale copies Riot no longer updates (Darius Q in 26.21: cooldownTime 9–5,
 # Cooldown and the wiki 9–4); they stay as a fallback.
 SPELL_FIELDS = {"cooldownTime": (("Cooldown", "cooldownTime"), 1), "mana": (("manaValues", "mana"), 0)}
+# Only read for real charges: many spells carry a leftover recharge time with no or a single ammo (Rengar, Irelia R: -1).
+AMMO_FIELDS = {"ammoRechargeTime": (("mAmmoRechargeTime",), 1), "maxAmmo": (("mMaxAmmo",), 1)}
 
 
 class UnsupportedCalculation(Exception):
@@ -89,6 +91,9 @@ def spell_values(spell: dict, max_rank: int) -> SpellValues:
     for name, (sources, first_rank) in SPELL_FIELDS.items():
         # Always present, so `cooldown: "cooldownTime"` and `cost: "mana"` resolve even for free spells.
         _add(result, name, lambda: _rank_value(_spell_field(spell, sources), max_rank, first_rank))
+    if max(_spell_field(spell, ("mMaxAmmo",)) or [0]) >= 2:
+        for name, (sources, first_rank) in AMMO_FIELDS.items():
+            _add(result, name, lambda: _rank_value(_spell_field(spell, sources), max_rank, first_rank))
     calculations = spell.get("mSpellCalculations") or {}
     for index in sorted(_effect_indices(calculations)):
         _add(result, _effect_name(index), lambda: _rank_value(_effect_amount(spell, index), max_rank))
