@@ -70,6 +70,7 @@ NAMED_BREAKPOINT = {"mAdditionalBonusAtThisLevel": "AdditionalBonusAtThisLevelDa
 # Cooldown and the wiki 9–4); they stay as a fallback.
 SPELL_FIELDS = {"cooldownTime": (("Cooldown", "cooldownTime"), 1), "mana": (("manaValues", "mana"), 0)}
 # Only read for real charges: many spells carry a leftover recharge time with no or a single ammo (Rengar, Irelia R: -1).
+# Hidden ammo is the game's internals, not charges (Karthus Q: 2 hidden, 1 s each, which is its 1 s cooldown in the wiki).
 AMMO_FIELDS = {"ammoRechargeTime": (("mAmmoRechargeTime",), 1), "maxAmmo": (("mMaxAmmo",), 1)}
 
 
@@ -91,7 +92,7 @@ def spell_values(spell: dict, max_rank: int) -> SpellValues:
     for name, (sources, first_rank) in SPELL_FIELDS.items():
         # Always present, so `cooldown: "cooldownTime"` and `cost: "mana"` resolve even for free spells.
         _add(result, name, lambda: _rank_value(_spell_field(spell, sources), max_rank, first_rank))
-    if max(_spell_field(spell, ("mMaxAmmo",)) or [0]) >= 2:
+    if max(_spell_field(spell, ("mMaxAmmo",)) or [0]) >= 2 and not spell.get("mAmmoCountHiddenInUI"):
         for name, (sources, first_rank) in AMMO_FIELDS.items():
             _add(result, name, lambda: _rank_value(_spell_field(spell, sources), max_rank, first_rank))
     calculations = spell.get("mSpellCalculations") or {}

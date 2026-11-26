@@ -26,10 +26,7 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 
 ## Phase 3: Loader with little manual work per patch
 
-The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching (in progress), (3) summoner spells, (4) items incl. actives, (5) runes.
-
-**Open from the 16.20 → 16.21 run** (throwaway DB `liandrys-patchtest`, port 27018, kept for further runs and Phase 4):
-- [ ] Karthus Q loads `KarthusLayWasteA1` (2 ammo, cooldown 0) instead of `KarthusLayWaste` (1 s), so it gets charges and a `[COOLDOWN]` warning; check which spell the record's Q slot should map to
+The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells, (4) items incl. actives, (5) runes. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
 
 **Then, one type at a time, each complete like the champions (first load from CDragon/wiki, patching, hotfixes, real run on the throwaway DB):**
 - [ ] (3) Summoner spells

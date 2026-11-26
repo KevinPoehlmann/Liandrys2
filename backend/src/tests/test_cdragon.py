@@ -109,6 +109,15 @@ class TestRankValues():
         assert "ammoRechargeTime" not in spell_values(spell, max_rank=5).values
 
 
+    def test_hidden_ammo_is_no_charges(self):
+        # 16.21 Karthus Q: the wiki has a 1 s cooldown and no charges
+        spell = {"mAmmoRechargeTime": [1] * 7, "mMaxAmmo": [2] * 7, "mAmmoCountHiddenInUI": True}
+
+        values = spell_values(spell, max_rank=5).values
+
+        assert "maxAmmo" not in values and "ammoRechargeTime" not in values
+
+
     def test_spell_fields_are_always_present(self):
         values = spell_values({}, max_rank=5).values
 
