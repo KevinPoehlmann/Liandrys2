@@ -905,9 +905,14 @@
           "recast_window": "0",
           "recast_delay": "0",
           "outcomes": [],
+          "dash": {
+            "distance": "375 + (EnhancedPounceRange - 375) * target_stacks_hunted_pounce",
+            "speed": "1150 + 500 * target_stacks_hunted_pounce",
+            "exceptions": []
+          },
           "rules": [
             {
-              "trigger": null,
+              "trigger": "on_dash_end",
               "filter": null,
               "outcome": null,
               "conditions": [],
@@ -923,6 +928,13 @@
                     "dmg_sub_type": "Magic",
                     "vamp": 0.0,
                     "can_crit": false
+                  }
+                },
+                {
+                  "type_": "Lock",
+                  "props": {
+                    "duration": "0.099",
+                    "exceptions": []
                   }
                 }
               ],
@@ -977,7 +989,8 @@
       "inputs": [],
       "pets": [],
       "assumptions": [
-        "The damage lands at the cast; the dash's travel time isn't modelled."
+        "Measured in the practice tool: the damage lands 10 ticks after the cast (14 at a Hunted target at range), so the speed is chosen to hit these ticks at full distance.",
+        "After landing the animation goes on (13 frames, 0.433 s, from the game files): 3 ticks without attacks or casts. At a Hunted target the longer animation (0.5 s) would leave only 2."
       ],
       "raw_stats": {},
       "changes": [],

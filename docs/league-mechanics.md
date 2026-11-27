@@ -209,7 +209,7 @@ Pages: Crowd_control, Types_of_Crowd_Control, Tenacity
   - B: Cleanse, Milio, mode adjustments (ARAM)
   - C: Garen passive, Brittle (−30%)
 
-**Simulation:** `check_action_delay` blocks by CC; `_apply_tenacity` keeps the 0.3 s minimum. ✓ Tenacity comes from items and buffs (Cleanse) and stacks as one multiplicative product (`MULTIPLICATIVE_STATS`); `get_stat(TENACITY_P)` is the tenacity itself. ⚠ No stacking groups yet. ⚠ No Root/Polymorph/Charm/Flee in `StatusType`.
+**Simulation:** `check_action_delay` blocks by CC; `_apply_tenacity` keeps the 0.3 s minimum. ✓ Tenacity comes from items and buffs (Cleanse) and stacks as one multiplicative product (`MULTIPLICATIVE_STATS`); `get_stat(TENACITY_P)` is the tenacity itself. ⚠ No stacking groups yet. Root and Ground delay dash stages (and count for tenacity); a dash under way goes on. ⚠ No Polymorph/Charm/Flee in `StatusType`; Root doesn't interrupt the few dashes the wiki lists (Akshan E, Camille W, …).
 
 **Cleanse** (wiki): removes all disables except airborne, nearsight, suppression and stasis, plus summoner spell debuffs (Ignite's damage, Exhaust); Ignite's Grievous Wounds stays (Cleanse and Ignite notes; the owner remembers it differently, not testable in the practice tool). Usable during CC except suppression and stasis. 75% tenacity for 3 s, 240 s cooldown. **Simulation:** action `Cleanse(target, statuses, buff_tags)` with the lists in the fixture, buff `tags`, ability flag `usable_during_cc`. ✓
 
@@ -267,7 +267,7 @@ From the wiki's 133 "Gameplay elements" pages, these look relevant later:
 - **Named item effect**: unique item passives don't stack (two of the same item, shared names). Needed before items.
 - **Attack effects** (parent page) and **On-action effects/Abilities Grouped by Consistency With On-Cast Effects**: which on-cast effects fire at the start and which at the end of the cast time.
 - **Spell shield**, **Invulnerability**, **Untargetability**: what still lands.
-- **Dash**, **Blink**, **Projectile**: action timing.
+- **Blink**, **Projectile**: action timing. (Dash: read; see the dash entry in docs/ability-system.md.)
 - **Stack**, **Stacking**, **Aura**, **Tether**: buff shapes we may not cover yet.
 - **Takedown**, **Kill**: execute and reset mechanics (2v2).
 - **Ability resource**, **Energy**, **Manaless**: costs (mana is not simulated yet).

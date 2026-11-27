@@ -32,8 +32,6 @@ The PBE preview is done too ([decisions](docs/decisions.md#pbe-preview)).
 
 **Next in this phase** (the timing data; these items may move to the backlog if no source turns up):
 - [ ] Items: `ByItemEpicnessCountCalculationPart` ("per legendary item") stays reported. In 16.23 only the old mythic passives' leftovers use it (Goredrinker, Galeforce, …; also Guinsoo's, Evenshroud, Radiant Virtue), none in a live tooltip; translate it once a tooltip uses it again
-- [ ] Dash and leap travel times (Nidalee's Pounce lands at the cast today), e.g. from CommunityDragon's spell data or other sources
-- [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions. Then `Lock` can tell an animation from a cast time (item actives can't be used during a cast time, but during a pure animation). Why CDragon doesn't help yet: see decisions, "Cast times and animations"
 
 
 ## Phase 4: Admin side complete
@@ -124,7 +122,9 @@ Ideas collected for later; mostly frontend.
 - `database.py`: wrong logger name, extra `id` field on update, `clear_patch` ignores `patch_left`
 - `logger.py`: duplicate formatter, handlers attached twice, `read_text` without encoding
 - Routes: duplicate `parse_from_request`, enum endpoints duplicating `/enum`
+- Stopping dashes: Poppy W (knock-up, then grounded and slowed), knockdowns and airborne stop a dash mid-way; root stops a few (wiki, Dash). Take the `DashEnd` out of the queue, so the arrival rules never run. Build it when Poppy or a knockdown is entered
 - Crit windup: a crit uses the timing of its `critAttacks` slot (practice tool: Karthus' crit leaves ~0.07 s later, see decisions "Windup checked"). Load a `crit_windup` per champion and use it when an attack crits; a new champion field, so decide the format first
+- Locks after the cast time: about a dozen abilities lock attacks, movement or one ability for 0.05–0.5 s after the cast time (wiki notes; Riven Q has no numbers at all, but measured: Q1/Q2 deal their damage on the first animation frame, Q3 on landing 0.400 s = 12 ticks after the cast; animations 0.774 / 0.677 / 0.903 s, see decisions, "Dashes"). Enter them by hand as a rule when the ability is entered; a `Lock` kind like "attacks only, X s after the cast" once several need it (see decisions, "Cast times and animations")
 - Decide: champion stats `int` vs `float` (Pydantic v1 silently truncates floats in `int` fields)
 - ~~Manual effect data lives per patch: fixes in older patches don't reach newer ones~~ (Phase 4: validating copies forward)
 - Roles (live patch): top laners reach level 20 (formulas already expect 20 values; the user UI still caps at 18), and each role brings small perks that the request has to ask for

@@ -10,6 +10,12 @@ from src.server.models.enums import ActionType, ActiveType, CostResource
 
 
 
+class DashHint(StrictModel):
+    """A suggestion for the stage's dash: CDragon marks dashes, the wiki has distance and speed for some (not Pounce)."""
+    distance: str | None = None
+    speed: str | None = None
+
+
 class Ability(StrictModel):
     name: str
     cost: str = "0"
@@ -31,6 +37,7 @@ class Ability(StrictModel):
     assumptions: list[str] = []  # what we assumed where data was missing, shown to the user
     values: dict[str, str] = {}  # loader-owned named values (BaseDamage, TotalDamage, ...), overwritten every patch
     tooltip: str = ""  # loader-owned, Riot's text with @Name@ placeholders for the values
+    dash_hint: DashHint | None = None  # loader-owned, for the editor
     raw_stats: dict[str, str] = {}
     changes: list[Change] = []
     validated: bool = False

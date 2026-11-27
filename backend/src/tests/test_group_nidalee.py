@@ -120,6 +120,29 @@ class TestAspectOfTheCougar():
         assert attack_ticks(sim) == [R_COOLDOWN + WINDUP_TICKS + MISSILE_TICKS]
 
 
+POUNCE_DASH = 10  # measured in the practice tool: the damage lands about 0.33 s after the cast
+HUNTED_POUNCE_DASH = 14  # about 0.47 s at a Hunted target from range
+POUNCE_LANDING_LOCK = 3  # the rest of the 13-frame animation (0.433 s)
+
+
+class TestPounce():
+
+    def test_damage_lands_after_the_dash(self, load_champion, darius):
+        sim = Simulation(nidalee(load_champion), darius)
+
+        sim.do_combo([blue(ActionType.R), blue(ActionType.W)])
+
+        assert [tick for tick, _ in hits(sim, OriginKind.ABILITY, name="W")] == [POUNCE_DASH]
+
+
+    def test_attack_waits_for_the_landing_animation(self, load_champion, darius):
+        sim = Simulation(nidalee(load_champion), darius)
+
+        sim.do_combo([blue(ActionType.R), blue(ActionType.W), blue(ActionType.BA)])
+
+        assert attack_ticks(sim) == [POUNCE_DASH + POUNCE_LANDING_LOCK + WINDUP_TICKS]
+
+
 DARIUS_MAX_HP = 652 + 114 * GROWTH_LVL_6
 JAVELIN_TRAVEL = to_ticks(DEFAULT_DISTANCE / 1300)  # 3
 JAVELIN_HIT = JAVELIN_CAST + JAVELIN_TRAVEL  # 11: Darius is Hunted from here
@@ -145,9 +168,10 @@ class TestHunt():
         sim.do_combo([blue(ActionType.Q), Action(actor=Actor.BLUE, target=Actor.RED, action_type=ActionType.R, delay=R_AFTER_THE_HIT),
                       blue(ActionType.W), blue(ActionType.W)])
 
-        # The first Pounce (rank 2) uses the Hunt: 2.5 s instead of 6 s.
+        # The first Pounce (rank 2) uses the Hunt: 2.5 s instead of 6 s, and leaps further, so it lands later.
         first = JAVELIN_CAST + to_ticks(R_AFTER_THE_HIT)
-        assert [tick for tick, _ in hits(sim, OriginKind.ABILITY, name="W")] == [first, first + to_ticks(2.5)]
+        assert [tick for tick, _ in hits(sim, OriginKind.ABILITY, name="W")] == [
+            first + HUNTED_POUNCE_DASH, first + to_ticks(2.5) + POUNCE_DASH]
 
 
     def test_a_hunt_in_human_form_resets_the_form_swap(self, load_champion, darius):

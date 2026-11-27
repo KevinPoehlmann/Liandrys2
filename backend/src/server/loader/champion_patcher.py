@@ -24,7 +24,7 @@ from src.server.simulation.formula import ELAPSED_PREFIX, OWNER_PREFIX, SLOT_PRE
 
 LOADED_SLOTS = ("passive",) + SLOTS
 # Fields that are text, loader-owned or bookkeeping; everything else is hand-made and may hold formulas.
-NOT_HAND_MADE = {"name", "assumptions", "values", "tooltip", "raw_stats", "changes", "validated",
+NOT_HAND_MADE = {"name", "assumptions", "values", "tooltip", "dash_hint", "raw_stats", "changes", "validated",
                  "image", "maxrank", "key", "rank_from"}
 NAME = re.compile(r"\b(?:([a-z]\w*)\.)?([A-Za-z_]\w*)\b")
 BUFF_COUNTER = re.compile(rf"\b(?:{STACKS_PREFIX}|{ELAPSED_PREFIX})(\w+)")

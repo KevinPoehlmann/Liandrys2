@@ -255,6 +255,7 @@ class StatusType(str, Enum):
     KINEMATICS = "Kinematics"
     NEARSIGHT = "Nearsight"
     REPLACE = "Replace"
+    ROOT = "Root"  # no movement and no dashes; attacks and other casts still work
     SILENCE = "Silence"
     SLEEP = "Sleep"
     SLOW = "Slow"
@@ -288,6 +289,7 @@ class Trigger(str, Enum):
     ON_START = "on_start"
     ON_DAMAGE_TAKEN = "on_damage_taken"
     ON_DEBUFF_DEALT = "on_debuff_dealt"  # a status (CC, Grievous Wounds) or a DoT applied to an enemy (Electrocute)
+    ON_DASH_END = "on_dash_end"  # the owner arrives; in a stage only that stage's dash (Pounce damage)
 
 class Target(str, Enum):
     SELF = "self"

@@ -2,9 +2,11 @@ import math
 
 import pytest
 
-from src.server.models.enums import ActionType, Actor, DamageSubType, EffectType, StatusType, to_ticks
+from src.server.models.enums import ActionType, Actor, DamageSubType, EffectType, RuleActionType, StatusType, Trigger, to_ticks
 from src.server.models.request import Action, Rank
+from src.server.models.rule import ApplyBuffAction, ApplyBuffProps, Rule
 from src.server.simulation.character import Character
+from src.server.simulation.exceptions import DataError
 from src.server.simulation.simulation import Simulation
 
 
@@ -196,3 +198,58 @@ class TestVayneTiming():
         vs_darius.do_action(aa)
         vs_darius._process_queue()
         assert vayne.get_buff_stacks("final_hour_stealth") == 0
+
+
+
+class TestVayneDash():
+
+    def test_the_attack_waits_for_the_dash(self, vs_darius: Simulation):
+        vayne = vs_darius.actors[Actor.BLUE]
+
+        vs_darius.do_action(combo(ActionType.Q)[0])
+
+        assert vayne.check_action_delay(ActionType.BA, vs_darius.tick) == Q_CAST_TICKS
+
+
+    def test_final_hour_can_be_cast_during_the_dash(self, vs_darius: Simulation):
+        q, r = combo(ActionType.Q, ActionType.R)
+
+        vs_darius.do_action(q)
+        vs_darius.do_action(r)
+
+        assert vs_darius.tick < Q_CAST_TICKS
+
+
+    @pytest.mark.parametrize("status", [StatusType.ROOT, StatusType.GROUND])
+    def test_root_and_ground_delay_the_dash_but_not_the_attack(self, vayne: Character, status: StatusType):
+        vayne.status_effects[status].append((30, 0))
+
+        assert vayne.check_action_delay(ActionType.Q, 0) == 30
+        assert vayne.check_action_delay(ActionType.BA, 0) == 0
+
+
+    def test_a_dash_needs_a_speed(self, load_champion):
+        champion = load_champion("vayne")
+        champion.q.stages[0].dash.speed = "0"
+        sim = Simulation(Character(champion, 6, Rank(q=3, w=1, e=1, r=1), []),
+                         Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), []))
+
+        with pytest.raises(DataError, match="speed above 0"):
+            sim.do_action(combo(ActionType.Q)[0])
+
+
+    def test_other_rules_can_react_to_the_arrival(self, load_champion):
+        champion = load_champion("vayne")
+        champion.passive.rules.append(Rule(trigger=Trigger.ON_DASH_END, actions=[ApplyBuffAction(
+            type_=RuleActionType.APPLY_BUFF, props=ApplyBuffProps(buff="final_hour_stealth", target="self"))]))
+        vayne = Character(champion, 6, Rank(q=3, w=1, e=1, r=1), [])
+        sim = Simulation(vayne, Character(load_champion("darius"), 6, Rank(q=1, w=1, e=1, r=1), []))
+
+        sim.do_action(combo(ActionType.Q)[0])
+        sim.tick = Q_CAST_TICKS - 1
+        sim._process_queue()
+        assert vayne.get_buff_stacks("final_hour_stealth") == 0
+
+        sim.tick = Q_CAST_TICKS
+        sim._process_queue()
+        assert vayne.get_buff_stacks("final_hour_stealth") == 1

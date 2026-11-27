@@ -61,7 +61,7 @@
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cooldown_starts_after": "tumble",
-    "cast_time": "300 / (500 + movespeed)",
+    "cast_time": "0",
     "recharge": "0",
     "values": {
       "TotalADRatio": "by_rank(0.75, 0.85, 0.95, 1.05, 1.15)",
@@ -92,9 +92,16 @@
     "stages": [
       {
         "recast_window": "0",
+        "dash": {
+          "distance": "300",
+          "speed": "500 + movespeed",
+          "exceptions": [
+            "r"
+          ]
+        },
         "rules": [
           {
-            "trigger": null,
+            "trigger": "on_dash_end",
             "filter": null,
             "conditions": [],
             "actions": [

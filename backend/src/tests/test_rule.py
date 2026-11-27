@@ -54,6 +54,12 @@ class TestRuleModels():
             Stage.parse_obj({"outcomes": ["blade", "handle"], "rules": [{"outcome": "bladee"}]})
 
 
+    def test_an_arrival_rule_needs_a_dash(self):
+        with pytest.raises(ValidationError, match="on_dash_end"):
+            Stage.parse_obj({"rules": [{"trigger": "on_dash_end"}]})
+        Stage.parse_obj({"dash": {"distance": "375", "speed": "1750"}, "rules": [{"trigger": "on_dash_end"}]})
+
+
     def test_stage_accepts_declared_outcomes(self):
         stage = Stage.parse_obj({"outcomes": ["blade", "handle"], "rules": [{"outcome": "handle"}, {}]})
         assert [rule.outcome for rule in stage.rules] == ["handle", None]

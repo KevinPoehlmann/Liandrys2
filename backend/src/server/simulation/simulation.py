@@ -36,12 +36,12 @@ from src.server.simulation.components import (
     ProcessedStatusProperties,
     QueueComponent
 )
-from src.server.simulation.events import BuffEnd, BuffTick, PetAttackDue, PetExpire, RuleEvent
+from src.server.simulation.events import BuffEnd, BuffTick, DashEnd, PetAttackDue, PetExpire, RuleEvent
 from src.server.simulation.exceptions import ComboError, DataError, describe, located
 from src.server.simulation.formula import FormulaContext, evaluate_formula
 from src.server.simulation.pet import PetCharacter
 
-QueueEntry = RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
+QueueEntry = RuleEvent | BuffEnd | BuffTick | DashEnd | PetAttackDue | PetExpire
 
 # Close enough for any melee attack; projectiles still need travel time (Vladimir's E lands after a Hemoplague cast at its release).
 DEFAULT_DISTANCE = 100
@@ -174,11 +174,16 @@ class Simulation():
         if not is_attack and character.counts_as_cast(action.action_type):
             # The cast event comes at the start of the cast time (Spellblade, Riven's Runic Blade).
             self._fire(Trigger.ON_CAST, action.actor, action.target, action.action_type, start, cast=cast)
-        action_effect = character.do_action(action, self.tick)
+        action_effect = character.do_action(action, self.tick, self.actors.get(action.target))
         self.tick = action_effect.tick
         for rule_event in action_effect.rule_events:
             rule_event.cast = cast
             self._queue_rule(rule_event, self.tick)
+        if action_effect.dash:
+            action_effect.dash.cast = cast
+            for rule_event in action_effect.dash.rule_events:
+                rule_event.cast = cast
+            self.queue.setdefault(action_effect.dash.end, []).append(action_effect.dash)
         if is_attack:
             self._fire(Trigger.ON_ATTACK, action.actor, action.target, action.action_type, self.tick, cast=cast)
         if action_effect.windup_cancel:
@@ -716,7 +721,8 @@ class Simulation():
         processed = []
         # Interval rules run before buff ends, so the tick at the end still sees the stacks.
         interval_events = [event for entry in entries if isinstance(entry, BuffTick) for event in self._interval_events(entry)]
-        rule_events = [entry for entry in entries if isinstance(entry, RuleEvent)] + interval_events
+        arrival_events = [event for entry in entries if isinstance(entry, DashEnd) for event in self._arrival_events(entry, q_tick)]
+        rule_events = [entry for entry in entries if isinstance(entry, RuleEvent)] + interval_events + arrival_events
         self._count_rule_events(rule_events, q_tick)
         for event in rule_events:
             try:
@@ -737,6 +743,18 @@ class Simulation():
         for end in [entry for entry in entries if isinstance(entry, BuffEnd)]:
             self.actors[end.bearer].expire_buff(end.buff, end.end)
             self._rescale_slowed_buffs(end.bearer, q_tick)
+
+
+    def _arrival_events(self, dash: DashEnd, q_tick: int) -> list[RuleEvent]:
+        """The stage's arrival rules without delay run in this tick; delayed ones and other rules reacting to the dash are queued."""
+        self._fire(Trigger.ON_DASH_END, dash.owner, dash.target, dash.slot, q_tick, cast=dash.cast)
+        now = []
+        for event in dash.rule_events:
+            if self._delay_ticks(event) == 0:
+                now.append(event)
+            else:
+                self._queue_rule(event, q_tick)
+        return now
 
 
     def _count_rule_events(self, events: list[RuleEvent], q_tick: int) -> None:

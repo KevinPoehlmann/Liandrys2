@@ -45,8 +45,20 @@ class BuffEnd:
 
 
 @dataclass
+class DashEnd:
+    """The owner arrives: the stage's `on_dash_end` rules run. Poppy W would remove it from the queue."""
+    owner: Actor
+    target: Actor
+    slot: ActionType
+    end: int
+    rule_events: list[RuleEvent] = field(default_factory=list)
+    cast: int | None = None
+
+
+@dataclass
 class ActionEffect:
     """What an action returns: the tick its cast time ends and the rule events it starts."""
     tick: int
     rule_events: list[RuleEvent] = field(default_factory=list)
     windup_cancel: set = field(default_factory=set)
+    dash: DashEnd | None = None

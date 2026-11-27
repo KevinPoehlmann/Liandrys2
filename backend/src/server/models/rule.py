@@ -265,11 +265,19 @@ class Input(StrictModel):
         return name
 
 
+class Dash(StrictModel):
+    """Starts when the cast time ends and lasts distance / speed; the owner can't attack or cast meanwhile."""
+    distance: str  # units
+    speed: str  # units per second
+    exceptions: list[ActionType] = []  # slots usable during the dash (Vayne: R during Tumble)
+
+
 class Stage(StrictModel):
     recast_window: str = "0"  # seconds after the previous stage's cast to cast this one, else the ability starts over
     recast_delay: str = "0"  # earliest seconds after the previous stage's cast (Riven Q: 0.3125)
     icon: str | None = None  # a key of Champion.icons (Sion's W recast: "sion_w2"); None shows the ability's image
     outcomes: list[str] = []
+    dash: Dash | None = None
     rules: list[Rule] = []
 
     @validator("rules")
@@ -278,4 +286,10 @@ class Stage(StrictModel):
         for rule in rules:
             if rule.outcome is not None and rule.outcome not in declared:
                 raise ValueError(f"Outcome '{rule.outcome}' is not one of the stage's outcomes {declared}")
+        return rules
+
+    @validator("rules")
+    def arrival_needs_a_dash(cls, rules: list[Rule], values: dict) -> list[Rule]:
+        if values.get("dash") is None and any(rule.trigger == Trigger.ON_DASH_END for rule in rules):
+            raise ValueError("A rule with trigger 'on_dash_end' needs a stage with a dash")
         return rules

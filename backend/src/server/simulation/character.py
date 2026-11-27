@@ -44,7 +44,7 @@ from src.server.simulation.components import (
     ProcessedStatusProperties,
     QueueComponent
 )
-from src.server.simulation.events import ActionEffect, RuleEvent
+from src.server.simulation.events import ActionEffect, DashEnd, RuleEvent
 from src.server.simulation.exceptions import ComboError, DataError, NotEnteredError, located
 from src.server.simulation.formula import FormulaContext, evaluate_formula
 
@@ -838,7 +838,7 @@ class Character():
 
     def _apply_status_effects(self, components: list[QueueComponent], tick: int) -> None:
         tenacity_affected = {StatusType.BERSERK, StatusType.BLIND, StatusType.CRIPPLE, StatusType.DISARM,
-                             StatusType.GROUND, StatusType.SILENCE, StatusType.SLEEP,
+                             StatusType.GROUND, StatusType.ROOT, StatusType.SILENCE, StatusType.SLEEP,
                              StatusType.SLOW, StatusType.STUN, StatusType.SUSPENSION, StatusType.TAUNT}
         for component in components:
             try:
@@ -905,6 +905,12 @@ class Character():
         if stun_delays:
             tick = max(tick, max(stun_delays))
 
+        # Dashes can't start while rooted or grounded (wiki, Dash); a dash already under way goes on.
+        if self._next_stage_dashes(action_type, tick):
+            grounded = [max(effect[0] for effect in self.status_effects[kind])
+                        for kind in (StatusType.ROOT, StatusType.GROUND) if kind in self.status_effects]
+            tick = max([tick] + grounded)
+
         if action_type == ActionType.BA and StatusType.DISARM in self.status_effects:
             disarm_delay = max(disarm[0] for disarm in self.status_effects[StatusType.DISARM])
             tick = max(tick, disarm_delay)
@@ -919,11 +925,16 @@ class Character():
 
 
 
-    def do_action(self, action: Action, tick: int) -> ActionEffect:
+    def _next_stage_dashes(self, slot: ActionType, tick: int) -> bool:
+        if slot not in self.ability_dict or not self.ability_dict[slot][0].stages:
+            return False
+        return self.ability_dict[slot][0].stages[self._stage_index(slot, tick)].dash is not None
+
+    def do_action(self, action: Action, tick: int, target: "Character | None" = None) -> ActionEffect:
         if action.action_type == ActionType.BA:
             return self._basic_attack(action, tick)
         elif action.action_type in self.ability_dict:
-            return self._do_ability(action, tick)
+            return self._do_ability(action, tick, target)
         elif action.action_type in self.item_slots:
             raise ComboError(f"{self.item_slots[action.action_type].name} has no active")
         else:
@@ -968,12 +979,13 @@ class Character():
         return Rule(actions=[damage], speed=str(self.champion.missile_speed) if self.is_ranged else "0")
     
 
-    def _do_ability(self, action: Action, tick: int) -> ActionEffect:
+    def _do_ability(self, action: Action, tick: int, target: "Character | None") -> ActionEffect:
         ability = self.ability_dict[action.action_type][0]
         if not ability.validated or not ability.stages:
             raise NotEnteredError(f"{self.name} {action.action_type.value.upper()} is not entered yet")
-        return self._cast_stage(action, ability, tick)
-    def _cast_stage(self, action: Action, ability: Ability, tick: int) -> ActionEffect:
+        return self._cast_stage(action, ability, tick, target)
+
+    def _cast_stage(self, action: Action, ability: Ability, tick: int, target: "Character | None") -> ActionEffect:
         slot = action.action_type
         context = self.formula_context(slot)
         cast_ticks = to_ticks(evaluate_formula(ability.cast_time, context))
@@ -992,11 +1004,24 @@ class Character():
         stage = ability.stages[index]
         outcome = self._outcome(action, stage)
         params = self._cast_params(ability, action)
-        rule_events = self._cost_event(action) + [
-            RuleEvent(rule=rule, slot=action.action_type, owner=action.actor, target=action.target, values=params)
-            for rule in stage.rules if rule.outcome in (None, outcome)
-        ]
-        return ActionEffect(tick=tick + cast_ticks, rule_events=rule_events)
+        events = [RuleEvent(rule=rule, slot=slot, owner=action.actor, target=action.target, values=params)
+                  for rule in stage.rules if rule.outcome in (None, outcome)]
+        on_cast_end = [event for event in events if event.rule.trigger != Trigger.ON_DASH_END]
+        on_arrival = [event for event in events if event.rule.trigger == Trigger.ON_DASH_END]
+        cast_end = tick + cast_ticks
+        dash = self._start_dash(action, stage, cast_end, on_arrival, target) if stage.dash else None
+        return ActionEffect(tick=cast_end, rule_events=self._cost_event(action) + on_cast_end, dash=dash)
+
+    def _start_dash(self, action: Action, stage: Stage, start: int, on_arrival: list[RuleEvent],
+                    target: "Character | None") -> DashEnd:
+        # The target counts for the distance: Pounce leaps twice as far at a Hunted target.
+        context = self.formula_context(action.action_type, target)
+        speed = evaluate_formula(stage.dash.speed, context)
+        if speed <= 0:
+            raise DataError(f"The dash of {action.action_type.value} needs a speed above 0, got {speed:g}")
+        end = start + to_ticks(evaluate_formula(stage.dash.distance, context) / speed)
+        self.lock(end, set(stage.dash.exceptions))
+        return DashEnd(owner=action.actor, target=action.target, slot=action.action_type, end=end, rule_events=on_arrival)
 
     def _stage_index(self, slot: ActionType, tick: int) -> int:
         recast = self._recast_window(slot)

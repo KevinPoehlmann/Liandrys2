@@ -5,9 +5,10 @@ from dataclasses import dataclass
 
 from src.server.loader.cdragon import SpellValues, bin_field, spell_values
 from src.server.loader.champion_source import loc_keys
+from src.server.loader.dash_hint import dash_hint
 from src.server.loader.helper import wiki_to_riot_patch
 from src.server.loader.patchexceptions import PatcherError
-from src.server.models.ability import Ability, ChampionAbility
+from src.server.models.ability import Ability, ChampionAbility, DashHint
 from src.server.models.champion import NewChampion, RawChampion, WikiTemplate
 from src.server.models.enums import AdaptiveType, RangeType, ResourceType
 from src.server.models.image import Image
@@ -103,6 +104,7 @@ class LoadedSpell:
     tooltip: str
     values: SpellValues
     wiki: WikiTemplate | None
+    dash_hint: DashHint | None = None
 
 
 def loaded_spells(raw: RawChampion, max_ranks: dict[str, int]) -> dict[str, LoadedSpell]:
@@ -142,6 +144,7 @@ def loaded_spell(record: dict, max_rank: int, strings: dict[str, str], wiki: Wik
         tooltip=strings.get(keys.get("keyTooltip", "").lower(), ""),
         values=spell_values(record["mSpell"], max_rank),
         wiki=wiki,
+        dash_hint=dash_hint(record["mSpell"], wiki),
     )
 
 
@@ -223,6 +226,8 @@ def apply_loader_part(champion: NewChampion, spells: dict[str, LoadedSpell]) -> 
         container: Ability | Passive = getattr(champion, slot)
         container.values = spell.values.values
         container.tooltip = spell.tooltip
+        if isinstance(container, Ability):
+            container.dash_hint = spell.dash_hint
 
 
 def initial_structure(ability: Ability, values: dict[str, str]) -> None:
