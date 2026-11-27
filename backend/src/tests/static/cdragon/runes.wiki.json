@@ -1,0 +1,79 @@
+{
+ "batchcomplete": true,
+ "query": {
+  "pages": [
+   {
+    "pageid": 1334769,
+    "ns": 10,
+    "title": "Template:Rune data Electrocute",
+    "revisions": [
+     {
+      "revid": 4060699,
+      "parentid": 4015084,
+      "slots": {
+       "main": {
+        "contentmodel": "wikitext",
+        "contentformat": "text/x-wiki",
+        "content": "{{{{{1<noinclude>|Rune data</noinclude>}}}|Electrocute|{{{2|}}}|{{{3|}}}|{{{4|}}}|{{{5|}}}\n|released     = Season 2018\n|path         = Domination\n|slot         = Keystone\n|description  = {{sbc|Passive:}} Damaging {{tip|basic attacks}}, {{tip|abilities}}, [[Named item effect|item effects]], and [[summoner spell]]s, as well as the application of {{tip|crowd control}} and {{tip|damage over time}} effects, apply {{tip|stacks}} against enemy {{tip|champion|champions}}, up to one per {{tip|cast instance}} per champion. Applying 3 stacks to a target within a 3 second period causes them to be struck by lightning after a {{fd|0.25}}-second delay, dealing them {{pp|60 + 10 * x|1 to 20 by 1}} {{as|(+ 10% '''bonus''' AD)}} {{as|(+ 5% AP)}} of either {{as|physical|physical damage}} or {{as|magic damage}}.\n|description2 = {{sbc|Variable Damage:}} This effect deals either {{as|physical|physical damage}} or {{as|magic damage}} depending on the damage contribution from your {{as|{{sti|attack damage}}}} and {{as|{{sti|ability power}}}} to the effect's damage formula.<ul><li>Greater '''bonus damage''' from the {{as|{{sti|AD ratio}}}} â†’ {{as|Physical damage}}</li><li>Greater '''bonus damage''' from the {{as|{{sti|AP ratio}}}} â†’ {{as|Magic damage}}</li></ul>If the damage contribution of {{as|{{sti|AD}}}} and {{as|{{sti|AP}}}} are zero or otherwise equal, the damage type defaults to {{as|magic damage}}.\n|cooldown     = 20\n|caption      = {{quote|\"We called them the Thunderlords, for to speak of their lightning was to invite disaster.\"|''Rune caption''}}\n}}"
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 1337605,
+    "ns": 0,
+    "title": "Electrocute",
+    "revisions": [
+     {
+      "revid": 4015230,
+      "parentid": 3991557,
+      "slots": {
+       "main": {
+        "contentmodel": "wikitext",
+        "contentformat": "text/x-wiki",
+        "content": "{{rune header|Electrocute}}\n\n== Notes ==\n* '''Electrocute''' deals {{tip|proc damage}}, and thus will not trigger [[spell effects]].\n* '''Electrocute''' can trigger while [[death|dead]].\n* {{tip|Blind}}, {{tip|Cripple}}, {{tip|Drowsy}}, {{tip|Kinematics}}, {{tip|Nearsight}}, and {{tip|Stasis}} do not count as valid crowd control for triggering stacks.\n* Becoming {{tip|untargetable}} during the {{fd|0.25}}-second delay will '''not''' prevent the effect from occurring.\n* The 3 second timer is non-refreshing - the third stack has to be applied within 3 seconds of the first.\n* {{cai|R|Ambessa}} is special cased to apply a stack for the suppression application and the damage dealt.\n* {{cai|Razor Shuriken|Zed}} and {{ai|Shadow Slash|Zed}}, when used together with {{ai|Living Shadow|Zed|Shadows}}, are special cased to generate a stack for each tick of damage.\n* {{cais|Tidecaller's Blessing|Nami}} damage instances beyond its first are special cased to not apply a stack.\n* Effects that deal {{tip|proc damage}} do not trigger a stack unless it is also tagged as {{tip|pet damage}}.\n** Such effects can still trigger a stack if they apply a debuff (i.e {{ii|Black Cleaver}}).\n"
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 1355862,
+    "ns": 0,
+    "title": "Conqueror",
+    "revisions": [
+     {
+      "revid": 4091967,
+      "parentid": 4085479,
+      "slots": {
+       "main": {
+        "contentmodel": "wikitext",
+        "contentformat": "text/x-wiki",
+        "content": "{{SeeOther|the skin line|{{univ|Conqueror}}}}\n\n{{rune header|Conqueror}}\n\n== Notes ==\n* '''Conqueror''' will grant stats based on the level of the user at the time of generating its first stack, even if more stacks are generated.{{bug|2}}\n* Some {{tip|ranged}} {{tip|on-hit}} {{tip|basic damage|basic}} {{tip|ability damage}} will grant 2 stacks of ''Conqueror'' (i.e {{cai|W|Azir}}, {{cai|Q|Ezreal}}, {{cai|Q|Miss Fortune}}), others will grant only 1 (i.e {{cai|Q|Smolder}}, {{cai|Q|Vayne}}, {{cai|Q|Viktor}}), regardless of the damage belonging to an {{tip|ability}} {{tip|cast instance}}. {{bug|2}}\n* '''Conqueror's''' stacking can only occur once per {{tip|cast instance}}.\n** For example, the fire waves from {{cai|Divine Ascent|Kayle}} share the ''cast instance'' with its triggering basic attack. This means it can only trigger a stack of '''Conqueror''' once per attack instead of the expected twice.\n** Abilities that apply a separate ''cast instance'' per hit will grant multiple stacks as normal.\n** In addition, {{cai|Judgment|Garen}}, and {{cai|Cyclone|Wukong}} have been special cased to stack '''Conqueror''' for every tick of damage.\n*** Other similar effects are not special cased (e.g {{cai|R|Nilah}}, {{cai|E|Pantheon}}, {{cai|R|Rakan}}, {{cai|Q|Taliyah}}, {{cai|R|Zac}}). {{bug|2}}\n** While {{tip|basic damage}} {{tip|on-hit}} can stack multiple times regardless of ''cast instance'', {{cai|Q|Master Yi}} is the only multi {{tip|on-hit}} effect that doesn't do so for being a single cast instance and for not being {{tip|basic damage}}.\n** If {{cai|Darkness Rise|Mordekaiser}} is activated through either {{ai|Obliterate|Mordekaiser}} or {{ai|Death's Grasp|Mordekaiser}}, it will be treated as the same ''cast instance'' as the triggering spell and it will not stack '''Conqueror'''.{{bug|2}}\n* '''Conqueror''' will '''<u>not</u>''' stack or refresh from these specific effects.\n** {{tip|Basic damage}} from {{tip|pet damage|pets}} (i.e. {{cis|Annie}} {{ui|Tibbers}} attack, {{cis|Malzahar}} {{ui|Voidling}} and {{cis|Yorick}} {{ui|Maiden of the Mist}} attack). {{bug|2|Was supposed to have been fixed in V9.7}}\n*** {{uis|Daisy}} attacks apply {{cis|Ivern}} {{tip|on-hit}} effects, and therefore generate 1 stack of '''Conqueror''' per attack. {{bug|2|He would be expected to generate 2 stacks from the pet damage}}\n** {{tip|Basic damage}} that does not trigger [[on-hit effects]] ({{cai|I|Nunu}} cone).\n** Attacks done by {{tip|clone|clones}}, as they are accredited to the clone.\n** {{iis|Runaan's Hurricane}} {{nie|Wind's Fury}} bolts, which are special cased to not stack '''Conqueror''' despite dealing {{tip|basic damage}} that can trigger on-hit effects (this includes special modifiers of Wind's Fury, such as on {{cais|Infernum|Aphelios}} cones, {{cai|Q|Ashe}} volleys, {{cai|Q|Jinx}} Fishbones attack).\n** Attacks which are {{tip|dodged}} or missed while the user is {{tip|blind|blinded}}.\n** Attacks against an {{tip|invulnerable}} target.\n** The automatic basic attack following {{si|Dash}} if it already stacked '''Conqueror'''.{{bug|1|This was expected to have been fixed in V9.24}}\n* '''Conqueror''' '''<u>will</u>''' stack or refresh for these specific effects.\n** {{cais|W|Malphite}} cone effect, as the only AoE non-{{tip|spell damage|spell}} damage that isn't tagged as {{tip|proc damage}}.\n** {{tip|default damage|Default}} / {{tip|raw damage}}\n*** Including {{iis|The Collector}} {{nie|Death}} - although it shares a cast instance with the ability that triggered it, meaning it can only stack '''Conqueror''' if triggered by a damage over time effect at least 4 seconds after the effect's initial application.\n** Attacks which are {{tip|blocked}}.\n"
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 1355863,
+    "ns": 10,
+    "title": "Template:Rune data Conqueror",
+    "revisions": [
+     {
+      "revid": 4060685,
+      "parentid": 4015567,
+      "slots": {
+       "main": {
+        "contentmodel": "wikitext",
+        "contentformat": "text/x-wiki",
+        "content": "{{{{{1<noinclude>|Rune data</noinclude>}}}|Conqueror|{{{2|}}}|{{{3|}}}|{{{4|}}}|{{{5|}}}\n|released     = Season 2018\n|path         = Precision\n|slot         = Keystone\n|description  = {{sbc|Passive:}} Dealing damage to enemy {{tip|champions}} generates {{tip|stacks}} of ''Conqueror'', lasting for 5 seconds, refreshing on subsequent damage against champions, and stacking up to 12 times. Gain {{rd|2|1}} stacks for {{tip|basic damage}} {{tip|on-hit}}. Otherwise, gain 2 stacks for any damage that is neither {{tip|basic damage|basic}} nor non-{{tip|pet damage|pet}} {{tip|proc damage}}, up to once every 4 seconds per {{tip|cast instance}}.\n|description2 = Each stack of ''Conqueror'' grants {{adaptive|1.8 + (4-1.8)/17*(x-1)|20}}, up to {{adaptive|1.8*12 + (4*12-1.8*12)/17*(x-1)|20}} at maximum stacks, at which you also {{tip|heal}} for {{rd|8%|5%}} of the {{tt|post-mitigation damage|Damage calculated after modifiers}} dealt against enemy champions.\n}}"
+       }
+      }
+     }
+    ]
+   }
+  ]
+ }
+}

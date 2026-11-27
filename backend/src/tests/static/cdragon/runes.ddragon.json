@@ -1,0 +1,202 @@
+[
+ {
+  "id": 8100,
+  "key": "Domination",
+  "icon": "perk-images/Styles/7200_Domination.png",
+  "name": "Domination",
+  "slots": [
+   {
+    "runes": [
+     {
+      "id": 8112,
+      "key": "Electrocute",
+      "icon": "perk-images/Styles/Domination/Electrocute/Electrocute.png",
+      "name": "Electrocute",
+      "shortDesc": "Hitting a champion with 3 <b>separate</b> attacks or abilities in 3s deals bonus <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_AdaptiveDmg'>adaptive damage</lol-uikit-tooltipped-keyword>.",
+      "longDesc": "Hitting a champion with 3 <b>separate</b> attacks or abilities within 3s deals bonus <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_AdaptiveDmg'><font color='#48C4B7'>adaptive damage</font></lol-uikit-tooltipped-keyword>.<br><br>Damage: 70 - 240 (+0.1 bonus AD, +0.05 AP) damage.<br>Cooldown: 20s<br><br><i>'We called them the Thunderlords, for to speak of their lightning was to invite disaster.'</i>"
+     },
+     {
+      "id": 8128,
+      "key": "DarkHarvest",
+      "icon": "perk-images/Styles/Domination/DarkHarvest/DarkHarvest.png",
+      "name": "Dark Harvest",
+      "shortDesc": "Damaging a low health champion inflicts <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_AdaptiveDmg'>adaptive damage</lol-uikit-tooltipped-keyword> and harvests a soul from the victim.",
+      "longDesc": "Damaging a Champion below 50% health deals <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_AdaptiveDmg'>adaptive damage</lol-uikit-tooltipped-keyword> and harvests their soul, permanently increasing Dark Harvest's damage by 11.<br><br>Dark Harvest damage: 30 (+11 damage per soul) (+0.1 bonus AD) (+0.05 AP)<br>Cooldown: 35s (resets to 1.0s on takedown)"
+     },
+     {
+      "id": 9923,
+      "key": "HailOfBlades",
+      "icon": "perk-images/Styles/Domination/HailOfBlades/HailOfBlades.png",
+      "name": "Hail of Blades",
+      "shortDesc": "Gain a large amount of Attack Speed and <trueDamage>bonus true damage</trueDamage> for the first 3 attacks made against enemy champions.",
+      "longDesc": "Gain 90% (60% for ranged champions) Attack Speed and <trueDamage>bonus true damage</trueDamage> when you attack an enemy champion for up to 3 attacks.<br><br>No more than 3s can elapse between attacks or this effect will end.<br><br>Cooldown: 10s.<br>On-Hit Damage: 2 - 20 (+0.12 bonus AD, +0.1 AP) damage.<br><br><rules>Attack resets increase the attack limit by 1.<br>Allows you to temporarily exceed the Attack Speed limit.</rules>"
+     }
+    ]
+   },
+   {
+    "runes": [
+     {
+      "id": 8126,
+      "key": "CheapShot",
+      "icon": "perk-images/Styles/Domination/CheapShot/CheapShot.png",
+      "name": "Cheap Shot",
+      "shortDesc": "Deal bonus true damage to enemy champions with <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_ImpairAct'>impaired movement or actions</lol-uikit-tooltipped-keyword>. ",
+      "longDesc": "Damaging champions with <b>impaired movement or actions</b> deals 10 - 45 bonus true damage (based on level).<br><br>Cooldown: 4s<br><rules>Activates on damage occurring after the impairment.</rules>"
+     },
+     {
+      "id": 8139,
+      "key": "TasteOfBlood",
+      "icon": "perk-images/Styles/Domination/TasteOfBlood/GreenTerror_TasteOfBlood.png",
+      "name": "Taste of Blood",
+      "shortDesc": "Heal when you damage an enemy champion.",
+      "longDesc": "Heal when you damage an enemy champion.<br><br>Healing: 16-40 (+0.1 bonus AD, +0.05 AP) health (based on level)<br><br>Cooldown: 20s"
+     },
+     {
+      "id": 8143,
+      "key": "SuddenImpact",
+      "icon": "perk-images/Styles/Domination/SuddenImpact/SuddenImpact.png",
+      "name": "Sudden Impact",
+      "shortDesc": "Damaging basic attacks and abilities deal bonus true damage to enemy champions after using a dash, leap, blink, teleport, or when leaving stealth.",
+      "longDesc": "Damaging basic attacks and abilities deal a bonus <trueDamage>20 - 80 True Damage</trueDamage> based on level to enemy champions after using a dash, leap, blink, teleport, or when leaving stealth for 4s.<br><br>Cooldown: 10s"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": 8000,
+  "key": "Precision",
+  "icon": "perk-images/Styles/7201_Precision.png",
+  "name": "Precision",
+  "slots": [
+   {
+    "runes": [
+     {
+      "id": 8005,
+      "key": "PressTheAttack",
+      "icon": "perk-images/Styles/Precision/PressTheAttack/PressTheAttack.png",
+      "name": "Press the Attack",
+      "shortDesc": "Hitting an enemy champion 3 consecutive times deals bonus damage and amplifies your damage until you leave combat with champions.",
+      "longDesc": "Hitting an enemy champion with 3 consecutive basic attacks deals 40 - 160 bonus <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_AdaptiveDmg'><font color='#48C4B7'>adaptive damage</font></lol-uikit-tooltipped-keyword> (based on level) and amplifies your damage dealt by 8% until you leave combat with champions."
+     },
+     {
+      "id": 8008,
+      "key": "LethalTempo",
+      "icon": "perk-images/Styles/Precision/LethalTempo/LethalTempoTemp.png",
+      "name": "Lethal Tempo",
+      "shortDesc": "Attacking an enemy champion grants you Attack Speed, up to 6 stacks. At max stacks, deal <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_AdaptiveDmg'><font color='#48C4B7'>bonus adaptive damage</font></lol-uikit-tooltipped-keyword> On-Attack.",
+      "longDesc": "Attacking an enemy champion grants you [6% Melee || 4% Ranged] Attack Speed for 6 seconds, up to 6. At max stacks, deal [9 - 30 Melee || 6 - 24 Ranged] <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_AdaptiveDmg'>bonus adaptive damage On-Attack, increased by 1% per 1% Bonus Attack Speed</lol-uikit-tooltipped-keyword>."
+     },
+     {
+      "id": 8021,
+      "key": "FleetFootwork",
+      "icon": "perk-images/Styles/Precision/FleetFootwork/FleetFootwork.png",
+      "name": "Fleet Footwork",
+      "shortDesc": "Attacking and moving builds Energy stacks. At 100 stacks, your next attack heals you and grants increased <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_MS'>MS</lol-uikit-tooltipped-keyword>.",
+      "longDesc": "Attacking and moving builds Energy stacks. At 100 stacks, your next attack is Energized<br><br>Energized attacks heal you for 15 - 160 (+0.1 Bonus AD, +0.05 AP) and grant <speed>20% Move Speed</speed> for 1s.<br><br>For Ranged Champions, Healing is 60% effective and Move Speed is 75% effective. All healing is 15% effective against Minions."
+     },
+     {
+      "id": 8010,
+      "key": "Conqueror",
+      "icon": "perk-images/Styles/Precision/Conqueror/Conqueror.png",
+      "name": "Conqueror",
+      "shortDesc": "Gain stacks of adaptive force when attacking enemy champions. After reaching 12 stacks, heal for a portion of damage you deal to champions.",
+      "longDesc": "Basic attacks or spells that deal damage to an enemy champion grant 2 stacks of Conqueror for 5s, gaining 1.8-4 <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_Adaptive'><font color='#48C4B7'>Adaptive Force</font></lol-uikit-tooltipped-keyword> per stack. Stacks up to 12 times. Ranged champions gain only 1 stack per basic attack.<br><br>When fully stacked, heal for 8% of the damage you deal to champions (5% for ranged champions)."
+     }
+    ]
+   },
+   {
+    "runes": [
+     {
+      "id": 9101,
+      "key": "AbsorbLife",
+      "icon": "perk-images/Styles/Precision/AbsorbLife/AbsorbLife.png",
+      "name": "Absorb Life",
+      "shortDesc": "Killing a target heals you.",
+      "longDesc": "Killing a target heals you for @HealAmount@."
+     },
+     {
+      "id": 9111,
+      "key": "Triumph",
+      "icon": "perk-images/Styles/Precision/Triumph.png",
+      "name": "Triumph",
+      "shortDesc": "<lol-uikit-tooltipped-keyword key='LinkTooltip_Description_Takedown'>Takedowns</lol-uikit-tooltipped-keyword> restore 5% of your missing health and grant an additional 20 gold. ",
+      "longDesc": "Takedowns restore 5% of your missing health, 2.5% of your max health, and grant an additional 20 gold. <br><br><hr><br><i>'The most dangerous game brings the greatest glory.' <br>—Noxian Reckoner</i>"
+     },
+     {
+      "id": 8009,
+      "key": "PresenceOfMind",
+      "icon": "perk-images/Styles/Precision/PresenceOfMind/PresenceOfMind.png",
+      "name": "Presence of Mind",
+      "shortDesc": "Restore a small amount of mana or energy when damaging an enemy champion. Takedowns restore mana or energy.",
+      "longDesc": "Damaging an enemy champion restores 6-50 (80% for ranged) mana or 6 energy.<br><br>Takedowns restore 15% of your maximum mana or energy. <br><br>Cooldown for damage restoration: 8s"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": 8400,
+  "key": "Resolve",
+  "icon": "perk-images/Styles/7204_Resolve.png",
+  "name": "Resolve",
+  "slots": [
+   {
+    "runes": [
+     {
+      "id": 8437,
+      "key": "GraspOfTheUndying",
+      "icon": "perk-images/Styles/Resolve/GraspOfTheUndying/GraspOfTheUndying.png",
+      "name": "Grasp of the Undying",
+      "shortDesc": "Every 4s your next attack on a champion deals bonus magic damage, heals you, and permanently increases your health.",
+      "longDesc": "Every 4s in combat, your next basic attack on a champion will:<li>Deal bonus magic damage equal to 3.5% of your max health<li>Heal you for 1.3% of your max health<li>Permanently increase your health by 5<br><rules><i>Ranged Champions:</i> Damage, healing, and permanent health gained are 40% effective.</rules>"
+     },
+     {
+      "id": 8439,
+      "key": "Aftershock",
+      "icon": "perk-images/Styles/Resolve/VeteranAftershock/VeteranAftershock.png",
+      "name": "Aftershock",
+      "shortDesc": "After <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_Immobilize'>immobilizing</lol-uikit-tooltipped-keyword> an enemy champion gain defenses and later deal a burst of magic damage around you.",
+      "longDesc": "After immobilizing an enemy champion, increase your Armor and Magic Resist by 45 + 75% of your Bonus Resists for 2.5s. Then explode, dealing magic damage to nearby enemies.<br><br>Damage: 25 - 120 (+8% of your bonus health)<br>Cooldown: 20s<br><br>Resistance bonus from Aftershock capped at: 80-150 (based on level)<br>"
+     },
+     {
+      "id": 8465,
+      "key": "Guardian",
+      "icon": "perk-images/Styles/Resolve/Guardian/Guardian.png",
+      "name": "Guardian",
+      "shortDesc": "Guard allies you cast spells on and those that are very nearby. If you or a guarded ally would take damage based on level, you're both granted a shield.",
+      "longDesc": "<i>Guard</i> allies within 350 units of you, and allies you target with spells for 2.5s. While <i>Guarding</i>, if you or the ally take more than a small amount of damage over the duration of the <i>Guard</i>, both of you gain a shield for 1.5s.<br><br>Cooldown: <scaleLevel>75 - 40</scaleLevel> seconds<br>Shield: <scaleLevel>40 - 150</scaleLevel> + <scaleAP>20%</scaleAP> of your ability power + <scalehealth>6%</scalehealth> of your bonus health<br>Proc Threshold: <scaleLevel>50 - 165</scaleLevel> postmitigation damage"
+     }
+    ]
+   },
+   {
+    "runes": [
+     {
+      "id": 8446,
+      "key": "Demolish",
+      "icon": "perk-images/Styles/Resolve/Demolish/Demolish.png",
+      "name": "Demolish",
+      "shortDesc": "Your third attack against turrets deals bonus damage.",
+      "longDesc": "Your third attack against towers deals [85 (+28% max Health) Melee || 50 (+20% max Health) Ranged] bonus physical damage.<br><br>Cooldown: 30s"
+     },
+     {
+      "id": 8463,
+      "key": "FontOfLife",
+      "icon": "perk-images/Styles/Resolve/FontOfLife/FontOfLife.png",
+      "name": "Font of Life",
+      "shortDesc": "<lol-uikit-tooltipped-keyword key='LinkTooltip_Description_ImpairMov'>Impairing</lol-uikit-tooltipped-keyword> the movement of an enemy champion heals nearby allied champions. ",
+      "longDesc": "Impairing the movement of an enemy champion restores <healing>@BaseHeal@ Health</healing> to you and the lowest health nearby allied champion.<br><br>70% effect for Ranged Users.<br><br>Cooldown: 20s"
+     },
+     {
+      "id": 8401,
+      "key": "ShieldBash",
+      "icon": "perk-images/Styles/Resolve/MirrorShell/MirrorShell.png",
+      "name": "Shield Bash",
+      "shortDesc": "Whenever you gain a shield, your next basic attack against a champion deals bonus <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_Adaptive'><font color='#48C4B7'>adaptive</font></lol-uikit-tooltipped-keyword> damage.",
+      "longDesc": "Whenever you gain a new shield,  your next basic attack against a champion deals <scaleLevel>5 - 30</scaleLevel> <scaleHealth>(+2.5% Bonus Health)</scaleHealth> <scaleMana>(+15.0% New Shield Amount)</scaleMana> bonus <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_Adaptive'><font color='#48C4B7'>adaptive</font></lol-uikit-tooltipped-keyword> damage.<br><br>You have up to 2s after the shield expires to use this effect."
+     }
+    ]
+   }
+  ]
+ }
+]

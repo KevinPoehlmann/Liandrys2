@@ -10,6 +10,7 @@ from src.server.models.champion import RawChampion, WikiTemplate
 
 CDRAGON = "https://raw.communitydragon.org/"
 WIKI_API = "https://wiki.leagueoflegends.com/en-us/api.php"
+WIKI_TITLES_PER_REQUEST = 20
 
 
 def cdragon_version(patch: str) -> str:
@@ -88,6 +89,40 @@ async def fetch_wiki_page(session: SafeSession, title: str, what: str) -> WikiTe
     revision = page["revisions"][0]
     return WikiTemplate(title=page["title"], revision_id=revision.get("revid", 0),
                         text=revision["slots"]["main"]["content"])
+
+
+async def fetch_wiki_pages(session: SafeSession, titles: list[str], what: str) -> dict[str, WikiTemplate]:
+    """Many pages' wikitext in few requests (62 runes need 124 pages), keyed by the requested title. Missing pages
+    are left out. The API cuts a too large answer and hands a `continue` for the rest."""
+    pages = {}
+    for start in range(0, len(titles), WIKI_TITLES_PER_REQUEST):
+        chunk = titles[start:start + WIKI_TITLES_PER_REQUEST]
+        params = {"action": "query", "titles": "|".join(chunk), "redirects": 1, "prop": "revisions",
+                  "rvprop": "ids|content", "rvslots": "main", "format": "json", "formatversion": 2}
+        while True:
+            response = await _get_json(session, f"{WIKI_API}?{urlencode(params)}", what, chunk[0])
+            pages |= parse_wiki_pages(response, chunk)
+            if "continue" not in response:
+                break
+            params |= response["continue"]
+    return pages
+
+
+def parse_wiki_pages(response: dict, titles: list[str]) -> dict[str, WikiTemplate]:
+    query = response.get("query", {})
+    # "normalized" (underscores, first letter) comes before "redirects"; each is one step from -> to.
+    steps = [{entry["from"]: entry["to"] for entry in query.get(key, [])} for key in ("normalized", "redirects")]
+    pages = {page["title"]: page for page in query.get("pages", []) if page.get("revisions")}
+    found = {}
+    for title in titles:
+        final = title
+        for step in steps:
+            final = step.get(final, final)
+        if page := pages.get(final):
+            revision = page["revisions"][0]
+            found[title] = WikiTemplate(title=page["title"], revision_id=revision.get("revid", 0),
+                                        text=revision["slots"]["main"]["content"])
+    return found
 
 
 def parse_champion_data(text: str) -> dict[str, dict]:

@@ -480,6 +480,15 @@ class TestCalculations():
         assert translate_calculation(calculation) == "h_42565e68 if ranged > 0 else h_d96e60e3"
 
 
+    def test_conditional_picks_a_calculation_for_melee(self):
+        # Demolish in 16.23: the melee calculation, else the ranged one.
+        calculation = {"mDefaultGameCalculation": "{4e3f20aa}", "mConditionalGameCalculation": "{5fecac03}",
+                       "mConditionalCalculationRequirements": {"__type": "IsMeleeCastRequirement"},
+                       "__type": "GameCalculationConditional"}
+
+        assert translate_calculation(calculation) == "h_5fecac03 if 1 - ranged > 0 else h_4e3f20aa"
+
+
     def test_ranged_multiplier_scales_only_ranged(self):
         # Titanic Hydra in 16.23: 1 % maximum health, 0.5 % for ranged (wiki).
         calculation = {"mFormulaParts": [{"mStat": 12, "mCoefficient": 0.01, "__type": "StatByCoefficientCalculationPart"}],

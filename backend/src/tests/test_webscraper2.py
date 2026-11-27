@@ -2,7 +2,6 @@ import pytest
 from bs4 import BeautifulSoup
 
 
-from src.server.loader.helper import RuneClass
 from src.server.loader.webscraper2 import (
     scrape_champion,
     _scrape_attackspeed_stats,  
@@ -11,16 +10,12 @@ from src.server.loader.webscraper2 import (
     _scrape_passive_description,
     _scrape_ability,            
     _scrape_ability_stats,      
-    scrape_rune,                
-    _scrape_rune_passive,       
-    _scrape_rune_summoner_stats,
 )
 from src.server.models.ability import ChampionAbility, Ability, ItemActive
 from src.server.models.champion import NewChampion, Champion
 from src.server.models.enums import RangeType, Stat, ItemClass
 from src.server.models.item import NewItem
-from src.server.models.rune import NewRune
-from src.server.models.json_validation import PassiveJson, Image, SpellJson, ChampionJson, StatsJson, ItemJson, GoldJson, RuneJson
+from src.server.models.json_validation import PassiveJson, Image, SpellJson, ChampionJson, StatsJson, ItemJson, GoldJson
 from src.server.models.passive import ChampionPassive, Passive
 
 
@@ -196,50 +191,3 @@ def test_scrape_ability_stats_void(load_soup):
     assert all(key in stat_dict for key in expected_keys)
     assert stat_dict["cost"] == "40.0 + (rank - 1) * 5.0"
     assert stat_dict["cast time"] == "none"
-
-
-def test_scrape_rune_comet(load_html):
-    rune_class = RuneClass(
-        rune=RuneJson(
-            id=13,
-            key="Sorcery",
-            icon="Sorcery.png",
-            name="Arcane Comet",
-            shortDesc="nah",
-            longDesc="fuck you",
-        ),
-        tree="Sorcery",
-        tree_id=2,
-        row=1,
-        slot=0
-    )
-    image = Image(
-        full="arcane_comet.png",
-        group="rune"
-    )
-    comet_html = load_html("arcane_comet")
-    result = scrape_rune(rune_class, comet_html, image, "15.7.1")
-    assert isinstance(result, NewRune)
-    assert result.name == "Arcane Comet"
-    assert result.passive.name == "Arcane Comet"
-
-
-def test_scrape_rune_passive_comet(load_soup):
-    soup = load_soup("arcane_comet")
-    result = _scrape_rune_passive(soup)
-    assert isinstance(result, Passive)
-    assert result.name == "Replace"
-    assert result.description.startswith("Dealing ability damage")
-    assert result.raw_stats["cooldown"].startswith("20")
-    assert "range" in result.raw_stats
-
-
-def test_scrape_rune_summoner_stats_comet(load_soup):
-    soup = load_soup("arcane_comet")
-    item_content = soup.find("div", class_="mw-parser-output")
-    result = _scrape_rune_summoner_stats(item_content)
-    assert "cooldown" in result
-    assert "range" in result
-    
-
-

@@ -4,7 +4,8 @@ from pathlib import Path
 import pytest
 
 from src.server.loader.champion_source import (cdragon_version, champion_strings, fetch_build, fetch_champion_data,
-                                               fetch_wiki_templates, load_raw_champion, parse_champion_data)
+                                               fetch_wiki_pages, fetch_wiki_templates, load_raw_champion,
+                                               parse_champion_data)
 from src.server.loader.patchexceptions import LoadError
 
 
@@ -116,3 +117,29 @@ async def test_raw_champion_keeps_its_champion_data(veigar_session):
     raw = await load_raw_champion(veigar_session, "16.23.1", "Veigar", "Veigar", BUILD, {}, {"changes": "V26.07"})
 
     assert raw.champion_data == {"changes": "V26.07"}
+
+
+class TestFetchWikiPages():
+
+    @pytest.mark.asyncio
+    async def test_a_cut_answer_is_continued(self):
+        def page(title: str) -> dict:
+            return {"title": title, "revisions": [{"revid": 1, "slots": {"main": {"content": title}}}]}
+
+        class ContinuingSession:
+            def __init__(self) -> None:
+                self.urls: list[str] = []
+
+            async def get_json(self, url: str) -> dict:
+                self.urls.append(url)
+                if "rvcontinue" not in url:  # the API cuts the answer after the first page's text
+                    return {"continue": {"rvcontinue": "2|1", "continue": "||"},
+                            "query": {"pages": [page("A"), {"title": "B"}]}}
+                return {"query": {"pages": [{"title": "A"}, page("B")]}}
+
+        session = ContinuingSession()
+
+        pages = await fetch_wiki_pages(session, ["A", "B"], "pages")
+
+        assert {title: found.text for title, found in pages.items()} == {"A": "A", "B": "B"}
+        assert len(session.urls) == 2

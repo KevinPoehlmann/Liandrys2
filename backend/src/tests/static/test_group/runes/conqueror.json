@@ -1,8 +1,8 @@
 {
   "rune_id": 8010,
   "name": "Conqueror",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "tree": "Precision",
   "tree_id": 8000,
   "row": 0,
@@ -26,7 +26,7 @@
             "actor": "self",
             "key": "stacks_conqueror",
             "comparison": "Equal",
-            "value": "12"
+            "value": "MaxStacks"
           }
         ],
         "actions": [
@@ -34,7 +34,7 @@
             "type_": "Heal",
             "props": {
               "target": "self",
-              "amount": "(0.05 if ranged else 0.08) * damage"
+              "amount": "(RangedHealingPercent if ranged else HealingPercent) * damage"
             }
           }
         ],
@@ -125,7 +125,7 @@
         "acceleration": "0",
         "max_speed": "0",
         "cooldown": "0",
-        "cast_cooldown": "4"
+        "cast_cooldown": "TimeUntilNextStackFromSameSpell"
       },
       {
         "trigger": "on_damage_dealt",
@@ -173,7 +173,7 @@
     "buffs": [
       {
         "name": "conqueror",
-        "duration": "5",
+        "duration": "BuffDuration",
         "max_stacks": 12,
         "refresh": true,
         "interval": "0",
@@ -185,7 +185,7 @@
         "stats": [
           {
             "stat": "adaptive force",
-            "formula": "stacks * (1.8 + 2.46 * (min(level, 18) - 1) / 17)",
+            "formula": "stacks * (MinAdaptivePerStack + (MaxAdaptivePerStack - MinAdaptivePerStack) * (min(level, 18) - 1) / 17)",
             "mode": "flat",
             "conversion": false,
             "snapshot": false
@@ -198,7 +198,17 @@
     "assumptions": [],
     "raw_stats": {},
     "changes": [],
-    "validated": true
+    "validated": true,
+    "values": {
+      "MinAdaptivePerStack": "1.8",
+      "MaxAdaptivePerStack": "4",
+      "MaxStacks": "12",
+      "BuffDuration": "5",
+      "TimeUntilNextStackFromSameSpell": "4",
+      "HealingPercent": "0.08",
+      "RangedHealingPercent": "0.05"
+    },
+    "tooltip": "Basic attacks or spells that deal damage to an enemy champion grant 2 stacks of Conqueror for @BuffDuration@s, gaining {{perk_substring_ConquerorAdaptive_@f4@}} per stack. Stacks up to @MaxStacks@ times. Ranged champions gain only 1 stack per basic attack.<br><br>When fully stacked, heal for @HealingPercent*100@% of the damage you deal to champions (@RangedHealingPercent*100@% for ranged champions).<br><br>Total Healing: @f1@"
   },
   "validated": true,
   "changes": [],

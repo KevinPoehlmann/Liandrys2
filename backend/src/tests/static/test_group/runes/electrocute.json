@@ -1,8 +1,8 @@
 {
   "rune_id": 8112,
   "name": "Electrocute",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "tree": "Domination",
   "tree_id": 8100,
   "row": 0,
@@ -14,9 +14,7 @@
     "raw_stats": {},
     "changes": [],
     "validated": true,
-    "assumptions": [
-      "Base damage grows linearly from 70 (level 1) to 260 (level 18), as the wiki's description says; its patch notes say 240."
-    ],
+    "assumptions": [],
     "rules": [
       {
         "trigger": "on_damage_dealt",
@@ -104,7 +102,7 @@
     "buffs": [
       {
         "name": "electrocute",
-        "duration": "3",
+        "duration": "WindowDuration",
         "max_stacks": 3,
         "refresh": false,
         "interval": "0",
@@ -182,9 +180,9 @@
             "conditions": [
               {
                 "actor": "self",
-                "key": "0.1 * bonus_ad",
+                "key": "BonusADRatio * bonus_ad",
                 "comparison": "Greater than",
-                "value": "0.05 * ap"
+                "value": "APRatio * ap"
               }
             ],
             "actions": [
@@ -192,7 +190,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "bearer",
-                  "amount": "70 + 190 * (min(level, 18) - 1) / 17 + 0.1 * bonus_ad + 0.05 * ap",
+                  "amount": "TotalDamage",
                   "dmg_type": [
                     "Proc damage"
                   ],
@@ -215,9 +213,9 @@
             "conditions": [
               {
                 "actor": "self",
-                "key": "0.1 * bonus_ad",
+                "key": "BonusADRatio * bonus_ad",
                 "comparison": "Less or equal",
-                "value": "0.05 * ap"
+                "value": "APRatio * ap"
               }
             ],
             "actions": [
@@ -225,7 +223,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "bearer",
-                  "amount": "70 + 190 * (min(level, 18) - 1) / 17 + 0.1 * bonus_ad + 0.05 * ap",
+                  "amount": "TotalDamage",
                   "dmg_type": [
                     "Proc damage"
                   ],
@@ -245,7 +243,7 @@
       },
       {
         "name": "electrocute_cooldown",
-        "duration": "20",
+        "duration": "Cooldown",
         "max_stacks": 1,
         "refresh": true,
         "interval": "0",
@@ -258,7 +256,18 @@
         "rules": []
       }
     ],
-    "description": "Damaging basic attacks, abilities, item effects, and summoner spells, as well as the application of  crowd control and damage over time effects, generate stacks against enemy  champions, up to one per attack or cast per champion. Applying 3 stacks to a target within a 3 second period causes them to be struck by lightning after a 0.25-second delay, dealing them 70 – 240 (based on level) (+ 10% bonus AD) (+ 5% AP) physical or magic damage.If「 10% bonus AD ≥ 5% AP, 」「 bonus AD ≥ 50% AP, 」deals physical damage. If otherwise, deals magic damage."
+    "description": "Damaging basic attacks, abilities, item effects, and summoner spells, as well as the application of  crowd control and damage over time effects, generate stacks against enemy  champions, up to one per attack or cast per champion. Applying 3 stacks to a target within a 3 second period causes them to be struck by lightning after a 0.25-second delay, dealing them 70 – 240 (based on level) (+ 10% bonus AD) (+ 5% AP) physical or magic damage.If「 10% bonus AD ≥ 5% AP, 」「 bonus AD ≥ 50% AP, 」deals physical damage. If otherwise, deals magic damage.",
+    "values": {
+      "Cooldown": "20",
+      "DamageBase": "70",
+      "DamageMax": "240",
+      "BonusADRatio": "0.1",
+      "WindowDuration": "3",
+      "APRatio": "0.05",
+      "CooldownMin": "20",
+      "TotalDamage": "by_level(70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260) + APRatio * ap + BonusADRatio * bonus_ad"
+    },
+    "tooltip": "Hitting a champion with 3 <b>separate</b> attacks or abilities within @WindowDuration@s deals <font color='#48C4B7'>@TotalDamage@</font> bonus <lol-uikit-tooltipped-keyword key='LinkTooltip_Description_AdaptiveDmg'><font color='#48C4B7'>adaptive damage</font></lol-uikit-tooltipped-keyword>.<br>Cooldown: @Cooldown@s<br><hr><br>Total Damage Dealt: <scaleAD>@f1@</scaleAD>"
   },
   "validated": true,
   "changes": [],

@@ -18,7 +18,7 @@ RIVEN_AD = 64 + 3 * GROWTH_LVL_6
 VAYNE_AD = 60 + 2.35 * GROWTH_LVL_6
 VEIGAR_AD = 52 + 2.7 * GROWTH_LVL_6
 DARIUS_ARMOR = 37 + 5.2 * GROWTH_LVL_6
-CONQUEROR_FORCE_LVL_6 = 1.8 + 2.46 * 5 / 17  # per stack, assumed linear from level 1 to 18
+CONQUEROR_FORCE_LVL_6 = 1.8 + (4 - 1.8) * 5 / 17  # per stack, 1.8 to 4 (wiki, CDragon), assumed linear to 18
 
 
 def load_rune(name: str) -> Rune:
@@ -27,7 +27,7 @@ def load_rune(name: str) -> Rune:
 
 
 def shards() -> list[Rune]:
-    return [load_rune("offence_adaptive_force"), load_rune("flex_adaptive_force")]
+    return [load_rune("adaptive_force_offense"), load_rune("adaptive_force_flex")]
 
 
 def physical(raw: float) -> float:
@@ -168,7 +168,7 @@ class TestPetDamageForTheOwner():
         assert len(executes) == 1 and executes[0] in pet_hits
 
 
-ELECTROCUTE_LVL_6 = 70 + 190 * 5 / 17  # assumed linear from level 1 to 18
+ELECTROCUTE_LVL_6 = 70 + 10 * 5  # CDragon's TotalDamage: 70 to 240 at level 18, 10 per level
 STRIKE_DELAY = 8  # 0.25 s
 
 

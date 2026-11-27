@@ -1,6 +1,6 @@
 """Loads new patches and hotfixes. Champions come from CommunityDragon, Data Dragon and the wiki API, on the first
-load, when patching forward and in a hotfix; summoner spells and items the same way from CommunityDragon's shared
-spells and items. Runes and patch detection still go through patchloader2 until they move here."""
+load, when patching forward and in a hotfix; summoner spells, items and runes the same way from CommunityDragon's
+shared spells, items and perks. Patch detection still goes through patchloader2 until it moves here."""
 import asyncio
 import logging
 import time
@@ -17,8 +17,8 @@ from src.server.loader.champion_builder import (SLOTS, LoadedSpell, build_champi
 from src.server.loader.champion_patcher import has_changes, keep_earlier_changes, patch_champion, spells_from_document
 from src.server.loader.champion_source import (cdragon_version, fetch_build, fetch_champion_data, fetch_strings,
                                                load_raw_champion)
-from src.server.loader.helper import RuneClass, SafeSession, info_loader, riot_to_wiki_patch
-from src.server.loader.images import (load_champion_images, load_item_image, load_masterwork_border,
+from src.server.loader.helper import SafeSession, info_loader, riot_to_wiki_patch
+from src.server.loader.images import (load_champion_images, load_item_image, load_masterwork_border, load_rune_image,
                                      load_summonerspell_image)
 from src.server.loader.item_builder import (build_item, item_from_document, loaded_item, patch_item, rift_items,
                                             unknown_stat_fields)
@@ -27,15 +27,21 @@ from src.server.loader.item_source import fetch_item_data, fetch_items_bin, load
 from src.server.loader.names import DDragonName, NameDictionary, ddragon_notes, load_name_dictionaries
 from src.server.loader.patch_notes import fetch_patch_page, hotfix_notes, notes_with_hotfixes
 from src.server.loader.patchexceptions import LoadError, PatcherError
+from src.server.loader.rune_builder import (SHARD_TREE_ID, RuneEntry, build_rune, loaded_rune, patch_rune,
+                                            rune_from_document, shard_entries, tree_entries, unknown_shard)
+from src.server.loader.rune_builder import wiki_mismatches as rune_wiki_mismatches
+from src.server.loader.rune_source import (fetch_perks_bin, fetch_rune_trees, fetch_rune_wiki_pages, load_raw_rune,
+                                           perk_records)
 from src.server.loader.summonerspell_builder import (build_summonerspell, patch_summonerspell, rift_spells,
                                                      spell_from_document, summoner_spell)
 from src.server.loader.summonerspell_builder import wiki_mismatches as spell_wiki_mismatches
 from src.server.loader.summonerspell_source import fetch_shared_bin, fetch_spell_data, load_raw_summonerspell
 from src.server.models.change import Change, with_hotfix_lines
-from src.server.models.champion import Champion, NewChampion, RawChampion
+from src.server.models.champion import Champion, NewChampion, RawChampion, WikiTemplate
 from src.server.models.item import Item, NewItem, RawItem
 from src.server.models.json_validation import ChampionJson, ChampionsJson, ItemJson, SummonerspellJson
 from src.server.models.patch import NewPatch, Patch
+from src.server.models.rune import NewRune, RawRune, Rune
 from src.server.models.summonerspell import NewSummonerspell, RawSummonerspell, Summonerspell
 from src.server.utils.logger import attach_fallback_logfile, finalize_load_logfile
 
@@ -71,6 +77,17 @@ class ItemSources:
 
 
 ItemEntry = tuple[str, ItemJson]  # Data Dragon's id and list entry
+
+
+@dataclass
+class RuneSources:
+    """What every rune of a load reads, downloaded once, and every rune with its place (trees and shard rows)."""
+    build: str
+    records: dict[int, dict]  # perks.cdtb.bin.json's perks by id
+    strings: dict[str, str]
+    wiki_pages: dict[str, WikiTemplate] | None  # data templates and articles by title; None: the wiki was down
+    wiki_names: dict[int, str]  # the wiki page of each tree rune
+    entries: list[RuneEntry]
 
 
 @dataclass
@@ -136,19 +153,21 @@ async def load_fresh_database(patches: list[str]) -> None:
     async with aiohttp.ClientSession(timeout=TIMEOUT) as aio_session:
         session = SafeSession(aio_session)
         champions = await fetch_champion_list(session, patch_name)
-        items, runes, summonerspells = await old._list_other_data(patch_name, session)
+        items, summonerspells = await old._list_other_data(patch_name, session)
+        runes = await fetch_rune_entries(session, patch_name)
         names = await name_dictionaries(session, champions, items, runes, summonerspells)
         summonerspells = rift_spells(summonerspells)
         sources = await item_sources(session, patch_name)
         items = rift_items(items, sources.item_data)
+        rune_data = await rune_sources(session, patch_name, runes, names["runes"])
         patch = await _resumed_or_new_patch(patch_name, NewPatch(
             patch=patch_name, champion_count=len(champions), item_count=len(items),
-            rune_count=len(runes), summonerspell_count=len(summonerspells)))
+            rune_count=len(rune_data.entries), summonerspell_count=len(summonerspells)))
 
         results = await asyncio.gather(
             load_all_champions(champions, session, patch, names["champions"]),
             load_all_items(items, session, patch, sources),
-            old._load_all_runes(runes, session, patch),
+            load_all_runes(session, patch, rune_data),
             load_all_summonerspells(summonerspells, session, patch, names["summonerspells"]),
             return_exceptions=True,
         )
@@ -179,13 +198,12 @@ async def fetch_champion_list(session: SafeSession, patch: str) -> list[Champion
 
 
 async def name_dictionaries(session: SafeSession, champions: list[ChampionJson], items: list[tuple[str, ItemJson]],
-                            runes: list[RuneClass], summonerspells: list[SummonerspellJson]) -> dict[str, NameDictionary]:
-    """Also handed to patchloader2, which loads items, runes and summoner spells for now.
-    Only Summoner's Rift: other modes' objects (Arena vouchers, Poro Toss, ...) keep Data Dragon's name."""
+                            runes: list[RuneEntry], summonerspells: list[SummonerspellJson]) -> dict[str, NameDictionary]:
+    """Only Summoner's Rift: other modes' objects (Arena vouchers, Poro Toss, ...) keep Data Dragon's name."""
     entries = {
         "champions": [DDragonName(champion.id_, champion.name) for champion in champions],
         "items": [DDragonName(item_id, item.name) for item_id, item in items if item.maps.get("11")],
-        "runes": [DDragonName(str(rune.rune.id_), rune.rune.name) for rune in runes],
+        "runes": [DDragonName(str(rune.rune_id), rune.name) for rune in runes if not rune.is_shard],
         "summonerspells": [DDragonName(spell.id_, spell.name) for spell in summonerspells if "CLASSIC" in spell.modes],
     }
     try:
@@ -194,7 +212,6 @@ async def name_dictionaries(session: SafeSession, champions: list[ChampionJson],
         # Without the wiki the old behavior stays: Data Dragon's names.
         patch_logger.warning(f"[PATCH] [NAMES] Wiki names not loaded, Data Dragon's names are used: {e}")
         names = {type_: NameDictionary() for type_ in entries}
-    old.WIKI_NAMES = names
     return names
 
 
@@ -296,14 +313,16 @@ async def load_patch(patch_name: str, old_patch: NewPatch) -> NewPatch:
                          item_count=old_patch.item_count, rune_count=old_patch.rune_count,
                          summonerspell_count=old_patch.summonerspell_count)
         champions = await fetch_champion_list(session, patch_name)
-        items, runes, summonerspells = await old._list_other_data(patch_name, session)
+        items, summonerspells = await old._list_other_data(patch_name, session)
+        runes = await fetch_rune_entries(session, patch_name)
         names = await name_dictionaries(session, champions, items, runes, summonerspells)
         notes = ddragon_notes(notes, names)
         await patch_all_champions(champions, notes.get("champions", {}), session, patch, old_patch, names["champions"])
         sources = await item_sources(session, patch_name)
         await patch_all_items(rift_items(items, sources.item_data), notes.get("items", {}), session, patch, old_patch,
                               sources)
-        await old._patch_runes(notes.get("runes", {}), patch, old_patch, session)
+        await patch_all_runes(notes.get("runes", {}), session, patch, old_patch,
+                              await rune_sources(session, patch_name, runes, names["runes"]))
         await patch_all_summonerspells(rift_spells(summonerspells), notes.get("summonerspells", {}), session, patch,
                                        old_patch, names["summonerspells"])
     patch.update_totals()
@@ -361,7 +380,8 @@ async def load_hotfix(patch: Patch, hotfix: Hotfix) -> Patch:
         session = SafeSession(aio_session)
         wikitext = await fetch_patch_page(session, riot_to_wiki_patch(patch.patch))
         champions = await fetch_champion_list(session, patch.patch)
-        items, runes, summonerspells = await old._list_other_data(patch.patch, session)
+        items, summonerspells = await old._list_other_data(patch.patch, session)
+        runes = await fetch_rune_entries(session, patch.patch)
         names = await name_dictionaries(session, champions, items, runes, summonerspells)
         notes = ddragon_notes(hotfix_notes(wikitext, hotfix.wiki_dates), names)
         champion_notes = notes["champions"]["changed"]
@@ -378,12 +398,13 @@ async def load_hotfix(patch: Patch, hotfix: Hotfix) -> Patch:
         await hotfix_all_summonerspells(summonerspells, spell_notes, session, patch, hotfixed_at,
                                         names["summonerspells"])
         await hotfix_all_items(items, item_notes, session, patch, hotfixed_at, sources)
-        await old.hotfix_others(notes, patch, hotfixed_at)
+        rune_count = await hotfix_runes(runes, notes.get("runes", {}).get("changed", {}), session, patch, hotfix,
+                                        hotfixed_at, names["runes"])
     patch.build, patch.updated_at = hotfix.build, hotfixed_at
     patch.update_totals()
     await db.upsert_patch(patch)
-    load_logger.info(f"[LOAD] Hotfixed {len(champions)} champions, {len(summonerspells)} summoner spells and "
-                     f"{len(items)} items in {time.monotonic() - start:.2f} seconds")
+    load_logger.info(f"[LOAD] Hotfixed {len(champions)} champions, {len(summonerspells)} summoner spells, "
+                     f"{len(items)} items and {rune_count} runes in {time.monotonic() - start:.2f} seconds")
     return patch
 
 
@@ -738,6 +759,186 @@ async def _old_item(old_item: NewItem, old_patch: NewPatch) -> LoadedSpell:
                              f"stored values (structure changes stay unseen)")
         return item_from_document(old_item)
     return loaded_item(old_raw)
+
+
+async def fetch_rune_entries(session: SafeSession, patch_name: str) -> list[RuneEntry]:
+    """Data Dragon's five trees; the stat shards come with the sources (CommunityDragon)."""
+    trees = await fetch_rune_trees(session, patch_name)
+    await old._load_rune_tree_images([tree.icon for tree in trees], session)
+    return tree_entries(trees)
+
+
+async def rune_sources(session: SafeSession, patch_name: str, entries: list[RuneEntry],
+                       names: NameDictionary = NameDictionary()) -> RuneSources:
+    version = cdragon_version(patch_name)
+    perks, strings = await fetch_perks_bin(session, version), await fetch_strings(session, version)
+    wiki_names = {entry.rune_id: names.wiki_name(str(entry.rune_id), entry.name) for entry in entries}
+    return RuneSources(build=await fetch_build(session, version), records=perk_records(perks), strings=strings,
+                       wiki_pages=await _rune_wiki_pages_or_nothing(session, list(wiki_names.values())),
+                       wiki_names=wiki_names, entries=entries + shard_entries(perks, strings))
+
+
+async def _rune_wiki_pages_or_nothing(session: SafeSession, wiki_names: list[str]) -> dict[str, WikiTemplate] | None:
+    # Only the description, cooldown and notes for the editor; runes load without them.
+    try:
+        return await fetch_rune_wiki_pages(session, wiki_names)
+    except (LoadError, RuntimeError, KeyError) as e:
+        patch_logger.warning(f"[RUNE] [WIKI] Rune wiki pages not loaded: {e}")
+        return None
+
+
+async def load_all_runes(session: SafeSession, patch: NewPatch, sources: RuneSources) -> None:
+    await _each_rune(sources.entries, lambda entry: load_rune(entry, session, patch, sources), "load")
+
+
+async def _each_rune(entries: list[RuneEntry], load: Callable[[RuneEntry], Awaitable[None]], action: str) -> None:
+    # The wiki pages are already there, only images load per rune. A shard in two rows shares its raw document,
+    # so its second row waits for the first instead of racing it on the same key.
+    seen: set[int] = set()
+    first, repeated = [], []
+    for entry in entries:
+        (repeated if entry.rune_id in seen else first).append(entry)
+        seen.add(entry.rune_id)
+    semaphore = asyncio.Semaphore(ITEM_CONCURRENCY)
+
+    async def limited(entry: RuneEntry) -> None:
+        async with semaphore:
+            await load(entry)
+
+    for group in (first, repeated):
+        results = await asyncio.gather(*(limited(entry) for entry in group), return_exceptions=True)
+        for entry, result in zip(group, results):
+            if isinstance(result, Exception):
+                _log_error("RUNE", entry.name, result)
+                load_logger.error(f"[RUNE] {entry.name} ❌ Failed to {action}")
+
+
+async def load_rune(entry: RuneEntry, session: SafeSession, patch: NewPatch, sources: RuneSources) -> None:
+    if await db.exists_rune(entry.rune_id, patch.patch, entry.key[1]):
+        return
+    raw = await _stored_raw_rune(entry, patch, sources)
+    await _store_rune(build_rune(raw, entry), raw, session, patch)
+    load_logger.info(f"[RUNE] {entry.name} ✔ Loaded successfully")
+
+
+async def _stored_raw_rune(entry: RuneEntry, patch: NewPatch, sources: RuneSources) -> RawRune:
+    wiki_name = None if entry.is_shard else sources.wiki_names.get(entry.rune_id, entry.name)
+    raw = load_raw_rune(entry.rune_id, wiki_name, patch.patch, sources.build, sources.records, sources.strings,
+                        sources.wiki_pages or {})
+    checked = sources.wiki_pages is not None and wiki_name  # without the wiki, one warning for all is enough
+    if checked and not raw.wiki_data:
+        patch_logger.warning(f"[RUNE] [WIKI] [{entry.name}] No Template:Rune data {wiki_name}")
+    if checked and not raw.wiki:
+        patch_logger.warning(f"[RUNE] [WIKI] [{entry.name}] No wiki article found")
+    # Stored before building, so a rune the builder can't handle still has its raw data to look at.
+    await db.upsert_raw_rune(raw)
+    return raw
+
+
+async def _store_rune(rune: NewRune, raw: RawRune, session: SafeSession, patch: NewPatch) -> None:
+    await _check_rune(rune, raw, session, patch)
+    await db.add_rune(rune)
+    patch.loaded_rune_count += 1
+
+
+async def _check_rune(rune: NewRune, raw: RawRune, session: SafeSession, patch: NewPatch) -> None:
+    """The wiki cross-check, an unknown shard and the image, on a first load, a patch and a hotfix."""
+    for mismatch in rune_wiki_mismatches(rune, raw):
+        patch_logger.warning(f"[RUNE] [WIKI] [{rune.name}] {mismatch}")
+    if rune.tree_id == SHARD_TREE_ID and unknown_shard(raw):
+        patch_logger.warning(f"[RUNE] [STATS] [{rune.name}] Unknown stat shard {raw.cdragon.get('mPerkName')}, "
+                             f"its stats need entering by hand: {rune.passive.values}")
+    for failure in await load_rune_image(session, rune, raw, cdragon_version(patch.patch)):
+        patch_logger.warning(f"[RUNE] [IMAGE] [{rune.name}] {failure}")
+
+
+def _rune_key(rune: NewRune) -> tuple[int, int | None]:
+    return rune.rune_id, rune.row if rune.tree_id == SHARD_TREE_ID else None
+
+
+async def patch_all_runes(notes: dict, session: SafeSession, patch: NewPatch, old_patch: NewPatch,
+                          sources: RuneSources) -> None:
+    """Runes of the old patch are patched forward, new ones get a first load, missing ones are left behind.
+    `notes` are the patch notes' {"changed": {rune: [lines]}, ...}, with Data Dragon's names."""
+    previous = {_rune_key(rune): rune for rune in await db.fetch_runes_by_patch(old_patch.patch)}
+    patch.rune_count = len(sources.entries)
+    for key in previous.keys() - {entry.key for entry in sources.entries}:
+        load_logger.info(f"[RUNE] {previous[key].name} ✔ Not in patch {patch.patch} anymore, left behind")
+
+    async def load(entry: RuneEntry) -> None:
+        if entry.key not in previous:
+            await load_rune(entry, session, patch, sources)
+            return
+        rune_notes = notes.get("changed", {}).get(entry.name, [])
+        await patch_one_rune(entry, previous[entry.key], rune_notes, session, patch, old_patch, sources)
+
+    await _each_rune(sources.entries, load, "patch")
+
+
+async def patch_one_rune(entry: RuneEntry, old_rune: Rune, notes: list[Change], session: SafeSession,
+                         patch: NewPatch, old_patch: NewPatch, sources: RuneSources) -> None:
+    if await db.exists_rune(entry.rune_id, patch.patch, entry.key[1]):
+        return
+    raw = await _stored_raw_rune(entry, patch, sources)
+    result = patch_rune(old_rune, await _old_rune(old_rune, old_patch), raw, entry, notes)
+    if result.unvalidated:
+        patch_logger.info(f"[RUNE] [PATCH] [{entry.name}] unvalidated: {'; '.join(result.unvalidated)}")
+    await _store_rune(result.rune, raw, session, patch)
+    if result.rune.changes:
+        patch.changed_rune_count += 1
+    load_logger.info(f"[RUNE] {entry.name} ✔ Patched successfully")
+
+
+async def hotfix_all_runes(entries: list[RuneEntry], notes: dict[str, list[Change]], session: SafeSession,
+                           patch: Patch, hotfixed_at: datetime, sources: RuneSources) -> None:
+    """`notes` are the hotfixes' {rune: [lines]}, with Data Dragon's names."""
+    current = {_rune_key(rune): rune for rune in await db.fetch_runes_by_patch(patch.patch)}
+
+    async def load(entry: RuneEntry) -> None:
+        if entry.key not in current:
+            patch_logger.warning(f"[RUNE] [HOTFIX] [{entry.name}] Not in patch {patch.patch}, skipped")
+            return
+        await hotfix_one_rune(entry, current[entry.key], notes.get(entry.name, []), session, patch, hotfixed_at,
+                              sources)
+
+    await _each_rune(entries, load, "hotfix")
+
+
+async def hotfix_one_rune(entry: RuneEntry, current: Rune, notes: list[Change], session: SafeSession, patch: Patch,
+                          hotfixed_at: datetime, sources: RuneSources) -> None:
+    old_rune = await _old_rune(current, patch)  # read before the new download replaces the raw data
+    raw = await _stored_raw_rune(entry, patch, sources)
+    result = patch_rune(current, old_rune, raw, entry, notes)
+    if result.unvalidated:
+        patch_logger.info(f"[RUNE] [HOTFIX] [{entry.name}] unvalidated: {'; '.join(result.unvalidated)}")
+    rune = result.rune
+    if rune.changes and not current.changes:
+        patch.changed_rune_count += 1
+    rune.changes = with_hotfix_lines(current.changes, rune.changes, hotfixed_at)
+    await _check_rune(rune, raw, session, patch)
+    await db.update_rune(Rune(id=current.id, **rune.dict()))
+    load_logger.info(f"[RUNE] {entry.name} ✔ Hotfixed")
+
+
+async def _old_rune(old_rune: NewRune, old_patch: NewPatch) -> LoadedSpell:
+    # Rebuilt from the old raw data with today's translator, so a translator change doesn't look like a patch change.
+    old_raw = await db.fetch_raw_rune(old_rune.rune_id, old_patch.patch)
+    if old_raw is None:
+        patch_logger.warning(f"[RUNE] [PATCH] [{old_rune.name}] No raw data of the old patch, comparing with the "
+                             f"stored values (structure changes stay unseen)")
+        return rune_from_document(old_rune)
+    return loaded_rune(old_raw)
+
+
+async def hotfix_runes(runes: list[RuneEntry], notes: dict[str, list[Change]], session: SafeSession, patch: Patch,
+                       hotfix: Hotfix, hotfixed_at: datetime, names: NameDictionary = NameDictionary()) -> int:
+    """All runes on a new build, else only the named ones; their sources are only downloaded when needed."""
+    if not hotfix.build_changed and not any(entry.name in notes for entry in runes):
+        return 0
+    sources = await rune_sources(session, patch.patch, runes, names)
+    entries = [entry for entry in sources.entries if hotfix.build_changed or entry.name in notes]
+    await hotfix_all_runes(entries, notes, session, patch, hotfixed_at, sources)
+    return len(entries)
 
 
 def _log_error(type_: str, name: str, error: Exception) -> None:

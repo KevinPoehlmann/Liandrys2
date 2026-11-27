@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup, Tag
 from dataclasses import dataclass
 from src.server.loader.helper import (
     wiki_to_riot_patch,
-    RuneClass,
     parse_formula_from_table,
     parse_formula_from_string,
 )
@@ -14,10 +13,8 @@ from src.server.loader.patchexceptions import ScrapeError
 from src.server.models.ability import ChampionAbility, Ability
 from src.server.models.champion import NewChampion
 from src.server.models.enums import ResourceType, RangeType
-from src.server.models.image import Image
 from src.server.models.json_validation import ChampionJson, SpellJson, PassiveJson
-from src.server.models.passive import ChampionPassive, Passive
-from src.server.models.rune import NewRune
+from src.server.models.passive import ChampionPassive
 
 
 patch_logger = logging.getLogger("liandrys.patch")
@@ -269,60 +266,6 @@ def _scrape_ability_stats(block: Tag) -> dict[str, str]:
             formula = parse_formula_from_string(value, scale=scale)
         stats[label] = formula
 
-    return stats
-
-
-def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str) -> NewRune:
-    soup = BeautifulSoup(wiki_html, "lxml")
-    try:
-        passive = _scrape_rune_passive(soup)
-    except (AttributeError, ValueError) as e:
-        raise ScrapeError(e, "Rune", rune_class.rune.name)
-    
-
-    passive.name = rune_class.rune.name
-
-    rune = NewRune(
-        rune_id=rune_class.rune.id_,
-        name=rune_class.rune.name,
-        patch=patch,
-        tree=rune_class.tree,
-        tree_id=rune_class.tree_id,
-        row=rune_class.row,
-        slot=rune_class.slot,
-        passive=passive,
-        image=image
-    )
-    return rune
-
-
-def _scrape_rune_passive(soup: BeautifulSoup) -> Passive:
-    rune_content = soup.find("div", class_="mw-parser-output")
-    rune_info = rune_content.find("div", class_="infobox-section") # type: ignore[arg-type]
-    passive_text = _get_clean_text(rune_info, remove="Passive:")
-    passive_stats = _scrape_rune_summoner_stats(rune_content)
-    passive = Passive(
-        name="Replace",
-        description = passive_text,
-        raw_stats=passive_stats
-    )
-    return passive
-
-
-def _scrape_rune_summoner_stats(rune_content: Tag) -> dict[str, str]:
-    stats = {}
-    rune_stats = rune_content.find("div", class_="infobox-section-column")
-    if not rune_stats:
-        return stats
-    stat_list = rune_stats.find_all("div", class_="infobox-data-row")
-    for stat in stat_list:
-        label = stat.find("div", class_="infobox-data-label")
-        value = stat.find("div", class_="infobox-data-value")
-        if not label or not value:
-            continue
-        label_text = label.text.lower()
-        value_text = value.text
-        stats[label_text] = value_text
     return stats
 
 

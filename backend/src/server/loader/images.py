@@ -11,6 +11,7 @@ from src.server.models.champion import NewChampion, RawChampion
 from src.server.models.image import Image
 from src.server.models.item import NewItem, RawItem
 from src.server.models.patch import NewPatch
+from src.server.models.rune import NewRune, RawRune
 from src.server.models.summonerspell import NewSummonerspell, RawSummonerspell
 
 
@@ -93,6 +94,21 @@ async def load_item_image(session: SafeSession, item: NewItem, raw: RawItem, ver
     url = asset_url(version, asset)
     try:
         item.image = await store_image(session, url, "item", _asset_name(asset))
+    except LoadError as e:
+        return [f"{e.code} {e.reason} — {e.url}"]
+    except RuntimeError as e:  # SafeSession's retries are used up
+        return [f"{e} — {url}"]
+    return []
+
+
+async def load_rune_image(session: SafeSession, rune: NewRune, raw: RawRune, version: str) -> list[str]:
+    """Like load_item_image: the failure, if any; then the rune keeps Data Dragon's image."""
+    asset = raw.cdragon.get("mIconTextureName", "")
+    if not asset:
+        return ["no icon in the rune data"]
+    url = asset_url(version, asset)
+    try:
+        rune.image = await store_image(session, url, "rune", _asset_name(asset))
     except LoadError as e:
         return [f"{e.code} {e.reason} — {e.url}"]
     except RuntimeError as e:  # SafeSession's retries are used up

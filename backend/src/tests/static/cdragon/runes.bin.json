@@ -1,0 +1,476 @@
+{
+ "Perks/Styles/Domination/Electrocute": {
+  "mPerkId": 8112,
+  "mPerkName": "Electrocute",
+  "mDisplayNameLocalizationKey": "perk_displayname_Electrocute",
+  "mTooltipNameLocalizationKey": "perk_tooltip_Electrocute",
+  "mShortDescLocalizationKey": "perk_short_desc_8112",
+  "mLongDescLocalizationKey": "perk_long_desc_8112",
+  "mEndOfGameStatDescriptions": [
+   "perk_eog_stat_desc_Electrocute1"
+  ],
+  "mDisplayStatLocalizationKey": "perk_display_stat_total",
+  "mIconTextureName": "assets/perks/styles/domination/electrocute/electrocute.tex",
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/Styles/Domination/Electrocute/Electrocute.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "Cooldown": 20.0,
+     "DamageBase": 70.0,
+     "DamageMax": 240.0,
+     "BonusADRatio": 0.10000000149011612,
+     "WindowDuration": 3.0,
+     "APRatio": 0.05000000074505806,
+     "CooldownMin": 20.0
+    },
+    "mEffectAmountGameMode": {
+     "NEXUSBLITZ": {
+      "mEffectAmountPerMode": {
+       "Cooldown": 20.0,
+       "CooldownMin": 15.0
+      },
+      "__type": "PerkEffectAmountPerMode"
+     },
+     "URF": {
+      "mEffectAmountPerMode": {
+       "Cooldown": 10.0,
+       "CooldownMin": 10.0
+      },
+      "__type": "PerkEffectAmountPerMode"
+     },
+     "ARAM": {
+      "mEffectAmountPerMode": {
+       "Cooldown": 15.0,
+       "CooldownMin": 10.0,
+       "DamageBase": 65.0,
+       "DamageMax": 250.0,
+       "BonusADRatio": 0.15000000596046448,
+       "APRatio": 0.10000000149011612
+      },
+      "__type": "PerkEffectAmountPerMode"
+     },
+     "KINGPORO": {
+      "mEffectAmountPerMode": {
+       "Cooldown": 15.0,
+       "CooldownMin": 10.0
+      },
+      "__type": "PerkEffectAmountPerMode"
+     }
+    },
+    "mCalculations": {
+     "TotalDamage": {
+      "mSimpleTooltipCalculationDisplay": 4,
+      "mFormulaParts": [
+       {
+        "mStartValue": 70.0,
+        "mEndValue": 240.0,
+        "__type": "ByCharLevelInterpolationCalculationPart"
+       },
+       {
+        "mDataValue": "APRatio",
+        "__type": "StatByNamedDataValueCalculationPart"
+       },
+       {
+        "mStat": 2,
+        "mStatFormula": 2,
+        "mDataValue": "BonusADRatio",
+        "__type": "StatByNamedDataValueCalculationPart"
+       }
+      ],
+      "__type": "GameCalculation"
+     }
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "mBuffs": [
+   {
+    "mBuffScriptName": "ASSETS/Perks/Styles/Domination/Electrocute/PerkElectrocuteLockout.lua",
+    "mBuffSpellObject": {
+     "mBuff": {
+      "mDescription": "buff_desc_8112Cooldown",
+      "__type": "BuffData"
+     },
+     "__type": "SpellObject"
+    },
+    "__type": "PerkBuff"
+   },
+   {
+    "mBuffScriptName": "ASSETS/Perks/Styles/Domination/Electrocute/Electrocute.lua",
+    "mBuffSpellObject": {
+     "mBuff": {
+      "mDescription": "buff_desc_8112Ready",
+      "__type": "BuffData"
+     },
+     "__type": "SpellObject"
+    },
+    "__type": "PerkBuff"
+   }
+  ],
+  "mDefault": true,
+  "__type": "Perk"
+ },
+ "Perks/Styles/Precision/Conqueror": {
+  "mPerkId": 8010,
+  "mPerkName": "Conqueror",
+  "mDisplayNameLocalizationKey": "perk_displayname_Conqueror",
+  "mTooltipNameLocalizationKey": "perk_tooltip_Conqueror",
+  "mShortDescLocalizationKey": "perk_short_desc_Conqueror",
+  "mLongDescLocalizationKey": "perk_long_desc_Conqueror",
+  "mEndOfGameStatDescriptions": [
+   "perk_eog_stat_desc_Conqueror"
+  ],
+  "mDisplayStatLocalizationKey": "perk_display_stat_total",
+  "mIconTextureName": "assets/perks/styles/precision/conqueror/conqueror.tex",
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/Styles/Precision/Conqueror/Conqueror.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "MinAdaptivePerStack": 1.7999999523162842,
+     "MaxAdaptivePerStack": 4.0,
+     "MaxStacks": 12.0,
+     "BuffDuration": 5.0,
+     "TimeUntilNextStackFromSameSpell": 4.0,
+     "HealingPercent": 0.07999999821186066,
+     "RangedHealingPercent": 0.05000000074505806
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "mBuffs": [
+   {
+    "mBuffScriptName": "ASSETS/Perks/Styles/Precision/Conqueror/Conqueror.lua",
+    "mBuffSpellObject": {
+     "mBuff": {
+      "mDescription": "buff_desc_Conqueror_Stacking",
+      "__type": "BuffData"
+     },
+     "__type": "SpellObject"
+    },
+    "__type": "PerkBuff"
+   },
+   {
+    "mBuffScriptName": "ASSETS/Perks/Styles/Precision/Conqueror/ConquerorONH.lua",
+    "mBuffSpellObject": {
+     "mBuff": {
+      "mDescription": "buff_desc_Conqueror_ONH",
+      "__type": "BuffData"
+     },
+     "__type": "SpellObject"
+    },
+    "__type": "PerkBuff"
+   },
+   {
+    "mBuffScriptName": "ASSETS/Perks/Styles/Precision/Conqueror/ConquerorEnrage.lua",
+    "mBuffSpellObject": {
+     "mBuff": {
+      "mDescription": "buff_desc_Conqueror_Enrage",
+      "__type": "BuffData"
+     },
+     "__type": "SpellObject"
+    },
+    "__type": "PerkBuff"
+   }
+  ],
+  "mMajorChangePatchVersion": "9.4",
+  "__type": "Perk"
+ },
+ "Perks/Styles/Resolve/Demolish": {
+  "mPerkId": 8446,
+  "mPerkName": "Demolish",
+  "mDisplayNameLocalizationKey": "perk_displayname_8446",
+  "mTooltipNameLocalizationKey": "perk_tooltip_8446",
+  "mShortDescLocalizationKey": "perk_short_desc_8446",
+  "mLongDescLocalizationKey": "perk_long_desc_8446",
+  "mEndOfGameStatDescriptions": [
+   "perk_eog_stat_desc_Demolish1"
+  ],
+  "mDisplayStatLocalizationKey": "perk_display_stat_Demolish",
+  "mIconTextureName": "assets/perks/styles/resolve/demolish/demolish.tex",
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/Styles/Resolve/Demolish/Demolish_SEASONAL.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "CooldownSeconds": 30.0,
+     "{8d810998}": 8.0,
+     "{97664ba4}": 3.0,
+     "BaseDamageMelee": 85.0,
+     "BaseDamageRanged": 50.0,
+     "HPRatioMelee": 0.2800000011920929,
+     "HPRatioRanged": 0.20000000298023224
+    },
+    "mEffectAmountGameMode": {
+     "NEXUSBLITZ": {
+      "mEffectAmountPerMode": {
+       "CooldownSeconds": 30.0
+      },
+      "__type": "PerkEffectAmountPerMode"
+     },
+     "URF": {
+      "mEffectAmountPerMode": {
+       "CooldownSeconds": 30.0
+      },
+      "__type": "PerkEffectAmountPerMode"
+     },
+     "ARAM": {
+      "mEffectAmountPerMode": {
+       "MaxHealthPercentDamage": 0.20000000298023224,
+       "OutputDamagePerStack": 50.0
+      },
+      "__type": "PerkEffectAmountPerMode"
+     },
+     "FIRSTBLOOD": {
+      "mEffectAmountPerMode": {
+       "MaxHealthPercentDamage": 0.10000000149011612,
+       "OutputDamagePerStack": 35.0
+      },
+      "__type": "PerkEffectAmountPerMode"
+     },
+     "KINGPORO": {
+      "mEffectAmountPerMode": {
+       "MaxHealthPercentDamage": 0.20000000298023224,
+       "OutputDamagePerStack": 50.0
+      },
+      "__type": "PerkEffectAmountPerMode"
+     }
+    },
+    "mCalculations": {
+     "DamageCalc": {
+      "mSimpleTooltipCalculationDisplay": 4,
+      "mDefaultGameCalculation": "{4e3f20aa}",
+      "mConditionalGameCalculation": "{5fecac03}",
+      "mConditionalCalculationRequirements": {
+       "__type": "IsMeleeCastRequirement"
+      },
+      "__type": "GameCalculationConditional"
+     },
+     "{4e3f20aa}": {
+      "mSimpleTooltipCalculationDisplay": 4,
+      "DamageType": 0,
+      "mFormulaParts": [
+       {
+        "mDataValue": "BaseDamageRanged",
+        "__type": "NamedDataValueCalculationPart"
+       },
+       {
+        "mStat": 12,
+        "mDataValue": "HPRatioRanged",
+        "__type": "StatByNamedDataValueCalculationPart"
+       }
+      ],
+      "__type": "GameCalculation"
+     },
+     "{5fecac03}": {
+      "mSimpleTooltipCalculationDisplay": 4,
+      "DamageType": 0,
+      "mFormulaParts": [
+       {
+        "mDataValue": "BaseDamageMelee",
+        "__type": "NamedDataValueCalculationPart"
+       },
+       {
+        "mStat": 12,
+        "mDataValue": "HPRatioMelee",
+        "__type": "StatByNamedDataValueCalculationPart"
+       }
+      ],
+      "__type": "GameCalculation"
+     }
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "mBuffs": [
+   {
+    "mBuffScriptName": "ASSETS/Perks/Styles/Resolve/Demolish/SR_2026_S1_DemolishCooldown.lua",
+    "mBuffSpellObject": {
+     "mBuff": {
+      "mDescription": "perk_buff_description_Demolish_CD",
+      "__type": "BuffData"
+     },
+     "__type": "SpellObject"
+    },
+    "__type": "PerkBuff"
+   }
+  ],
+  "mDefault": true,
+  "__type": "Perk"
+ },
+ "Perks/StatMods/Slots/OffensiveStats": {
+  "mSlotLabelKey": "perk_rune_stat_groupname_offensive",
+  "mType": 5,
+  "mPerks": [
+   "Perks/StatMods/Adaptive",
+   "Perks/StatMods/AttackSpeed",
+   "Perks/StatMods/CDRScaling"
+  ],
+  "__type": "PerkSlot"
+ },
+ "Perks/StatMods/Slots/FlexStats": {
+  "mSlotLabelKey": "perk_rune_stat_groupname_flex",
+  "mType": 5,
+  "mPerks": [
+   "Perks/StatMods/Adaptive",
+   "Perks/StatMods/MovementSpeed",
+   "Perks/StatMods/HealthScaling"
+  ],
+  "__type": "PerkSlot"
+ },
+ "Perks/StatMods/Slots/DefensiveStats": {
+  "mSlotLabelKey": "perk_rune_stat_groupname_defensive",
+  "mType": 5,
+  "mPerks": [
+   "Perks/StatMods/Health",
+   "Perks/StatMods/Tenacity",
+   "Perks/StatMods/HealthScaling"
+  ],
+  "__type": "PerkSlot"
+ },
+ "Perks/StatMods/Adaptive": {
+  "mPerkId": 5008,
+  "mPerkName": "Adaptive",
+  "mDisplayNameLocalizationKey": "perk_displayname_Adaptive",
+  "mTooltipNameLocalizationKey": "perk_tooltip_StatModAdaptive",
+  "mShortDescLocalizationKey": "perk_long_desc_StatModAdaptive",
+  "mLongDescLocalizationKey": "perk_long_desc_StatModAdaptive",
+  "mIconTextureName": "assets/perks/statmods/statmodsadaptiveforceicon.tex",
+  "mStackable": true,
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/StatMods/StatModAdaptive.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "StatGain2": 9.0,
+     "StatGain1": 5.400000095367432
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "__type": "Perk"
+ },
+ "Perks/StatMods/AttackSpeed": {
+  "mPerkId": 5005,
+  "mPerkName": "AttackSpeed",
+  "mDisplayNameLocalizationKey": "perk_displayname_AttackSpeed",
+  "mTooltipNameLocalizationKey": "perk_tooltip_StatModAttackSpeed",
+  "mShortDescLocalizationKey": "perk_long_desc_StatModAttackSpeed",
+  "mLongDescLocalizationKey": "perk_long_desc_StatModAttackSpeed",
+  "mIconTextureName": "assets/perks/statmods/statmodsattackspeedicon.tex",
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/StatMods/StatModAttackSpeed.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "StatGain": 10.0
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "__type": "Perk"
+ },
+ "Perks/StatMods/CDRScaling": {
+  "mPerkId": 5007,
+  "mPerkName": "CDRScaling",
+  "mDisplayNameLocalizationKey": "perk_displayname_CDRScaling",
+  "mTooltipNameLocalizationKey": "perk_tooltip_StatModCooldownReductionScaling",
+  "mShortDescLocalizationKey": "perk_long_desc_StatModCooldownReductionScaling",
+  "mLongDescLocalizationKey": "perk_long_desc_StatModCooldownReductionScaling",
+  "mIconTextureName": "assets/perks/statmods/statmodscdrscalingicon.tex",
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/StatMods/StatModCDRScaling.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "HasteGain": 8.0
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "__type": "Perk"
+ },
+ "Perks/StatMods/Health": {
+  "mPerkId": 5011,
+  "mPerkName": "Health",
+  "mDisplayNameLocalizationKey": "perk_displayname_Health",
+  "mTooltipNameLocalizationKey": "perk_tooltip_StatModHealth",
+  "mShortDescLocalizationKey": "perk_short_desc_StatModHealth",
+  "mLongDescLocalizationKey": "perk_short_desc_StatModHealth",
+  "mIconTextureName": "assets/perks/statmods/statmodshealthscalingicon.tex",
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/StatMods/StatModHealth.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "StatGain": 65.0
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "__type": "Perk"
+ },
+ "Perks/StatMods/HealthScaling": {
+  "mPerkId": 5001,
+  "mPerkName": "HealthScaling",
+  "mDisplayNameLocalizationKey": "perk_displayname_HealthScaling",
+  "mTooltipNameLocalizationKey": "perk_tooltip_StatModHealthScaling",
+  "mShortDescLocalizationKey": "perk_long_desc_StatModHealthScaling",
+  "mLongDescLocalizationKey": "perk_long_desc_StatModHealthScaling",
+  "mIconTextureName": "assets/perks/statmods/statmodshealthplusicon.tex",
+  "mStackable": true,
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/StatMods/StatModHealthScaling.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "StatGainMin": 10.0,
+     "StatGainMax": 180.0
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "__type": "Perk"
+ },
+ "Perks/StatMods/MovementSpeed": {
+  "mPerkId": 5010,
+  "mPerkName": "MovementSpeed",
+  "mDisplayNameLocalizationKey": "perk_displayname_MovementSpeed",
+  "mTooltipNameLocalizationKey": "perk_tooltip_StatModMovementSpeed",
+  "mShortDescLocalizationKey": "perk_long_desc_StatModMovementSpeed",
+  "mLongDescLocalizationKey": "perk_long_desc_StatModMovementSpeed",
+  "mIconTextureName": "assets/perks/statmods/statmodsmovementspeedicon.tex",
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/StatMods/StatModMovementSpeed.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "StatGain1": 2.5
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "__type": "Perk"
+ },
+ "Perks/StatMods/Tenacity": {
+  "mPerkId": 5013,
+  "mPerkName": "Tenacity",
+  "mDisplayNameLocalizationKey": "perk_displayname_Tenacity",
+  "mTooltipNameLocalizationKey": "perk_tooltip_StatModTenacity",
+  "mShortDescLocalizationKey": "perk_short_desc_StatModTenacity",
+  "mLongDescLocalizationKey": "perk_short_desc_StatModTenacity",
+  "mIconTextureName": "assets/perks/statmods/statmodstenacityicon.tex",
+  "mScript": {
+   "mSpellScriptName": "ASSETS/Perks/StatMods/StatModTenacity.lua",
+   "mSpellScriptData": {
+    "mEffectAmount": {
+     "StatGain": 15.0
+    },
+    "__type": "PerkScriptData"
+   },
+   "__type": "PerkScript"
+  },
+  "__type": "Perk"
+ }
+}

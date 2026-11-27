@@ -12,7 +12,7 @@ from pymongo.results import UpdateResult
 from src.server.models.patch import NewPatch, Patch
 from src.server.models.champion import NewChampion, Champion, RawChampion, ShortChampion
 from src.server.models.item import NewItem, Item, RawItem, ShortItem
-from src.server.models.rune import NewRune, Rune, ShortRune
+from src.server.models.rune import NewRune, RawRune, Rune, ShortRune
 from src.server.models.summonerspell import NewSummonerspell, RawSummonerspell, Summonerspell, ShortSummonerspell
 from src.server.models.enums import Map
 
@@ -51,6 +51,7 @@ async def setup_indexes() -> None:
     await _unique_index(raw_champion_collection, ["champion_id", "patch"], "raw_champion_index")
     await _unique_index(raw_summonerspell_collection, ["key", "patch"], "raw_summonerspell_index")
     await _unique_index(raw_item_collection, ["item_id", "patch"], "raw_item_index")
+    await _unique_index(raw_rune_collection, ["rune_id", "patch"], "raw_rune_index")
 
 
 async def _unique_index(collection: AgnosticCollection, fields: list[str], name: str) -> None:
@@ -77,6 +78,7 @@ summonerspell_collection: AgnosticCollection = database.summonerspells
 raw_champion_collection: AgnosticCollection = database.raw_champions
 raw_summonerspell_collection: AgnosticCollection = database.raw_summonerspells
 raw_item_collection: AgnosticCollection = database.raw_items
+raw_rune_collection: AgnosticCollection = database.raw_runes
 
 
 
@@ -321,9 +323,21 @@ async def add_rune(rune: NewRune) -> str:
     return result.inserted_id
 
 
-async def exists_rune_by_name(name: str, patch: str) -> bool:
-    count = await rune_collection.count_documents({"name": name, "patch": patch}, limit=1)
+async def exists_rune(rune_id: int, patch: str, row: int | None = None) -> bool:
+    """`row` only for a stat shard, which has one document per row."""
+    query = {"rune_id": rune_id, "patch": patch} | ({"row": row} if row is not None else {})
+    count = await rune_collection.count_documents(query, limit=1)
     return count > 0
+
+
+async def upsert_raw_rune(raw: RawRune) -> None:
+    key = {"rune_id": raw.rune_id, "patch": raw.patch}
+    await raw_rune_collection.replace_one(key, raw.dict(), upsert=True)
+
+
+async def fetch_raw_rune(rune_id: int, patch: str) -> RawRune | None:
+    document = await raw_rune_collection.find_one({"rune_id": rune_id, "patch": patch})
+    return RawRune.parse_obj(document) if document else None
 
 
 async def fetch_runes_by_patch(patch: str) -> list[Rune]:

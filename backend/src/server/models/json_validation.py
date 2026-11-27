@@ -2,7 +2,6 @@ from pathlib import Path
 from pydantic import BaseModel, Field, validator, ValidationError
 
 from src.server.models.image import Image
-from src.server.models.enums import Stat
 
 
 
@@ -208,20 +207,6 @@ class UrlJson(BaseModel):
     summonerspellImage: str
 
 
-class StatShardStatJson(BaseModel):
-    stat: Stat
-    scaling: str
-
-
-class StatShardJson(BaseModel):
-    rune_id: int
-    name: str
-    row: int
-    slot: int
-    stat: StatShardStatJson
-    image: str
-
-
 class InfoJson(BaseModel):
     paths: PathJson
     urls: UrlJson
@@ -229,4 +214,3 @@ class InfoJson(BaseModel):
     wikiNames: dict[str, dict[str, str]]  # type ⇒ Data Dragon id ⇒ wiki page, only where the automatic lookup fails
     maps: dict
     abilityStats: dict
-    runeStatShards: list[StatShardJson]

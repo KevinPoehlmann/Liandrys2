@@ -9,6 +9,7 @@ import pytest
 import src.server.loader.patchloader as loader
 from src.server.loader.names import DDragonName, NameDictionary
 from src.server.loader.patchexceptions import LoadError, PatcherError
+from src.server.loader.rune_builder import RuneEntry
 from src.server.models.change import patch_note
 from src.server.models.champion import Champion, RawChampion
 from src.server.models.json_validation import ChampionJson
@@ -228,13 +229,10 @@ class TestNameDictionaries():
     @pytest.mark.asyncio
     async def test_without_the_wiki_data_dragons_names_stay(self, monkeypatch, loggers):
         monkeypatch.setattr(loader, "load_name_dictionaries", AsyncMock(side_effect=LoadError(404, "down", "", "", "")))
-        old_loader = Mock()
-        monkeypatch.setattr(loader, "old", old_loader)
 
         result = await loader.name_dictionaries(FakeSession({}), [veigar_entry()], [], [], [])
 
         assert result["champions"].wiki_name("Veigar", "Veigar") == "Veigar"
-        assert old_loader.WIKI_NAMES is result
         assert "Wiki names not loaded" in loggers["patch"].warning.call_args.args[0]
 
 
@@ -242,17 +240,20 @@ class TestNameDictionaries():
     async def test_only_summoners_rift_objects_are_looked_up(self, monkeypatch):
         lookup = AsyncMock(return_value={})
         monkeypatch.setattr(loader, "load_name_dictionaries", lookup)
-        monkeypatch.setattr(loader, "old", Mock())
         items = [("1001", SimpleNamespace(name="Boots", maps={"11": True})),
                  ("3901", SimpleNamespace(name="Fire at Will", maps={"11": False}))]
         spells = [SimpleNamespace(id_="SummonerFlash", name="Flash", modes=["CLASSIC", "ARAM"]),
                   SimpleNamespace(id_="SummonerSnowball", name="Mark", modes=["ARAM"])]
+        runes = [RuneEntry(8112, "Electrocute", "Domination", 8100, 0, 0, "electrocute.png"),
+                 RuneEntry(5008, "Adaptive Force (Offense)", "Stat Shard", 0, 0, 0, "adaptive.png")]
 
-        await loader.name_dictionaries(FakeSession({}), [], items, [], spells)
+        await loader.name_dictionaries(FakeSession({}), [], items, runes, spells)
 
         entries = lookup.call_args.args[1]
         assert entries["items"] == [DDragonName("1001", "Boots")]
         assert entries["summonerspells"] == [DDragonName("SummonerFlash", "Flash")]
+        # Stat shards have no wiki pages to look up.
+        assert entries["runes"] == [DDragonName("8112", "Electrocute")]
 
 
 class TestFetchChampionList():
@@ -278,8 +279,7 @@ class TestLoadFreshDatabase():
     @pytest.fixture
     def old_loader(self, monkeypatch) -> Mock:
         spells = [SimpleNamespace(id_="SummonerFlash", modes=["CLASSIC"]), SimpleNamespace(id_="SummonerMana", modes=["ARAM"])]
-        mock = Mock(_list_other_data=AsyncMock(return_value=([("1001", None), ("322065", None)], [], spells)),
-                    _load_all_runes=AsyncMock())
+        mock = Mock(_list_other_data=AsyncMock(return_value=([("1001", None), ("322065", None)], spells)))
         monkeypatch.setattr(loader, "old", mock)
         return mock
 
@@ -292,8 +292,12 @@ class TestLoadFreshDatabase():
         monkeypatch.setattr(loader, "load_all_items", AsyncMock())
         monkeypatch.setattr(loader, "item_sources", AsyncMock(return_value=Mock(item_data={
             "1001": {"modes": {"classic sr 5v5": True}}, "322065": {"modes": {"swiftplay": True}}})))
+        monkeypatch.setattr(loader, "fetch_rune_entries", AsyncMock(return_value=[]))
+        # Two runes: one tree rune from Data Dragon, one stat shard from CommunityDragon.
+        monkeypatch.setattr(loader, "rune_sources", AsyncMock(return_value=Mock(entries=[Mock(), Mock()])))
+        monkeypatch.setattr(loader, "load_all_runes", AsyncMock())
         monkeypatch.setattr(loader, "name_dictionaries", AsyncMock(
-            return_value={"champions": NameDictionary(), "summonerspells": NameDictionary()}))
+            return_value={"champions": NameDictionary(), "summonerspells": NameDictionary(), "runes": NameDictionary()}))
 
 
     @staticmethod
@@ -308,14 +312,15 @@ class TestLoadFreshDatabase():
         patch = database.upsert_patch.call_args.args[0]
         assert patch.patch == "16.23.1"
         # Only Summoner's Rift spells and items count: Clarity (ARAM) and Swiftplay's copy are left out.
-        assert (patch.champion_count, patch.item_count, patch.summonerspell_count, patch.total_count) == (1, 1, 1, 3)
+        assert (patch.champion_count, patch.item_count, patch.summonerspell_count, patch.rune_count,
+                patch.total_count) == (1, 1, 1, 2, 5)
         assert patch.loaded_total_count == 1
         loader.load_all_items.assert_called_once()
 
 
     @pytest.mark.asyncio
     async def test_a_failing_type_still_stores_the_patch(self, database, old_loader, champions, loggers):
-        old_loader._load_all_runes.side_effect = RuntimeError("wiki down")
+        loader.load_all_runes.side_effect = RuntimeError("wiki down")
 
         await loader.load_fresh_database(["16.23.1"])
 

@@ -117,6 +117,18 @@ def item_values(record: dict) -> SpellValues:
     return result
 
 
+def rune_values(record: dict) -> SpellValues:
+    """A rune's values: its script's named numbers (one each, no ranks) and calculations (Electrocute's TotalDamage).
+    Other modes' numbers (mEffectAmountGameMode: ARAM, URF) stay in the raw data."""
+    result = SpellValues()
+    script = record.get("mScript", {}).get("mSpellScriptData", {})
+    amounts = script.get("mEffectAmount") or {}
+    for name, amount in amounts.items():
+        _add(result, name, lambda: format_number(amount))
+    _add_calculations(result, script.get("mCalculations") or {}, list(amounts), [], 0)
+    return result
+
+
 def _add_calculations(result: SpellValues, calculations: dict, riot_names: list[str],
                       effect_amounts: list[list[float] | None], max_rank: int) -> None:
     for index in sorted(_effect_indices(calculations)):
@@ -307,6 +319,8 @@ def _conditional(calculation: dict) -> str:
             condition = _buff_stacks(requirement)
         case "IsRangedCastRequirement":
             condition = "ranged"
+        case "IsMeleeCastRequirement":  # Demolish
+            condition = "1 - ranged"
         case other:
             raise UnsupportedCalculation(f"condition {other}")
     comparison = "== 0" if requirement.get("mInvertResult") else "> 0"

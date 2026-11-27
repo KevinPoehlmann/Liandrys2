@@ -11,14 +11,10 @@ import time
 
 
 from aiohttp import ClientResponseError
-from dataclasses import dataclass
 from datetime import datetime
 
 from src.server.loader.patchexceptions import PatcherError, ScrapeError
-from src.server.models.json_validation import (
-    InfoJson,
-    RuneJson
-)
+from src.server.models.json_validation import InfoJson
 
 patch_logger = logging.getLogger("liandrys.patch")
 load_logger = logging.getLogger("liandrys.load")
@@ -170,17 +166,6 @@ def datetime_to_wiki(date: datetime) -> str:
 
 
 
-@dataclass
-class RuneClass():
-    """Class to gather Rune information"""
-    rune: RuneJson
-    tree: str
-    tree_id: int
-    row: int
-    slot: int
-
-    def __str__(self) -> str:
-        return self.rune.name
 
 
 

@@ -20,7 +20,8 @@ backend/            FastAPI, one codebase, two apps
   src/server/
     database.py     Motor/MongoDB access, one collection per type, all queries
     errors.py       error responses {detail, code, error_id}; tracebacks to alerts.log, failed simulations with their request to simulation.log
-    loader/         patchloader2.py (orchestration) + webscraper2.py (wiki scraping) + helper.py
+    loader/         patchloader.py (orchestration) + <type>_source.py / <type>_builder.py per type + cdragon.py
+                    (translator) + champion_patcher.py (diff, validation); patchloader2.py/webscraper2.py are the old loader
     models/         Pydantic v1 models (see below); enums.py is the import-free bottom layer (enums ← models ← simulation ← routes), result.py the response format
     routes/         every module exposes `router` (read) and `admin` (write)
     simulation/     simulation.py (tick queue) + character.py (stats, formulas, applying effects) + pet.py (summoned units)
@@ -33,7 +34,7 @@ frontend/admin/     admin UI (Vue 3 + Vite + Tailwind) :5174 -> proxies to :5001
 
 **Data flow:** Riot Data Dragon (lists, base stats, images) + League wiki (scraped details) → loader → MongoDB → the admin editor completes abilities/passives by hand → the user picks a combo → simulation → `effect_list` → chart.
 
-**Patch versioning:** every document carries `patch` (its identity, with the name/id). A new patch copies all documents of the old patch forward; a hotfix overwrites its patch in place (`Patch.build` = CommunityDragon build, `Patch.updated_at` = last hotfix run). Champions are diffed against CommunityDragon (`loader/champion_patcher.py`): `changes` (`list[Change]`, source `data` or `patch_notes`) holds only this patch's changes, and an ability loses `validated` only where the change can break its hand-made rules (table in [docs/decisions.md](docs/decisions.md#automatic-patching)). Summoner spells and items patch the same way (`loader/summonerspell_builder.py`, `loader/item_builder.py`; one spell or item = one slot, an item's `values` are shared by its active and passives). Runes still go through the old loader: named in the patch notes ⇒ `changes` lines and `validated = False`. `validated` means "the manually maintained data is trustworthy for this patch"; `Champion.validated` is computed from its abilities. A patch with `loaded_total_count < total_count` is incomplete, and the next load resumes it.
+**Patch versioning:** every document carries `patch` (its identity, with the name/id). A new patch copies all documents of the old patch forward; a hotfix overwrites its patch in place (`Patch.build` = CommunityDragon build, `Patch.updated_at` = last hotfix run). Champions are diffed against CommunityDragon (`loader/champion_patcher.py`): `changes` (`list[Change]`, source `data` or `patch_notes`) holds only this patch's changes, and an ability loses `validated` only where the change can break its hand-made rules (table in [docs/decisions.md](docs/decisions.md#automatic-patching)). Summoner spells, items and runes patch the same way (`loader/summonerspell_builder.py`, `loader/item_builder.py`, `loader/rune_builder.py`; one spell, item or rune = one slot, an item's `values` are shared by its active and passives, a rune's are on its passive; stat shards are one document per row with loader-built stats). `validated` means "the manually maintained data is trustworthy for this patch"; `Champion.validated` is computed from its abilities. A patch with `loaded_total_count < total_count` is incomplete, and the next load resumes it.
 
 **Models:**
 - Every type has `New<Type>` (no id, what the loader writes), `<Type>` (with `_id`) and `Short<Type>` (projection for lists).
