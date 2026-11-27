@@ -5,7 +5,6 @@
   "hotfix": "2025-06-12T00:00:00",
   "ability": {
     "name": "Cleanse",
-    "description": "Removes all  disables (excluding  Airborne,  Nearsight, and  Suppression) and  summoner spell debuffs (excluding  Mark) affecting your champion, and grants you 75%  tenacity for 3 seconds.",
     "cost": "0",
     "cooldown": "240",
     "cast_time": "0",

@@ -142,7 +142,6 @@ async function saveItem() {
 function addPassive() {
   item.value.passives.push({
     name: '',
-    description: '',
     raw_stats: {},
     unique: false,
     changes: [],

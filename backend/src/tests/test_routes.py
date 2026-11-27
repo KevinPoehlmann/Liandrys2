@@ -88,15 +88,6 @@ class TestRuneTrees():
         assert response.json() == {"8100": tree.dict()}
 
 
-    def test_a_patch_without_trees_gets_the_old_static_icons(self, monkeypatch):
-        patch = Patch(_id="0123456789abcdef01234567", patch="16.21.1")
-        monkeypatch.setattr(rune, "fetch_patch_by_name", AsyncMock(return_value=patch))
-
-        response = request(rune, "rune", "GET", "/rune/trees/16.21.1")
-
-        assert response.json()["8000"] == {"name": "Precision", "image": {"full": "7201_Precision.png", "group": "rune"}}
-
-
     def test_an_unknown_patch_is_a_404(self, monkeypatch):
         monkeypatch.setattr(rune, "fetch_patch_by_name", AsyncMock(return_value=None))
 

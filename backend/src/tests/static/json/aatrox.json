@@ -30,30 +30,6 @@
     "missile_speed": 0,
     "passive": {
       "name": "Simple Stacks",
-      "description": "Periodically, Aatrox's next basic attack deals bonus <physicalDamage>physical damage</physicalDamage> and heals him, based on the target's max health. ",
-      "effects": [
-        {
-          "buff": "Cast",
-          "props": {
-            "trigger": ["q"],
-            "actions": [{
-              "type_": "Stack",
-              "props": {
-                "stack_key": "passive",
-                "amount": "1"
-              }
-            }]
-          }
-        },
-        {
-          "buff": "Stats",
-          "props": {
-            "stat": "ad",
-            "scaling": "2 * passive"
-          }
-        }
-      ],
-      "ready_to_use": false,
       "changes": [],
       "image": {
         "full": "Aatrox_Passive.png",
@@ -67,44 +43,9 @@
     },
     "q": {
       "name": "Simple Damage",
-      "description": "Only dealing damage.",
       "validated": true,
-      "effects": [
-        {
-          "text": "Very simple damage.",
-          "effect_components": [
-            {
-              "type_": "Damage",
-              "props": {
-                "scaling": "-5 + rank * 15 + (0.525 + rank * 0.075) * ad",
-                "dmg_type": "Area damage",
-                "damage_sub_type": "Physical",
-                "hp_scaling": "flat"
-              },
-              "duration": 0.0,
-              "interval": 0.0,
-              "speed": 0,
-              "delay": 0.0,
-              "comment": "First Cast Damage"
-            }
-          ],
-          "conditions": []
-        }
-      ],
       "cast_time": 0.6,
       "cooldown": "2",
-      "costs": "0",
-      "damage_type": "Area damage",
-      "damage_sub_type": [
-        "Physical"
-      ],
-      "counters": [
-        {
-          "type_": "Spell shield",
-          "effect": "Blocked"
-        }
-      ],
-      "ready_to_use": false,
       "changes": [],
       "maxrank": 5,
       "image": {
@@ -119,13 +60,8 @@
     },
     "w": {
       "name": "DoT",
-      "description": "Does DoT damage",
-      "effects": [],
       "cast_time": 0.25,
       "cooldown": "0",
-      "costs": "0",
-      "counters": [],
-      "ready_to_use": false,
       "changes": [],
       "maxrank": 5,
       "image": {
@@ -140,13 +76,8 @@
     },
     "e": {
       "name": "Healing",
-      "description": "Heals",
-      "effects": [],
       "cast_time": 0.25,
       "cooldown": "0",
-      "costs": "0",
-      "counters": [],
-      "ready_to_use": false,
       "changes": [],
       "maxrank": 5,
       "image": {
@@ -161,13 +92,8 @@
     },
     "r": {
       "name": "None",
-      "description": "Not doing anything",
-      "effects": [],
       "cast_time": 0.25,
       "cooldown": "0",
-      "costs": "0",
-      "counters": [],
-      "ready_to_use": false,
       "changes": [],
       "maxrank": 3,
       "image": {
@@ -180,7 +106,6 @@
         "w": 48
       }
     },
-    "ready_to_use": false,
     "changes": [],
     "image": {
       "full": "Aatrox.png",

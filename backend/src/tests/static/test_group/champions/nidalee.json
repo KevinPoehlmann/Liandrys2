@@ -32,8 +32,6 @@
   "missile_speed": 2500,
   "passive": {
     "name": "Prowl",
-    "description": "Innate: Riven's ability casts generate a stack of Charge for 6 seconds, refreshing on subsequent casts and stacking up to 3 times. Riven's basic attacks are empowered to each consume a stack to deal bonus physical damage equal to 30% – 60% (based on level) AD, reduced to「 50% 」「 15% – 30% (based on level) AD 」against structures.\n\n\n\nThe bonus damage is affected by  critical strike modifiers and applies  life steal at 100% effectiveness.",
-    "static_cooldown": "0",
     "values": {
       "cooldownTime": "0",
       "mana": "0"
@@ -110,7 +108,6 @@
   },
   "q": {
     "name": "Javelin Toss",
-    "description": "",
     "maxrank": 5,
     "image": {
       "full": "RivenTriCleave.png",
@@ -244,7 +241,6 @@
   },
   "w": {
     "name": "Bushwhack",
-    "description": "",
     "maxrank": 5,
     "image": {
       "full": "RivenTriCleave.png",
@@ -514,7 +510,6 @@
   },
   "e": {
     "name": "Primal Surge",
-    "description": "",
     "maxrank": 5,
     "image": {
       "full": "RivenTriCleave.png",
@@ -620,7 +615,6 @@
   },
   "r": {
     "name": "Aspect of the Cougar",
-    "description": "",
     "maxrank": 4,
     "image": {
       "full": "RivenTriCleave.png",
@@ -744,7 +738,6 @@
   "extra_abilities": [
     {
       "name": "Takedown",
-      "description": "",
       "maxrank": 4,
       "image": {
         "full": "RivenTriCleave.png",
@@ -883,7 +876,6 @@
     },
     {
       "name": "Pounce",
-      "description": "",
       "maxrank": 4,
       "image": {
         "full": "RivenTriCleave.png",
@@ -995,7 +987,6 @@
     },
     {
       "name": "Swipe",
-      "description": "",
       "maxrank": 4,
       "image": {
         "full": "RivenTriCleave.png",

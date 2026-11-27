@@ -5,12 +5,10 @@
   "hotfix": null,
   "ability": {
     "name": "Smite",
-    "description": "Deals  600 true damage to the target medium / large monster or enemy minion. Against pets, deals 40 true damage instead.Transforms into  Unleashed Smite once a jungle pet is fed 20 treats.",
     "cost": "0",
     "cooldown": "15",
     "cast_time": "0",
     "recharge": "90",
-    "effects": [],
     "raw_stats": {
       "charges": "2",
       "range": " 500",

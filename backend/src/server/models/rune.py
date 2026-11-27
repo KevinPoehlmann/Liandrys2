@@ -6,7 +6,6 @@ from src.server.models.change import Change
 from src.server.models.champion import WikiTemplate
 from src.server.models.passive import Passive
 from src.server.models.image import Image
-from src.server.models.patch import RuneTree
 from src.server.models.pydanticid import PydanticObjectId
 
 
@@ -56,12 +55,3 @@ class RawRune(BaseModel):
     wiki_data: WikiTemplate | None = None  # Template:Rune data <name>: the wiki's description and cooldown
     wiki: WikiTemplate | None = None  # the wiki article's wikitext, for its notes
 
-
-# The old loader's tree icons, until a fresh load gives every patch its own (Patch.rune_trees).
-RUNE_TREES = {tree_id: RuneTree(name=name, image=Image(full=file, group="rune")) for tree_id, name, file in (
-    (8000, "Precision", "7201_Precision.png"),
-    (8100, "Domination", "7200_Domination.png"),
-    (8200, "Sorcery", "7202_Sorcery.png"),
-    (8300, "Inspiration", "7203_Whimsy.png"),
-    (8400, "Resolve", "7204_Resolve.png"),
-)}

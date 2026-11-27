@@ -9,12 +9,6 @@
       <input v-model="passive.name" class="w-full px-2 py-1 border rounded" />
     </div>
 
-    <!-- Description -->
-    <div>
-      <label class="block text-sm font-medium mb-1">Description</label>
-      <textarea v-model="passive.description" rows="3" class="w-full px-2 py-1 border rounded"></textarea>
-    </div>
-
     <!-- Unique checkbox for items -->
     <div v-if="showUnique" class="flex items-center gap-2">
       <input type="checkbox" v-model="passive.unique" />

@@ -32,8 +32,6 @@
   "missile_speed": 0,
   "passive": {
     "name": "Hemorrhage",
-    "description": "Innate: Darius'  damaging basic attacks and abilities apply a stack of Hemorrhage to enemies for 5 seconds, refreshing on subsequent applications and stacking up to 5 times.\n\n\n\nHemorrhage: For each stack, the target is dealt「 13 – 30 (based on level) (+ 30% bonus AD) total physical damage over the duration, 」「 3.25 – 7.5 (based on level) (+ 7.5% bonus AD) physical damage every 1.25 seconds over the duration, 」up to a maximum of「 65 – 150 (based on level) (+ 150% bonus AD) total physical damage over the duration. 」「 16.25 – 37.5 (based on level) (+ 37.5% bonus AD) physical damage with each tick. 」Hemorrhage deals 200% damage against  monsters.\n\n\n\nWhen Darius kills a champion with  Noxian Guillotine, or applies 5 stacks on an enemy  champion, he becomes empowered with Noxian Might for 5 seconds.\n\n\n\nNoxian Might: Darius gains 30 – 230 (based on level)  bonus attack damage and instantly applies 5 Hemorrhage stacks through his usual means.",
-    "static_cooldown": "0",
     "values": {
       "MonsterMod": "2.5",
       "SecondsPerTick": "1.26",
@@ -164,7 +162,6 @@
   },
   "q": {
     "name": "Decimate",
-    "description": "Darius winds up and swings his axe in a wide circle. Enemies struck by the blade take more damage than those struck by the handle. Darius heals based on enemy champions and large monsters hit by the blade.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.75",
@@ -276,7 +273,6 @@
   },
   "w": {
     "name": "Crippling Strike",
-    "description": "Darius's next attack strikes an enemy's crucial artery. As they bleed out, their Move Speed is slowed.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0",
@@ -400,7 +396,6 @@
   },
   "e": {
     "name": "Apprehend",
-    "description": "Darius hones his axe, passively causing his physical damage to ignore a percentage of his target's Armor. When activated, Darius sweeps up his enemies with his axe's hook and pulls them to him.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",
@@ -491,7 +486,6 @@
   },
   "r": {
     "name": "Noxian Guillotine",
-    "description": "Darius leaps to an enemy champion and strikes a lethal blow, dealing true damage. This damage is increased for each stack of Hemorrhage on the target. If Noxian Guillotine is a killing blow, its cooldown is refreshed for a brief duration.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.3667",

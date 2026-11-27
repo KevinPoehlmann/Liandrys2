@@ -3,3 +3,5 @@ __pycache__/
 .pytest_cache/
 src/logs/*
 src/cache/*
+src/images/*
+!src/images/.gitkeep

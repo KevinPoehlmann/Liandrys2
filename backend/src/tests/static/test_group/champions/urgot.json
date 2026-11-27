@@ -32,8 +32,6 @@
   "missile_speed": 2500,
   "passive": {
     "name": "Echoing Flames",
-    "description": "Innate: Riven's ability casts generate a stack of Charge for 6 seconds, refreshing on subsequent casts and stacking up to 3 times. Riven's basic attacks are empowered to each consume a stack to deal bonus physical damage equal to 30% – 60% (based on level) AD, reduced to「 50% 」「 15% – 30% (based on level) AD 」against structures.\n\n\n\nThe bonus damage is affected by  critical strike modifiers and applies  life steal at 100% effectiveness.",
-    "static_cooldown": "0",
     "values": {
       "LegWarningTime": "2.5",
       "cooldownTime": "0",
@@ -65,7 +63,6 @@
   },
   "q": {
     "name": "Broken Wings",
-    "description": "Riven lashes out in a series of strikes. This ability can be reactivated three times in a short time frame with the third hit knocking back nearby enemies.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",
@@ -111,7 +108,6 @@
   },
   "w": {
     "name": "Purge",
-    "description": "Riven emits a Ki Burst, damaging and stunning nearby enemies.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0",
@@ -262,7 +258,6 @@
   },
   "e": {
     "name": "Valor",
-    "description": "Riven steps forward a short distance and blocks incoming damage.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0",
@@ -311,7 +306,6 @@
   },
   "r": {
     "name": "Blade of the Exile",
-    "description": "Riven empowers her keepsake weapon with energy, and gains Attack Damage and Range. During this time, she also gains the ability to use Wind Slash, a powerful ranged attack, once.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",

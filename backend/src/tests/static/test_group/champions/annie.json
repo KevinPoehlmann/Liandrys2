@@ -32,8 +32,6 @@
   "missile_speed": 1500,
   "passive": {
     "name": "Pyromania",
-    "description": "Innate - Pyromania: Annie generates a stack of Pyromania whenever she hits an enemy with  Disintegrate or casts her other abilities, stacking up to 4 times, at which she gains Energized.\n\n\n\nEnergized: Annie empowers her next cast of  Disintegrate,  Incinerate, or  Summon: Tibbers to consume all Pyromania stacks to  stun enemies hit for 1.25 / 1.5 / 1.75 (based on level) seconds.\n\n\n\nAnnie gains maximum stacks of Pyromania when the game starts and upon respawning. She will lose Energized and all Pyromania stacks upon death.",
-    "static_cooldown": "0",
     "values": {
       "MaxStacks": "4",
       "StunBaseDuration": "1.25",
@@ -156,7 +154,6 @@
   },
   "q": {
     "name": "Disintegrate",
-    "description": "Annie hurls a Mana infused fireball, dealing damage and refunding the Mana cost if it destroys the target.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",
@@ -293,7 +290,6 @@
   },
   "w": {
     "name": "Incinerate",
-    "description": "Annie casts a blazing cone of fire, dealing damage to all enemies in the area.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",
@@ -432,7 +428,6 @@
   },
   "e": {
     "name": "Molten Shield",
-    "description": "Grants Annie or an ally a shield, a burst of Move Speed, and damages enemies who strike her with attacks or spells.",
     "cost": "mana",
     "cooldown": "10",
     "cast_time": "0",
@@ -638,7 +633,6 @@
   },
   "r": {
     "name": "Summon: Tibbers",
-    "description": "Annie wills her bear Tibbers to life, dealing damage to units in the area. Tibbers can attack and also burns enemies that stand near him.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",

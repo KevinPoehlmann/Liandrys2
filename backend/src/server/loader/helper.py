@@ -140,6 +140,13 @@ class SafeSession:
                 base_delay = getattr(self, "backoff_factor", 1.5)
                 for attempt in range(1, retries + 1):
                     delay = base_delay * 2 ** (attempt - 1)
+                    last = attempt == retries
+                    next_step = "Giving up." if last else f"Retrying in {delay:.2f}s..."
+
+                    async def wait():
+                        if not last:
+                            await asyncio.sleep(delay)
+
                     try:
                         return await func(*args, **kwargs)
                     except aiohttp.ClientResponseError as e:
@@ -147,11 +154,11 @@ class SafeSession:
                         if e.status == 429:
                             if hasattr(self, "http_429_abortion"):
                                 await self.http_429_abortion()
-                            if hasattr(self, '_global_backoff'):
+                            if not last and hasattr(self, '_global_backoff'):
                                 await self._global_backoff(delay)
-                            patch_logger.info(f"[NETWORK] [RETRY] [429] Rate limited. Retrying in {delay:.2f}s... [{attempt}/{retries}]")
-                            if attempt == 1 or attempt == retries:
-                                load_logger.warning(f"[NETWORK] [RETRY] [429] Rate limited. Retrying in {delay:.2f}s... [{attempt}/{retries}]")
+                            patch_logger.info(f"[NETWORK] [RETRY] [429] Rate limited. {next_step} [{attempt}/{retries}]")
+                            if attempt == 1 or last:
+                                load_logger.warning(f"[NETWORK] [RETRY] [429] Rate limited. {next_step} [{attempt}/{retries}]")
                             continue
                         if e.status == 404:
                             patch_logger.warning(f"[NETWORK] [RETRY] [404] Not found: {url}")
@@ -162,14 +169,14 @@ class SafeSession:
                                 patch_logger.critical(f"[NETWORK] [RETRY] [{e.status}] Access denied at {url}. Aborting further requests.")
                             raise RuntimeError(f"Access forbidden: HTTP {e.status}") from e
                         if e.status >= 500:
-                            patch_logger.warning(f"[NETWORK] [RETRY] [{e.status}] Server error. Retrying in {delay:.2f}s... [{attempt}/{retries}]")
-                            await asyncio.sleep(delay)
+                            patch_logger.warning(f"[NETWORK] [RETRY] [{e.status}] Server error. {next_step} [{attempt}/{retries}]")
+                            await wait()
                             continue
                         raise
                     except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                         # Dropped connections and timeouts are transient; anything else is a bug and passes through.
-                        patch_logger.warning(f"[NETWORK] [RETRY] [{type(e).__name__}] {e}. Retrying in {delay:.2f}s... [{attempt}/{retries}]")
-                        await asyncio.sleep(delay)
+                        patch_logger.warning(f"[NETWORK] [RETRY] [{type(e).__name__}] {e}. {next_step} [{attempt}/{retries}]")
+                        await wait()
                 raise RuntimeError("Max retry attempts exceeded.")
             return wrapper
         return decorator

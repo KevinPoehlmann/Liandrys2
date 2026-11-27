@@ -1,13 +1,10 @@
-from pydantic import BaseModel
-
 from src.server.models.change import Change
 from src.server.models.image import Image
-from src.server.models.rule import Buff, Input, Rule, StatModifier
+from src.server.models.rule import Buff, Input, Rule, StatModifier, StrictModel
 
 
-class Passive(BaseModel):
+class Passive(StrictModel):
     name: str
-    description: str = ""
     rules: list[Rule] = []
     stats: list[StatModifier] = []
     buffs: list[Buff] = []

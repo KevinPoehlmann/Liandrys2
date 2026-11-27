@@ -256,7 +256,6 @@
         "rules": []
       }
     ],
-    "description": "Damaging basic attacks, abilities, item effects, and summoner spells, as well as the application of  crowd control and damage over time effects, generate stacks against enemy  champions, up to one per attack or cast per champion. Applying 3 stacks to a target within a 3 second period causes them to be struck by lightning after a 0.25-second delay, dealing them 70 – 240 (based on level) (+ 10% bonus AD) (+ 5% AP) physical or magic damage.If「 10% bonus AD ≥ 5% AP, 」「 bonus AD ≥ 50% AP, 」deals physical damage. If otherwise, deals magic damage.",
     "values": {
       "Cooldown": "20",
       "DamageBase": "70",

@@ -5,7 +5,6 @@
   "hotfix": "2025-06-12T00:00:00",
   "ability": {
     "name": "Ignite",
-    "description": "Sets the target enemy champion on fire for 5 seconds,  revealing them and dealing 70 – 475 (based on level)  true damage over the duration, with the first tick of damage occurring briefly after the cast and subsequent ticks occurring every 1.056 seconds after the previous. The target is also inflicted with  Grievous Wounds for the same duration.",
     "cost": "0",
     "cooldown": "cooldownTime",
     "cast_time": "0",

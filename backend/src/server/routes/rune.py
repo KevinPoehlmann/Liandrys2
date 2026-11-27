@@ -9,7 +9,7 @@ from src.server.database import (
     update_rune
 )
 from src.server.models.patch import RuneTree
-from src.server.models.rune import ShortRune, Rune, RUNE_TREES
+from src.server.models.rune import ShortRune, Rune
 
 from src.server.routes.helpers import get_required_rune
 
@@ -31,7 +31,7 @@ async def get_trees(patch: str) -> dict[int, RuneTree]:
     document = await fetch_patch_by_name(patch)
     if document is None:
         raise HTTPException(status_code=404, detail=f"Patch {patch} not found!")
-    return document.rune_trees or RUNE_TREES
+    return document.rune_trees
 
 
 @router.get("/{rune_id}")

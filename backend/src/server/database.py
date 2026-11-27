@@ -115,16 +115,22 @@ async def clear_patch(patch: str) -> dict[str, int]:
 
 #------------------Patch--------------------------------------------------
 
+def patch_document(patch: NewPatch) -> dict:
+    # MongoDB only takes string keys; reading the document turns the tree ids back into ints.
+    document = patch.dict(exclude={"id"})
+    document["rune_trees"] = {str(tree_id): tree for tree_id, tree in document["rune_trees"].items()}
+    return document
+
+
 async def add_patch(patch: NewPatch) -> str:
-    document = patch.dict()
-    result = await patch_collection.insert_one(document)
+    result = await patch_collection.insert_one(patch_document(patch))
     return result.inserted_id
 
 
 async def upsert_patch(patch: NewPatch) -> str:
     result = await patch_collection.update_one(
         {"patch": patch.patch},
-        {"$set": patch.dict(exclude={"id"})},
+        {"$set": patch_document(patch)},
         upsert=True
     )
 

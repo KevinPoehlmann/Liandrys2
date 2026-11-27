@@ -9,7 +9,6 @@
       "3024"
     ],
     "class_": "legendary item",
-    "ready_to_use": true,
     "stats": {
       "ability haste": 20,
       "armor": 65,
@@ -19,16 +18,10 @@
     "passives": [
       {
         "name": "Unique – Rock Solid",
-        "description": "",
-        "effects": [],
-        "ready_to_use": false,
         "changes": []
       },
       {
         "name": "Unique – Winter's Caress",
-        "description": "",
-        "effects": [],
-        "ready_to_use": false,
         "changes": []
       }
     ],

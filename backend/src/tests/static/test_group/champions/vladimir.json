@@ -32,8 +32,6 @@
   "missile_speed": 1600,
   "passive": {
     "name": "Crimson Pact",
-    "description": "Innate: Vladimir gains (3.3% bonus health) as  ability power and (160% AP) as  bonus health. These two bonuses do not stack with each other.",
-    "static_cooldown": "0",
     "values": {
       "HPforAP": "30",
       "APRatioBonusHP": "1.6",
@@ -109,7 +107,6 @@
   },
   "q": {
     "name": "Transfusion",
-    "description": "Vladimir steals life from the target enemy. When Vladimir's resource is full, Transfusion will benefit from massively increased damage and healing for a brief time.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",
@@ -344,7 +341,6 @@
   },
   "w": {
     "name": "Sanguine Pool",
-    "description": "Vladimir sinks into a pool of blood, becoming untargetable for 2 seconds. Additionally, enemies on the pool are slowed and Vladimir siphons life from them.",
     "cost": "HealthCost * current_hp",
     "cooldown": "cooldownTime",
     "cast_time": "0",
@@ -516,7 +512,6 @@
   },
   "e": {
     "name": "Tides of Blood",
-    "description": "Vladimir pays his own health to charge up a reservoir of blood which, when released, deals damage in the area around him but can be blocked by enemy units.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0",
@@ -720,7 +715,6 @@
   },
   "r": {
     "name": "Hemoplague",
-    "description": "Vladimir infects an area with a virulent plague. Affected enemies take increased damage for the duration. After a few seconds, Hemoplague deals magic damage to infected enemies and heals Vladimir for each enemy Champion hit.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0",

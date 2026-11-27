@@ -146,11 +146,14 @@ def http_error(status: int) -> aiohttp.ClientResponseError:
 
 @pytest.fixture
 def no_sleep(monkeypatch):
-    async def sleep(_):
-        pass
+    sleeps = []
+
+    async def sleep(delay):
+        sleeps.append(delay)
     monkeypatch.setattr(asyncio, "sleep", sleep)
     monkeypatch.setattr(helper, "patch_logger", Mock())
     monkeypatch.setattr(helper, "load_logger", Mock())
+    return sleeps
 
 
 @pytest.mark.parametrize("error", [aiohttp.ServerDisconnectedError(), asyncio.TimeoutError(), http_error(503)])
@@ -161,12 +164,14 @@ async def test_retry_repeats_network_errors(no_sleep, error):
     assert session.calls == 2
 
 
-async def test_retry_gives_up_after_max_retries(no_sleep):
-    session = FailingSession(*[asyncio.TimeoutError()] * 3)
+@pytest.mark.parametrize("error", [asyncio.TimeoutError(), http_error(503), http_error(429)])
+async def test_retry_gives_up_after_max_retries_without_a_last_wait(no_sleep, error):
+    session = FailingSession(*[error] * 3)
 
     with pytest.raises(RuntimeError, match="Max retry"):
-        await SafeSession(session).get_json("url")
+        await SafeSession(session, backoff_factor=25).get_json("url")
     assert session.calls == 3
+    assert no_sleep == [25, 50]
 
 
 @pytest.mark.parametrize("error", [KeyError("bug"), http_error(400)])

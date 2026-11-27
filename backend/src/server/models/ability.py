@@ -3,16 +3,15 @@ from pydantic import BaseModel
 from src.server.models.change import Change
 from src.server.models.image import Image
 from src.server.models.pet import Pet
-from src.server.models.rule import Buff, Input, Rule, Stage, StatModifier
+from src.server.models.rule import Buff, Input, Rule, Stage, StatModifier, StrictModel
 
 from src.server.models.enums import ActionType, ActiveType, CostResource
 
 
 
 
-class Ability(BaseModel):
+class Ability(StrictModel):
     name: str
-    description: str = ""
     cost: str = "0"
     cost_resource: CostResource = CostResource.NONE  # paid when the cast starts
     cooldown: str = "0"

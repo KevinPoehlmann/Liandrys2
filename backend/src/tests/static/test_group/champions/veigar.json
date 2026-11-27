@@ -32,8 +32,6 @@
   "missile_speed": 1500,
   "passive": {
     "name": "Phenomenal Evil Power",
-    "description": "Innate: Veigar generates a stack of Phenomenal Evil for each enemy  champion hit by his abilities, and 5 stacks whenever he scores an enemy champion  takedown.\n\n\n\nPhenomenal Evil: For each stack, Veigar gains  1 ability power.",
-    "static_cooldown": "0",
     "values": {
       "dQKillStacks": "1",
       "dAbilityStacks": "1",
@@ -118,7 +116,6 @@
   },
   "q": {
     "name": "Baleful Strike",
-    "description": "Veigar unleashes a bolt of dark energy that deals magic damage to the first two enemies hit. Units killed by this bolt grant Veigar some ability power permanently.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",
@@ -201,7 +198,6 @@
   },
   "w": {
     "name": "Dark Matter",
-    "description": "Veigar calls a great mass of dark matter to fall from the sky to the target location, dealing magic damage when it lands. Stacks of Phenomenal Evil reduce Dark Matter's cooldown.",
     "cost": "mana",
     "cooldown": "BaseCooldown * (1 - passive.DarkMatterCDRIncrement * floor(stacks_phenomenal_evil / passive.PStacksPerDarkMatterCDR))",
     "cast_time": "0.25",
@@ -286,7 +282,6 @@
   },
   "e": {
     "name": "Event Horizon",
-    "description": "Veigar twists the edges of space, creating a cage that Stuns enemies that pass through.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",
@@ -367,7 +362,6 @@
   },
   "r": {
     "name": "Primordial Burst",
-    "description": "Blasts target enemy champion, dealing a large amount of magic damage, increasing based on the target's missing health.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cast_time": "0.25",

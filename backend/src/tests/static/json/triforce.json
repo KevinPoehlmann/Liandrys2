@@ -10,7 +10,6 @@
       "3051"
     ],
     "class_": "legendary item",
-    "ready_to_use": true,
     "stats": {
       "ad": 45,
       "ability haste": 20,
@@ -21,16 +20,10 @@
     "passives": [
       {
         "name": "Unique – Spellblade",
-        "description": "",
-        "effects": [],
-        "ready_to_use": false,
         "changes": []
       },
       {
         "name": "Unique – Quicken",
-        "description": "",
-        "effects": [],
-        "ready_to_use": false,
         "changes": []
       }
     ],

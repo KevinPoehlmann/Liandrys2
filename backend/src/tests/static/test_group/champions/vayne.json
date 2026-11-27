@@ -32,8 +32,6 @@
   "missile_speed": 2000,
   "passive": {
     "name": "Night Hunter",
-    "description": "Innate: Vayne gains  30 bonus movement speed while facing a nearby  visible enemy champion, increased to 90 while under the effects of  Final Hour.",
-    "static_cooldown": "0",
     "values": {
       "MovementSpeed": "30",
       "Range": "2000",
@@ -60,7 +58,6 @@
   },
   "q": {
     "name": "Tumble",
-    "description": "Vayne tumbles, maneuvering to carefully place her next shot. Her next attack deals bonus damage.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cooldown_starts_after": "tumble",
@@ -167,7 +164,6 @@
   },
   "w": {
     "name": "Silver Bolts",
-    "description": "Vayne tips her bolts with a rare metal, toxic to evil things. The third consecutive attack or ability against the same target deals a percentage of the target's max health as bonus true damage.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cooldown_starts_after": null,
@@ -268,7 +264,6 @@
   },
   "e": {
     "name": "Condemn",
-    "description": "Vayne draws a heavy crossbow from her back, and fires a huge bolt at her target, knocking them back and dealing damage. If they collide with terrain, they are impaled, dealing bonus damage and stunning them.",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cooldown_starts_after": null,
@@ -416,7 +411,6 @@
   },
   "r": {
     "name": "Final Hour",
-    "description": "Readying herself for an epic confrontation, Vayne gains increased Attack Damage, Invisibility during Tumble, reduced Tumble cooldown, and more bonus Move Speed from Night Hunter",
     "cost": "mana",
     "cooldown": "cooldownTime",
     "cooldown_starts_after": null,

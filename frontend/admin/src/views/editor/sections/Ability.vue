@@ -44,12 +44,6 @@
       </div>
     </div>
 
-    <!-- Description -->
-    <div>
-      <label class="block text-sm font-medium">Description</label>
-      <textarea v-model="ability.description" rows="3" class="w-full px-2 py-1 border rounded"></textarea>
-    </div>
-
     <!-- Raw Stats -->
     <div>
       <h3 class="font-semibold text-sm mb-1">Raw Stats</h3>

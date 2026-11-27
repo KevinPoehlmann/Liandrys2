@@ -24,7 +24,6 @@
   "passives": [
     {
       "name": "Death",
-      "description": "If you deal post-mitigation damage that would leave a champion below 5% of their maximum health,  execute them.",
       "rules": [
         {
           "trigger": "on_damage_dealt",
@@ -86,7 +85,6 @@
     },
     {
       "name": "Taxes",
-      "description": "Killing a champion grants you an additional  25.",
       "rules": [],
       "stats": [],
       "buffs": [],

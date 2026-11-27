@@ -26,9 +26,6 @@
   "passives": [
     {
       "name": "Carve",
-      "description": "Dealing physical damage to an enemy champion applies a stack of Carve for 6 seconds, stacking up to 5 times. Each stack inflicts 6% armor reduction, up to 30% at 5 stacks.",
-      "static_cooldown": "",
-      "effects": [],
       "raw_stats": {},
       "changes": [],
       "validated": false,
@@ -36,9 +33,6 @@
     },
     {
       "name": "Fervor",
-      "description": "Dealing physical damage grants you 20 bonus movement speed for 2 seconds.",
-      "static_cooldown": "",
-      "effects": [],
       "raw_stats": {},
       "changes": [],
       "validated": false,

@@ -26,15 +26,14 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 
 ## Phase 3: Loader with little manual work per patch
 
-The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells ✅, (4) items incl. actives ✅, (5) runes ✅. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
+The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells ✅, (4) items incl. actives ✅, (5) runes ✅, then the fresh load into the real DB ✅. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
 
-**Later in this phase:**
+**Next in this phase** (PBE preview, then the timing data; the timing items may move to the backlog if no source turns up):
+- [ ] Items: Gangplank's three R upgrades (Death's Daughter, Fire at Will, Raise Morale; ids 3901–3903) load as Summoner's Rift items, named with Data Dragon's markup (`<rarityLegendary>…<br><subtitleLeft>500 Silver Serpents…`). Filter them out, or later make them part of Gangplank's R
 - [ ] Items: `ByItemEpicnessCountCalculationPart` ("per legendary item") stays reported. In 16.23 only the old mythic passives' leftovers use it (Goredrinker, Galeforce, …; also Guinsoo's, Evenshroud, Radiant Virtue), none in a live tooltip; translate it once a tooltip uses it again
 - [ ] PBE preview (V1, after the base loader): CDragon mirrors the PBE (`pbe/`, e.g. 16.24 while 26.23 is live) in the same format, about two weeks ahead. Load it as a provisional next patch, clearly marked, replaced on release. PBE values still change, and some never ship
 - [ ] Dash and leap travel times (Nidalee's Pounce lands at the cast today), e.g. from CommunityDragon's spell data or other sources
 - [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions. Then `Lock` can tell an animation from a cast time (item actives can't be used during a cast time, but during a pure animation). Why CDragon doesn't help yet: see decisions, "Cast times and animations"
-- [ ] Fresh load into the new format. Then delete the old loader's images (unhashed names in `src/images/passive`, `spell`, …, including the 12 zero-byte files such as `BriarP.png`, `SkarnerQ.png`) if nothing references them anymore. With them go the static `RUNE_TREES` fallback of `/rune/trees/{patch}` and its five icons (`images/rune/7201_Precision.png`, …), once every patch has `rune_trees`
-- [ ] `extra = forbid` for the hand-entered containers (Ability, Passive, Pet) so typos fail; needs a fresh load or an `$unset` of the old `effects` in the DB first. Remove the unused `description` field of `Ability`/`Passive` with it (nothing writes it since the old loader; tooltip and wiki texts replace it)
 
 
 ## Phase 4: Admin side complete

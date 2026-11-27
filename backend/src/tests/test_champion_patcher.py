@@ -369,7 +369,7 @@ def test_used_names_per_slot(veigar):
 
 
 def test_used_names_skip_texts(veigar):
-    veigar.q.description = "BaseDamage is great"
+    veigar.q.assumptions = ["BaseDamage is great"]
     veigar.q.rules = []
 
     assert "BaseDamage" not in used_names(veigar.q, "q").get("q", set())
