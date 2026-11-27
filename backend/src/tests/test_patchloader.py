@@ -16,6 +16,7 @@ from src.server.models.json_validation import ChampionJson
 from src.server.models.patch import NewPatch
 from src.server.loader.champion_builder import champion_stats
 from src.tests.test_champion_builder import raw_champion
+from src.tests.test_summonerspell_builder import entry
 
 
 CDRAGON = Path(__file__).parent / "static" / "cdragon"
@@ -274,14 +275,44 @@ class TestFetchChampionList():
             await loader.fetch_champion_list(FakeSession({}), "16.23.1")
 
 
+class TestFetchOtherLists():
+
+    @pytest.mark.asyncio
+    async def test_items_by_id(self):
+        items = fixture("items.ddragon.json")["data"]
+        session = FakeSession({"16.23.1/data/en_GB/item.json": {"type": "item", "version": "16.23.1", "basic": {},
+                                                                "data": items, "groups": [], "tree": []}})
+
+        result = await loader.fetch_item_list(session, "16.23.1")
+
+        assert [item_id for item_id, _ in result] == list(items)
+        assert result[0][1].name == items["3057"]["name"]
+
+
+    @pytest.mark.asyncio
+    async def test_summonerspells(self):
+        ignite = entry().dict(by_alias=True)
+        session = FakeSession({"16.23.1/data/en_GB/summoner.json": {"type": "summoner", "version": "16.23.1",
+                                                                    "data": {"SummonerDot": ignite}}})
+
+        assert [spell.id_ for spell in await loader.fetch_summonerspell_list(session, "16.23.1")] == ["SummonerDot"]
+
+
+    @pytest.mark.asyncio
+    async def test_missing_lists_are_errors(self):
+        with pytest.raises(PatcherError):
+            await loader.fetch_item_list(FakeSession({}), "16.23.1")
+        with pytest.raises(PatcherError):
+            await loader.fetch_summonerspell_list(FakeSession({}), "16.23.1")
+
+
 class TestLoadFreshDatabase():
 
     @pytest.fixture
-    def old_loader(self, monkeypatch) -> Mock:
+    def lists(self, monkeypatch) -> None:
         spells = [SimpleNamespace(id_="SummonerFlash", modes=["CLASSIC"]), SimpleNamespace(id_="SummonerMana", modes=["ARAM"])]
-        mock = Mock(_list_other_data=AsyncMock(return_value=([("1001", None), ("322065", None)], spells)))
-        monkeypatch.setattr(loader, "old", mock)
-        return mock
+        monkeypatch.setattr(loader, "fetch_item_list", AsyncMock(return_value=[("1001", None), ("322065", None)]))
+        monkeypatch.setattr(loader, "fetch_summonerspell_list", AsyncMock(return_value=spells))
 
 
     @pytest.fixture
@@ -306,7 +337,7 @@ class TestLoadFreshDatabase():
 
 
     @pytest.mark.asyncio
-    async def test_counts_and_stores_the_patch(self, database, old_loader, champions):
+    async def test_counts_and_stores_the_patch(self, database, lists, champions):
         await loader.load_fresh_database(["16.23.1"])
 
         patch = database.upsert_patch.call_args.args[0]
@@ -319,7 +350,7 @@ class TestLoadFreshDatabase():
 
 
     @pytest.mark.asyncio
-    async def test_a_failing_type_still_stores_the_patch(self, database, old_loader, champions, loggers):
+    async def test_a_failing_type_still_stores_the_patch(self, database, lists, champions, loggers):
         loader.load_all_runes.side_effect = RuntimeError("wiki down")
 
         await loader.load_fresh_database(["16.23.1"])
@@ -329,7 +360,7 @@ class TestLoadFreshDatabase():
 
 
     @pytest.mark.asyncio
-    async def test_resumes_an_unfinished_load_of_the_same_patch(self, database, old_loader, champions):
+    async def test_resumes_an_unfinished_load_of_the_same_patch(self, database, lists, champions):
         unfinished = NewPatch(patch="16.23.1", champion_count=1, loaded_champion_count=0, cached_documents=3)
         database.fetch_patch_latest.return_value = unfinished
 
@@ -341,42 +372,42 @@ class TestLoadFreshDatabase():
 class TestPendingHotfix():
 
     @pytest.fixture
-    def sources(self, monkeypatch) -> Mock:
-        wiki = Mock(return_value=[])
+    def sources(self, monkeypatch) -> AsyncMock:
+        wiki = AsyncMock(return_value=[])
         monkeypatch.setattr(loader, "fetch_build", AsyncMock(return_value=BUILD))
-        monkeypatch.setattr(loader.old, "wiki_hotfix_dates", wiki)
+        monkeypatch.setattr(loader, "fetch_hotfix_dates", wiki)
         return wiki
 
 
     @pytest.mark.asyncio
-    async def test_same_build_and_no_wiki_hotfix_is_nothing(self, sources):
-        assert await loader.pending_hotfix(NewPatch(patch="16.23.1", build=BUILD)) is None
+    async def test_same_build_and_no_wiki_hotfix_is_nothing(self, session, sources):
+        assert await loader.pending_hotfix(session, NewPatch(patch="16.23.1", build=BUILD)) is None
 
 
     @pytest.mark.asyncio
-    async def test_a_new_build_is_a_hotfix(self, sources):
-        hotfix = await loader.pending_hotfix(NewPatch(patch="16.23.1", build="16.23.1000"))
+    async def test_a_new_build_is_a_hotfix(self, session, sources):
+        hotfix = await loader.pending_hotfix(session, NewPatch(patch="16.23.1", build="16.23.1000"))
 
         assert (hotfix.build, hotfix.build_changed, hotfix.wiki_dates) == (BUILD, True, [])
 
 
     @pytest.mark.asyncio
-    async def test_only_wiki_hotfixes_after_the_last_run_day_count(self, sources):
+    async def test_only_wiki_hotfixes_after_the_last_run_day_count(self, session, sources):
         sources.return_value = [datetime(2026, 11, 20), datetime(2026, 11, 22)]
         patch = NewPatch(patch="16.23.1", build=BUILD, updated_at=datetime(2026, 11, 20, 18, 0))
 
-        hotfix = await loader.pending_hotfix(patch)
+        hotfix = await loader.pending_hotfix(session, patch)
 
         assert (hotfix.build_changed, hotfix.wiki_dates) == (False, [datetime(2026, 11, 22)])
 
 
     @pytest.mark.asyncio
-    async def test_without_a_run_the_load_day_counts(self, sources):
+    async def test_without_a_run_the_load_day_counts(self, session, sources):
         # The load already took the earlier wiki hotfixes with it.
         sources.return_value = [datetime(2026, 11, 20), datetime(2026, 11, 22)]
         patch = NewPatch(patch="16.23.1", build=BUILD, timestamp=datetime(2026, 11, 21, 9, 0))
 
-        hotfix = await loader.pending_hotfix(patch)
+        hotfix = await loader.pending_hotfix(session, patch)
 
         assert hotfix.wiki_dates == [datetime(2026, 11, 22)]
 
@@ -425,7 +456,6 @@ class TestLoadData():
         hotfixed = NewPatch(patch="16.22.1", build=BUILD)
         hotfix = loader.Hotfix(BUILD, True)
         database.fetch_patch_latest.return_value = latest
-        monkeypatch.setattr(loader.old, "_reload_info_loader", Mock())
         monkeypatch.setattr(loader, "check_updates", AsyncMock(return_value=(["16.23.1"], hotfix)))
         load_hotfix = AsyncMock(return_value=hotfixed)
         load_patches = AsyncMock()

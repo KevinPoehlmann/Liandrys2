@@ -2,7 +2,6 @@ import copy
 import json
 import pytest
 
-from bs4 import BeautifulSoup
 from bson.objectid import ObjectId
 from datetime import datetime
 
@@ -64,20 +63,6 @@ def compare_objects():
 @pytest.fixture
 def resolve_fixture(request):
     return request.getfixturevalue(request.param)  # Resolves fixture dynamically
-
-
-@pytest.fixture
-def load_html():
-    def _loader(name: str) -> str:
-        with open(f"src/tests/static/html/{name}.html", "r", encoding="utf-8") as f:
-            return f.read()
-    return _loader
-
-@pytest.fixture
-def load_soup(load_html):
-    def _loader(name: str) -> BeautifulSoup:
-        return BeautifulSoup(load_html(name), "lxml")
-    return _loader
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 """Loads new patches and hotfixes. Champions come from CommunityDragon, Data Dragon and the wiki API, on the first
 load, when patching forward and in a hotfix; summoner spells, items and runes the same way from CommunityDragon's
-shared spells, items and perks. Patch detection still goes through patchloader2 until it moves here."""
+shared spells, items and perks."""
 import asyncio
 import logging
 import time
@@ -11,7 +11,6 @@ from typing import Awaitable, Callable
 import aiohttp
 
 import src.server.database as db
-import src.server.loader.patchloader2 as old
 from src.server.loader.champion_builder import (SLOTS, LoadedSpell, build_champion, loaded_spells, missing_cooldowns,
                                                 wiki_mismatches)
 from src.server.loader.champion_patcher import has_changes, keep_earlier_changes, patch_champion, spells_from_document
@@ -23,9 +22,10 @@ from src.server.loader.images import (load_champion_images, load_item_image, loa
 from src.server.loader.item_builder import (build_item, item_from_document, loaded_item, patch_item, rift_items,
                                             unknown_stat_fields)
 from src.server.loader.item_builder import wiki_mismatches as item_wiki_mismatches
-from src.server.loader.item_source import fetch_item_data, fetch_items_bin, load_raw_item
+from src.server.loader.item_source import fetch_item_data, fetch_item_list, fetch_items_bin, load_raw_item
 from src.server.loader.names import DDragonName, NameDictionary, ddragon_notes, load_name_dictionaries
-from src.server.loader.patch_notes import fetch_patch_page, hotfix_notes, notes_with_hotfixes
+from src.server.loader.patch_notes import fetch_hotfix_dates, fetch_patch_page, hotfix_notes, notes_with_hotfixes
+from src.server.loader.patch_source import fetch_patch_list, is_complete, patches_to_load
 from src.server.loader.patchexceptions import LoadError, PatcherError
 from src.server.loader.rune_builder import (SHARD_TREE_ID, RuneEntry, build_rune, loaded_rune, patch_rune,
                                             rune_from_document, shard_entries, tree_entries, unknown_shard)
@@ -35,7 +35,8 @@ from src.server.loader.rune_source import (fetch_perks_bin, fetch_rune_trees, fe
 from src.server.loader.summonerspell_builder import (build_summonerspell, patch_summonerspell, rift_spells,
                                                      spell_from_document, summoner_spell)
 from src.server.loader.summonerspell_builder import wiki_mismatches as spell_wiki_mismatches
-from src.server.loader.summonerspell_source import fetch_shared_bin, fetch_spell_data, load_raw_summonerspell
+from src.server.loader.summonerspell_source import (fetch_shared_bin, fetch_spell_data, fetch_summonerspell_list,
+                                                    load_raw_summonerspell)
 from src.server.models.change import Change, with_hotfix_lines
 from src.server.models.champion import Champion, NewChampion, RawChampion, WikiTemplate
 from src.server.models.item import Item, NewItem, RawItem
@@ -104,10 +105,9 @@ async def load_data() -> None:
         return
     async with patch_load_lock:
         try:
-            old._reload_info_loader()
             patches, hotfix = await check_updates()
             latest = await db.fetch_patch_latest()
-            if not _complete(latest):
+            if not is_complete(latest):
                 await load_fresh_database(patches)
                 return
             if not patches and not hotfix:
@@ -124,22 +124,19 @@ async def load_data() -> None:
 
 
 async def check_updates() -> tuple[list[str], Hotfix | None]:
-    patches = await old.check_patch_available()
     latest = await db.fetch_patch_latest()
-    return patches, await pending_hotfix(latest) if _complete(latest) else None
-
-
-def _complete(patch: NewPatch | None) -> bool:
-    return patch is not None and patch.loaded_total_count == patch.total_count
-
-
-async def pending_hotfix(patch: NewPatch) -> Hotfix | None:
-    """A new CommunityDragon build, or a wiki hotfix from a later day than the last load or hotfix run."""
     async with aiohttp.ClientSession(timeout=TIMEOUT) as aio_session:
-        build = await fetch_build(SafeSession(aio_session), cdragon_version(patch.patch))
+        session = SafeSession(aio_session)
+        patches = patches_to_load(latest, await fetch_patch_list(session))
+        return patches, await pending_hotfix(session, latest) if is_complete(latest) else None
+
+
+async def pending_hotfix(session: SafeSession, patch: NewPatch) -> Hotfix | None:
+    """A new CommunityDragon build, or a wiki hotfix from a later day than the last load or hotfix run."""
+    build = await fetch_build(session, cdragon_version(patch.patch))
     # Wiki hotfixes only carry a day; one added later on the day of a run is missed (CDragon's build still catches it).
     last_run = (patch.updated_at or patch.timestamp).date()
-    dates = [date for date in old.wiki_hotfix_dates(patch.patch) if date.date() > last_run]
+    dates = [date for date in await fetch_hotfix_dates(session, patch.patch) if date.date() > last_run]
     if build == patch.build and not dates:
         return None
     return Hotfix(build, build != patch.build, dates)
@@ -153,7 +150,8 @@ async def load_fresh_database(patches: list[str]) -> None:
     async with aiohttp.ClientSession(timeout=TIMEOUT) as aio_session:
         session = SafeSession(aio_session)
         champions = await fetch_champion_list(session, patch_name)
-        items, summonerspells = await old._list_other_data(patch_name, session)
+        items = await fetch_item_list(session, patch_name)
+        summonerspells = await fetch_summonerspell_list(session, patch_name)
         runes = await fetch_rune_entries(session, patch_name)
         names = await name_dictionaries(session, champions, items, runes, summonerspells)
         summonerspells = rift_spells(summonerspells)
@@ -299,8 +297,20 @@ async def load_patches(patches: list[str], latest: NewPatch) -> None:
             latest = await load_patch(patch_name, latest)
         except Exception as e:
             patch_logger.exception(f"[PATCH] [PATCH] [{patch_name}] ❌ Failed to load patch: {e}")
-            await old._clean_up(NewPatch(patch=patch_name))
+            await _clean_up(patch_name)
             raise
+
+
+async def _clean_up(patch_name: str) -> None:
+    """Removes a failed patch's documents, so the next run starts it over."""
+    result = await db.clear_patch(patch_name)
+    if not result["cleanup_successful"]:
+        patch_logger.error(f"[PATCH] [CLEANUP] [{patch_name}] ❌ Cleanup failed!")
+        return
+    patch_logger.warning(f"[PATCH] [CLEANUP] [{patch_name}] Cleaned up.")
+    for key, count in result.items():
+        if key != "cleanup_successful":
+            patch_logger.info(f"[PATCH] [CLEANUP] [{patch_name}] - {key}: {count} document(s) removed")
 
 
 async def load_patch(patch_name: str, old_patch: NewPatch) -> NewPatch:
@@ -313,7 +323,8 @@ async def load_patch(patch_name: str, old_patch: NewPatch) -> NewPatch:
                          item_count=old_patch.item_count, rune_count=old_patch.rune_count,
                          summonerspell_count=old_patch.summonerspell_count)
         champions = await fetch_champion_list(session, patch_name)
-        items, summonerspells = await old._list_other_data(patch_name, session)
+        items = await fetch_item_list(session, patch_name)
+        summonerspells = await fetch_summonerspell_list(session, patch_name)
         runes = await fetch_rune_entries(session, patch_name)
         names = await name_dictionaries(session, champions, items, runes, summonerspells)
         notes = ddragon_notes(notes, names)
@@ -380,7 +391,8 @@ async def load_hotfix(patch: Patch, hotfix: Hotfix) -> Patch:
         session = SafeSession(aio_session)
         wikitext = await fetch_patch_page(session, riot_to_wiki_patch(patch.patch))
         champions = await fetch_champion_list(session, patch.patch)
-        items, summonerspells = await old._list_other_data(patch.patch, session)
+        items = await fetch_item_list(session, patch.patch)
+        summonerspells = await fetch_summonerspell_list(session, patch.patch)
         runes = await fetch_rune_entries(session, patch.patch)
         names = await name_dictionaries(session, champions, items, runes, summonerspells)
         notes = ddragon_notes(hotfix_notes(wikitext, hotfix.wiki_dates), names)
@@ -763,9 +775,7 @@ async def _old_item(old_item: NewItem, old_patch: NewPatch) -> LoadedSpell:
 
 async def fetch_rune_entries(session: SafeSession, patch_name: str) -> list[RuneEntry]:
     """Data Dragon's five trees; the stat shards come with the sources (CommunityDragon)."""
-    trees = await fetch_rune_trees(session, patch_name)
-    await old._load_rune_tree_images([tree.icon for tree in trees], session)
-    return tree_entries(trees)
+    return tree_entries(await fetch_rune_trees(session, patch_name))
 
 
 async def rune_sources(session: SafeSession, patch_name: str, entries: list[RuneEntry],

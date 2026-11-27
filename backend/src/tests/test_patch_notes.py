@@ -2,9 +2,11 @@ from datetime import datetime
 
 import pytest
 
-from src.server.loader.patch_notes import (hotfix_dates, hotfix_notes, notes_with_hotfixes, page_text, parse_patch_notes,
-                                           wikitext_to_text)
+from src.server.loader.patch_notes import (fetch_hotfix_dates, hotfix_dates, hotfix_notes, notes_with_hotfixes, page_text,
+                                           parse_patch_notes, wikitext_to_text)
+from src.server.loader.patchexceptions import LoadError
 from src.server.models.change import patch_note
+from src.tests.test_patchloader import FakeSession
 
 
 @pytest.fixture
@@ -109,6 +111,21 @@ def test_hotfix_dates(load_wikitext):
     assert hotfix_dates(load_wikitext("V26.21")) == [datetime(2026, 10, 22)]
     assert hotfix_dates(load_wikitext("V25.S1.1")) == [datetime(2025, 1, 9), datetime(2025, 1, 10),
                                                        datetime(2025, 1, 13), datetime(2025, 1, 22)]
+
+
+@pytest.mark.asyncio
+async def test_fetch_hotfix_dates_reads_the_wiki_patch_page(load_wikitext):
+    page = {"query": {"pages": [{"revisions": [{"slots": {"main": {"content": load_wikitext("V26.21")}}}]}]}}
+
+    assert await fetch_hotfix_dates(FakeSession({"titles=V26.21": page}), "16.21.1") == [datetime(2026, 10, 22)]
+
+
+@pytest.mark.asyncio
+async def test_fetch_hotfix_dates_without_a_patch_page_is_an_error():
+    missing = {"query": {"pages": [{"title": "V26.21", "missing": True}]}}
+
+    with pytest.raises(LoadError):
+        await fetch_hotfix_dates(FakeSession({"titles=V26.21": missing}), "16.21.1")
 
 
 def test_no_hotfixes():

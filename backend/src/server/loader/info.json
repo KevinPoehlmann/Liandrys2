@@ -1,83 +1,8 @@
 {
-    "paths": {
-        "image": "src/images/",
-        "sprite": "src/images/sprites/",
-        "cache": "src/cache/"
-    },
-    "urls": {
-        "patches": "https://ddragon.leagueoflegends.com/api/versions.json",
-        "dataLink": "http://ddragon.leagueoflegends.com/cdn/",
-        "wiki": "https://wiki.leagueoflegends.com/en-us/",
-        "championList": "/data/en_GB/champion.json",
-        "championFull": "/data/en_GB/championFull.json",
-        "championData": "/data/en_GB/champion/",
-        "championWiki": "/LoL",
-        "championImage": "/img/champion/",
-        "image": "img/",
-        "itemList": "/data/en_GB/item.json",
-        "itemImage": "/img/item/",
-        "passiveImage": "/img/passive/",
-        "runeList": "/data/en_GB/runesReforged.json",
-        "runeImage": "img/",
-        "spellImage": "/img/spell/",
-        "sprite": "/img/sprite/",
-        "summonerspellList": "/data/en_GB/summoner.json",
-        "summonerspellImage": "/img/spell/"
-    },
-    "itemStatDict": {
-        "ability haste": "abilityhaste",
-        "ability power": "ap",
-        "armor": "armor",
-        "armor penetration percent": "armor_pen_percent",
-        "attack damage": "ad",
-        "attack speed percent": "attackspeed_percent",
-        "base mana regen percent": "mana_regen_percent",
-        "base mana regeneration percent": "mana_regen_percent",
-        "base health regen percent": "hp_regen_percent",
-        "base health regeneration percent": "hp_regen_percent",
-        "critical strike chance percent": "crit_chance_percent",
-        "gold per 10 seconds": "gold_per_10_s",
-        "health": "hp",
-        "heal and shield power percent": "heal_and_shield_percent",
-        "lethality": "lethality",
-        "Lethality": "lethality",
-        "life steal percent": "life_steal_percent",
-        "magic penetration": "magic_pen",
-        "magic penetration percent": "magic_pen_percent",
-        "magic resist": "mr",
-        "magic resistance": "mr",
-        "mana": "mana",
-        "move speed": "movementspeed",
-        "movement speed": "movementspeed",
-        "move speed percent": "movementspeed_percent",
-        "movement speed percent": "movementspeed_percent",
-        "omnivamp percent": "omnivamp_percent",
-        "slow resist percent": "slow_resist_percent",
-        "summoner spell haste": "summonerspell_haste",
-        "tenacity percent": "tenacity_percent"
-    },
     "wikiNames": {
         "champions": {},
         "items": {},
         "runes": {},
         "summonerspells": {}
-    },
-    "maps": {
-        "11": "SR",
-        "12": "HA",
-        "21": "NB",
-        "22": "22",
-        "30": "Arena"
-    },
-    "abilityStats": {
-        "cooldown": "cooldown",
-        "static cooldown": "cooldown",
-        "recharge": "recharge",
-        "cost": "cost",
-        "cast time": "cast_time",
-        "speed": "speed",
-        "duration": "duration",
-        "range": "range",
-        "target range": "target_range"
     }
 }

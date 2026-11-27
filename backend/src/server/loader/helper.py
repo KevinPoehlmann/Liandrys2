@@ -3,7 +3,6 @@ import asyncio
 import functools
 import json
 import logging
-import math
 import re
 import requests
 import socket
@@ -74,55 +73,6 @@ def wiki_to_riot_patch(wiki_patch: str) -> str:
 
 
 
-
-
-
-def parse_formula_from_table(bot_str: str, top_str: str = "", scale: str = "level") -> str:
-    bot_values = [float(v.strip()) for v in bot_str.split(";")]
-    if top_str:
-        top_values = [float(v.strip()) for v in top_str.split(";")]
-    else:
-        top_values = list(range(1, len(bot_values) + 1))
-
-    step = (bot_values[-1] - bot_values[0]) / (len(bot_values) - 1)
-    top_step = (top_values[-1] - top_values[0]) / (len(top_values) - 1)
-    if not math.isclose(step, bot_values[1] - bot_values[0], rel_tol=0.01) or not math.isclose(top_step, top_values[1] - top_values[0], rel_tol=0.01):
-        return ""
-    
-    formula = f"{bot_values[0]} + (({scale} - {top_values[0]}) // {top_step}) * {step}"
-    return formula
-
-
-def parse_formula_from_string(string: str, scale: str = "rank") -> str:
-
-    regex = r"(?P<values>[\d/ \.]+)(?P<unit>[\w]*)"
-    match = re.fullmatch(regex, string)
-    if not match:
-        return string
-    try:
-        values = [float(v.strip()) for v in match.group("values").split("/")]
-    except ValueError:
-        patch_logger.warning(f"[CHAMPION] [SCRAPE] [?] Invalid values in formula: {string}")
-        return string
-    
-    if len(values) == 1:
-        return f"{values[0]}"
-    elif len(values) > 1:
-        step = (values[-1] - values[0]) / (len(values) - 1)
-        return f"{values[0]} + ({scale} - 1) * {step}"
-    else:
-        return string
-    
-
-
-def parse_formula_from_list(values: list[float], scale: str = "rank") -> str:
-    formula = ""
-    if len(values) == 1:
-        formula = f"{values[0]}"
-    else:
-        step = (values[-1] - values[0]) / (len(values) - 1)
-        formula = f"{values[0]} + ({scale} - 1) * {step}"
-    return formula
 
 
 
@@ -236,16 +186,6 @@ class SafeSession:
         async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as response:
             response.raise_for_status()
             return await response.json()
-
-    @_retry()
-    async def get_html(self, url: str) -> str:
-        async with self.semaphore:
-            if self.abort_event.is_set():
-                return ""
-            await self.backoff_event.wait()
-            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as response:
-                response.raise_for_status()
-                return await response.text()
 
     @_retry()
     async def get_bytes(self, url: str) -> bytes:

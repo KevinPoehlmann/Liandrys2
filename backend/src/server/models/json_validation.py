@@ -178,39 +178,5 @@ class SummonerspellJson(BaseModel):
 
 #--------------------------------------------------------------------------
 
-#TODO convert from str to Path
-class PathJson(BaseModel):
-    image: str
-    sprite: str
-    cache: str
-
-
-
-class UrlJson(BaseModel):
-    patches: str
-    dataLink: str
-    wiki: str
-    championList: str
-    championFull: str
-    championData: str
-    championWiki: str
-    championImage: str
-    image: str
-    itemList: str
-    itemImage: str
-    passiveImage: str
-    runeList: str
-    runeImage: str
-    spellImage: str
-    sprite: str
-    summonerspellList: str
-    summonerspellImage: str
-
-
 class InfoJson(BaseModel):
-    paths: PathJson
-    urls: UrlJson
-    itemStatDict: dict
     wikiNames: dict[str, dict[str, str]]  # type ⇒ Data Dragon id ⇒ wiki page, only where the automatic lookup fails
-    maps: dict
-    abilityStats: dict

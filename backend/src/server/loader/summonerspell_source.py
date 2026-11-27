@@ -5,8 +5,20 @@ from datetime import datetime
 from src.server.loader.champion_source import CDRAGON, fetch_wiki_page, loc_keys
 from src.server.loader.helper import SafeSession
 from src.server.loader.lua import parse_lua_table
-from src.server.loader.patchexceptions import LoadError
+from src.server.loader.patchexceptions import LoadError, PatcherError
+from src.server.models.json_validation import SummonerspellJson, SummonerspellsJson
 from src.server.models.summonerspell import RawSummonerspell
+
+
+DDRAGON_SPELLS = "https://ddragon.leagueoflegends.com/cdn/{}/data/en_GB/summoner.json"
+
+
+async def fetch_summonerspell_list(session: SafeSession, patch: str) -> list[SummonerspellJson]:
+    """Data Dragon's list of every mode's summoner spells; rift_spells keeps Summoner's Rift's."""
+    data = await session.get_json(DDRAGON_SPELLS.format(patch))
+    if not data:  # SafeSession answers a 404 with ""
+        raise PatcherError(f"No summoner spell list for patch {patch}", "Data Dragon's summoner.json is missing")
+    return [SummonerspellJson(**spell) for spell in SummonerspellsJson(**data).data.values()]
 
 
 async def fetch_shared_bin(session: SafeSession, version: str) -> dict:

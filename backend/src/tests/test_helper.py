@@ -7,9 +7,6 @@ from src.server.loader.helper import (
     patch_sort_key,
     riot_to_wiki_patch,
     wiki_to_riot_patch,
-    parse_formula_from_table,
-    parse_formula_from_string,
-    parse_formula_from_list,
     wiki_release_to_datetime,
     wiki_to_datetime
 )
@@ -21,8 +18,7 @@ from src.server.loader.patchexceptions import PatcherError, ScrapeError
 
 
 def test_info_loader():
-    urls = info_loader().urls
-    assert urls.patches == "https://ddragon.leagueoflegends.com/api/versions.json"
+    assert set(info_loader().wikiNames) == {"champions", "items", "runes", "summonerspells"}
 
 
 
@@ -76,66 +72,6 @@ def test_wiki_to_riot_patch_invalid_format(invalid_patch):
     with pytest.raises(PatcherError):
         wiki_to_riot_patch(invalid_patch)
 
-
-
-
-@pytest.mark.parametrize(
-    "bot_values, top_values, scale, expected",
-    [
-        # Basic linear scaling
-        ("22;21.29;20.59;19.88;19.18;18.47;17.76;17.06;16.35;15.65;14.94;14.24;13.53;12.82;12.12;11.41;10.71;10",
-         "",
-         "level",
-         "22.0 + ((level - 1) // 1.0) * -0.7058823529411765"),
-        
-        # Nonlinear scaling with a single value
-        ("30;24;18;12",
-         "1;6;11;16",
-         "level",
-         "30.0 + ((level - 1.0) // 5.0) * -6.0"),
-    ]
-)
-def test_parse_formula_from_table(bot_values, top_values, scale, expected):
-    result = parse_formula_from_table(bot_str=bot_values, top_str=top_values, scale=scale)
-    assert result == expected
-
-
-@pytest.mark.parametrize(
-    "string, scale, expected",
-    [
-        ("60 / 65 / 70 / 75 / 80 Mana",
-         "rank",
-         "60.0 + (rank - 1) * 5.0"),
-        
-        ("11 / 10 / 9 / 8 / 7", 
-         "rank",
-         "11.0 + (rank - 1) * -1.0"),
-        
-        ("60 Mana + all charges", 
-         "rank",
-         "60 Mana + all charges"),
-        
-        ("Damage scales with love and moonlight", 
-         "rank",
-         "Damage scales with love and moonlight"),
-    ]
-)
-def test_parse_formula_from_string(string, scale, expected):
-
-    result = parse_formula_from_string(string, scale)
-    assert result == expected
-
-
-
-@pytest.mark.parametrize(
-    "string, expected",
-    [
-        ([60, 70, 80, 90, 100], "60 + (rank - 1) * 10.0")
-    ]
-)
-def test_parse_formula_from_list(string, expected):
-    result = parse_formula_from_list(string)
-    assert result == expected
 
 
 

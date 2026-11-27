@@ -5,11 +5,21 @@ from datetime import datetime
 from src.server.loader.champion_source import CDRAGON, fetch_wiki_page
 from src.server.loader.helper import SafeSession
 from src.server.loader.lua import parse_lua_table
-from src.server.loader.patchexceptions import LoadError
+from src.server.loader.patchexceptions import LoadError, PatcherError
 from src.server.models.item import RawItem
+from src.server.models.json_validation import ItemJson, ItemsJson
 
 
+DDRAGON_ITEMS = "https://ddragon.leagueoflegends.com/cdn/{}/data/en_GB/item.json"
 INHERITED = "=>"  # Module:ItemData's "take this field from that item" (Muramana's stats from Manamune)
+
+
+async def fetch_item_list(session: SafeSession, patch: str) -> list[tuple[str, ItemJson]]:
+    """Data Dragon's list of every mode's items, by id; rift_items keeps Summoner's Rift's."""
+    data = await session.get_json(DDRAGON_ITEMS.format(patch))
+    if not data:  # SafeSession answers a 404 with ""
+        raise PatcherError(f"No item list for patch {patch}", "Data Dragon's item.json is missing")
+    return [(item_id, ItemJson(**item)) for item_id, item in ItemsJson(**data).data.items()]
 
 
 async def fetch_items_bin(session: SafeSession, version: str) -> dict:

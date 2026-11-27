@@ -11,7 +11,8 @@ from datetime import datetime
 from urllib.parse import urlencode
 
 from src.server.loader.champion_source import WIKI_API
-from src.server.loader.helper import SafeSession, datetime_to_wiki, wiki_release_to_datetime, wiki_to_datetime
+from src.server.loader.helper import (SafeSession, datetime_to_wiki, riot_to_wiki_patch, wiki_release_to_datetime,
+                                      wiki_to_datetime)
 from src.server.loader.patchexceptions import LoadError, ScrapeError
 from src.server.models.change import Change, patch_note
 
@@ -48,6 +49,10 @@ async def fetch_patch_page(session: SafeSession, wiki_patch: str) -> str:
     if text is None:
         raise LoadError(404, "No patch page", url, "Patch", wiki_patch)
     return text
+
+
+async def fetch_hotfix_dates(session: SafeSession, riot_patch: str) -> list[datetime]:
+    return hotfix_dates(await fetch_patch_page(session, riot_to_wiki_patch(riot_patch)))
 
 
 def parse_patch_notes(wikitext: str, hotfix: datetime | None = None) -> dict[str, dict]:

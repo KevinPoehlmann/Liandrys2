@@ -21,7 +21,7 @@ backend/            FastAPI, one codebase, two apps
     database.py     Motor/MongoDB access, one collection per type, all queries
     errors.py       error responses {detail, code, error_id}; tracebacks to alerts.log, failed simulations with their request to simulation.log
     loader/         patchloader.py (orchestration) + <type>_source.py / <type>_builder.py per type + cdragon.py
-                    (translator) + champion_patcher.py (diff, validation); patchloader2.py/webscraper2.py are the old loader
+                    (translator) + champion_patcher.py (diff, validation) + patch_source.py (which patches to load)
     models/         Pydantic v1 models (see below); enums.py is the import-free bottom layer (enums ← models ← simulation ← routes), result.py the response format
     routes/         every module exposes `router` (read) and `admin` (write)
     simulation/     simulation.py (tick queue) + character.py (stats, formulas, applying effects) + pet.py (summoned units)
@@ -59,7 +59,7 @@ cd backend && .venv/Scripts/python -m pytest -q src/tests/test_simulation.py
 
 - Do **not** add an `__init__.py` to `backend/`, or pytest breaks.
 - Tests must not touch the real DB. Mock every `db.*` call. Check with an unreachable DB: `MONGODB_HOST=127.0.0.1 MONGODB_PORT=1 MONGODB_USER=x MONGODB_PASSWORD=x pytest`.
-- `PATHS`/`URLS` in patchloader2 are read at import time, so mocking `info_loader` in a test has no effect. Mock file writes (`Path.write_bytes`) instead, or tests write into the real `src/images`.
+- Tests that store images monkeypatch `images.IMAGE_DIR` (see `tests/test_images.py`), or they write into the real `src/images`.
 - Debugging in Docker: uncomment the debugpy entrypoint and port in `docker-compose.yml`, then use "Attach to FastAPI (Docker)" in VS Code.
 - After renaming tests via script, VS Code's Testing panel needs "Refresh Tests".
 
