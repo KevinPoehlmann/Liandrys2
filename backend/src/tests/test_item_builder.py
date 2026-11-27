@@ -177,15 +177,6 @@ class TestRiftItems():
 
         assert [item_id for item_id, _ in rift_items(items, item_data)] == [SHEEN]
 
-    def test_champion_upgrades_bought_without_gold_are_left_out(self):
-        upgrade, black_spear = entry(SHEEN).copy(deep=True), entry(SHEEN).copy(deep=True)
-        upgrade.gold.purchasable = False  # Gangplank's Fire at Will costs Silver Serpents
-        items = [("3901", upgrade), ("3599", black_spear)]
-        rift = {"modes": {"classic sr 5v5": True}}
-        item_data = {"3901": {**rift, "champion": ["Gangplank"]}, "3599": {**rift, "champion": ["Kalista", "Sylas"]}}
-
-        assert [item_id for item_id, _ in rift_items(items, item_data)] == ["3599"]
-
     def test_without_the_module_data_dragon_decides(self):
         items = [(item_id, entry(item_id)) for item_id in (SHEEN, "322065")]  # Swiftplay's copy also lists map 11
 

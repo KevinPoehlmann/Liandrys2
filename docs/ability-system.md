@@ -239,6 +239,12 @@ def zed_death_mark(ctx: ActionContext, percent: str) -> list[Action]:
 - Phase 4 check: the name exists and `args` match the signature. Every custom function gets its own test.
 - **Rule:** use `Custom` only when a single champion needs a new concept. When a second one needs it, it becomes a real building block. The test group must work without `Custom`.
 
+`Custom` only returns actions, so it can't change what a champion *has*. For that there is a second hatch on the champion level, a setup hook registered the same way (`@custom_setup("sylas_hijack")`) and run once when the Character is built. Example: Sylas gets the opponent's R as an extra ability (`rank_from: R`, AD ratios converted to AP: 0.6% AP per 1% total AD, 0.4% per 1% bonus AD), and Hijack's buff puts it on R via `replaces`. Same rules as `Custom`. Not built yet; it needs an optional field on the champion (ask before adding it).
+
+Two data rules so stolen or possessed abilities (Sylas, Viego) keep working:
+- Scalings always stay stat variables in the formula (`0.6 * bonus_ad`), never precomputed numbers, so a conversion can remap them.
+- References across containers (`q.X`, `rank_q`, `stacks_` of a buff from another slot) only where really needed: they resolve against the character that casts, not the champion the ability belongs to. Riot itself drops most of them when Sylas steals an ult (Brand R without Blaze, Lux R without Illumination).
+
 ## Examples
 
 **Sheen**
