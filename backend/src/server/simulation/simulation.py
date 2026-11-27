@@ -363,7 +363,7 @@ class Simulation():
                 return [self._shield(props, event)]
             case ApplyBuffAction(props=props):
                 bearer = self._resolve_target(props.target, event)
-                stacks = int(evaluate_formula(props.stacks, owner.formula_context(event.slot)))
+                stacks = int(evaluate_formula(props.stacks, self._context(event, event.target)))
                 instance = self.actors[bearer].apply_buff(props.buff, owner, stacks, tick, event.cast, event.values)
                 if instance.end is not None:
                     self.queue.setdefault(instance.end, []).append(BuffEnd(bearer=bearer, buff=props.buff, end=instance.end))
@@ -378,7 +378,7 @@ class Simulation():
                 if props.stacks is None:
                     bearer.remove_buff(props.buff, tick)
                 else:
-                    bearer.remove_stacks(props.buff, int(evaluate_formula(props.stacks, owner.formula_context(event.slot))), tick)
+                    bearer.remove_stacks(props.buff, int(evaluate_formula(props.stacks, self._context(event, event.target))), tick)
                 self._rescale_slowed_buffs(self._actor_of(bearer), tick)
             case PayCostAction(props=props):
                 cost = ProcessedCostProperties(resource=props.resource, value=evaluate_formula(props.amount, self._context(event, event.owner)))

@@ -79,7 +79,7 @@ class TestLoad():
         assert (stored_raw.key, stored_raw.build, stored_raw.spell_data["cooldown"]) == ("SummonerDot", BUILD, "180")
         assert (stored_raw.wiki.title, stored_raw.wiki.revision_id) == ("Ignite", 42)
         assert spell.ability.values["GrievousAmount"] == "0.4"
-        assert patch.loaded_summonerspell_count == 1
+        database.add_summonerspell.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_a_missing_article_and_module_are_warnings(self, session, database, loggers):
@@ -98,7 +98,7 @@ class TestLoad():
 
         await loader.load_all_summonerspells([unknown, entry()], session, patch)
 
-        assert patch.loaded_summonerspell_count == 1
+        database.add_summonerspell.assert_called_once()
         loggers["load"].error.assert_called_once_with("[SUMMONERSPELL] Smite ❌ Failed to load")
 
     @pytest.mark.asyncio
@@ -134,7 +134,7 @@ class TestPatch():
         assert [change.text for change in ignite.changes] == ["Grievous Wounds duration changed"]
         assert not ignite.validated  # named in the patch notes, but CDragon's numbers didn't change
         assert flash.name == "Flash"
-        assert (patch.summonerspell_count, patch.loaded_summonerspell_count, patch.changed_summonerspell_count) == (2, 2, 1)
+        assert patch.summonerspell_count == 2
 
     @pytest.mark.asyncio
     async def test_without_old_raw_data_the_stored_values_are_compared(self, session, database, loggers):
@@ -175,7 +175,6 @@ class TestHotfix():
         assert updated.id == current.id
         assert [(change.text, change.hotfix) for change in updated.changes] == [("Damage increased", None),
                                                                                 ("Cooldown reduced", hotfixed_at)]
-        assert patch.changed_summonerspell_count == 0  # it already counted as changed in this patch
 
     @pytest.mark.asyncio
     async def test_nothing_to_hotfix_downloads_nothing(self, session, database):

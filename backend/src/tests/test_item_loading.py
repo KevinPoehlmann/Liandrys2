@@ -97,7 +97,7 @@ class TestLoad():
         assert (stored_raw.item_id, stored_raw.build, stored_raw.active["mScriptName"]) == (GUNBLADE, BUILD,
                                                                                            "HextechGunbladeSpell")
         assert item.values["Cooldown"] == "60"
-        assert patch.loaded_item_count == 1
+        database.add_item.assert_called_once()
         assert images.call_args.args[3] == "16.23"
 
     @pytest.mark.asyncio
@@ -137,7 +137,7 @@ class TestLoad():
         await loader.load_all_items([("9999", entry(SHEEN)), (GUNBLADE, entry(GUNBLADE))], FakeSession({}), patch,
                                     sources())
 
-        assert patch.loaded_item_count == 1
+        database.add_item.assert_called_once()
         loggers["load"].error.assert_called_once_with("[ITEM] Sheen ❌ Failed to load")
 
     @pytest.mark.asyncio
@@ -166,7 +166,7 @@ class TestPatch():
         assert [change.text for change in thornmail.changes] == ["Thorns damage changed"]
         assert not thornmail.validated  # named in the patch notes, but CDragon's numbers didn't change
         assert stored[SHEEN].name == "Sheen"
-        assert (patch.item_count, patch.loaded_item_count, patch.changed_item_count) == (2, 2, 1)
+        assert patch.item_count == len(stored) == 2
 
     @pytest.mark.asyncio
     async def test_without_old_raw_data_the_stored_values_are_compared(self, database, loggers):
@@ -209,7 +209,6 @@ class TestHotfix():
         assert updated.id == current.id
         assert [(change.text, change.hotfix) for change in updated.changes] == [
             ("Thorns damage changed", None), ("Grievous Wounds duration reduced", hotfixed_at)]
-        assert patch.changed_item_count == 0  # it already counted as changed in this patch
 
     @pytest.mark.asyncio
     async def test_an_item_not_in_the_patch_is_skipped(self, database, loggers):

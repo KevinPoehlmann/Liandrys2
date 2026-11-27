@@ -13,7 +13,8 @@ import aiohttp
 import src.server.database as db
 from src.server.loader.champion_builder import (SLOTS, LoadedSpell, build_champion, loaded_spells, missing_cooldowns,
                                                 wiki_mismatches)
-from src.server.loader.champion_patcher import has_changes, keep_earlier_changes, patch_champion, spells_from_document
+from src.server.loader.champion_patcher import (keep_earlier_changes, patch_champion, recorded_changes,
+                                                spells_from_document)
 from src.server.loader.champion_source import (CDRAGON, PBE, cdragon_folder, cdragon_version, fetch_build,
                                                fetch_champion_data, fetch_strings, load_raw_champion)
 from src.server.loader.helper import SafeSession, info_loader, riot_to_wiki_patch
@@ -38,7 +39,7 @@ from src.server.loader.summonerspell_builder import (build_summonerspell, patch_
 from src.server.loader.summonerspell_builder import wiki_mismatches as spell_wiki_mismatches
 from src.server.loader.summonerspell_source import (fetch_shared_bin, fetch_spell_data, fetch_summonerspell_list,
                                                     load_raw_summonerspell)
-from src.server.models.change import Change, with_hotfix_lines
+from src.server.models.change import Change, unrecorded, with_hotfix_lines
 from src.server.models.champion import Champion, NewChampion, RawChampion, WikiTemplate
 from src.server.models.item import Item, NewItem, RawItem
 from src.server.models.json_validation import ChampionJson, ChampionsJson, ItemJson, SummonerspellJson
@@ -123,12 +124,19 @@ async def load_data() -> None:
 
 
 async def load_live() -> NewPatch | None:
-    """Completes an unfinished first load (then None), or hotfixes the latest patch and loads every newer one."""
+    """A first load (then None), or: finishes an unfinished patch, hotfixes the latest patch and loads every newer one."""
     patches, hotfix = await check_updates()
     latest = await db.fetch_patch_latest()
-    if not is_complete(latest):
-        await load_fresh_database(patches)
+    if latest is None:
+        await load_fresh_database(patches[-1])
         return None
+    if not is_complete(latest):
+        # Newer patches build on this one, so they wait until it is complete. Its hotfix check comes with the next run.
+        latest = await resume(latest)
+        if not is_complete(latest):
+            load_logger.error(f"[LOAD] Patch {latest.patch} is still incomplete, newer patches wait until it is.")
+            return None
+        patches = [patch for patch in patches if patch != latest.patch]
     if not patches and not hotfix:
         load_logger.info("[LOAD] Patch is up to date, no new data to load.")
     # The hotfix comes first, so the next patch starts from the corrected data.
@@ -158,8 +166,16 @@ async def pending_hotfix(session: SafeSession, patch: NewPatch) -> Hotfix | None
     return Hotfix(build, build != patch.build, dates)
 
 
-async def load_fresh_database(patches: list[str]) -> None:
-    patch_name = patches[-1]
+async def resume(patch: Patch) -> NewPatch:
+    """An unfinished patch is finished the way it started: patched forward from the live patch before it, so the
+    missing objects get their hand-made part, or loaded fresh if it is the first. Stored objects are skipped."""
+    previous = await db.fetch_patch_before(patch.patch)
+    if previous is None:
+        return await load_fresh_database(patch.patch)
+    return await load_patches([patch.patch], previous)
+
+
+async def load_fresh_database(patch_name: str) -> NewPatch:
     _log_section(f"Loading fresh database for patch {patch_name}")
     start = time.monotonic()
 
@@ -189,18 +205,26 @@ async def load_fresh_database(patches: list[str]) -> None:
     for result in results:
         if isinstance(result, Exception):
             _log_error("PATCH", patch_name, result)
-    patch.update_totals()
-    await db.upsert_patch(patch)
+    await _store_patch(patch)
     load_logger.info(f"[LOAD] Loaded {patch.loaded_total_count} / {patch.total_count} objects "
                      f"in {time.monotonic() - start:.2f} seconds")
+    return patch
 
 
 async def _resumed_or_new_patch(patch_name: str, new_patch: NewPatch) -> NewPatch:
-    # An unfinished load of the same patch keeps its counters; existing objects are skipped.
+    # An unfinished load of the same patch keeps its timestamp and build; existing objects are skipped.
     latest = await db.fetch_patch_latest()
     if latest and latest.patch == patch_name:
         return latest
     return new_patch
+
+
+async def _store_patch(patch: NewPatch) -> None:
+    # Counted from the documents, not per stored object: objects of a killed run count too.
+    for counter, count in (await db.count_patch_documents(patch.patch)).items():
+        setattr(patch, counter, count)
+    patch.update_totals()
+    await db.upsert_patch(patch)
 
 
 async def fetch_champion_list(session: SafeSession, patch: str) -> list[ChampionJson]:
@@ -244,7 +268,8 @@ async def load_all_champions(champions: list[ChampionJson], session: SafeSession
 
 
 async def _each_champion(champions: list[ChampionJson], load: Callable[[ChampionJson], Awaitable[None]],
-                         action: str) -> None:
+                         action: str) -> int:
+    """Loads them all, logs each failure and returns how many failed."""
     semaphore = asyncio.Semaphore(CHAMPION_CONCURRENCY)
 
     async def limited(entry: ChampionJson) -> None:
@@ -256,6 +281,7 @@ async def _each_champion(champions: list[ChampionJson], load: Callable[[Champion
         if isinstance(result, Exception):
             _log_error("CHAMPION", entry.name, result)
             load_logger.error(f"[CHAMPION] {entry.name} ❌ Failed to {action}")
+    return sum(isinstance(result, Exception) for result in results)
 
 
 async def _champion_data_or_nothing(session: SafeSession) -> dict[str, dict]:
@@ -278,14 +304,21 @@ async def load_champion(entry: ChampionJson, session: SafeSession, patch: NewPat
 
 async def _stored_raw_champion(entry: ChampionJson, session: SafeSession, patch: NewPatch, build: str,
                                strings: dict[str, str], champion_data: dict | None, wiki_name: str | None) -> RawChampion:
+    raw = await _downloaded_raw_champion(entry, session, patch, build, strings, champion_data, wiki_name)
+    # Stored before building, so a champion the builder can't handle still has its raw data to look at.
+    await db.upsert_raw_champion(raw)
+    return raw
+
+
+async def _downloaded_raw_champion(entry: ChampionJson, session: SafeSession, patch: NewPatch, build: str,
+                                   strings: dict[str, str], champion_data: dict | None,
+                                   wiki_name: str | None) -> RawChampion:
     raw = await load_raw_champion(session, patch.patch, cdragon_folder(patch), entry.id_, wiki_name or entry.name,
                                   build, strings, champion_data)
     if not raw.wiki:
         patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] No wiki data templates found")
     if not raw.champion_data:
         patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] Not in Module:ChampionData")
-    # Stored before building, so a champion the builder can't handle still has its raw data to look at.
-    await db.upsert_raw_champion(raw)
     return raw
 
 
@@ -296,7 +329,6 @@ async def _store_champion(champion: NewChampion, raw: RawChampion, session: Safe
     for failure in await load_champion_images(session, champion, raw, cdragon_folder(patch)):
         patch_logger.warning(f"[CHAMPION] [IMAGE] [{champion.name}] {failure}")
     await db.add_champion(champion)
-    patch.loaded_champion_count += 1
 
 
 def _warn_missing_cooldowns(champion: NewChampion) -> None:
@@ -372,8 +404,7 @@ async def _patch_forward(session: SafeSession, patch: NewPatch, old_patch: NewPa
                           await rune_sources(session, folder, runes, names["runes"]))
     await patch_all_summonerspells(rift_spells(summonerspells), notes.get("summonerspells", {}), session, patch,
                                    old_patch, names["summonerspells"])
-    patch.update_totals()
-    await db.upsert_patch(patch)
+    await _store_patch(patch)
     load_logger.info(f"[LOAD] Patched {patch.loaded_total_count} / {patch.total_count} objects "
                      f"in {time.monotonic() - start:.2f} seconds")
     return patch
@@ -453,8 +484,6 @@ async def patch_one_champion(entry: ChampionJson, old_champion: Champion, notes:
     for name, reasons in result.unvalidated.items():
         patch_logger.info(f"[CHAMPION] [PATCH] [{entry.name}] {name} unvalidated: {'; '.join(reasons)}")
     await _store_champion(result.champion, raw, session, patch)
-    if result.changed:
-        patch.changed_champion_count += 1
     load_logger.info(f"[CHAMPION] {entry.name} ✔ Patched successfully")
 
 
@@ -481,22 +510,25 @@ async def load_hotfix(patch: Patch, hotfix: Hotfix) -> Patch:
             champions = [entry for entry in champions if entry.name in champion_notes]
             summonerspells = [entry for entry in summonerspells if entry.name in spell_notes]
             items = [entry for entry in items if entry[1].name in item_notes]
-        await hotfix_all_champions(champions, champion_notes, session, patch, hotfixed_at, names["champions"])
-        await hotfix_all_summonerspells(summonerspells, spell_notes, session, patch, hotfixed_at,
-                                        names["summonerspells"])
-        await hotfix_all_items(items, item_notes, session, patch, hotfixed_at, sources)
-        rune_count = await hotfix_runes(runes, notes.get("runes", {}).get("changed", {}), session, patch, hotfix,
-                                        hotfixed_at, names["runes"])
-    patch.build, patch.updated_at = hotfix.build, hotfixed_at
-    patch.update_totals()
-    await db.upsert_patch(patch)
+        failed = await hotfix_all_champions(champions, champion_notes, session, patch, hotfixed_at, names["champions"])
+        failed += await hotfix_all_summonerspells(summonerspells, spell_notes, session, patch, hotfixed_at,
+                                                  names["summonerspells"])
+        failed += await hotfix_all_items(items, item_notes, session, patch, hotfixed_at, sources)
+        rune_count, failed_runes = await hotfix_runes(runes, notes.get("runes", {}).get("changed", {}), session, patch,
+                                                      hotfix, hotfixed_at, names["runes"])
+    if failed + failed_runes:
+        # Without the new build and run date the next run repeats the hotfix; what worked now gives no new lines then.
+        load_logger.error(f"[LOAD] Hotfix incomplete: {failed + failed_runes} object(s) failed, the next run repeats it.")
+    else:
+        patch.build, patch.updated_at = hotfix.build, hotfixed_at
+    await _store_patch(patch)
     load_logger.info(f"[LOAD] Hotfixed {len(champions)} champions, {len(summonerspells)} summoner spells, "
                      f"{len(items)} items and {rune_count} runes in {time.monotonic() - start:.2f} seconds")
     return patch
 
 
 async def hotfix_all_champions(champions: list[ChampionJson], notes: dict, session: SafeSession, patch: Patch,
-                               hotfixed_at: datetime, names: NameDictionary = NameDictionary()) -> None:
+                               hotfixed_at: datetime, names: NameDictionary = NameDictionary()) -> int:
     """`notes` are the hotfixes' {champion: {ability: [lines]}}, with Data Dragon's names."""
     version = cdragon_folder(patch)
     build = await fetch_build(session, version)
@@ -512,23 +544,29 @@ async def hotfix_all_champions(champions: list[ChampionJson], notes: dict, sessi
                                   build, strings, champion_data.get(entry.id_, {}),
                                   names.wiki_name(entry.id_, entry.name))
 
-    await _each_champion(champions, load, "hotfix")
+    return await _each_champion(champions, load, "hotfix")
 
 
 async def hotfix_one_champion(entry: ChampionJson, current: Champion, notes: dict[str, list[Change]],
                               session: SafeSession, patch: Patch, hotfixed_at: datetime, build: str,
                               strings: dict[str, str], champion_data: dict, wiki_name: str | None = None) -> None:
-    old_spells = await _old_spells(current, patch)  # read before the new download replaces the raw data
-    raw = await _stored_raw_champion(entry, session, patch, build, strings, champion_data, wiki_name)
-    result = patch_champion(current, old_spells, raw, entry, notes)
+    old_spells = await _old_spells(current, patch)
+    raw = await _downloaded_raw_champion(entry, session, patch, build, strings, champion_data, wiki_name)
+    result = patch_champion(current, old_spells, raw, entry, _unrecorded_notes(notes, recorded_changes(current)))
     for name, reasons in result.unvalidated.items():
         patch_logger.info(f"[CHAMPION] [HOTFIX] [{entry.name}] {name} unvalidated: {'; '.join(reasons)}")
-    if result.changed and not has_changes(current):
-        patch.changed_champion_count += 1
     _warn_missing_cooldowns(result.champion)
     keep_earlier_changes(result.champion, current, hotfixed_at)
     await db.update_champion(Champion(id=current.id, **result.champion.dict()))
+    # Stored last: if anything before fails, the old raw data stays and the retried hotfix still sees the diff.
+    await db.upsert_raw_champion(raw)
     load_logger.info(f"[CHAMPION] {entry.name} ✔ Hotfixed")
+
+
+def _unrecorded_notes(notes: dict[str, list[Change]], recorded: list[Change]) -> dict[str, list[Change]]:
+    # A retried hotfix finds its lines again; they were judged in the earlier run ("patch notes only" would be wrong).
+    lines = {name: unrecorded(changes, recorded) for name, changes in notes.items()}
+    return {name: changes for name, changes in lines.items() if changes}
 
 
 async def _old_spells(old_champion: Champion, old_patch: NewPatch) -> dict[str, LoadedSpell]:
@@ -563,14 +601,17 @@ async def _spell_data_or_nothing(session: SafeSession) -> dict[str, dict]:
 
 
 async def _each_summonerspell(spells: list[SummonerspellJson], load: Callable[[SummonerspellJson], Awaitable[None]],
-                              action: str) -> None:
+                              action: str) -> int:
     # Nine spells, one after the other: their wiki requests run next to the champions' and must not add to the 429s.
+    failed = 0
     for entry in spells:
         try:
             await load(entry)
         except Exception as e:
+            failed += 1
             _log_error("SUMMONERSPELL", entry.name, e)
             load_logger.error(f"[SUMMONERSPELL] {entry.name} ❌ Failed to {action}")
+    return failed
 
 
 async def load_summonerspell(entry: SummonerspellJson, session: SafeSession, patch: NewPatch, sources: SpellSources,
@@ -584,14 +625,20 @@ async def load_summonerspell(entry: SummonerspellJson, session: SafeSession, pat
 
 async def _stored_raw_summonerspell(entry: SummonerspellJson, session: SafeSession, patch: NewPatch,
                                     sources: SpellSources, names: NameDictionary) -> RawSummonerspell:
+    raw = await _downloaded_raw_summonerspell(entry, session, patch, sources, names)
+    # Stored before building, so a spell the builder can't handle still has its raw data to look at.
+    await db.upsert_raw_summonerspell(raw)
+    return raw
+
+
+async def _downloaded_raw_summonerspell(entry: SummonerspellJson, session: SafeSession, patch: NewPatch,
+                                        sources: SpellSources, names: NameDictionary) -> RawSummonerspell:
     raw = await load_raw_summonerspell(session, entry.id_, names.wiki_name(entry.id_, entry.name), patch.patch,
                                        sources.build, sources.shared, sources.strings, sources.spell_data)
     if not raw.wiki:
         patch_logger.warning(f"[SUMMONERSPELL] [WIKI] [{entry.name}] No wiki article found")
     if not raw.spell_data:
         patch_logger.warning(f"[SUMMONERSPELL] [WIKI] [{entry.name}] Not in Module:SpellData")
-    # Stored before building, so a spell the builder can't handle still has its raw data to look at.
-    await db.upsert_raw_summonerspell(raw)
     return raw
 
 
@@ -599,7 +646,6 @@ async def _store_summonerspell(spell: NewSummonerspell, raw: RawSummonerspell, s
                                patch: NewPatch) -> None:
     await _check_summonerspell(spell, raw, session, patch)
     await db.add_summonerspell(spell)
-    patch.loaded_summonerspell_count += 1
 
 
 async def _check_summonerspell(spell: NewSummonerspell, raw: RawSummonerspell, session: SafeSession,
@@ -641,17 +687,15 @@ async def patch_one_summonerspell(entry: SummonerspellJson, old_spell: Summoners
     if result.unvalidated:
         patch_logger.info(f"[SUMMONERSPELL] [PATCH] [{entry.name}] unvalidated: {'; '.join(result.unvalidated)}")
     await _store_summonerspell(result.summonerspell, raw, session, patch)
-    if result.summonerspell.changes:
-        patch.changed_summonerspell_count += 1
     load_logger.info(f"[SUMMONERSPELL] {entry.name} ✔ Patched successfully")
 
 
 async def hotfix_all_summonerspells(spells: list[SummonerspellJson], notes: dict[str, list[Change]],
                                     session: SafeSession, patch: Patch, hotfixed_at: datetime,
-                                    names: NameDictionary = NameDictionary()) -> None:
+                                    names: NameDictionary = NameDictionary()) -> int:
     """`notes` are the hotfixes' {spell: [lines]}, with Data Dragon's names."""
     if not spells:
-        return
+        return 0
     sources = await _spell_sources(session, patch)
     current = {spell.key: spell for spell in await db.fetch_summonerspells_by_patch(patch.patch)}
 
@@ -662,23 +706,22 @@ async def hotfix_all_summonerspells(spells: list[SummonerspellJson], notes: dict
         await hotfix_one_summonerspell(entry, current[entry.id_], notes.get(entry.name, []), session, patch,
                                        hotfixed_at, sources, names)
 
-    await _each_summonerspell(spells, load, "hotfix")
+    return await _each_summonerspell(spells, load, "hotfix")
 
 
 async def hotfix_one_summonerspell(entry: SummonerspellJson, current: Summonerspell, notes: list[Change],
                                    session: SafeSession, patch: Patch, hotfixed_at: datetime, sources: SpellSources,
                                    names: NameDictionary = NameDictionary()) -> None:
-    old_spell = await _old_summoner_spell(current, patch)  # read before the new download replaces the raw data
-    raw = await _stored_raw_summonerspell(entry, session, patch, sources, names)
-    result = patch_summonerspell(current, old_spell, raw, entry, notes)
+    old_spell = await _old_summoner_spell(current, patch)
+    raw = await _downloaded_raw_summonerspell(entry, session, patch, sources, names)
+    result = patch_summonerspell(current, old_spell, raw, entry, unrecorded(notes, current.changes))
     if result.unvalidated:
         patch_logger.info(f"[SUMMONERSPELL] [HOTFIX] [{entry.name}] unvalidated: {'; '.join(result.unvalidated)}")
     spell = result.summonerspell
-    if spell.changes and not current.changes:
-        patch.changed_summonerspell_count += 1
     spell.changes = with_hotfix_lines(current.changes, spell.changes, hotfixed_at)
     await _check_summonerspell(spell, raw, session, patch)
     await db.update_summonerspell(Summonerspell(id=current.id, **spell.dict()))
+    await db.upsert_raw_summonerspell(raw)  # stored last, like a champion's
     load_logger.info(f"[SUMMONERSPELL] {entry.name} ✔ Hotfixed")
 
 
@@ -717,7 +760,7 @@ async def _load_masterwork_border(session: SafeSession, patch: NewPatch, sources
         patch_logger.warning(f"[ITEM] [IMAGE] [Masterwork border] {failure}")
 
 
-async def _each_item(items: list[ItemEntry], load: Callable[[ItemEntry], Awaitable[None]], action: str) -> None:
+async def _each_item(items: list[ItemEntry], load: Callable[[ItemEntry], Awaitable[None]], action: str) -> int:
     # No wiki request per item, only its image, so more run in parallel than champions.
     semaphore = asyncio.Semaphore(ITEM_CONCURRENCY)
 
@@ -730,6 +773,7 @@ async def _each_item(items: list[ItemEntry], load: Callable[[ItemEntry], Awaitab
         if isinstance(result, Exception):
             _log_error("ITEM", entry.name, result)
             load_logger.error(f"[ITEM] {entry.name} ❌ Failed to {action}")
+    return sum(isinstance(result, Exception) for result in results)
 
 
 async def load_item(entry: ItemEntry, session: SafeSession, patch: NewPatch, sources: ItemSources) -> None:
@@ -742,19 +786,23 @@ async def load_item(entry: ItemEntry, session: SafeSession, patch: NewPatch, sou
 
 
 async def _stored_raw_item(item_id: str, item_json: ItemJson, patch: NewPatch, sources: ItemSources) -> RawItem:
+    raw = _downloaded_raw_item(item_id, item_json, patch, sources)
+    # Stored before building, so an item the builder can't handle still has its raw data to look at.
+    await db.upsert_raw_item(raw)
+    return raw
+
+
+def _downloaded_raw_item(item_id: str, item_json: ItemJson, patch: NewPatch, sources: ItemSources) -> RawItem:
     raw = load_raw_item(item_id, patch.patch, sources.build, sources.items, sources.shared, sources.strings,
                         sources.item_data)
     if sources.item_data and not raw.item_data:
         patch_logger.warning(f"[ITEM] [WIKI] [{item_json.name}] Not in Module:ItemData")
-    # Stored before building, so an item the builder can't handle still has its raw data to look at.
-    await db.upsert_raw_item(raw)
     return raw
 
 
 async def _store_item(item: NewItem, raw: RawItem, session: SafeSession, patch: NewPatch) -> None:
     await _check_item(item, raw, session, patch)
     await db.add_item(item)
-    patch.loaded_item_count += 1
 
 
 async def _check_item(item: NewItem, raw: RawItem, session: SafeSession, patch: NewPatch) -> None:
@@ -798,13 +846,11 @@ async def patch_one_item(entry: ItemEntry, old_item: Item, notes: list[Change], 
     if result.unvalidated:
         patch_logger.info(f"[ITEM] [PATCH] [{item_json.name}] unvalidated: {'; '.join(result.unvalidated)}")
     await _store_item(result.item, raw, session, patch)
-    if result.item.changes:
-        patch.changed_item_count += 1
     load_logger.info(f"[ITEM] {item_json.name} ✔ Patched successfully")
 
 
 async def hotfix_all_items(items: list[ItemEntry], notes: dict[str, list[Change]], session: SafeSession,
-                           patch: Patch, hotfixed_at: datetime, sources: ItemSources) -> None:
+                           patch: Patch, hotfixed_at: datetime, sources: ItemSources) -> int:
     """`notes` are the hotfixes' {item: [lines]}, with Data Dragon's names."""
     current = {item.item_id: item for item in await db.fetch_items_by_patch(patch.patch)}
     await _load_masterwork_border(session, patch, sources)
@@ -817,23 +863,22 @@ async def hotfix_all_items(items: list[ItemEntry], notes: dict[str, list[Change]
         await hotfix_one_item(entry, current[item_id], notes.get(item_json.name, []), session, patch, hotfixed_at,
                               sources)
 
-    await _each_item(items, load, "hotfix")
+    return await _each_item(items, load, "hotfix")
 
 
 async def hotfix_one_item(entry: ItemEntry, current: Item, notes: list[Change], session: SafeSession, patch: Patch,
                           hotfixed_at: datetime, sources: ItemSources) -> None:
     item_id, item_json = entry
-    old_item = await _old_item(current, patch)  # read before the new download replaces the raw data
-    raw = await _stored_raw_item(item_id, item_json, patch, sources)
-    result = patch_item(current, old_item, raw, item_json, notes)
+    old_item = await _old_item(current, patch)
+    raw = _downloaded_raw_item(item_id, item_json, patch, sources)
+    result = patch_item(current, old_item, raw, item_json, unrecorded(notes, current.changes))
     if result.unvalidated:
         patch_logger.info(f"[ITEM] [HOTFIX] [{item_json.name}] unvalidated: {'; '.join(result.unvalidated)}")
     item = result.item
-    if item.changes and not current.changes:
-        patch.changed_item_count += 1
     item.changes = with_hotfix_lines(current.changes, item.changes, hotfixed_at)
     await _check_item(item, raw, session, patch)
     await db.update_item(Item(id=current.id, **item.dict()))
+    await db.upsert_raw_item(raw)  # stored last, like a champion's
     load_logger.info(f"[ITEM] {item_json.name} ✔ Hotfixed")
 
 
@@ -881,7 +926,7 @@ async def _load_rune_tree_icons(session: SafeSession, patch: NewPatch, sources: 
         patch_logger.warning(f"[RUNE] [IMAGE] [Tree] {failure}")
 
 
-async def _each_rune(entries: list[RuneEntry], load: Callable[[RuneEntry], Awaitable[None]], action: str) -> None:
+async def _each_rune(entries: list[RuneEntry], load: Callable[[RuneEntry], Awaitable[None]], action: str) -> int:
     # The wiki pages are already there, only images load per rune. A shard in two rows shares its raw document,
     # so its second row waits for the first instead of racing it on the same key.
     seen: set[int] = set()
@@ -895,12 +940,15 @@ async def _each_rune(entries: list[RuneEntry], load: Callable[[RuneEntry], Await
         async with semaphore:
             await load(entry)
 
+    failed = 0
     for group in (first, repeated):
         results = await asyncio.gather(*(limited(entry) for entry in group), return_exceptions=True)
         for entry, result in zip(group, results):
             if isinstance(result, Exception):
+                failed += 1
                 _log_error("RUNE", entry.name, result)
                 load_logger.error(f"[RUNE] {entry.name} ❌ Failed to {action}")
+    return failed
 
 
 async def load_rune(entry: RuneEntry, session: SafeSession, patch: NewPatch, sources: RuneSources) -> None:
@@ -912,6 +960,13 @@ async def load_rune(entry: RuneEntry, session: SafeSession, patch: NewPatch, sou
 
 
 async def _stored_raw_rune(entry: RuneEntry, patch: NewPatch, sources: RuneSources) -> RawRune:
+    raw = _downloaded_raw_rune(entry, patch, sources)
+    # Stored before building, so a rune the builder can't handle still has its raw data to look at.
+    await db.upsert_raw_rune(raw)
+    return raw
+
+
+def _downloaded_raw_rune(entry: RuneEntry, patch: NewPatch, sources: RuneSources) -> RawRune:
     wiki_name = None if entry.is_shard else sources.wiki_names.get(entry.rune_id, entry.name)
     raw = load_raw_rune(entry.rune_id, wiki_name, patch.patch, sources.build, sources.records, sources.strings,
                         sources.wiki_pages or {})
@@ -920,15 +975,12 @@ async def _stored_raw_rune(entry: RuneEntry, patch: NewPatch, sources: RuneSourc
         patch_logger.warning(f"[RUNE] [WIKI] [{entry.name}] No Template:Rune data {wiki_name}")
     if checked and not raw.wiki:
         patch_logger.warning(f"[RUNE] [WIKI] [{entry.name}] No wiki article found")
-    # Stored before building, so a rune the builder can't handle still has its raw data to look at.
-    await db.upsert_raw_rune(raw)
     return raw
 
 
 async def _store_rune(rune: NewRune, raw: RawRune, session: SafeSession, patch: NewPatch) -> None:
     await _check_rune(rune, raw, session, patch)
     await db.add_rune(rune)
-    patch.loaded_rune_count += 1
 
 
 async def _check_rune(rune: NewRune, raw: RawRune, session: SafeSession, patch: NewPatch) -> None:
@@ -975,13 +1027,11 @@ async def patch_one_rune(entry: RuneEntry, old_rune: Rune, notes: list[Change], 
     if result.unvalidated:
         patch_logger.info(f"[RUNE] [PATCH] [{entry.name}] unvalidated: {'; '.join(result.unvalidated)}")
     await _store_rune(result.rune, raw, session, patch)
-    if result.rune.changes:
-        patch.changed_rune_count += 1
     load_logger.info(f"[RUNE] {entry.name} ✔ Patched successfully")
 
 
 async def hotfix_all_runes(entries: list[RuneEntry], notes: dict[str, list[Change]], session: SafeSession,
-                           patch: Patch, hotfixed_at: datetime, sources: RuneSources) -> None:
+                           patch: Patch, hotfixed_at: datetime, sources: RuneSources) -> int:
     """`notes` are the hotfixes' {rune: [lines]}, with Data Dragon's names."""
     current = {_rune_key(rune): rune for rune in await db.fetch_runes_by_patch(patch.patch)}
     await _load_rune_tree_icons(session, patch, sources)
@@ -993,22 +1043,21 @@ async def hotfix_all_runes(entries: list[RuneEntry], notes: dict[str, list[Chang
         await hotfix_one_rune(entry, current[entry.key], notes.get(entry.name, []), session, patch, hotfixed_at,
                               sources)
 
-    await _each_rune(entries, load, "hotfix")
+    return await _each_rune(entries, load, "hotfix")
 
 
 async def hotfix_one_rune(entry: RuneEntry, current: Rune, notes: list[Change], session: SafeSession, patch: Patch,
                           hotfixed_at: datetime, sources: RuneSources) -> None:
-    old_rune = await _old_rune(current, patch)  # read before the new download replaces the raw data
-    raw = await _stored_raw_rune(entry, patch, sources)
-    result = patch_rune(current, old_rune, raw, entry, notes)
+    old_rune = await _old_rune(current, patch)
+    raw = _downloaded_raw_rune(entry, patch, sources)
+    result = patch_rune(current, old_rune, raw, entry, unrecorded(notes, current.changes))
     if result.unvalidated:
         patch_logger.info(f"[RUNE] [HOTFIX] [{entry.name}] unvalidated: {'; '.join(result.unvalidated)}")
     rune = result.rune
-    if rune.changes and not current.changes:
-        patch.changed_rune_count += 1
     rune.changes = with_hotfix_lines(current.changes, rune.changes, hotfixed_at)
     await _check_rune(rune, raw, session, patch)
     await db.update_rune(Rune(id=current.id, **rune.dict()))
+    await db.upsert_raw_rune(raw)  # stored last, like a champion's
     load_logger.info(f"[RUNE] {entry.name} ✔ Hotfixed")
 
 
@@ -1023,14 +1072,15 @@ async def _old_rune(old_rune: NewRune, old_patch: NewPatch) -> LoadedSpell:
 
 
 async def hotfix_runes(runes: list[RuneEntry], notes: dict[str, list[Change]], session: SafeSession, patch: Patch,
-                       hotfix: Hotfix, hotfixed_at: datetime, names: NameDictionary = NameDictionary()) -> int:
-    """All runes on a new build, else only the named ones; their sources are only downloaded when needed."""
+                       hotfix: Hotfix, hotfixed_at: datetime,
+                       names: NameDictionary = NameDictionary()) -> tuple[int, int]:
+    """All runes on a new build, else only the named ones; their sources are only downloaded when needed.
+    Returns how many were hotfixed and how many of them failed."""
     if not hotfix.build_changed and not any(entry.name in notes for entry in runes):
-        return 0
+        return 0, 0
     sources = await rune_sources(session, cdragon_folder(patch), runes, names)
     entries = [entry for entry in sources.entries if hotfix.build_changed or entry.name in notes]
-    await hotfix_all_runes(entries, notes, session, patch, hotfixed_at, sources)
-    return len(entries)
+    return len(entries), await hotfix_all_runes(entries, notes, session, patch, hotfixed_at, sources)
 
 
 def _log_error(type_: str, name: str, error: Exception) -> None:

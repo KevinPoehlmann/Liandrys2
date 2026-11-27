@@ -1,8 +1,10 @@
 import pytest
 
-from src.server.models.enums import ActionType, Actor, Stat, to_ticks
+from src.server.models.enums import ActionType, Actor, RuleActionType, Stat, Target, to_ticks
 from src.server.models.request import Action, Rank
+from src.server.models.rule import ApplyBuffAction, ApplyBuffProps, Rule
 from src.server.simulation.character import Character
+from src.server.simulation.events import RuleEvent
 from src.server.simulation.simulation import Simulation
 
 
@@ -73,6 +75,18 @@ class TestBuffInstances():
             darius.apply_buff("silver_bolts", vayne, 1, 0)
 
         assert darius.get_buff_stacks("silver_bolts") == 3
+
+
+    def test_stack_formulas_read_the_event_like_other_actions(self, vayne, darius):
+        # e.g. "a stack per 100 damage dealt" in a damage-triggered rule
+        apply = ApplyBuffAction(type_=RuleActionType.APPLY_BUFF,
+                                props=ApplyBuffProps(buff="silver_bolts", target=Target.TARGET, stacks="floor(damage / 100)"))
+        event = RuleEvent(rule=Rule(actions=[apply]), slot=ActionType.W, owner=Actor.BLUE, target=Actor.RED,
+                          values={"damage": 250})
+
+        Simulation(vayne, darius)._run_rule(event, 0)
+
+        assert darius.get_buff_stacks("silver_bolts") == 2
 
 
     def test_removing_stacks_ends_the_buff_at_zero(self, vayne, darius):

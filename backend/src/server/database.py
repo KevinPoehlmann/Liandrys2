@@ -152,6 +152,29 @@ async def fetch_patch_latest() -> Patch | None:
     return Patch(**document)
 
 
+async def fetch_patch_before(patch: str) -> Patch | None:
+    """The live patch a patch was patched forward from; the collation makes `$lt` numeric too."""
+    document = await patch_collection.find_one(LIVE | {"patch": {"$lt": patch}}, **PATCH_ORDER)
+    return Patch(**document) if document else None
+
+
+# A champion's patch changes sit on the champion and on each of its containers.
+CHAMPION_CHANGED = {"$or": [{f"{field}.0": {"$exists": True}} for field in (
+    "changes", "passive.changes", "q.changes", "w.changes", "e.changes", "r.changes", "extra_abilities.changes")]}
+CHANGED = {"changes.0": {"$exists": True}}
+
+
+async def count_patch_documents(patch: str) -> dict[str, int]:
+    """The patch's loaded and changed counters, counted from its documents: a resumed or killed run counts right."""
+    collections = {"champion": (champion_collection, CHAMPION_CHANGED), "item": (item_collection, CHANGED),
+                   "rune": (rune_collection, CHANGED), "summonerspell": (summonerspell_collection, CHANGED)}
+    counts = {}
+    for type_, (collection, changed) in collections.items():
+        counts[f"loaded_{type_}_count"] = await collection.count_documents({"patch": patch})
+        counts[f"changed_{type_}_count"] = await collection.count_documents({"patch": patch} | changed)
+    return counts
+
+
 async def fetch_previews() -> list[Patch]:
     return [Patch(**document) async for document in patch_collection.find({"preview": True}, **PATCH_ORDER)]
 

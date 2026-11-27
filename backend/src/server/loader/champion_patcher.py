@@ -52,13 +52,9 @@ class PatchedChampion:
     champion: NewChampion
     unvalidated: dict[str, list[str]]  # container name -> why it lost its validation
 
-    @property
-    def changed(self) -> bool:
-        return has_changes(self.champion)
 
-
-def has_changes(champion: NewChampion) -> bool:
-    return bool(champion.changes) or any(container.changes for _, container in _containers(champion))
+def recorded_changes(champion: NewChampion) -> list[Change]:
+    return champion.changes + [change for _, container in _containers(champion) for change in container.changes]
 
 
 def keep_earlier_changes(champion: NewChampion, earlier: NewChampion, hotfixed_at: datetime) -> None:

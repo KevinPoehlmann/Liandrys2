@@ -120,9 +120,8 @@ def datetime_to_wiki(date: datetime) -> str:
 
 
 class SafeSession:
-    def __init__(self, session: aiohttp.ClientSession, semaphore: asyncio.Semaphore | None = None, max_retries: int = 3, backoff_factor: float = 25, backoff_event: asyncio.Event | None = None):
+    def __init__(self, session: aiohttp.ClientSession, max_retries: int = 3, backoff_factor: float = 25, backoff_event: asyncio.Event | None = None):
         self.session = session
-        self.semaphore = semaphore or asyncio.Semaphore(5)
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
         self.backoff_event = backoff_event or asyncio.Event()
@@ -183,16 +182,24 @@ class SafeSession:
 
     @_retry()
     async def get_json(self, url: str) -> dict:
+        await self._wait_for_turn()
         async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as response:
             response.raise_for_status()
             return await response.json()
 
     @_retry()
     async def get_bytes(self, url: str) -> bytes:
+        await self._wait_for_turn()
         async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as response:
             response.raise_for_status()
             return await response.read()
         
+
+    async def _wait_for_turn(self) -> None:
+        # Every request of the session, also each retry, waits out a running backoff, and none starts after an abort.
+        await self.backoff_event.wait()
+        if self.abort_event.is_set():
+            raise RuntimeError("Requests aborted (access denied or too many 429 responses)")
 
     async def _global_backoff(self, delay: float) -> None:
         if self.backoff_event.is_set():

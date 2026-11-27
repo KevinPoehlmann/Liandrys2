@@ -94,7 +94,7 @@ class TestSources():
 
         await loader.load_all_runes(session, patch, await sources(session, ELECTROCUTE_ID))
 
-        assert patch.loaded_rune_count == 1 + SHARD_COUNT
+        assert database.add_rune.await_count == 1 + SHARD_COUNT
         assert any("Rune wiki pages not loaded" in warning for warning in warnings(loggers))
         assert not any("No wiki article" in warning for warning in warnings(loggers))  # no warning per rune
 
@@ -111,7 +111,7 @@ class TestLoad():
         assert electrocute.passive.values["WindowDuration"] == "3"
         raws = [call.args[0] for call in database.upsert_raw_rune.call_args_list]
         assert next(found for found in raws if found.rune_id == ELECTROCUTE_ID).wiki_data.revision_id == 4060699
-        assert patch.loaded_rune_count == 1 + SHARD_COUNT
+        assert database.add_rune.await_count == 1 + SHARD_COUNT
 
 
     @pytest.mark.asyncio
@@ -151,7 +151,7 @@ class TestLoad():
 
         await loader.load_all_runes(session, patch, found)
 
-        assert patch.loaded_rune_count == SHARD_COUNT
+        assert database.add_rune.await_count == SHARD_COUNT
         loggers["load"].error.assert_called_once_with("[RUNE] Electrocute ❌ Failed to load")
 
 
@@ -193,7 +193,7 @@ class TestPatch():
         assert electrocute.passive.rules == stored_electrocute().passive.rules  # the hand-made part stays
         assert [change.text for change in electrocute.changes] == ["Bug fixed"]
         assert not electrocute.validated  # named in the patch notes, but CDragon's numbers didn't change
-        assert (patch.rune_count, patch.loaded_rune_count, patch.changed_rune_count) == (10, 10, 1)
+        assert patch.rune_count == len(added(database)) == 10
 
 
     @pytest.mark.asyncio
@@ -237,22 +237,21 @@ class TestHotfix():
         hotfix = loader.Hotfix(BUILD, build_changed=False)
         names = NameDictionary({str(ELECTROCUTE_ID): "Electrocute"})
 
-        count = await loader.hotfix_runes([entry(ELECTROCUTE_ID)], notes, session, patch, hotfix, hotfixed_at, names)
+        counts = await loader.hotfix_runes([entry(ELECTROCUTE_ID)], notes, session, patch, hotfix, hotfixed_at, names)
 
         updated = database.update_rune.call_args.args[0]
-        assert (count, updated.id) == (1, current.id)
+        assert (counts, updated.id) == ((1, 0), current.id)
         assert [(change.text, change.hotfix) for change in updated.changes] == [("Damage increased", None),
                                                                                 ("Cooldown reduced", hotfixed_at)]
-        assert patch.changed_rune_count == 0  # it already counted as changed in this patch
 
 
     @pytest.mark.asyncio
     async def test_nothing_named_and_the_same_build_downloads_nothing(self, session, database, patch):
         hotfix = loader.Hotfix(BUILD, build_changed=False)
 
-        count = await loader.hotfix_runes([entry(ELECTROCUTE_ID)], {}, session, patch, hotfix, datetime.now())
+        counts = await loader.hotfix_runes([entry(ELECTROCUTE_ID)], {}, session, patch, hotfix, datetime.now())
 
-        assert count == 0 and session.urls == []
+        assert counts == (0, 0) and session.urls == []
 
 
     @pytest.mark.asyncio
@@ -260,8 +259,8 @@ class TestHotfix():
         database.fetch_runes_by_patch.return_value = [stored_electrocute("16.23.1")]
         hotfix = loader.Hotfix("new build", build_changed=True)
 
-        count = await loader.hotfix_runes([entry(ELECTROCUTE_ID)], {}, session, patch, hotfix, datetime.now())
+        counts = await loader.hotfix_runes([entry(ELECTROCUTE_ID)], {}, session, patch, hotfix, datetime.now())
 
-        # Electrocute is updated; the shards aren't in the patch yet and are skipped with a warning.
-        assert count == 1 + SHARD_COUNT
+        # Electrocute is updated; the shards aren't in the patch yet and are skipped with a warning, not failed.
+        assert counts == (1 + SHARD_COUNT, 0)
         database.update_rune.assert_called_once()

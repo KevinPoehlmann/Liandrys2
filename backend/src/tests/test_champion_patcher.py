@@ -5,9 +5,9 @@ import pytest
 
 from src.server.loader.cdragon import field_hash
 from src.server.loader.champion_builder import champion_stats, loaded_spells
-from src.server.loader.champion_patcher import (_calculation_names, _note_lines, has_changes, keep_earlier_changes,
-                                                patch_champion, spells_from_document, used_names)
-from src.server.models.ability import Ability, ExtraAbility
+from src.server.loader.champion_patcher import (_calculation_names, _note_lines, keep_earlier_changes,
+                                                patch_champion, recorded_changes, spells_from_document, used_names)
+from src.server.models.ability import ExtraAbility
 from src.server.models.change import Change, patch_note
 from src.server.models.enums import ChangeSource
 from src.server.models.json_validation import ChampionJson
@@ -86,7 +86,7 @@ class TestCopyForward():
         assert result.champion.patch == NEW_PATCH
         assert result.unvalidated == {}
         assert result.champion.validated
-        assert not result.changed
+        assert not recorded_changes(result.champion)
 
 
     def test_hand_made_part_survives(self, veigar, old_raw, new_raw):
@@ -148,10 +148,10 @@ class TestHotfix():
             ("Cooldown reduced", None), ("Mana cost reduced", earlier_run), ("Range increased", HOTFIXED_AT)]
 
 
-    def test_has_changes_looks_into_every_container(self, veigar):
-        assert not has_changes(veigar)
+    def test_recorded_changes_look_into_every_container(self, veigar):
+        assert recorded_changes(veigar) == []
         veigar.e.changes = [patch_note("Radius increased")]
-        assert has_changes(veigar)
+        assert recorded_changes(veigar) == [patch_note("Radius increased")]
 
 
 class TestValidation():
@@ -381,8 +381,3 @@ def test_named_level_parts_reference_their_data_values():
             "{9823b29a}": [{"level": 6, "{ae9b464d}": "Bonus", "{b0d8b2ac}": "PerLevel", "__type": "{0333530c}"}]}
 
     assert _calculation_names({"mFormulaParts": [part]}) == {"Level1MS", "PerLevel", "Bonus"}
-
-
-def test_old_documents_hold_plain_lines():
-    assert Ability(name="Q", changes=["Damage increased"]).changes == [
-        Change(source=ChangeSource.PATCH_NOTES, text="Damage increased")]

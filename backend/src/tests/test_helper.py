@@ -185,3 +185,23 @@ async def test_retry_lets_other_errors_through(no_sleep, error):
 
 async def test_retry_returns_empty_on_404(no_sleep):
     assert await SafeSession(FailingSession(http_error(404))).get_json("url") == ""
+
+
+async def test_a_backoff_holds_every_request_of_the_session():
+    session = SafeSession(FailingSession())
+    session.backoff_event.clear()  # another request got a 429 and waits it out
+    request = asyncio.create_task(session.get_json("url"))
+    await asyncio.sleep(0)
+
+    assert session.session.calls == 0
+    session.backoff_event.set()
+    assert await request == {"ok": True}
+
+
+async def test_after_an_abort_no_request_starts():
+    session = SafeSession(FailingSession())
+    session.abort_event.set()
+
+    with pytest.raises(RuntimeError, match="aborted"):
+        await session.get_json("url")
+    assert session.session.calls == 0

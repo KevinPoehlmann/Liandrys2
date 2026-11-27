@@ -24,20 +24,19 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-1-simulation-correctness).
 
 Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-model). Design in [docs/ability-system.md](docs/ability-system.md).
 
-## Phase 3: Loader with little manual work per patch
+## Phase 3: Loader with little manual work per patch ✅
 
-The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells ✅, (4) items incl. actives ✅, (5) runes ✅, then the fresh load into the real DB ✅. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
-
-The PBE preview is done too ([decisions](docs/decisions.md#pbe-preview)).
-
-**Next in this phase** (the timing data; these items may move to the backlog if no source turns up):
-- [ ] Items: `ByItemEpicnessCountCalculationPart` ("per legendary item") stays reported. In 16.23 only the old mythic passives' leftovers use it (Goredrinker, Galeforce, …; also Guinsoo's, Evenshroud, Radiant Virtue), none in a live tooltip; translate it once a tooltip uses it again
-
+Done, see [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch), incl. the PBE preview and the review at the end. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
 
 ## Phase 4: Admin side complete
 
 - [ ] **Rule editor** for the new format: rules (trigger, conditions, actions), buffs, stats, inputs, stages, pets, `Custom`. Values reference the named values from the loader. Shows the texts next to it: the `tooltip` and the wiki texts, which only live in the raw data (`raw_*` collections, no admin route reads them yet). The current editor still has only the old effect components
 - [ ] **Data checks on PUT:** run each changed ability once in a mini simulation (dummy target, all ranks), reject with a clear message on error. Warn (don't reject) when a `cooldown` formula uses `cooldown_multiplier` or a value built with it (Aphelios' `GravitumQCD`): the Character applies haste again
+  - The PUT takes only the hand-made part; the loader-owned fields (`values`, `tooltip`, `dash_hint`, `raw_stats`, `changes`, names, images, max ranks, stats) come from the stored document. Today it writes the whole body, so an editor opened before a hotfix undoes it, and an AI draft could write numbers (against "the AI never writes numbers")
+  - Recompute `Champion.validated` from its containers on save; `reject_preview` should read the stored document's patch, not the body's
+  - Reject `Input` names that shadow formula variables (`level`, `rank`, stats like `ap`, event values like `damage`): scenario inputs are read before them, silently
+- [ ] Decide which `validated` the editor sets for items, runes and summoner spells: the object's flag is the one the loader and lists use; the active's/passives'/ability's own `validated` is never read. Drop or hide those, or make the object's flag computed like `Champion.validated`
+- [ ] Extra abilities (Nidalee's cougar form): their `values` are never refreshed by the loader, and bare names in their formulas are never diffed (only `r.X` references are). Decide where their values come from (their own CDragon spell, e.g. Takedown's, or only the `rank_from` slot) before the editor enters them
 - [ ] Aphelios: only Q, W and R, and his abilities don't rank up; he levels stats instead (`ApheliosPBuffAD/AS/AP` stacks × `ADPerRank` …), his Q cooldowns scale with level, and his weapons are five Q spells of their own. Check how `rank`, the slots and the editor fit him before his data entry
 - [ ] Editor: field for `Champion.adaptive_type` (only if the loader can't scrape it)
 - [ ] Editor: show save errors (400/422); update `originalChampion` after saving; load `/enum` once and `provide` it
@@ -52,6 +51,7 @@ The PBE preview is done too ([decisions](docs/decisions.md#pbe-preview)).
 - [ ] Migration (needed from the fresh load on): `schema_version` per document, an ordered list of migrations, `update_many` instead of one-by-one updates, migrations for all types
 - [ ] Translator leftovers that need the editor or the extra abilities (all reported by the loader, see decisions "Translator: what stays reported"): 39 hashed buff names (two K'Sante buff counters, Elise R's `{e6fdcc5d}`), Elise R's `ExternalNamedDataValue` (her spider E)
 - [ ] Log view: probably fixed once the loader is async (Phase 3); also handle the polling race at start
+  - Idea: load progress ("Champions 87 / 173"). The loader stores the patch document with its totals at the start (like the PBE preview), and `/patch/load/status` counts the patch's documents on each poll (`database.count_patch_documents`, the same query the loader uses at the end), so there is no second counter. Today the counters only reach the DB when the load is done
 
 AI drafts as a pilot, in Claude Code sessions on the Pro subscription (no API key, no app integration yet; the rule editor stays for review and for the cases the AI gets wrong):
 - [ ] Workflow: Claude Code reads the raw data, writes the rules and sends them through the admin PUT, so the data checks apply like for manual entry
@@ -113,6 +113,8 @@ Ideas collected for later; mostly frontend.
 - Production: disclaimer "not affiliated with Riot Games", register the project in the Riot Developer Portal
 
 ## Backlog (after V1 or when needed)
+
+- Items: `ByItemEpicnessCountCalculationPart` ("per legendary item") stays reported. In 16.23 only the old mythic passives' leftovers use it (Goredrinker, Galeforce, …; also Guinsoo's, Evenshroud, Radiant Virtue), none in a live tooltip; translate it once a tooltip uses it again
 
 - Pydantic v2, only once everything else is polished
 - Security/production: separate Mongo users (`read` for the user backend, `readWrite` for admin), `.env` instead of credentials in compose, no public Mongo/admin ports, production build + nginx, safer `eval`
