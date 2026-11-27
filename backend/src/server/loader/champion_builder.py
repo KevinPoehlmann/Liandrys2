@@ -108,7 +108,7 @@ def loaded_spells(raw: RawChampion, max_ranks: dict[str, int]) -> dict[str, Load
     """Q, W, E, R and the passive, found through the champion's own record (the passive has no ranks)."""
     strings = {key.lower(): text for key, text in raw.strings.items()}
     templates = _wiki_by_slot(raw.wiki)
-    return {slot: _loaded_spell(record, max_ranks.get(slot, 0), strings, templates.get(slot))
+    return {slot: loaded_spell(record, max_ranks.get(slot, 0), strings, templates.get(slot))
             for slot, record in _spell_records(raw.cdragon).items()}
 
 
@@ -123,7 +123,7 @@ def _spell_records(cdragon: dict) -> dict[str, dict]:
     return {slot: cdragon[path] for slot, path in paths.items()}
 
 
-def _loaded_spell(record: dict, max_rank: int, strings: dict[str, str], wiki: WikiTemplate | None) -> LoadedSpell:
+def loaded_spell(record: dict, max_rank: int, strings: dict[str, str], wiki: WikiTemplate | None) -> LoadedSpell:
     keys = loc_keys(record)
     return LoadedSpell(
         script_name=record["mScriptName"],

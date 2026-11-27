@@ -208,6 +208,7 @@ class Map(str, Enum):
             "30": cls.AR, "CHERRY": cls.AR,
             "33": cls.SW,
             "35": cls.BR, "BRAWL": cls.BR,
+            "SWIFTPLAY": cls.SP,
         }
         try:
             return cls(value)

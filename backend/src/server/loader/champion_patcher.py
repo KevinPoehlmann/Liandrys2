@@ -85,7 +85,7 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
 
     notes = dict(patch_notes)
     unvalidated = {}
-    champion.changes = _data_changes(_stat_lines(champion, champion_stats(raw.cdragon)))
+    champion.changes = data_changes(_stat_lines(champion, champion_stats(raw.cdragon)))
     for slot, container in _containers(champion):
         diff = diffs.get(slot, SpellDiff())
         lines = _note_lines(notes, container.name)
@@ -94,9 +94,9 @@ def patch_champion(old: NewChampion, old_spells: dict[str, LoadedSpell], raw: Ra
             lines += _note_lines(notes, container.name)
         if slot in max_ranks:
             _set_max_rank(container, max_ranks[slot], diff)
-        container.changes = _data_changes(diff.lines) + lines
+        container.changes = data_changes(diff.lines) + lines
         if renames or buffs:
-            _rename_hand_made(container, slot, renames, buffs)
+            rename_hand_made(container, slot, renames, buffs)
         reasons = unvalidating_reasons(slot, used_names(container, slot), diffs)
         if lines and not _data_lines_behind(container, diff, diffs):
             reasons.append("named in the patch notes only")
@@ -220,7 +220,7 @@ def rename_names(text: str, renames: dict[str | None, dict[str, str]], own_slot:
     return NAME.sub(rename, text)
 
 
-def _rename_hand_made(container: Ability | Passive, slot: str, renames: dict[str, dict[str, str]],
+def rename_hand_made(container: Ability | Passive, slot: str, renames: dict[str, dict[str, str]],
                       buffs: dict[str, str]) -> None:
     for name in container.__fields__.keys() - NOT_HAND_MADE:
         _set_if_changed(container, name, _renamed(getattr(container, name), slot, renames, buffs))
@@ -339,5 +339,5 @@ def _format(value) -> str:
     return f"{value:g}" if isinstance(value, float) else str(getattr(value, "value", value))
 
 
-def _data_changes(lines: list[str]) -> list[Change]:
+def data_changes(lines: list[str]) -> list[Change]:
     return [Change(source=ChangeSource.DATA, text=line) for line in lines]

@@ -1,0 +1,14 @@
+{
+ "entries": {
+  "spell_smite_cooldown_and_recharge": "@AmmoRechargeTime@s Recharge (@Cooldown@s %i:cooldown%)",
+  "spell_summonerdot_tooltip": "Deals <trueDamage>@TooltipTrueDamageCalculation@ true damage</trueDamage> to target enemy champion over 5 seconds and applies <keyword>@GrievousAmount*100@% Grievous Wounds</keyword> for the duration.<br><br>{{ Item_KeywordDefinition_Wounds }}<br><br>{{Spell_Summoner_Dot_Jade_Mastery_Expansion_@f1@}}",
+  "spell_summonerflash_tooltip": "Teleports you a short distance toward your cursor.",
+  "spell_summonersmite_tooltip": "Deals <trueDamage>@SmiteBaseDamage@ true damage</trueDamage> to target large monster or lane minion.<br><br>Deals <trueDamage>@FirstPVPDamage@ true damage</trueDamage> to champion pets.",
+  "spell_summonerdot_summary": "Deals true damage over time to target enemy champion and reduces healing effects on them for the duration.",
+  "spell_summonerflash_name": "Flash",
+  "spell_summonerdot_name": "Ignite",
+  "spell_summonersmite_name": "Smite",
+  "spell_summonersmite_summary": "Deals true damage to a monster or minion.",
+  "spell_summonerflash_summary": "Teleports you a short distance toward your cursor."
+ }
+}

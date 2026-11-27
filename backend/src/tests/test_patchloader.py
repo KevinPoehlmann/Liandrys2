@@ -277,8 +277,9 @@ class TestLoadFreshDatabase():
 
     @pytest.fixture
     def old_loader(self, monkeypatch) -> Mock:
-        mock = Mock(_list_other_data=AsyncMock(return_value=([("1001", None)], [], [])), _load_all_items=AsyncMock(),
-                    _load_all_runes=AsyncMock(), _load_all_summonerspells=AsyncMock())
+        spells = [SimpleNamespace(id_="SummonerFlash", modes=["CLASSIC"]), SimpleNamespace(id_="SummonerMana", modes=["ARAM"])]
+        mock = Mock(_list_other_data=AsyncMock(return_value=([("1001", None)], [], spells)), _load_all_items=AsyncMock(),
+                    _load_all_runes=AsyncMock())
         monkeypatch.setattr(loader, "old", mock)
         return mock
 
@@ -287,7 +288,9 @@ class TestLoadFreshDatabase():
     def champions(self, monkeypatch) -> None:
         monkeypatch.setattr(loader, "fetch_champion_list", AsyncMock(return_value=[veigar_entry()]))
         monkeypatch.setattr(loader, "load_all_champions", AsyncMock(side_effect=self._count_one))
-        monkeypatch.setattr(loader, "name_dictionaries", AsyncMock(return_value={"champions": NameDictionary()}))
+        monkeypatch.setattr(loader, "load_all_summonerspells", AsyncMock())
+        monkeypatch.setattr(loader, "name_dictionaries", AsyncMock(
+            return_value={"champions": NameDictionary(), "summonerspells": NameDictionary()}))
 
 
     @staticmethod
@@ -301,7 +304,8 @@ class TestLoadFreshDatabase():
 
         patch = database.upsert_patch.call_args.args[0]
         assert patch.patch == "16.23.1"
-        assert (patch.champion_count, patch.item_count, patch.total_count) == (1, 1, 2)
+        # Only Summoner's Rift spells count: Clarity (ARAM) is left out.
+        assert (patch.champion_count, patch.item_count, patch.summonerspell_count, patch.total_count) == (1, 1, 1, 3)
         assert patch.loaded_total_count == 1
         old_loader._load_all_items.assert_called_once()
 

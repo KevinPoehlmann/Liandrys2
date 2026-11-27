@@ -7,7 +7,7 @@
     "name": "Ignite",
     "description": "Sets the target enemy champion on fire for 5 seconds,  revealing them and dealing 70 – 475 (based on level)  true damage over the duration, with the first tick of damage occurring briefly after the cast and subsequent ticks occurring every 1.056 seconds after the previous. The target is also inflicted with  Grievous Wounds for the same duration.",
     "cost": "0",
-    "cooldown": "180",
+    "cooldown": "cooldownTime",
     "cast_time": "0",
     "recharge": "0",
     "raw_stats": {
@@ -41,8 +41,8 @@
                 "props": {
                   "target": "target",
                   "status": "Grievous Wounds",
-                  "duration": "5",
-                  "strength": "0.4"
+                  "duration": "DotDuration",
+                  "strength": "GrievousAmount"
                 }
               }
             ],
@@ -60,7 +60,7 @@
     "buffs": [
       {
         "name": "ignite",
-        "duration": "5",
+        "duration": "DotDuration",
         "max_stacks": 1,
         "refresh": true,
         "interval": "1.056",
@@ -83,7 +83,7 @@
                 "type_": "Damage",
                 "props": {
                   "target": "bearer",
-                  "amount": "(70 + 20 * (min(level, 5) - 1) + 25 * max(0, level - 5)) / 5",
+                  "amount": "DamagePerSecond",
                   "dmg_type": [
                     "Proc damage",
                     "DOT damage"
@@ -99,7 +99,18 @@
           }
         ]
       }
-    ]
+    ],
+    "values": {
+      "GrievousAmount": "0.4",
+      "SightRadius": "100",
+      "DotDuration": "5",
+      "InverseDuration": "0.2",
+      "cooldownTime": "180",
+      "mana": "0",
+      "TooltipTrueDamageCalculation": "by_level(70, 90, 110, 130, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525)",
+      "DamagePerSecond": "TooltipTrueDamageCalculation * InverseDuration"
+    },
+    "tooltip": "Deals <trueDamage>@TooltipTrueDamageCalculation@ true damage</trueDamage> to target enemy champion over 5 seconds and applies <keyword>@GrievousAmount*100@% Grievous Wounds</keyword> for the duration.<br><br>{{ Item_KeywordDefinition_Wounds }}<br><br>{{Spell_Summoner_Dot_Jade_Mastery_Expansion_@f1@}}"
   },
   "validated": true,
   "maps": [

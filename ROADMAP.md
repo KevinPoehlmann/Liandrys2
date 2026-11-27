@@ -26,13 +26,12 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 
 ## Phase 3: Loader with little manual work per patch
 
-The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells, (4) items incl. actives, (5) runes. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
+The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells ✅, (4) items incl. actives, (5) runes. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
 
 **Then, one type at a time, each complete like the champions (first load from CDragon/wiki, patching, hotfixes, real run on the throwaway DB):**
-- [ ] (3) Summoner spells
 - [ ] (4) Items incl. actives
 - [ ] (5) Runes
-- [ ] Remove the old loader (`patchloader2.py`, `webscraper2.py` and their tests) once all four types run through `patchloader.py`
+- [ ] Remove the old loader (`patchloader2.py`, `webscraper2.py` and their tests) once all four types run through `patchloader.py` (summoner spells are already gone from them)
 
 **Later in this phase:**
 - [ ] Named values per ability with stable names (`BaseDamage`, `ADRatio`, …) for the other three types; the rule editor (Phase 4) offers them for selection

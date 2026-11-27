@@ -9,6 +9,7 @@ from src.server.loader.helper import SafeSession
 from src.server.loader.patchexceptions import LoadError
 from src.server.models.champion import NewChampion, RawChampion
 from src.server.models.image import Image
+from src.server.models.summonerspell import NewSummonerspell, RawSummonerspell
 
 
 IMAGE_DIR = Path("src/images")
@@ -21,6 +22,11 @@ def asset_url(version: str, asset: str) -> str:
 
 def champion_icon_url(version: str, key: str) -> str:
     return f"{CDRAGON}{version}/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/{key}.png"
+
+
+def summoner_icon_url(version: str, asset: str) -> str:
+    # Summoner spells name only the file ("SummonerIgnite.dds"); it lives with the other spell icons.
+    return f"{CDRAGON}{version}/game/data/spells/icons2d/{_asset_name(asset)}.png"
 
 
 def hashed_name(name: str, content: bytes) -> str:
@@ -58,6 +64,22 @@ async def load_champion_images(session: SafeSession, champion: NewChampion, raw:
         except RuntimeError as e:  # SafeSession's retries are used up
             failures.append(f"{group} {name}: {e} — {url}")
     return failures
+
+
+async def load_summonerspell_image(session: SafeSession, summonerspell: NewSummonerspell, raw: RawSummonerspell,
+                                   version: str) -> list[str]:
+    """Like load_champion_images: the failure, if any; then the spell keeps its old image."""
+    asset = raw.cdragon["mSpell"].get("mImgIconName", [""])[0]
+    if not asset:
+        return ["no icon in the spell data"]
+    url = summoner_icon_url(version, asset)
+    try:
+        summonerspell.image = await store_image(session, url, "spell", _asset_name(asset))
+    except LoadError as e:
+        return [f"{e.code} {e.reason} — {e.url}"]
+    except RuntimeError as e:  # SafeSession's retries are used up
+        return [f"{e} — {url}"]
+    return []
 
 
 def _asset_name(asset: str) -> str:

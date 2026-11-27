@@ -13,7 +13,7 @@ from src.server.models.patch import NewPatch, Patch
 from src.server.models.champion import NewChampion, Champion, RawChampion, ShortChampion
 from src.server.models.item import NewItem, Item, ShortItem
 from src.server.models.rune import NewRune, Rune, ShortRune
-from src.server.models.summonerspell import NewSummonerspell, Summonerspell, ShortSummonerspell
+from src.server.models.summonerspell import NewSummonerspell, RawSummonerspell, Summonerspell, ShortSummonerspell
 from src.server.models.enums import Map
 
 
@@ -49,6 +49,7 @@ async def setup_indexes() -> None:
     await _unique_index(rune_collection, ["name", "patch"], "rune_index")
     await _unique_index(summonerspell_collection, ["key", "patch"], "summonerspell_index")
     await _unique_index(raw_champion_collection, ["champion_id", "patch"], "raw_champion_index")
+    await _unique_index(raw_summonerspell_collection, ["key", "patch"], "raw_summonerspell_index")
 
 
 async def _unique_index(collection: AgnosticCollection, fields: list[str], name: str) -> None:
@@ -73,6 +74,7 @@ item_collection: AgnosticCollection = database.items
 rune_collection: AgnosticCollection = database.runes
 summonerspell_collection: AgnosticCollection = database.summonerspells
 raw_champion_collection: AgnosticCollection = database.raw_champions
+raw_summonerspell_collection: AgnosticCollection = database.raw_summonerspells
 
 
 
@@ -348,6 +350,16 @@ async def update_rune(rune: Rune):
 
 
 #--------Summonerspell-----------------------------
+
+
+async def upsert_raw_summonerspell(raw: RawSummonerspell) -> None:
+    key = {"key": raw.key, "patch": raw.patch}
+    await raw_summonerspell_collection.replace_one(key, raw.dict(), upsert=True)
+
+
+async def fetch_raw_summonerspell(key: str, patch: str) -> RawSummonerspell | None:
+    document = await raw_summonerspell_collection.find_one({"key": key, "patch": patch})
+    return RawSummonerspell.parse_obj(document) if document else None
 
 
 async def add_summonerspell(summonerspell: NewSummonerspell) -> str:

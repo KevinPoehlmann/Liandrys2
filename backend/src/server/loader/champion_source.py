@@ -74,13 +74,20 @@ def parse_wiki_templates(response: dict) -> dict[str, WikiTemplate]:
 
 async def fetch_champion_data(session: SafeSession) -> dict[str, dict]:
     """Module:ChampionData/data: every champion's wiki stats and last change, keyed by Data Dragon id (`apiname`)."""
-    query = urlencode({"action": "query", "titles": "Module:ChampionData/data", "prop": "revisions",
-                       "rvprop": "content", "rvslots": "main", "format": "json", "formatversion": 2})
-    response = await _get_json(session, f"{WIKI_API}?{query}", "wiki module", "ChampionData")
+    return parse_champion_data((await fetch_wiki_page(session, "Module:ChampionData/data", "wiki module")).text)
+
+
+async def fetch_wiki_page(session: SafeSession, title: str, what: str) -> WikiTemplate:
+    """A wiki page's wikitext with its revision; a redirect is followed."""
+    query = urlencode({"action": "query", "titles": title, "redirects": 1, "prop": "revisions",
+                       "rvprop": "ids|content", "rvslots": "main", "format": "json", "formatversion": 2})
+    response = await _get_json(session, f"{WIKI_API}?{query}", what, title)
     page = response["query"]["pages"][0]
     if "revisions" not in page:
-        raise LoadError(404, "No module text", WIKI_API, "wiki module", "ChampionData")
-    return parse_champion_data(page["revisions"][0]["slots"]["main"]["content"])
+        raise LoadError(404, "No page text", WIKI_API, what, title)
+    revision = page["revisions"][0]
+    return WikiTemplate(title=page["title"], revision_id=revision.get("revid", 0),
+                        text=revision["slots"]["main"]["content"])
 
 
 def parse_champion_data(text: str) -> dict[str, dict]:

@@ -38,7 +38,6 @@ from src.server.models.patch import NewPatch, Patch
 from src.server.models.passive import Passive
 from src.server.models.rule import StatModifier
 from src.server.models.rune import NewRune
-from src.server.models.summonerspell import NewSummonerspell
 
 
 
@@ -159,15 +158,6 @@ async def _load_all_runes(rune_list: list[RuneClass], session: SafeSession, patc
     await asyncio.gather(*rune_tasks)
 
 
-async def _load_all_summonerspells(summonerspell_list: list[SummonerspellJson], session: SafeSession, patch: NewPatch) -> None:
-    summonerspell_tasks = [
-        _load_summonerspell(stats, session, patch)
-        for stats in summonerspell_list
-    ]
-    await asyncio.gather(*summonerspell_tasks)
-
-
-
 async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, patch: NewPatch) -> None:
     if item_id == "1038":
         debug_logger.debug(f"[ITEM] we are at BF Sword")
@@ -232,39 +222,6 @@ async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: NewPatc
     await db.add_rune(rune)
     patch.loaded_rune_count += 1
     load_logger.info(f"[RUNE] {rune.name} ✔ Loaded successfully")
-
-
-async def _load_summonerspell(summonerspell_json: SummonerspellJson, session: SafeSession, patch: NewPatch) -> None:
-    if await db.exists_summonerspell_by_key(summonerspell_json.key, patch.patch):
-        return
-    
-    summonerspell_wiki = await _fetch_wiki_html(_wiki_name("summonerspells", summonerspell_json.id_, summonerspell_json.name), "Summonerspell",
-                                               patch, session)
-    if not summonerspell_wiki:
-        if "CLASSIC" not in summonerspell_json.modes:
-            patch.summonerspell_count -= 1
-        return
-    try:
-        summonerspell = ws.scrape_summonerspell(summonerspell_json, summonerspell_wiki, patch.patch)
-        if not summonerspell:
-            _save_cached_html("summonerspell", summonerspell_json.name, patch, summonerspell_wiki)
-            patch_logger.error(f"[SUMMONERSPELL] [LOAD] [{summonerspell_json.name}] ❌ Failed to create object")
-            load_logger.error(f"[SUMMONERSPELL] {summonerspell_json.name} ❌ Failed to load")
-            return
-    except Exception as e:
-        _save_cached_html("summonerspell", summonerspell_json.name, patch, summonerspell_wiki)
-        patch_logger.exception(f"[SUMMONERSPELL] [LOAD] [{summonerspell_json.name}] ❌ Failed to create object: {e}")
-        load_logger.error(f"[SUMMONERSPELL] {summonerspell_json.name} ❌ Failed to load")
-        raise
-    
-    try:
-        await _load_image(summonerspell_json.image, session, patch)
-    except Exception as e:
-        patch_logger.exception(f"[SUMMONERSPELL] [IMAGE] [{summonerspell_json.name}] ❌ Failed to load image: {e}")
-
-    await db.add_summonerspell(summonerspell)
-    patch.loaded_summonerspell_count += 1
-    load_logger.info(f"[SUMMONERSPELL] {summonerspell.name} ✔ Loaded successfully")
 
 
 async def _load_rune_stat_shards(patch: NewPatch) -> None:
@@ -485,60 +442,9 @@ async def _add_changes_rune(rune: NewRune, diff: list) -> None:
     rune.validated = False
 
 
-async def _patch_summonerspells(changes: dict, new_patch: NewPatch, old_patch: NewPatch, session: SafeSession) -> None:
-    all_spells = await db.fetch_summonerspells_by_patch(old_patch.patch)
-
-    try:
-        summoners_data = await session.get_json(URLS.dataLink + new_patch.patch + URLS.summonerspellList)
-        summoners = SummonerspellsJson(**summoners_data)
-        new_summoners = [SummonerspellJson(**summoner_data) for summoner_data in summoners.data.values() if summoner_data["name"] in changes.get("new", [])]
-
-        for new_summoner_json in new_summoners:
-            new_patch.summonerspell_count += 1
-            try:
-                await _load_summonerspell(new_summoner_json, session, new_patch)
-                changes["new"].remove(new_summoner_json.name)
-            except Exception as e:
-                patch_logger.exception(f"[SUMMONERSPELL] [PATCH] [{new_summoner_json.name}] ❌ Failed to load new summonerspell: {e}")
-                load_logger.error(f"[SUMMONERSPELL] {new_summoner_json.name} ❌ Failed to load")
-
-        for summoner_name in changes.get("new", []):
-            patch_logger.error(f"[SUMMONERSPELL] [PATCH] [{summoner_name}] ❌ Summonerspell not found in the new patch data!")
-            load_logger.error(f"[SUMMONERSPELL] {summoner_name} ❌ Summonerspell not found in the new patch data!")
-    except Exception as e:
-        patch_logger.exception(f"[SUMMONERSPELL] [PATCH] ❌ Failed to patch NEW summonerspells: {e}")
-        load_logger.error(f"[SUMMONERSPELL] ❌ Failed to patch NEW summonerspells: {e}")
-
-    for spell in all_spells:
-        if spell.name in changes.get("deleted", []):
-            new_patch.summonerspell_count -= 1
-            load_logger.info(f"[SUMMONERSPELL] {spell.name} ✔ Deleted successfully")
-            continue  # optional: log & skip
-
-        spell.patch = new_patch.patch
-        if spell.name in changes.get("changed", {}):
-            new_patch.changed_summonerspell_count += 1
-            diff = changes["changed"][spell.name]
-            try:
-                await _add_changes_summonerspell(spell, diff)
-                load_logger.info(f"[SUMMONERSPELL] {spell.name} ✔ Patched successfully")
-            except Exception as e:
-                patch_logger.exception(f"[SUMMONERSPELL] [PATCH] [{spell.name}] ❌ Failed to apply changes: {e}")
-                load_logger.error(f"[SUMMONERSPELL] {spell.name} ❌ Failed to patch")
-
-        await db.add_summonerspell(spell)
-        new_patch.loaded_summonerspell_count += 1
-
-
-async def _add_changes_summonerspell(spell: NewSummonerspell, diff: list) -> None:
-    spell.changes.extend(diff)
-    spell.validated = False
-
-
 async def hotfix_others(notes: dict, patch: NewPatch, hotfixed_at: datetime) -> None:
-    """Items, runes and summoner spells named in a hotfix get its lines and lose their validation, in place."""
-    types = {"items": (db.fetch_items_by_patch, db.update_item), "runes": (db.fetch_runes_by_patch, db.update_rune),
-             "summonerspells": (db.fetch_summonerspells_by_patch, db.update_summonerspell)}
+    """Items and runes named in a hotfix get its lines and lose their validation, in place."""
+    types = {"items": (db.fetch_items_by_patch, db.update_item), "runes": (db.fetch_runes_by_patch, db.update_rune)}
     for type_, (fetch, update) in types.items():
         type_notes = notes.get(type_, {})
         for status in ("new", "deleted"):

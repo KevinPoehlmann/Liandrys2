@@ -22,17 +22,14 @@ from src.server.loader.webscraper2 import (
     scrape_rune,                
     _scrape_rune_passive,       
     _scrape_rune_summoner_stats,
-    scrape_summonerspell,       
-    _scrape_summonerspell_active,
 )
 from src.server.models.ability import ChampionAbility, Ability, ItemActive
 from src.server.models.champion import NewChampion, Champion
 from src.server.models.enums import RangeType, Stat, ItemClass
 from src.server.models.item import NewItem
 from src.server.models.rune import NewRune
-from src.server.models.json_validation import PassiveJson, Image, SpellJson, ChampionJson, StatsJson, ItemJson, SummonerspellJson, GoldJson, RuneJson
+from src.server.models.json_validation import PassiveJson, Image, SpellJson, ChampionJson, StatsJson, ItemJson, GoldJson, RuneJson
 from src.server.models.passive import ChampionPassive, Passive
-from src.server.models.summonerspell import NewSummonerspell
 
 
 
@@ -440,51 +437,3 @@ def test_scrape_rune_summoner_stats_comet(load_soup):
     
 
 
-def test_scrape_summonerspell_smite(load_html):
-    summonerspell_json = SummonerspellJson(
-        id="SummonerSmite",
-        name="Smite",
-        description="Smite description",
-        tooltip="Smite tooltip",
-        maxrank=1,
-        cooldown=[15],
-        cooldownBurn="",
-        cost=[0],
-        costBurn="",
-        datavalues={},
-        effect=[],
-        effectBurn=[],
-        vars=[],
-        key="11",
-        summonerLevel=1,
-        modes=["Summoner"],
-        costType="",
-        maxammo="",
-        range=[0],
-        rangeBurn="",
-        image=Image(
-            full="SummonerSmite.png",
-            sprite="spell0.png",
-            group="spell",
-            x=0,
-            y=0,
-            w=48,
-            h=48
-        ),
-        resource="",
-    )
-    smite_html = load_html("smite")
-    result = scrape_summonerspell(summonerspell_json, smite_html, "15.7.1")
-    assert isinstance(result, NewSummonerspell)
-    assert result.name == "Smite"
-    assert result.ability.name == "Smite"
-
-
-def test_scrape_summonerspell_active_smite(load_soup):
-    soup = load_soup("smite")
-    result = _scrape_summonerspell_active(soup)
-    assert isinstance(result, Ability)
-    assert result.name == "Replace"
-    assert result.description.startswith("Deals ")  # or similar
-    assert result.cooldown == "15"
-    assert result.recharge == "90"

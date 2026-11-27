@@ -24,10 +24,9 @@ from src.server.models.enums import (
 )
 from src.server.models.image import Image
 from src.server.models.item import NewItem
-from src.server.models.json_validation import ChampionJson, SpellJson, PassiveJson, ItemJson, SummonerspellJson
+from src.server.models.json_validation import ChampionJson, SpellJson, PassiveJson, ItemJson
 from src.server.models.passive import ChampionPassive, ItemPassive, Passive
 from src.server.models.rune import NewRune
-from src.server.models.summonerspell import NewSummonerspell
 
 
 
@@ -523,57 +522,6 @@ def _scrape_rune_summoner_stats(rune_content: Tag) -> dict[str, str]:
         value_text = value.text
         stats[label_text] = value_text
     return stats
-
-
-
-def scrape_summonerspell(summonerspell_json: SummonerspellJson, wiki_html: str, patch: str) -> NewSummonerspell:
-    soup = BeautifulSoup(wiki_html, "lxml")
-    maps = []
-    for mode in summonerspell_json.modes:
-        try:
-            maps.append(Map.from_str(mode))
-        except ValueError as e:
-            continue
-    try:
-        active = _scrape_summonerspell_active(soup)
-    except AttributeError as e:
-        if Map.SR in maps:
-            raise ScrapeError(e, "Summonerspell", summonerspell_json.name)
-        patch_logger.info(f"[SUMMONERSPELL] [SCRAPE] [{summonerspell_json.name}] No active found")
-        active = Ability(name=summonerspell_json.name)
-    except ValueError as e:
-        raise ScrapeError(e, "Summonerspell", summonerspell_json.name)
-    
-    active.name = summonerspell_json.name
-
-    summonerspell = NewSummonerspell(
-        key=summonerspell_json.id_,
-        name=summonerspell_json.name,
-        patch=patch,
-        ability=active,
-        maps=maps,
-        image=summonerspell_json.image
-    )
-
-
-    return summonerspell
-
-
-def _scrape_summonerspell_active(soup: BeautifulSoup) -> Ability:
-    summonerspell_content = soup.find("div", class_="mw-parser-output")
-    summonerspell_info = summonerspell_content.find("div", class_="infobox-section") # type: ignore[arg-type]
-    passive_text = summonerspell_info.text
-    passive_stats = _scrape_rune_summoner_stats(summonerspell_content)
-    active = Ability(
-        name="Replace",
-        description = passive_text,
-        cooldown=passive_stats.pop("cooldown", "0").strip(" seconds"),
-        recharge=passive_stats.pop("recharge time", "0").strip(" seconds"),
-        raw_stats=passive_stats
-    )
-    return active
-
-    
 
 
 
