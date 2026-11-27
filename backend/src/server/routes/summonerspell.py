@@ -9,7 +9,7 @@ from src.server.database import (
 from src.server.models.summonerspell import ShortSummonerspell, Summonerspell
 from src.server.models.enums import Map
 
-from src.server.routes.helpers import get_required_summonerspell
+from src.server.routes.helpers import get_required_summonerspell, reject_preview
 
 router = APIRouter()
 admin = APIRouter()
@@ -31,6 +31,7 @@ async def get_summonerspell(summoner_id: str) -> Summonerspell:
 
 @admin.put("/")
 async def put_summonerspell(summonerspell: Summonerspell) -> int:
+    await reject_preview(summonerspell.patch)
     response = await update_summonerspell(summonerspell)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Summonerspell with ID: {summonerspell.id} !")

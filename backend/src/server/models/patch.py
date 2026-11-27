@@ -14,6 +14,7 @@ class NewPatch(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
     build: str | None = None  # CommunityDragon's content build; a new build within the patch is a hotfix
     updated_at: datetime | None = None  # the last hotfix run
+    preview: bool = False  # a PBE preview of the next patch: provisional, read-only, replaced on release
     validated: bool = False
     masterwork_border: Image | None = None  # Ornn's frame, drawn over a legendary item's icon when upgraded
     rune_trees: dict[int, RuneTree] = {}  # by tree id (8000: Precision)

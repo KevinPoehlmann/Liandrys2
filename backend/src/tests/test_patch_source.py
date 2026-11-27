@@ -1,6 +1,10 @@
+from datetime import datetime
+from types import SimpleNamespace
+
 import pytest
 
-from src.server.loader.patch_source import fetch_patch_list, patches_to_load
+from src.server.loader.patch_source import (fetch_patch_list, new_on_pbe, patches_to_load, preview_is_current,
+                                            preview_name)
 from src.server.loader.patchexceptions import PatcherError
 from src.server.models.patch import NewPatch
 from src.tests.test_patchloader import FakeSession
@@ -50,3 +54,58 @@ class TestPatchesToLoad():
     def test_a_patch_missing_from_riots_list_is_an_error(self):
         with pytest.raises(PatcherError):
             patches_to_load(NewPatch(patch="14.9.1"), ["15.7.1", "15.6.1"])
+
+
+PBE_BUILD = "16.24.8420984+branch.main.content.beta"
+
+
+class TestPreviewName():
+
+    def test_the_pbe_build_names_the_coming_patch(self):
+        assert preview_name(PBE_BUILD) == "16.24.1"
+
+
+    def test_a_build_without_a_version_is_an_error(self):
+        with pytest.raises(PatcherError):
+            preview_name("main")
+
+
+class TestPreviewIsCurrent():
+
+    @pytest.fixture
+    def live(self) -> NewPatch:
+        return NewPatch(patch="16.23.1")
+
+
+    @pytest.fixture
+    def preview(self) -> NewPatch:
+        return NewPatch(patch="16.24.1", preview=True, build=PBE_BUILD, timestamp=datetime(2026, 11, 25, 9, 0))
+
+
+    def test_same_patch_and_build_is_current(self, preview, live):
+        assert preview_is_current(preview, "16.24.1", PBE_BUILD, live)
+
+
+    def test_a_new_pbe_build_is_not(self, preview, live):
+        assert not preview_is_current(preview, "16.24.1", "16.24.8430000+branch.main.content.beta", live)
+
+
+    def test_an_interrupted_load_has_no_build_yet(self, preview, live):
+        preview.build = None
+
+        assert not preview_is_current(preview, "16.24.1", PBE_BUILD, live)
+
+
+    def test_a_live_hotfix_after_the_preview_reloads_it(self, preview, live):
+        # The preview copies the live patch's hand-made part and compares with its numbers.
+        live.updated_at = datetime(2026, 11, 26, 12, 0)
+
+        assert not preview_is_current(preview, "16.24.1", PBE_BUILD, live)
+
+
+def test_new_on_pbe_skips_live_champions_and_mode_copies():
+    champions = [SimpleNamespace(key="1"), SimpleNamespace(key="254")]
+    summary = [{"id": -1, "alias": "None"}, {"id": 1, "alias": "Annie"}, {"id": 254, "alias": "Vi"},
+               {"id": 60001, "alias": "Jade_Annie"}, {"id": 951, "alias": "Newcomer"}]
+
+    assert new_on_pbe(summary, champions) == ["Newcomer"]

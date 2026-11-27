@@ -10,7 +10,7 @@ from src.server.database import (
 from src.server.models.item import ShortItem, Item
 from src.server.models.enums import ItemClass, Map
 
-from src.server.routes.helpers import get_required_item
+from src.server.routes.helpers import get_required_item, reject_preview
 
 
 router = APIRouter()
@@ -49,6 +49,7 @@ async def get_item(item_id: str) -> Item:
 
 @admin.put("/")
 async def put_item(item: Item) -> int:
+    await reject_preview(item.patch)
     response = await update_item(item)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Item with ID: {item.id} !")

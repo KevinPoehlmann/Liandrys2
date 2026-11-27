@@ -13,7 +13,7 @@ from src.server.database import (
 from src.server.models.champion import ShortChampion, Champion
 from src.server.models.enums import RangeType, ResourceType
 
-from src.server.routes.helpers import get_required_champion
+from src.server.routes.helpers import get_required_champion, reject_preview
 
 debug_logger = logging.getLogger("liandrys.debug")
 
@@ -52,6 +52,7 @@ async def get_champion_by_id(id_: str) -> Champion:
 
 @admin.put("/")
 async def put_champion(champion: Champion) -> Champion:
+    await reject_preview(champion.patch)
     response = await update_champion(champion)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Champion with ID: {champion.id} !")

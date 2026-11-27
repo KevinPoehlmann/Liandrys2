@@ -23,6 +23,7 @@ patch_logger = logging.getLogger("patch_logger")
 
 # Patches are strings, so without numeric ordering "15.9.1" sorts after "15.10.1".
 PATCH_ORDER = {"sort": [("patch", -1)], "collation": Collation(locale="en", numericOrdering=True)}
+LIVE = {"preview": {"$ne": True}}  # documents from before the field count as live
 
 
 def connect_database() -> AgnosticDatabase:
@@ -144,10 +145,15 @@ async def upsert_patch(patch: NewPatch) -> str:
 
 
 async def fetch_patch_latest() -> Patch | None:
-    document = await patch_collection.find_one(**PATCH_ORDER)
+    """The latest live patch; the PBE preview is newer, but no patch builds on it."""
+    document = await patch_collection.find_one(LIVE, **PATCH_ORDER)
     if not document:
         return None
     return Patch(**document)
+
+
+async def fetch_previews() -> list[Patch]:
+    return [Patch(**document) async for document in patch_collection.find({"preview": True}, **PATCH_ORDER)]
 
 
 async def fetch_patch_by_name(patch: str) -> Patch | None:

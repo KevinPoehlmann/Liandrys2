@@ -173,7 +173,8 @@ onMounted(async () => {
   const all = await allRes.json()
   const mapEnums = await enumRes.json()
   const options = all.map(patch => ({
-    label: patch.updated_at ? `${patch.patch} (hotfix ${formatDateLabel(patch.updated_at)})` : patch.patch,
+    label: patch.preview ? `${patch.patch} (PBE preview)`
+      : patch.updated_at ? `${patch.patch} (hotfix ${formatDateLabel(patch.updated_at)})` : patch.patch,
     patch: patch.patch
   }))
   patchOptions.value = options

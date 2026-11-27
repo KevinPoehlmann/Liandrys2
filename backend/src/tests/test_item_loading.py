@@ -67,7 +67,7 @@ class TestSources():
             "ItemData": module_response((CDRAGON / "item_data.lua").read_text(encoding="utf-8")),
         })
 
-        found = await loader.item_sources(session, "16.23.1")
+        found = await loader.item_sources(session, "16.23")
 
         assert found.build == BUILD
         assert found.item_data[SHEEN]["effects"]["pass"]["name"] == "Spellblade"
@@ -78,7 +78,7 @@ class TestSources():
         session = FakeSession({"content-metadata.json": {"version": BUILD}, "items.cdtb.bin.json": ITEMS,
                                "shared.cdtb.bin.json": SHARED, "lol.stringtable.json": {"entries": STRINGS}})
 
-        found = await loader.item_sources(session, "16.23.1")
+        found = await loader.item_sources(session, "16.23")
 
         assert found.item_data == {}
         assert any("Module:ItemData not loaded" in warning for warning in warnings(loggers))

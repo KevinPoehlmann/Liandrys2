@@ -110,7 +110,7 @@ onMounted(async () => {
   const { data } = await axios.get("/patch/all")
   patches.value = data
   if (patches.value.length > 0) {
-    selectedPatch.value = patches.value[0].patch
+    selectedPatch.value = (patches.value.find(patch => !patch.preview) || patches.value[0]).patch
     await fetchAllData()
   }
   const  enumRes  = await axios.get("/enum/")
@@ -119,6 +119,7 @@ onMounted(async () => {
 })
 
 function patchLabel(patch) {
+  if (patch.preview) return `${patch.patch} (PBE preview, read-only)`
   return patch.updated_at ? `${patch.patch} (hotfix ${new Date(patch.updated_at).toLocaleString()})` : patch.patch
 }
 

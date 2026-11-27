@@ -14,10 +14,10 @@ import src.server.database as db
 from src.server.loader.champion_builder import (SLOTS, LoadedSpell, build_champion, loaded_spells, missing_cooldowns,
                                                 wiki_mismatches)
 from src.server.loader.champion_patcher import has_changes, keep_earlier_changes, patch_champion, spells_from_document
-from src.server.loader.champion_source import (cdragon_version, fetch_build, fetch_champion_data, fetch_strings,
-                                               load_raw_champion)
+from src.server.loader.champion_source import (CDRAGON, PBE, cdragon_folder, cdragon_version, fetch_build,
+                                               fetch_champion_data, fetch_strings, load_raw_champion)
 from src.server.loader.helper import SafeSession, info_loader, riot_to_wiki_patch
-from src.server.loader.images import (load_champion_images, load_item_image, load_masterwork_border, load_rune_image,
+from src.server.loader.images import (CLIENT_DATA, load_champion_images, load_item_image, load_masterwork_border, load_rune_image,
                                      load_rune_tree_icons, load_summonerspell_image)
 from src.server.loader.item_builder import (build_item, item_from_document, loaded_item, patch_item, rift_items,
                                             unknown_stat_fields)
@@ -25,7 +25,8 @@ from src.server.loader.item_builder import wiki_mismatches as item_wiki_mismatch
 from src.server.loader.item_source import fetch_item_data, fetch_item_list, fetch_items_bin, load_raw_item
 from src.server.loader.names import DDragonName, NameDictionary, ddragon_notes, load_name_dictionaries
 from src.server.loader.patch_notes import fetch_hotfix_dates, fetch_patch_page, hotfix_notes, notes_with_hotfixes
-from src.server.loader.patch_source import fetch_patch_list, is_complete, patches_to_load
+from src.server.loader.patch_source import (fetch_patch_list, is_complete, is_newer, new_on_pbe, patches_to_load,
+                                            preview_is_current, preview_name)
 from src.server.loader.patchexceptions import LoadError, PatcherError
 from src.server.loader.rune_builder import (SHARD_TREE_ID, RuneEntry, build_rune, loaded_rune, patch_rune,
                                             rune_from_document, shard_entries, tree_entries, unknown_shard)
@@ -51,6 +52,7 @@ patch_logger = logging.getLogger("liandrys.patch")
 load_logger = logging.getLogger("liandrys.load")
 
 DDRAGON = "https://ddragon.leagueoflegends.com/cdn/"
+PBE_CHAMPIONS = f"{CDRAGON}{PBE}/{CLIENT_DATA}v1/champion-summary.json"
 CHAMPION_CONCURRENCY = 5  # the wiki API answers too many parallel requests with 429
 ITEM_CONCURRENCY = 10
 TIMEOUT = aiohttp.ClientTimeout(total=600)
@@ -100,28 +102,41 @@ class Hotfix:
 
 
 async def load_data() -> None:
-    """Entry point: completes an unfinished first load, or hotfixes the latest patch and loads every newer one."""
+    """Entry point: the live patches first, then the PBE preview built on the latest of them."""
     if patch_load_lock.locked():
         load_logger.info("[LOAD] Patch data is already loading — skipping this call.")
         return
     async with patch_load_lock:
         try:
-            patches, hotfix = await check_updates()
-            latest = await db.fetch_patch_latest()
-            if not is_complete(latest):
-                await load_fresh_database(patches)
-                return
-            if not patches and not hotfix:
-                load_logger.info("[LOAD] Patch is up to date, no new data to load.")
-                return
-            # The hotfix comes first, so the next patch starts from the corrected data.
-            if hotfix:
-                latest = await load_hotfix(latest, hotfix)
-            if patches:
-                await load_patches(patches, latest)
+            latest = await load_live()
         except Exception as e:
             patch_logger.exception(f"[PATCH] [UNEXPECTED] ❌ {type(e).__name__}: {e}")
             load_logger.error("[LOAD] Patch load failed!")
+            return
+        if latest is None:
+            return
+        try:
+            await update_preview(latest)
+        except Exception as e:
+            patch_logger.exception(f"[PATCH] [PREVIEW] ❌ {type(e).__name__}: {e}")
+            load_logger.error("[LOAD] PBE preview load failed!")
+
+
+async def load_live() -> NewPatch | None:
+    """Completes an unfinished first load (then None), or hotfixes the latest patch and loads every newer one."""
+    patches, hotfix = await check_updates()
+    latest = await db.fetch_patch_latest()
+    if not is_complete(latest):
+        await load_fresh_database(patches)
+        return None
+    if not patches and not hotfix:
+        load_logger.info("[LOAD] Patch is up to date, no new data to load.")
+    # The hotfix comes first, so the next patch starts from the corrected data.
+    if hotfix:
+        latest = await load_hotfix(latest, hotfix)
+    if patches:
+        latest = await load_patches(patches, latest)
+    return latest
 
 
 async def check_updates() -> tuple[list[str], Hotfix | None]:
@@ -134,7 +149,7 @@ async def check_updates() -> tuple[list[str], Hotfix | None]:
 
 async def pending_hotfix(session: SafeSession, patch: NewPatch) -> Hotfix | None:
     """A new CommunityDragon build, or a wiki hotfix from a later day than the last load or hotfix run."""
-    build = await fetch_build(session, cdragon_version(patch.patch))
+    build = await fetch_build(session, cdragon_folder(patch))
     # Wiki hotfixes only carry a day; one added later on the day of a run is missed (CDragon's build still catches it).
     last_run = (patch.updated_at or patch.timestamp).date()
     dates = [date for date in await fetch_hotfix_dates(session, patch.patch) if date.date() > last_run]
@@ -156,9 +171,9 @@ async def load_fresh_database(patches: list[str]) -> None:
         runes = await fetch_rune_entries(session, patch_name)
         names = await name_dictionaries(session, champions, items, runes, summonerspells)
         summonerspells = rift_spells(summonerspells)
-        sources = await item_sources(session, patch_name)
+        sources = await item_sources(session, cdragon_version(patch_name))
         items = rift_items(items, sources.item_data)
-        rune_data = await rune_sources(session, patch_name, runes, names["runes"])
+        rune_data = await rune_sources(session, cdragon_version(patch_name), runes, names["runes"])
         patch = await _resumed_or_new_patch(patch_name, NewPatch(
             patch=patch_name, champion_count=len(champions), item_count=len(items),
             rune_count=len(rune_data.entries), summonerspell_count=len(summonerspells)))
@@ -216,7 +231,7 @@ async def name_dictionaries(session: SafeSession, champions: list[ChampionJson],
 
 async def load_all_champions(champions: list[ChampionJson], session: SafeSession, patch: NewPatch,
                              names: NameDictionary = NameDictionary()) -> None:
-    version = cdragon_version(patch.patch)
+    version = cdragon_folder(patch)
     build = patch.build = await fetch_build(session, version)
     strings = await fetch_strings(session, version)
     champion_data = await _champion_data_or_nothing(session)
@@ -263,8 +278,8 @@ async def load_champion(entry: ChampionJson, session: SafeSession, patch: NewPat
 
 async def _stored_raw_champion(entry: ChampionJson, session: SafeSession, patch: NewPatch, build: str,
                                strings: dict[str, str], champion_data: dict | None, wiki_name: str | None) -> RawChampion:
-    raw = await load_raw_champion(session, patch.patch, entry.id_, wiki_name or entry.name, build, strings,
-                                  champion_data)
+    raw = await load_raw_champion(session, patch.patch, cdragon_folder(patch), entry.id_, wiki_name or entry.name,
+                                  build, strings, champion_data)
     if not raw.wiki:
         patch_logger.warning(f"[CHAMPION] [WIKI] [{entry.name}] No wiki data templates found")
     if not raw.champion_data:
@@ -278,7 +293,7 @@ async def _store_champion(champion: NewChampion, raw: RawChampion, session: Safe
     _warn_missing_cooldowns(champion)
     for mismatch in wiki_mismatches(champion, raw.champion_data):
         patch_logger.warning(f"[CHAMPION] [WIKI] [{champion.name}] {mismatch}")
-    for failure in await load_champion_images(session, champion, raw, cdragon_version(patch.patch)):
+    for failure in await load_champion_images(session, champion, raw, cdragon_folder(patch)):
         patch_logger.warning(f"[CHAMPION] [IMAGE] [{champion.name}] {failure}")
     await db.add_champion(champion)
     patch.loaded_champion_count += 1
@@ -290,16 +305,25 @@ def _warn_missing_cooldowns(champion: NewChampion) -> None:
                              f"CDragon has no cooldown, enter it by hand (\"0\" if it has none)")
 
 
-async def load_patches(patches: list[str], latest: NewPatch) -> None:
+async def load_patches(patches: list[str], latest: NewPatch) -> NewPatch:
     """Patches forward one patch at a time, each from the one before."""
     for patch_name in patches:
         finalize_load_logfile(latest.patch)
+        await _drop_previews(up_to=patch_name)
         try:
             latest = await load_patch(patch_name, latest)
         except Exception as e:
             patch_logger.exception(f"[PATCH] [PATCH] [{patch_name}] ❌ Failed to load patch: {e}")
             await _clean_up(patch_name)
             raise
+    return latest
+
+
+async def _drop_previews(up_to: str) -> None:
+    # The released patch replaces its preview, which may carry the same name and would otherwise count as loaded.
+    for preview in await db.fetch_previews():
+        if not is_newer(preview.patch, up_to):
+            await _clean_up(preview.patch)
 
 
 async def _clean_up(patch_name: str) -> None:
@@ -316,27 +340,38 @@ async def _clean_up(patch_name: str) -> None:
 
 async def load_patch(patch_name: str, old_patch: NewPatch) -> NewPatch:
     _log_section(f"Loading patch {patch_name}")
-    start = time.monotonic()
     async with aiohttp.ClientSession(timeout=TIMEOUT) as aio_session:
         session = SafeSession(aio_session)
         notes = notes_with_hotfixes(await fetch_patch_page(session, riot_to_wiki_patch(patch_name)))
-        patch = NewPatch(patch=patch_name, champion_count=old_patch.champion_count,
-                         item_count=old_patch.item_count, rune_count=old_patch.rune_count,
-                         summonerspell_count=old_patch.summonerspell_count)
-        champions = await fetch_champion_list(session, patch_name)
-        items = await fetch_item_list(session, patch_name)
-        summonerspells = await fetch_summonerspell_list(session, patch_name)
-        runes = await fetch_rune_entries(session, patch_name)
-        names = await name_dictionaries(session, champions, items, runes, summonerspells)
-        notes = ddragon_notes(notes, names)
-        await patch_all_champions(champions, notes.get("champions", {}), session, patch, old_patch, names["champions"])
-        sources = await item_sources(session, patch_name)
-        await patch_all_items(rift_items(items, sources.item_data), notes.get("items", {}), session, patch, old_patch,
-                              sources)
-        await patch_all_runes(notes.get("runes", {}), session, patch, old_patch,
-                              await rune_sources(session, patch_name, runes, names["runes"]))
-        await patch_all_summonerspells(rift_spells(summonerspells), notes.get("summonerspells", {}), session, patch,
-                                       old_patch, names["summonerspells"])
+        return await _patch_forward(session, _next_patch(patch_name, old_patch), old_patch, notes)
+
+
+def _next_patch(patch_name: str, old_patch: NewPatch, preview: bool = False) -> NewPatch:
+    return NewPatch(patch=patch_name, preview=preview, champion_count=old_patch.champion_count,
+                    item_count=old_patch.item_count, rune_count=old_patch.rune_count,
+                    summonerspell_count=old_patch.summonerspell_count)
+
+
+async def _patch_forward(session: SafeSession, patch: NewPatch, old_patch: NewPatch, notes: dict) -> NewPatch:
+    """Every type patched forward from the old patch. Data Dragon has no PBE, so a preview takes the old patch's lists."""
+    start = time.monotonic()
+    lists, folder = (old_patch.patch if patch.preview else patch.patch), cdragon_folder(patch)
+    champions = await fetch_champion_list(session, lists)
+    items = await fetch_item_list(session, lists)
+    summonerspells = await fetch_summonerspell_list(session, lists)
+    runes = await fetch_rune_entries(session, lists)
+    names = await name_dictionaries(session, champions, items, runes, summonerspells)
+    notes = ddragon_notes(notes, names)
+    if patch.preview:
+        await _log_new_on_pbe(session, champions)
+    await patch_all_champions(champions, notes.get("champions", {}), session, patch, old_patch, names["champions"])
+    sources = await item_sources(session, folder)
+    await patch_all_items(rift_items(items, sources.item_data), notes.get("items", {}), session, patch, old_patch,
+                          sources)
+    await patch_all_runes(notes.get("runes", {}), session, patch, old_patch,
+                          await rune_sources(session, folder, runes, names["runes"]))
+    await patch_all_summonerspells(rift_spells(summonerspells), notes.get("summonerspells", {}), session, patch,
+                                   old_patch, names["summonerspells"])
     patch.update_totals()
     await db.upsert_patch(patch)
     load_logger.info(f"[LOAD] Patched {patch.loaded_total_count} / {patch.total_count} objects "
@@ -344,11 +379,50 @@ async def load_patch(patch_name: str, old_patch: NewPatch) -> NewPatch:
     return patch
 
 
+async def update_preview(live: NewPatch) -> None:
+    """Reloads the PBE preview when the PBE has a new build or the live patch got a hotfix since. Once the PBE shows the
+    live patch (release day, before it moves on), there is no preview."""
+    async with aiohttp.ClientSession(timeout=TIMEOUT) as aio_session:
+        session = SafeSession(aio_session)
+        build = await fetch_build(session, PBE)
+        name = preview_name(build)
+        previews = await db.fetch_previews()
+        ahead = is_newer(name, live.patch)
+        if ahead and any(preview_is_current(preview, name, build, live) for preview in previews):
+            load_logger.info(f"[LOAD] PBE preview {name} is up to date.")
+            return
+        for preview in previews:
+            await _clean_up(preview.patch)
+        if not ahead:
+            load_logger.info(f"[LOAD] The PBE shows patch {name}, no preview until it moves on.")
+            return
+        await load_preview(session, name, live)
+
+
+async def load_preview(session: SafeSession, patch_name: str, live: NewPatch) -> NewPatch:
+    """The PBE patched forward from the live patch, without patch notes (the wiki page is a stub until release)."""
+    _log_section(f"Loading PBE preview of patch {patch_name}")
+    patch = _next_patch(patch_name, live, preview=True)
+    # Stored first, so an interrupted load leaves no documents that look live; its build follows at the end.
+    await db.upsert_patch(patch)
+    return await _patch_forward(session, patch, live, {})
+
+
+async def _log_new_on_pbe(session: SafeSession, champions: list[ChampionJson]) -> None:
+    summary = await session.get_json(PBE_CHAMPIONS)
+    if not isinstance(summary, list):
+        patch_logger.warning("[CHAMPION] [PREVIEW] The PBE's champion list didn't load, new champions stay unseen")
+        return
+    for alias in new_on_pbe(summary, champions):
+        patch_logger.warning(f"[CHAMPION] [PREVIEW] [{alias}] Only on the PBE, left out of the preview "
+                             f"(it needs Data Dragon's list entry)")
+
+
 async def patch_all_champions(champions: list[ChampionJson], notes: dict, session: SafeSession, patch: NewPatch,
                               old_patch: NewPatch, names: NameDictionary = NameDictionary()) -> None:
     """Champions of the old patch are patched forward, new ones get a first load.
     `notes` are the patch notes' {"changed": {champion: {ability: [lines]}}}, with Data Dragon's names."""
-    version = cdragon_version(patch.patch)
+    version = cdragon_folder(patch)
     build = patch.build = await fetch_build(session, version)
     strings = await fetch_strings(session, version)
     champion_data = await _champion_data_or_nothing(session)
@@ -401,7 +475,7 @@ async def load_hotfix(patch: Patch, hotfix: Hotfix) -> Patch:
         spell_notes = notes.get("summonerspells", {}).get("changed", {})
         item_notes = notes.get("items", {}).get("changed", {})
         summonerspells = rift_spells(summonerspells)
-        sources = await item_sources(session, patch.patch)
+        sources = await item_sources(session, cdragon_folder(patch))
         items = rift_items(items, sources.item_data)
         if not hotfix.build_changed:
             champions = [entry for entry in champions if entry.name in champion_notes]
@@ -424,7 +498,7 @@ async def load_hotfix(patch: Patch, hotfix: Hotfix) -> Patch:
 async def hotfix_all_champions(champions: list[ChampionJson], notes: dict, session: SafeSession, patch: Patch,
                                hotfixed_at: datetime, names: NameDictionary = NameDictionary()) -> None:
     """`notes` are the hotfixes' {champion: {ability: [lines]}}, with Data Dragon's names."""
-    version = cdragon_version(patch.patch)
+    version = cdragon_folder(patch)
     build = await fetch_build(session, version)
     strings = await fetch_strings(session, version)
     champion_data = await _champion_data_or_nothing(session)
@@ -474,7 +548,7 @@ async def load_all_summonerspells(spells: list[SummonerspellJson], session: Safe
 
 
 async def _spell_sources(session: SafeSession, patch: NewPatch) -> SpellSources:
-    version = cdragon_version(patch.patch)
+    version = cdragon_folder(patch)
     return SpellSources(build=await fetch_build(session, version), shared=await fetch_shared_bin(session, version),
                         strings=await fetch_strings(session, version), spell_data=await _spell_data_or_nothing(session))
 
@@ -533,7 +607,7 @@ async def _check_summonerspell(spell: NewSummonerspell, raw: RawSummonerspell, s
     """The wiki cross-check and the image, on a first load, a patch and a hotfix."""
     for mismatch in spell_wiki_mismatches(spell, raw.spell_data):
         patch_logger.warning(f"[SUMMONERSPELL] [WIKI] [{spell.name}] {mismatch}")
-    for failure in await load_summonerspell_image(session, spell, raw, cdragon_version(patch.patch)):
+    for failure in await load_summonerspell_image(session, spell, raw, cdragon_folder(patch)):
         patch_logger.warning(f"[SUMMONERSPELL] [IMAGE] [{spell.name}] {failure}")
 
 
@@ -618,8 +692,7 @@ async def _old_summoner_spell(old_spell: NewSummonerspell, old_patch: NewPatch) 
     return summoner_spell(old_raw)
 
 
-async def item_sources(session: SafeSession, patch_name: str) -> ItemSources:
-    version = cdragon_version(patch_name)
+async def item_sources(session: SafeSession, version: str) -> ItemSources:
     return ItemSources(build=await fetch_build(session, version), items=await fetch_items_bin(session, version),
                        shared=await fetch_shared_bin(session, version), strings=await fetch_strings(session, version),
                        item_data=await _item_data_or_nothing(session))
@@ -640,7 +713,7 @@ async def load_all_items(items: list[ItemEntry], session: SafeSession, patch: Ne
 
 
 async def _load_masterwork_border(session: SafeSession, patch: NewPatch, sources: ItemSources) -> None:
-    for failure in await load_masterwork_border(session, patch, sources.items, cdragon_version(patch.patch)):
+    for failure in await load_masterwork_border(session, patch, sources.items, cdragon_folder(patch)):
         patch_logger.warning(f"[ITEM] [IMAGE] [Masterwork border] {failure}")
 
 
@@ -690,7 +763,7 @@ async def _check_item(item: NewItem, raw: RawItem, session: SafeSession, patch: 
         patch_logger.warning(f"[ITEM] [WIKI] [{item.name}] {mismatch}")
     for name in unknown_stat_fields(raw.cdragon):
         patch_logger.warning(f"[ITEM] [STATS] [{item.name}] Unknown stat field {name}: {raw.cdragon[name]}")
-    for failure in await load_item_image(session, item, raw, cdragon_version(patch.patch)):
+    for failure in await load_item_image(session, item, raw, cdragon_folder(patch)):
         patch_logger.warning(f"[ITEM] [IMAGE] [{item.name}] {failure}")
 
 
@@ -779,9 +852,8 @@ async def fetch_rune_entries(session: SafeSession, patch_name: str) -> list[Rune
     return tree_entries(await fetch_rune_trees(session, patch_name))
 
 
-async def rune_sources(session: SafeSession, patch_name: str, entries: list[RuneEntry],
+async def rune_sources(session: SafeSession, version: str, entries: list[RuneEntry],
                        names: NameDictionary = NameDictionary()) -> RuneSources:
-    version = cdragon_version(patch_name)
     perks, strings = await fetch_perks_bin(session, version), await fetch_strings(session, version)
     wiki_names = {entry.rune_id: names.wiki_name(str(entry.rune_id), entry.name) for entry in entries}
     return RuneSources(build=await fetch_build(session, version), records=perk_records(perks), strings=strings,
@@ -805,7 +877,7 @@ async def load_all_runes(session: SafeSession, patch: NewPatch, sources: RuneSou
 
 
 async def _load_rune_tree_icons(session: SafeSession, patch: NewPatch, sources: RuneSources) -> None:
-    for failure in await load_rune_tree_icons(session, patch, sources.trees, cdragon_version(patch.patch)):
+    for failure in await load_rune_tree_icons(session, patch, sources.trees, cdragon_folder(patch)):
         patch_logger.warning(f"[RUNE] [IMAGE] [Tree] {failure}")
 
 
@@ -866,7 +938,7 @@ async def _check_rune(rune: NewRune, raw: RawRune, session: SafeSession, patch: 
     if rune.tree_id == SHARD_TREE_ID and unknown_shard(raw):
         patch_logger.warning(f"[RUNE] [STATS] [{rune.name}] Unknown stat shard {raw.cdragon.get('mPerkName')}, "
                              f"its stats need entering by hand: {rune.passive.values}")
-    for failure in await load_rune_image(session, rune, raw, cdragon_version(patch.patch)):
+    for failure in await load_rune_image(session, rune, raw, cdragon_folder(patch)):
         patch_logger.warning(f"[RUNE] [IMAGE] [{rune.name}] {failure}")
 
 
@@ -955,7 +1027,7 @@ async def hotfix_runes(runes: list[RuneEntry], notes: dict[str, list[Change]], s
     """All runes on a new build, else only the named ones; their sources are only downloaded when needed."""
     if not hotfix.build_changed and not any(entry.name in notes for entry in runes):
         return 0
-    sources = await rune_sources(session, patch.patch, runes, names)
+    sources = await rune_sources(session, cdragon_folder(patch), runes, names)
     entries = [entry for entry in sources.entries if hotfix.build_changed or entry.name in notes]
     await hotfix_all_runes(entries, notes, session, patch, hotfixed_at, sources)
     return len(entries)

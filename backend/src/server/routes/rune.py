@@ -11,7 +11,7 @@ from src.server.database import (
 from src.server.models.patch import RuneTree
 from src.server.models.rune import ShortRune, Rune
 
-from src.server.routes.helpers import get_required_rune
+from src.server.routes.helpers import get_required_rune, reject_preview
 
 router = APIRouter()
 admin = APIRouter()
@@ -41,6 +41,7 @@ async def get_rune(rune_id: str) -> Rune:
 
 @admin.put("/")
 async def put_rune(rune: Rune) -> int:
+    await reject_preview(rune.patch)
     response = await update_rune(rune)
     if response.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"Could not find Rune with ID: {rune.id} !")

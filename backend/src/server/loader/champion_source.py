@@ -6,9 +6,11 @@ from src.server.loader.helper import SafeSession
 from src.server.loader.lua import parse_lua_table
 from src.server.loader.patchexceptions import LoadError
 from src.server.models.champion import RawChampion, WikiTemplate
+from src.server.models.patch import NewPatch
 
 
 CDRAGON = "https://raw.communitydragon.org/"
+PBE = "pbe"  # CommunityDragon's mirror of the PBE, in the same format as a patch folder
 WIKI_API = "https://wiki.leagueoflegends.com/en-us/api.php"
 WIKI_TITLES_PER_REQUEST = 20
 
@@ -17,6 +19,10 @@ def cdragon_version(patch: str) -> str:
     """Data Dragon's "16.23.1" is CommunityDragon's folder "16.23"."""
     major, minor, *_ = patch.split(".")
     return f"{major}.{minor}"
+
+
+def cdragon_folder(patch: NewPatch) -> str:
+    return PBE if patch.preview else cdragon_version(patch.patch)
 
 
 async def fetch_build(session: SafeSession, version: str) -> str:
@@ -130,9 +136,9 @@ def parse_champion_data(text: str) -> dict[str, dict]:
     return {entry["apiname"]: entry for entry in parse_lua_table(text).values() if "apiname" in entry}
 
 
-async def load_raw_champion(session: SafeSession, patch: str, champion_id: str, champion_name: str,
+async def load_raw_champion(session: SafeSession, patch: str, folder: str, champion_id: str, champion_name: str,
                             build: str, strings: dict[str, str], champion_data: dict | None = None) -> RawChampion:
-    cdragon = await fetch_champion_bin(session, cdragon_version(patch), champion_id)
+    cdragon = await fetch_champion_bin(session, folder, champion_id)
     return RawChampion(
         champion_id=champion_id, patch=patch, build=build, fetched_at=datetime.now(),
         cdragon=cdragon, strings=champion_strings(strings, cdragon),

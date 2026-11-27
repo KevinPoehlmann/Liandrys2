@@ -450,15 +450,23 @@ class TestHotfixOneChampion():
 
 class TestLoadData():
 
+    @pytest.fixture
+    def preview(self, monkeypatch) -> AsyncMock:
+        mock = AsyncMock()
+        monkeypatch.setattr(loader, "update_preview", mock)
+        return mock
+
+
     @pytest.mark.asyncio
-    async def test_the_hotfix_comes_before_the_next_patch(self, database, monkeypatch):
+    async def test_the_hotfix_comes_before_the_next_patch_and_the_preview_last(self, database, monkeypatch, preview):
         latest = NewPatch(patch="16.22.1")
         hotfixed = NewPatch(patch="16.22.1", build=BUILD)
+        newest = NewPatch(patch="16.23.1")
         hotfix = loader.Hotfix(BUILD, True)
         database.fetch_patch_latest.return_value = latest
         monkeypatch.setattr(loader, "check_updates", AsyncMock(return_value=(["16.23.1"], hotfix)))
         load_hotfix = AsyncMock(return_value=hotfixed)
-        load_patches = AsyncMock()
+        load_patches = AsyncMock(return_value=newest)
         monkeypatch.setattr(loader, "load_hotfix", load_hotfix)
         monkeypatch.setattr(loader, "load_patches", load_patches)
 
@@ -466,3 +474,125 @@ class TestLoadData():
 
         load_hotfix.assert_called_once_with(latest, hotfix)
         load_patches.assert_called_once_with(["16.23.1"], hotfixed)
+        preview.assert_called_once_with(newest)
+
+
+    @pytest.mark.asyncio
+    async def test_a_failing_preview_is_no_failed_patch_load(self, database, monkeypatch, preview, loggers):
+        database.fetch_patch_latest.return_value = NewPatch(patch="16.23.1")
+        monkeypatch.setattr(loader, "check_updates", AsyncMock(return_value=([], None)))
+        preview.side_effect = RuntimeError("PBE down")
+
+        await loader.load_data()
+
+        assert loggers["load"].error.call_args.args[0] == "[LOAD] PBE preview load failed!"
+
+
+    @pytest.mark.asyncio
+    async def test_a_first_load_has_no_preview_yet(self, database, monkeypatch, preview):
+        monkeypatch.setattr(loader, "check_updates", AsyncMock(return_value=(["16.23.1"], None)))
+        monkeypatch.setattr(loader, "load_fresh_database", AsyncMock())
+
+        await loader.load_data()
+
+        preview.assert_not_called()
+
+
+class TestLoadPatches():
+
+    @pytest.mark.asyncio
+    async def test_the_released_patch_drops_its_preview_first(self, database, monkeypatch):
+        database.fetch_previews = AsyncMock(return_value=[NewPatch(patch="16.23.1", preview=True),
+                                                          NewPatch(patch="16.24.1", preview=True)])
+        clean_up = AsyncMock()
+        monkeypatch.setattr(loader, "_clean_up", clean_up)
+        monkeypatch.setattr(loader, "finalize_load_logfile", Mock())
+
+        async def load_patch(name: str, old_patch: NewPatch) -> NewPatch:
+            # Its documents carry the same name, so they would count as already loaded.
+            clean_up.assert_awaited_once_with("16.23.1")
+            return NewPatch(patch=name)
+        monkeypatch.setattr(loader, "load_patch", load_patch)
+
+        latest = await loader.load_patches(["16.23.1"], NewPatch(patch="16.22.1"))
+
+        assert latest.patch == "16.23.1"
+
+
+PBE_BUILD = "16.24.8420984+branch.main.content.beta"
+
+
+class TestUpdatePreview():
+
+    @pytest.fixture
+    def live(self) -> NewPatch:
+        return NewPatch(patch="16.23.1")
+
+
+    @pytest.fixture
+    def load_preview(self, monkeypatch, database) -> AsyncMock:
+        monkeypatch.setattr(loader, "fetch_build", AsyncMock(return_value=PBE_BUILD))
+        monkeypatch.setattr(loader, "_clean_up", AsyncMock())
+        database.fetch_previews = AsyncMock(return_value=[])
+        mock = AsyncMock()
+        monkeypatch.setattr(loader, "load_preview", mock)
+        return mock
+
+
+    @pytest.mark.asyncio
+    async def test_a_new_pbe_build_replaces_the_preview(self, database, live, load_preview):
+        database.fetch_previews.return_value = [NewPatch(patch="16.24.1", preview=True, build="16.24.1000+main")]
+
+        await loader.update_preview(live)
+
+        loader._clean_up.assert_awaited_once_with("16.24.1")
+        assert load_preview.call_args.args[1:] == ("16.24.1", live)
+
+
+    @pytest.mark.asyncio
+    async def test_a_current_preview_stays(self, database, live, load_preview):
+        database.fetch_previews.return_value = [NewPatch(patch="16.24.1", preview=True, build=PBE_BUILD)]
+
+        await loader.update_preview(live)
+
+        loader._clean_up.assert_not_called()
+        load_preview.assert_not_called()
+
+
+    @pytest.mark.asyncio
+    async def test_no_preview_while_the_pbe_shows_the_live_patch(self, live, load_preview):
+        live.patch = "16.24.1"
+
+        await loader.update_preview(live)
+
+        load_preview.assert_not_called()
+
+
+class TestLoadPreview():
+
+    @pytest.fixture
+    def steps(self, monkeypatch) -> None:
+        for name in ("fetch_champion_list", "fetch_item_list", "fetch_summonerspell_list", "fetch_rune_entries",
+                     "rune_sources", "patch_all_champions", "patch_all_items", "patch_all_runes",
+                     "patch_all_summonerspells"):
+            monkeypatch.setattr(loader, name, AsyncMock(return_value=[]))
+        monkeypatch.setattr(loader, "item_sources", AsyncMock(return_value=SimpleNamespace(item_data={})))
+        monkeypatch.setattr(loader, "name_dictionaries", AsyncMock(return_value={
+            type_: NameDictionary() for type_ in ("champions", "items", "runes", "summonerspells")}))
+
+
+    @pytest.mark.asyncio
+    async def test_patches_the_pbe_forward_from_the_live_patch_and_its_lists(self, database, steps):
+        live = NewPatch(patch="16.23.1", champion_count=172)
+        stored = []
+        database.upsert_patch = AsyncMock(side_effect=lambda patch: stored.append(patch.copy()))
+
+        patch = await loader.load_preview(FakeSession({}), "16.24.1", live)
+
+        assert loader.fetch_champion_list.call_args.args[1] == "16.23.1"  # Data Dragon has no PBE
+        assert loader.item_sources.call_args.args[1] == "pbe"
+        assert loader.rune_sources.call_args.args[1] == "pbe"
+        assert loader.patch_all_champions.call_args.args[3:5] == (patch, live)
+        assert (patch.patch, patch.preview, patch.champion_count) == ("16.24.1", True, 172)
+        # Marked as a preview before its first document is stored; the build only comes with the finished load.
+        assert (stored[0].preview, stored[0].build) == (True, None)

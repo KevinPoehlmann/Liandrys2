@@ -55,16 +55,34 @@ def test_get_returns_the_document_with_id(monkeypatch, module, prefix, path, mod
     assert response.json()["_id"] == document.id
 
 
+def patch_lookup(monkeypatch, preview: bool) -> None:
+    patch = Patch(_id="0123456789abcdef01234567", patch="16.23.1", preview=preview)
+    monkeypatch.setattr("src.server.routes.helpers.fetch_patch_by_name", AsyncMock(return_value=patch))
+
+
 @pytest.mark.parametrize("module, prefix, path, model, _, update", CASES)
 def test_put_parses_the_body_and_saves_it(monkeypatch, module, prefix, path, model, _, update):
     body = load(path)
     saved = AsyncMock(return_value=SimpleNamespace(matched_count=1, modified_count=1))
     monkeypatch.setattr(f"{module.__name__}.{update}", saved)
+    patch_lookup(monkeypatch, preview=False)
 
     response = request(module, prefix, "PUT", f"/admin/{prefix}/", json=body)
 
     assert response.status_code == 200
     assert saved.await_args.args[0] == model.parse_obj(body)
+
+
+@pytest.mark.parametrize("module, prefix, path, model, _, update", CASES)
+def test_put_on_a_pbe_preview_is_rejected(monkeypatch, module, prefix, path, model, _, update):
+    saved = AsyncMock()
+    monkeypatch.setattr(f"{module.__name__}.{update}", saved)
+    patch_lookup(monkeypatch, preview=True)
+
+    response = request(module, prefix, "PUT", f"/admin/{prefix}/", json=load(path))
+
+    assert response.status_code == 409
+    saved.assert_not_called()
 
 
 @pytest.mark.parametrize("module, prefix, path, model, _, update", CASES)

@@ -28,9 +28,10 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 
 The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells ✅, (4) items incl. actives ✅, (5) runes ✅, then the fresh load into the real DB ✅. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
 
-**Next in this phase** (PBE preview, then the timing data; the timing items may move to the backlog if no source turns up):
+The PBE preview is done too ([decisions](docs/decisions.md#pbe-preview)).
+
+**Next in this phase** (the timing data; these items may move to the backlog if no source turns up):
 - [ ] Items: `ByItemEpicnessCountCalculationPart` ("per legendary item") stays reported. In 16.23 only the old mythic passives' leftovers use it (Goredrinker, Galeforce, …; also Guinsoo's, Evenshroud, Radiant Virtue), none in a live tooltip; translate it once a tooltip uses it again
-- [ ] PBE preview (V1, after the base loader): CDragon mirrors the PBE (`pbe/`, e.g. 16.24 while 26.23 is live) in the same format, about two weeks ahead. Load it as a provisional next patch, clearly marked, replaced on release. PBE values still change, and some never ship
 - [ ] Dash and leap travel times (Nidalee's Pounce lands at the cast today), e.g. from CommunityDragon's spell data or other sources
 - [ ] Animation locks after the cast time (e.g. Riven Q uncanceled vs. canceled) from real data instead of assumptions. Then `Lock` can tell an animation from a cast time (item actives can't be used during a cast time, but during a pure animation). Why CDragon doesn't help yet: see decisions, "Cast times and animations"
 

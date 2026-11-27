@@ -68,7 +68,7 @@ def warnings(loggers) -> list[str]:
 
 async def sources(session, *rune_ids: int):
     names = NameDictionary({str(ELECTROCUTE_ID): "Electrocute"})
-    return await loader.rune_sources(session, "16.23.1", [entry(rune_id) for rune_id in rune_ids], names)
+    return await loader.rune_sources(session, "16.23", [entry(rune_id) for rune_id in rune_ids], names)
 
 
 def added(database) -> list:
