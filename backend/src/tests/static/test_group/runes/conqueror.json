@@ -184,7 +184,7 @@
         "stats": [
           {
             "stat": "adaptive force",
-            "formula": "stacks * (MinAdaptivePerStack + (MaxAdaptivePerStack - MinAdaptivePerStack) * (min(level, 18) - 1) / 17)",
+            "formula": "stacks * (MinAdaptivePerStack + (MaxAdaptivePerStack - MinAdaptivePerStack) * (level - 1) / 17)",
             "mode": "flat",
             "conversion": false,
             "snapshot": false

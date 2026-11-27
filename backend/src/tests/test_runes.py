@@ -18,7 +18,7 @@ RIVEN_AD = 64 + 3 * GROWTH_LVL_6
 VAYNE_AD = 60 + 2.35 * GROWTH_LVL_6
 VEIGAR_AD = 52 + 2.7 * GROWTH_LVL_6
 DARIUS_ARMOR = 37 + 5.2 * GROWTH_LVL_6
-CONQUEROR_FORCE_LVL_6 = 1.8 + (4 - 1.8) * 5 / 17  # per stack, 1.8 to 4 (wiki, CDragon), assumed linear to 18
+CONQUEROR_FORCE_LVL_6 = 1.8 + (4 - 1.8) * 5 / 17  # per stack, 1.8 to 4 at 18, linear and on past 18 (practice tool)
 
 
 def load_rune(name: str) -> Rune:
@@ -115,6 +115,17 @@ def damage_values(sim: Simulation, name: str, actor: Actor = Actor.BLUE) -> list
 
 
 class TestConquerorStacks():
+
+    # Practice tool, Aatrox (bonus AD per stack, one decimal): 1.1 at level 1, 1.5 at 6, 2.4 at 18, 2.5 at 19, 2.6 at 20.
+    @pytest.mark.parametrize("level, shown", [(1, 1.1), (6, 1.5), (18, 2.4), (19, 2.5), (20, 2.6)])
+    def test_ad_per_stack_grows_linearly_and_past_18(self, load_champion, level, shown):
+        rank = Rank(q=0, w=0, e=0, r=0)
+        plain = Character(load_champion("riven"), level, rank, [])
+        riven = Character(load_champion("riven"), level, rank, [], runes=[load_rune("conqueror")])
+        riven.apply_buff("conqueror", riven, 1, 0)
+
+        assert round(riven.get_stat(Stat.AD) - plain.get_stat(Stat.AD), 1) == shown
+
 
     def test_every_cast_stacks(self, load_champion):
         riven = Character(load_champion("riven"), 6, Rank(q=3, w=0, e=0, r=0), [], runes=[load_rune("conqueror")])

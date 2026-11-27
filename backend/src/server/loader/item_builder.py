@@ -71,9 +71,16 @@ def rift_items(items: list[tuple[str, ItemJson]], item_data: dict[str, dict]) ->
     copies (Swiftplay's 32xxxx, the 66xxxx ones), so without the module only its purchasable 4-digit ids count."""
     if item_data:
         return [(item_id, item) for item_id, item in items
-                if (item_data.get(item_id, {}).get("modes") or {}).get(RIFT_MODE)]
+                if (item_data.get(item_id, {}).get("modes") or {}).get(RIFT_MODE)
+                and not _champion_upgrade(item, item_data[item_id])]
     return [(item_id, item) for item_id, item in items
             if item.maps.get("11") and item.gold.purchasable and len(item_id) == 4]
+
+
+def _champion_upgrade(item: ItemJson, data: dict) -> bool:
+    # Gangplank's R upgrades are items bought with Silver Serpents instead of gold; they belong to his R.
+    # Kalista's Black Spear is champion-bound too, but bought for 0 gold, so it stays an item.
+    return bool(data.get("champion")) and not item.gold.purchasable
 
 
 def build_item(raw: RawItem, entry: ItemJson) -> NewItem:

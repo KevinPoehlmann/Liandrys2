@@ -26,6 +26,14 @@ Pages: Champion_statistic
 
 **Simulation:** `get_base_stat` uses exactly this formula. ✓
 
+## Levels 19 and 20
+Pages: none (practice tool, levels 19/20 exist there)
+
+- Rule of thumb: **what scales linearly with level keeps scaling past 18** at the same step. Measured: Tibbers' HP and Annie E (level 20), Conqueror's adaptive force per stack (tooltip at 19 and 20: 2.5 and 2.6 AD with Aatrox), Electrocute's CDragon curve (250, 260). The wiki rarely says so; its "1 – 18" ranges end at 18 only because the normal game does.
+- CDragon's level interpolations carry `mScalePastDefaultMaxLevel: false` where they stop at 18; without the field they continue.
+
+**Simulation:** the translator continues interpolations past 18 unless `mScalePastDefaultMaxLevel` is false. ✓ Hand-made formulas write level curves as `start + (end - start) * (level - 1) / 17`, without `min(level, 18)`; a cap only where a measurement shows one. Level lists (`values` per level) and breakpoints come from CDragon as they are.
+
 ## Damage and mitigation
 Pages: Damage, Armor, Magic_resistance, Armor_penetration, Magic_penetration
 
