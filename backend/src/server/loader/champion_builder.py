@@ -19,6 +19,7 @@ SLOTS = ("q", "w", "e", "r")
 DEFAULT_COOLDOWN = "cooldownTime"
 WIKI_SLOTS = {"Q": "q", "W": "w", "E": "e", "R": "r", "I": "passive"}  # the wiki calls the passive "I" (innate)
 REDIRECT = re.compile(r"#REDIRECT \[\[(.+?)\]\]")
+SKIN_VARIANT = re.compile(r"_skin\d+\.\w+$")  # apheliosp_skin01.dds, not Wukong's monkeykingstoneskin.dds
 
 
 def build_champion(raw: RawChampion, entry: ChampionJson) -> NewChampion:
@@ -115,6 +116,16 @@ def loaded_spells(raw: RawChampion, max_ranks: dict[str, int]) -> dict[str, Load
 def spell_icons(raw: RawChampion) -> dict[str, str]:
     """The game asset of each slot's icon. Some spells list more (Nidalee R: both forms, Darius' passive: its buff); the first is the spell's own."""
     return {slot: record["mSpell"].get("mImgIconName", [""])[0] for slot, record in _spell_records(raw.cdragon).items()}
+
+
+def own_icons(raw: RawChampion) -> list[str]:
+    """Every icon in the champion's own HUD folder, from all its spells: recasts and forms have their own (Sion's W
+    recast, Nidalee's cougar spells). Other folders hold borrowed placeholders (Sion's Q missile shows Ezreal's R),
+    and skin variants only change the look."""
+    folder = f"assets/characters/{raw.champion_id.lower()}/hud/"
+    return sorted({asset for record in raw.cdragon.values() if isinstance(record, dict)
+                   for asset in (record.get("mSpell") or {}).get("mImgIconName") or []
+                   if asset.lower().startswith(folder) and not SKIN_VARIANT.search(asset.lower())})
 
 
 def _spell_records(cdragon: dict) -> dict[str, dict]:

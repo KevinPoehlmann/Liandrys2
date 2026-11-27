@@ -41,6 +41,15 @@ def perk_records(perks_bin: dict) -> dict[int, dict]:
             if isinstance(record, dict) and record.get("__type") == "Perk" and "mPerkId" in record}
 
 
+def tree_icons(perks_bin: dict, strings: dict[str, str]) -> dict[int, tuple[str, str]]:
+    """Each tree's name and icon asset from its PerkStyle record."""
+    return {record["mPerkStyleId"]: (strings.get(record.get("mDisplayNameLocalizationKey", "").lower(),
+                                                 record.get("mPerkStyleName", "")),
+                                     record.get("mIconTextureName", ""))
+            for record in perks_bin.values()
+            if isinstance(record, dict) and record.get("__type") == "PerkStyle" and "mPerkStyleId" in record}
+
+
 async def fetch_rune_wiki_pages(session: SafeSession, wiki_names: list[str]) -> dict[str, WikiTemplate]:
     """Every rune's data template and article in a few requests, next to the champions' wiki requests."""
     titles = [title for name in wiki_names for title in (WIKI_DATA.format(name), name)]

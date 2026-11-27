@@ -58,9 +58,8 @@ class NewChampion(BaseModel):
     changes: list[Change] = []
 
     image: Image
-
-
-
+    splash: Image | None = None  # loader-owned: the base skin's splash art, a background for the champion's page
+    icons: dict[str, Image] = {}  # loader-owned: every icon of the champion's spells, for stages and extra abilities
 
 
 class Champion(NewChampion):

@@ -46,6 +46,13 @@ def images(monkeypatch) -> AsyncMock:
     return mock
 
 
+@pytest.fixture(autouse=True)
+def tree_icons(monkeypatch) -> AsyncMock:
+    mock = AsyncMock(return_value=[])
+    monkeypatch.setattr(loader, "load_rune_tree_icons", mock)
+    return mock
+
+
 @pytest.fixture
 def database(monkeypatch) -> Mock:
     mock = Mock(exists_rune=AsyncMock(return_value=False), upsert_raw_rune=AsyncMock(), add_rune=AsyncMock(),
@@ -156,6 +163,19 @@ class TestLoad():
 
         assert images.call_args.args[3] == "16.23"
         assert "[RUNE] [IMAGE] [Electrocute] 404 Image not found — url" in warnings(loggers)
+
+
+    @pytest.mark.asyncio
+    async def test_the_tree_icons_load_once_per_patch(self, session, database, loggers, tree_icons):
+        tree_icons.return_value = ["Domination: 404 Image not found — url"]
+        patch = NewPatch(patch="16.23.1")
+
+        await loader.load_all_runes(session, patch, await sources(session, ELECTROCUTE_ID))
+
+        tree_icons.assert_called_once()
+        assert tree_icons.call_args.args[1] is patch
+        assert tree_icons.call_args.args[2] == {8100: ("Domination", "assets/perks/styles/7200_domination.tex")}
+        assert "[RUNE] [IMAGE] [Tree] Domination: 404 Image not found — url" in warnings(loggers)
 
 
 class TestPatch():

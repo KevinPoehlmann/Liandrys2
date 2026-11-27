@@ -48,6 +48,7 @@ class ExtraAbility(ChampionAbility):
     """An ability a buff puts on Q/W/E/R (Nidalee's cougar form, later Hwei's subcasts)."""
     key: str  # what Buff.replaces points to, e.g. "takedown"
     rank_from: ActionType  # whose ability points it uses (Nidalee's cougar abilities: R)
+    icon: str | None = None  # a key of Champion.icons; the loader points `image` to it every patch
 
 
 class ItemActive(Ability):

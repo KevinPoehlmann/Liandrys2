@@ -8,7 +8,9 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from src.server.models.champion import Champion
+from src.server.models.image import Image
 from src.server.models.item import Item
+from src.server.models.patch import Patch, RuneTree
 from src.server.models.rune import Rune
 from src.server.models.summonerspell import Summonerspell
 from src.server.routes import champion, item, rune, summonerspell
@@ -72,3 +74,30 @@ def test_put_rejects_an_invalid_body(monkeypatch, module, prefix, path, model, _
     response = request(module, prefix, "PUT", f"/admin/{prefix}/", json={"name": "only a name"})
 
     assert response.status_code == 422
+
+
+class TestRuneTrees():
+
+    def test_the_patchs_own_trees(self, monkeypatch):
+        tree = RuneTree(name="Domination", image=Image(full="7200_domination.1a2b3c4d.png", group="rune"))
+        patch = Patch(_id="0123456789abcdef01234567", patch="16.23.1", rune_trees={8100: tree})
+        monkeypatch.setattr(rune, "fetch_patch_by_name", AsyncMock(return_value=patch))
+
+        response = request(rune, "rune", "GET", "/rune/trees/16.23.1")
+
+        assert response.json() == {"8100": tree.dict()}
+
+
+    def test_a_patch_without_trees_gets_the_old_static_icons(self, monkeypatch):
+        patch = Patch(_id="0123456789abcdef01234567", patch="16.21.1")
+        monkeypatch.setattr(rune, "fetch_patch_by_name", AsyncMock(return_value=patch))
+
+        response = request(rune, "rune", "GET", "/rune/trees/16.21.1")
+
+        assert response.json()["8000"] == {"name": "Precision", "image": {"full": "7201_Precision.png", "group": "rune"}}
+
+
+    def test_an_unknown_patch_is_a_404(self, monkeypatch):
+        monkeypatch.setattr(rune, "fetch_patch_by_name", AsyncMock(return_value=None))
+
+        assert request(rune, "rune", "GET", "/rune/trees/1.1.1").status_code == 404

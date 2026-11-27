@@ -144,6 +144,11 @@ async def fetch_patch_latest() -> Patch | None:
     return Patch(**document)
 
 
+async def fetch_patch_by_name(patch: str) -> Patch | None:
+    document = await patch_collection.find_one({"patch": patch})
+    return Patch(**document) if document else None
+
+
 async def fetch_patch_by_id(id_) -> Patch | None:
     patch = await patch_collection.find_one({"_id": ObjectId(id_)})
     if patch:

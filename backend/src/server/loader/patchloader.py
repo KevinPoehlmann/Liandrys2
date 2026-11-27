@@ -18,7 +18,7 @@ from src.server.loader.champion_source import (cdragon_version, fetch_build, fet
                                                load_raw_champion)
 from src.server.loader.helper import SafeSession, info_loader, riot_to_wiki_patch
 from src.server.loader.images import (load_champion_images, load_item_image, load_masterwork_border, load_rune_image,
-                                     load_summonerspell_image)
+                                     load_rune_tree_icons, load_summonerspell_image)
 from src.server.loader.item_builder import (build_item, item_from_document, loaded_item, patch_item, rift_items,
                                             unknown_stat_fields)
 from src.server.loader.item_builder import wiki_mismatches as item_wiki_mismatches
@@ -31,7 +31,7 @@ from src.server.loader.rune_builder import (SHARD_TREE_ID, RuneEntry, build_rune
                                             rune_from_document, shard_entries, tree_entries, unknown_shard)
 from src.server.loader.rune_builder import wiki_mismatches as rune_wiki_mismatches
 from src.server.loader.rune_source import (fetch_perks_bin, fetch_rune_trees, fetch_rune_wiki_pages, load_raw_rune,
-                                           perk_records)
+                                           perk_records, tree_icons)
 from src.server.loader.summonerspell_builder import (build_summonerspell, patch_summonerspell, rift_spells,
                                                      spell_from_document, summoner_spell)
 from src.server.loader.summonerspell_builder import wiki_mismatches as spell_wiki_mismatches
@@ -89,6 +89,7 @@ class RuneSources:
     wiki_pages: dict[str, WikiTemplate] | None  # data templates and articles by title; None: the wiki was down
     wiki_names: dict[int, str]  # the wiki page of each tree rune
     entries: list[RuneEntry]
+    trees: dict[int, tuple[str, str]] = field(default_factory=dict)  # tree id -> name, icon asset
 
 
 @dataclass
@@ -785,7 +786,8 @@ async def rune_sources(session: SafeSession, patch_name: str, entries: list[Rune
     wiki_names = {entry.rune_id: names.wiki_name(str(entry.rune_id), entry.name) for entry in entries}
     return RuneSources(build=await fetch_build(session, version), records=perk_records(perks), strings=strings,
                        wiki_pages=await _rune_wiki_pages_or_nothing(session, list(wiki_names.values())),
-                       wiki_names=wiki_names, entries=entries + shard_entries(perks, strings))
+                       wiki_names=wiki_names, entries=entries + shard_entries(perks, strings),
+                       trees=tree_icons(perks, strings))
 
 
 async def _rune_wiki_pages_or_nothing(session: SafeSession, wiki_names: list[str]) -> dict[str, WikiTemplate] | None:
@@ -798,7 +800,13 @@ async def _rune_wiki_pages_or_nothing(session: SafeSession, wiki_names: list[str
 
 
 async def load_all_runes(session: SafeSession, patch: NewPatch, sources: RuneSources) -> None:
+    await _load_rune_tree_icons(session, patch, sources)
     await _each_rune(sources.entries, lambda entry: load_rune(entry, session, patch, sources), "load")
+
+
+async def _load_rune_tree_icons(session: SafeSession, patch: NewPatch, sources: RuneSources) -> None:
+    for failure in await load_rune_tree_icons(session, patch, sources.trees, cdragon_version(patch.patch)):
+        patch_logger.warning(f"[RUNE] [IMAGE] [Tree] {failure}")
 
 
 async def _each_rune(entries: list[RuneEntry], load: Callable[[RuneEntry], Awaitable[None]], action: str) -> None:
@@ -872,6 +880,7 @@ async def patch_all_runes(notes: dict, session: SafeSession, patch: NewPatch, ol
     `notes` are the patch notes' {"changed": {rune: [lines]}, ...}, with Data Dragon's names."""
     previous = {_rune_key(rune): rune for rune in await db.fetch_runes_by_patch(old_patch.patch)}
     patch.rune_count = len(sources.entries)
+    await _load_rune_tree_icons(session, patch, sources)
     for key in previous.keys() - {entry.key for entry in sources.entries}:
         load_logger.info(f"[RUNE] {previous[key].name} ✔ Not in patch {patch.patch} anymore, left behind")
 
@@ -903,6 +912,7 @@ async def hotfix_all_runes(entries: list[RuneEntry], notes: dict[str, list[Chang
                            patch: Patch, hotfixed_at: datetime, sources: RuneSources) -> None:
     """`notes` are the hotfixes' {rune: [lines]}, with Data Dragon's names."""
     current = {_rune_key(rune): rune for rune in await db.fetch_runes_by_patch(patch.patch)}
+    await _load_rune_tree_icons(session, patch, sources)
 
     async def load(entry: RuneEntry) -> None:
         if entry.key not in current:

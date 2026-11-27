@@ -472,5 +472,13 @@
    "__type": "PerkScript"
   },
   "__type": "Perk"
+ },
+ "Perks/Styles/Domination": {
+  "mPerkStyleId": 8100,
+  "mPerkStyleName": "Domination",
+  "mDisplayNameLocalizationKey": "perkstyle_displayname_7200",
+  "mTooltipNameLocalizationKey": "perkstyle_tooltip_7200",
+  "mIconTextureName": "assets/perks/styles/7200_domination.tex",
+  "__type": "PerkStyle"
  }
 }

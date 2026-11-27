@@ -9,7 +9,7 @@
             @click="handleSelect('prim', -1, Number(id))"
             >
             <img
-              :src="info.image"
+              :src="getImageUrl(info)"
               :alt="info.name"
               :class="[
                 'w-14 h-14 object-cover rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer hover:scale-105',
@@ -49,7 +49,7 @@
             @click="handleSelect('sec', -1, Number(id))"
             >
             <img
-              :src="info.image"
+              :src="getImageUrl(info)"
               :alt="info.name"
               :class="[
                 'w-14 h-14 object-cover rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer hover:scale-105',
@@ -104,8 +104,9 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, inject } from 'vue'
 import NoItem from '@/assets/emptyicon.png'
+import { buildUrl } from '@/utils/fetch'
 
 const props = defineProps({
   availableRunes: Array,
@@ -114,8 +115,10 @@ const props = defineProps({
 
 const runeTrees = ref({})
 
+const patchContext = inject('patchContext')
+
 onMounted(async () => {
-  const res = await fetch('/rune/trees/')
+  const res = await fetch(buildUrl('/rune/trees', patchContext.value.patch))
   runeTrees.value = await res.json()
 })
 

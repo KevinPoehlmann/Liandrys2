@@ -28,6 +28,7 @@ Stage:
     recast_window: str
     outcomes: list[str] = []  # how the cast can land, e.g. Darius Q ["blade", "handle", "miss"]; the first is the default
     rules: list[Rule]         # trigger is implicitly "this stage is cast"
+    icon: str | None = None   # a key of Champion.icons (Sion's W recast: "sion_w2"); None shows the ability's image
 
 Passive:
     name

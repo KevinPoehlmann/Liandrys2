@@ -4,6 +4,11 @@ from src.server.models.image import Image
 from src.server.models.pydanticid import PydanticObjectId
 
 
+class RuneTree(BaseModel):
+    name: str
+    image: Image
+
+
 class NewPatch(BaseModel):
     patch: str
     timestamp: datetime = Field(default_factory=datetime.now)
@@ -11,6 +16,7 @@ class NewPatch(BaseModel):
     updated_at: datetime | None = None  # the last hotfix run
     validated: bool = False
     masterwork_border: Image | None = None  # Ornn's frame, drawn over a legendary item's icon when upgraded
+    rune_trees: dict[int, RuneTree] = {}  # by tree id (8000: Precision)
 
     cached_documents: int = 0
 

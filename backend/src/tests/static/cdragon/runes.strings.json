@@ -49,5 +49,6 @@
  "perk_tooltip_statmodhealth": "<scaleHealth>+@StatGain@ Health</scaleHealth>",
  "perk_tooltip_statmodhealthscaling": "<scaleHealth>+@f1@ Health</scaleHealth> (based on level)",
  "perk_tooltip_statmodmovementspeed": "<speed>+@StatGain1@% Move Speed</speed>",
- "perk_tooltip_statmodtenacity": "+@StatGain@% Tenacity and Slow Resist"
+ "perk_tooltip_statmodtenacity": "+@StatGain@% Tenacity and Slow Resist",
+ "perkstyle_displayname_7200": "Domination"
 }

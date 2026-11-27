@@ -268,6 +268,7 @@ class Input(StrictModel):
 class Stage(StrictModel):
     recast_window: str = "0"  # seconds after the previous stage's cast to cast this one, else the ability starts over
     recast_delay: str = "0"  # earliest seconds after the previous stage's cast (Riven Q: 0.3125)
+    icon: str | None = None  # a key of Champion.icons (Sion's W recast: "sion_w2"); None shows the ability's image
     outcomes: list[str] = []
     rules: list[Rule] = []
 

@@ -878,7 +878,8 @@
       "raw_stats": {},
       "changes": [],
       "key": "takedown",
-      "rank_from": "r"
+      "rank_from": "r",
+      "icon": "nidalee_q2"
     },
     {
       "name": "Pounce",
@@ -989,7 +990,8 @@
       "raw_stats": {},
       "changes": [],
       "key": "pounce",
-      "rank_from": "r"
+      "rank_from": "r",
+      "icon": "nidalee_w2"
     },
     {
       "name": "Swipe",
@@ -1062,7 +1064,8 @@
       "raw_stats": {},
       "changes": [],
       "key": "swipe",
-      "rank_from": "r"
+      "rank_from": "r",
+      "icon": "nidalee_e2"
     }
   ]
 }
