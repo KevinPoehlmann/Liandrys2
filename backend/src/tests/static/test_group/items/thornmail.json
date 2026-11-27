@@ -1,8 +1,8 @@
 {
   "item_id": "3075",
   "name": "Thornmail",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "gold": 2450,
   "into": [],
   "from_": [
@@ -13,26 +13,18 @@
   "class_": "legendary item",
   "validated": true,
   "stats": {
-    "armor": 75.0,
-    "hp": 150.0
+    "hp": 150.0,
+    "armor": 75.0
   },
   "masterwork": {
-    "armor": 100.0,
-    "hp": 335.0
+    "armor": 25,
+    "hp": 185
   },
   "active": null,
   "passives": [
     {
       "name": "Thorns",
       "description": "When struck by a basic attack on-hit, deal 20 (+ 10% bonus armor) magic damage to the attacker and, if they are a champion, inflict them with  Grievous Wounds for 3 seconds.",
-      "raw_stats": {},
-      "changes": [],
-      "validated": true,
-      "unique": true,
-      "inputs": [],
-      "stats": [],
-      "buffs": [],
-      "assumptions": [],
       "rules": [
         {
           "trigger": "on_get_hit",
@@ -44,12 +36,13 @@
               "type_": "Damage",
               "props": {
                 "target": "target",
-                "amount": "20 + 0.1 * bonus_armor",
+                "amount": "TotalDamage",
                 "dmg_type": [
                   "Reactive damage"
                 ],
                 "dmg_sub_type": "Magic",
-                "vamp": 0.0
+                "vamp": 0.0,
+                "can_crit": false
               }
             }
           ],
@@ -57,7 +50,9 @@
           "speed": "0",
           "acceleration": "0",
           "max_speed": "0",
-          "cooldown": "0"
+          "cooldown": "0",
+          "cast_cooldown": null,
+          "for_each": null
         },
         {
           "trigger": "on_get_hit",
@@ -77,8 +72,8 @@
               "props": {
                 "target": "target",
                 "status": "Grievous Wounds",
-                "duration": "3",
-                "strength": "0.4"
+                "duration": "GrievousDuration",
+                "strength": "GrievousAmount"
               }
             }
           ],
@@ -86,28 +81,42 @@
           "speed": "0",
           "acceleration": "0",
           "max_speed": "0",
-          "cooldown": "0"
+          "cooldown": "0",
+          "cast_cooldown": null,
+          "for_each": null
         }
-      ]
+      ],
+      "stats": [],
+      "buffs": [],
+      "inputs": [],
+      "assumptions": [],
+      "values": {},
+      "tooltip": "",
+      "raw_stats": {},
+      "changes": [],
+      "validated": true,
+      "unique": true
     }
   ],
-  "limitations": "Limited to 1 Thornmail.",
+  "limitations": "",
   "requirements": "",
   "maps": [
     "SR",
-    "HA",
-    "NB",
-    "Brawl"
+    "HA"
   ],
+  "values": {
+    "BaseDamage": "20",
+    "BonusArmorDamageRatio": "0.1",
+    "GrievousAmount": "0.4",
+    "GrievousDuration": "3",
+    "EnhancedGrievousAmount": "0.4",
+    "TotalDamage": "BaseDamage + BonusArmorDamageRatio * bonus_armor"
+  },
+  "tooltip": "<section></section><section><attention>%i:scaleHealth% @FlatHPPoolMod@</attention> Health<br><attention>%i:scaleArmor% @FlatArmorMod@</attention> Armor</section><section><passive>Thorns</passive><br>When struck by an Attack, deal <magicDamage>@TotalDamage@ magic damage</magicDamage> to the attacker and apply <keyword>@GrievousAmount*100@% Wounds</keyword> for @GrievousDuration@ seconds if they are a champion.</section><section></section><section><flavorText></flavorText></section>",
   "changes": [],
   "image": {
     "full": "3075.png",
-    "group": "item",
-    "sprite": "item2.png",
-    "x": 336,
-    "y": 432,
-    "h": 48,
-    "w": 48
+    "group": "item"
   },
   "_id": "685961e17de6da37b9ad9290"
 }

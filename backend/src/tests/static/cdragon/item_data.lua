@@ -1,0 +1,291 @@
+return {
+    ["Blade of the Ruined King"] = {
+        ["id"]                  = 3153,
+        ["nickname"]            = {"brk", "bork", "botrk", "mist"},
+        ["tags"]                = {"HasOnHit", "OnHitAppliesLifeSteal"},
+        ["tier"]                = 3,
+        ["type"]                = {"Legendary"},
+        ["modes"] = {
+            ["classic sr 5v5"]  = true,
+            ["aram"]            = true,
+            ["nb"]              = true,
+            ["ar"]              = true,
+        },
+        ["menu"] = {
+            ["fighter"]         = true,
+            ["marksman"]        = true,
+            ["onhit effects"]   = true,
+        },
+        ["stats"] = {
+            ["ad"]              = 40,
+            ["as"]              = 25,
+            ["lifesteal"]       = 10,
+        },
+        ["effects"] = {
+            ["pass"] = {
+                ["name"]        = "Mist's Edge",
+                ["unique"]      = true,
+                ["description"] = "Basic attacks deal {{as|'''bonus''' physical damage}} [[on-hit]] equal to {{as|{{rd|9%|6%}} of the target's '''current''' health}}, with a '''maximum''' of 100 against {{tip|minions}} and {{tip|monsters}}.",
+            },
+            ["pass2"] = {
+                ["name"]        = "Clawing Shadows",
+                ["unique"]      = true,
+                ["description"] = "Basic attacks on-hit against enemy champions apply a stack for 6 seconds, stacking up to 3 times. The third stack consumes them all to {{tip|slow}} the target by 30% for 1 second.",
+                ["cd"]          = "15",
+            },
+        },
+        ["recipe"]              = {"Vampiric Scepter", "Recurve Bow", "Pickaxe"},
+        ["buy"]                 = 3200,
+    },
+    ["Health Potion"] = {
+        ["id"]                  = 2003,
+        ["nickname"]            = {"consumable", "red"},
+        ["tier"]                = 1,
+        ["type"]                = {"Potion"},
+        ["limit"]               = "Limited to 5 at a time.",
+        ["modes"] = {
+            ["classic sr 5v5"]  = true,
+            ["aram"]            = true,
+            ["nb"]              = true,
+            ["ar"]              = false,
+        },
+        ["menu"] = {
+            ["health and reg"]  = true,
+        },
+        ["effects"] = {
+            ["consume"]         = "{{stil|Health regeneration|Restores}} {{as|4 [[health]]}} every {{fd|0.5}} seconds over 15 seconds, restoring a total of {{as|120 health}} (1 second cooldown).",
+        },
+        ["buy"]                 = 50,
+        ["sellratio"]           = 0.4,
+    },
+    ["Hextech Gunblade"] = {
+        ["id"]                  = 3146,
+        ["tier"]                = 3,
+        ["type"]                = {"Legendary"},
+        ["modes"] = {
+            ["classic sr 5v5"]  = true,
+            ["aram"]            = true,
+            ["nb"]              = true,
+            ["ar"]              = true,
+        },
+        ["menu"] = {
+            ["mage"]            = true,
+        },
+        ["stats"] = {
+            ["ad"]              = 40,
+            ["ap"]              = 80,
+            ["omnivamp"]        = 10,
+        },
+        ["effects"] = {
+            ["act"] = {   
+                ["name"]        = "Lightning Bolt",
+                ["unique"]      = true,
+                ["description"] = "Shocks the target enemy champion with a bolt of lightning, dealing {{as|{{pp|175 to 253|tooltipSize=20}}|magic damage}} {{as|(+ 30% AP)}} {{as|magic damage}} and {{tip|slow|slowing}} them by 25% for {{fd|1.5}} seconds.",
+                ["cd"]          = "60",
+                ["range"]       = "{{tip|er|icononly=true}} 700",
+            },
+        },
+        ["recipe"]              = {"Vampiric Scepter", "Hextech Alternator", "Amplifying Tome"},        
+        ["buy"]                 = 3000,
+    },
+    ["Manamune"] = {
+        ["id"]                  = 3004,
+        ["nickname"]            = {"Muramana", "tear"},
+        ["tags"]                = {"HasOnHit"},
+        ["tier"]                = 3,
+        ["type"]                = "=>Muramana",
+        ["itemlimit"]           = "Manaflow",
+        ["modes"] = {
+            ["classic sr 5v5"]  = true,
+            ["aram"]            = true,
+            ["nb"]              = true,
+            ["ar"]              = true,
+        },
+        ["menu"] = {
+            ["fighter"]         = true,
+            ["marksman"]        = true,
+            ["assassin"]        = true,
+            ["onhit effects"]   = true,
+        },
+        ["stats"] = {
+            ["ad"]              = 35,
+            ["ah"]              = 15,
+            ["mana"]            = 500,
+        },
+        ["effects"] = {
+            ["pass"] = {
+                ["name"]        = "Awe",
+                ["unique"]      = true,
+                ["description"] = "Grants {{as|'''bonus''' attack damage}} equal to {{as|2% '''maximum''' mana}}.",
+            },
+            ["pass2"] = {
+                ["name"]        = "Manaflow",
+                ["unique"]      = true,
+                ["description"] = "Grants a charge every 8 seconds, up to 4 charges. Consumes a charge [[on-hit]] and whenever affecting an enemy or ally with an [[champion ability|ability]] to grant {{as|3 '''bonus''' mana}}, increased to {{as|6|mana}} for champion targets, up to a '''maximum''' of {{as|360 '''bonus''' mana}}. Can only be triggered once per {{tip|cast instance}}.",
+            },
+            ["pass3"] = {
+                ["description"] = "Transforms into {{ii|Muramana}} at {{as|360 '''bonus''' mana}}.",
+            },
+        },
+        ["recipe"]              = {"Tear of the Goddess", "Caulfield's Warhammer", "Long Sword"},
+        ["buy"]                 = 2900,
+    },
+    ["Muramana"] = {
+        ["id"]                  = 3042,
+        ["tags"]                = {"HasOnHit", "OnHitAppliesLifeSteal"},
+        ["tier"]                = 4,
+        ["type"]                = {"Legendary"},
+        ["limit"]               = "Limited to 1 '''Manamune'''.",
+        ["modes"]               = "=>Manamune",
+        ["menu"]                = "=>Manamune",
+        ["stats"] = {
+            ["ad"]              = "=>Manamune",
+            ["ah"]              = "=>Manamune",
+            ["mana"]            = 1000,
+        },
+        ["effects"] = {
+            ["pass"]            = "=>Manamune",
+            ["pass2"] = {   
+                ["name"]        = "Shock",
+                ["unique"]      = true,
+                ["description"] = "Basic attacks {{tip|on-hit}} against champions deal {{as|{{as|{{fd|1.2}}% '''maximum''' mana}} '''bonus''' physical damage}}.",
+                ["description2"]= "Dealing {{tip|ability damage}} to champions with a {{tip|champion ability}} deals {{as|{{as|{{rd|4%|3%}} '''maximum''' mana}} '''bonus''' physical damage|physical damage}}, unless the damage also counts as {{tip|proc damage}} or {{tip|indirect damage}}. This can only be triggered on the same target once every {{fd|6.5}} seconds from the same cast instance.",
+            },
+        },
+        ["recipe"]              = {"Manamune"},
+        ["buy"]                 = "=>Manamune",
+    },
+    ["Sheen"] = {
+        ["id"]                  = 3057,
+        ["nickname"]            = {"Jimmy Neutron"},
+        ["tags"]                = {"HasOnHit", "OnHitAppliesLifeSteal"},
+        ["tier"]                = 1,
+        ["type"]                = {"Epic"},
+        ["itemlimit"]           = "Spellblade",
+        ["modes"] = {
+            ["classic sr 5v5"]  = true,
+            ["aram"]            = true,
+            ["nb"]              = true,
+            ["ar"]              = false,
+        },
+        ["menu"] = {
+            ["fighter"]         = true,
+            ["marksman"]        = true,
+            ["mage"]            = true,
+            ["onhit effects"]   = true,
+        },
+        ["stats"] = {
+            ["ah"]              = 10,
+        },
+        ["effects"] = {
+            ["pass"] = {   
+                ["name"]        = "Spellblade",
+                ["unique"]      = true,
+                ["description"] = "After using an [[Champion ability|ability]], your next basic attack within 10 seconds deals {{as|100% '''base''' AD}} {{as|'''bonus''' physical damage}} [[on-hit]] ({{fd|1.5}} second cooldown, starts after using the empowered attack).",
+            },
+        },
+        ["recipe"]              = {"Glowing Mote"},
+        ["buy"]                 = 900,
+    },
+    ["The Collector"] = {
+        ["id"]                  = 6676,
+        ["nickname"]            = {"deathblade", "gun", "lethality"},
+        ["tier"]                = 3,
+        ["type"]                = {"Legendary"},
+        ["modes"] = {
+            ["classic sr 5v5"]  = true,
+            ["aram"]            = true,
+            ["nb"]              = true,
+            ["ar"]              = true,
+        },
+        ["menu"] = {
+            ["marksman"]        = true,
+            ["assassin"]        = true,
+        },
+        ["stats"] = {
+            ["ad"]              = 50,
+            ["crit"]            = 25,
+            ["lethality"]       = 10,
+        },
+        ["effects"] = {
+            ["pass"] = {   
+                ["name"]        = "Death",
+                ["unique"]      = true,
+                ["description"] = "If you deal {{tt|post-mitigation|Damage calculated after modifiers}} damage that would leave a champion below {{as|5% of their '''maximum''' health}}, {{tip|execute}} them.",
+            },
+            ["pass2"] = {   
+                ["name"]        = "Taxes",
+                ["unique"]      = true,
+                ["description"] = "Killing a champion grants you an additional {{g|25}}.",
+            },
+        },
+        ["recipe"]              = {"Pickaxe", "Serrated Dirk", "Cloak of Agility"},
+        ["buy"]                 = 3000,
+    },
+    ["Thornmail"] = {
+        ["id"]                  = 3075,
+        ["nickname"]            = {"grievous wounds"},
+        ["tier"]                = 3,
+        ["type"]                = {"Legendary"},
+        ["modes"] = {
+            ["classic sr 5v5"]  = true,
+            ["aram"]            = true,
+            ["nb"]              = true,
+            ["ar"]              = true,
+        },
+        ["menu"] = {
+            ["tank"]            = true,
+        },
+        ["stats"] = {
+            ["armor"]           = 75,
+            ["hp"]              = 150,
+        },
+        ["effects"] = {
+            ["pass"] = {   
+                ["name"]        = "Thorns",
+                ["unique"]      = true,
+                ["description"] = "When struck by a basic attack [[on-hit]], deal {{as|20 {{as|(+ 10% '''bonus''' armor)}} magic damage|magic damage}} to the attacker and, if they are a champion, inflict them with {{tip|Grievous Wounds}} for 3 seconds.",
+            },
+        },
+        ["recipe"]              = {"Bramble Vest", "Chain Vest", "Ruby Crystal"},
+        ["buy"]                 = 2450,
+    },
+    ["Titanic Hydra"] = {
+        ["id"]                  = 3748,
+        ["nickname"]            = {"beefer", "juggernaut"},
+        ["tags"]                = {"HasOnHit", "OnHitAppliesLifeSteal"},
+        ["tier"]                = 3,
+        ["type"]                = {"Legendary"},
+        ["itemlimit"]           = "Hydra",
+        ["modes"] = {
+            ["classic sr 5v5"]  = true,
+            ["aram"]            = true,
+            ["nb"]              = true,
+            ["ar"]              = true,
+        },
+        ["menu"] = {
+            ["fighter"]         = true,
+            ["tank"]            = true,
+            ["onhit effects"]   = true,
+        },
+        ["stats"] = {
+            ["ad"]              = 40,
+            ["hp"]              = 600,
+        },
+        ["effects"] = {
+            ["pass"] = {
+                ["name"]        = "Cleave",
+                ["unique"]      = true,
+                ["description"] = "Basic attacks [[on-hit]] deal {{as|{{rd|1%|{{fd|0.5}}%}} '''maximum''' health|hp}} {{as|'''bonus''' physical damage}} to the target and {{as|{{rd|3%|{{fd|1.5}}%}} '''maximum''' health|hp}} {{as|physical damage}} to other enemies in a cone in the direction of the primary target.",
+            },
+            ["act"] = {
+                ["name"]        = "Titanic Crescent",
+                ["unique"]      = true,
+                ["description"] = "Your next basic attack [[on-hit]] within 10 seconds empowers ''Cleave'' to deal {{as|{{rd|4%|2%}} '''maximum''' health|hp}} {{as|'''bonus''' physical damage}} to the primary target and {{as|{{rd|9%|{{fd|4.5}}%}} '''maximum''' health|hp}} {{as|physical damage}} to secondary targets (10 second cooldown, starts after using the empowered attack).",
+                ["description2"]= "''Titanic Crescent'' [[Basic attack#Resets|resets]] the user's [[basic attack]] timer.",
+            },
+        },
+        ["recipe"]              = {"Tiamat", "Tunneler", "Giant's Belt"},
+        ["buy"]                 = 3300,
+    },
+}

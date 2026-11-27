@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from src.server.loader.cdragon import (BUFF_NAMES_BY_HASH, bin_field, field_hash, format_number, part_type, spell_values,
-                                       translate_calculation)
+from src.server.loader.cdragon import (BUFF_NAMES_BY_HASH, bin_field, field_hash, format_number, item_values, part_type,
+                                       spell_values, translate_calculation)
 
 
 CDRAGON = Path(__file__).parent / "static" / "cdragon"
@@ -469,6 +469,33 @@ class TestCalculations():
 
         assert translate_calculation(shen) == "Empowered if stacks_ShenSpiritShadowQuestReward > 0 else Base"
         assert translate_calculation(jax) == "TotalDamage if stacks_ShenSpiritShadowQuestReward == 0 else 0"
+
+
+    def test_conditional_picks_a_calculation_by_range_type(self):
+        # Blade of the Ruined King in 16.23: its hashed calculations for melee and ranged.
+        calculation = {"mDefaultGameCalculation": "{d96e60e3}", "mConditionalGameCalculation": "{42565e68}",
+                       "mConditionalCalculationRequirements": {"__type": "IsRangedCastRequirement"},
+                       "__type": "GameCalculationConditional"}
+
+        assert translate_calculation(calculation) == "h_42565e68 if ranged > 0 else h_d96e60e3"
+
+
+    def test_ranged_multiplier_scales_only_ranged(self):
+        # Titanic Hydra in 16.23: 1 % maximum health, 0.5 % for ranged (wiki).
+        calculation = {"mFormulaParts": [{"mStat": 12, "mCoefficient": 0.01, "__type": "StatByCoefficientCalculationPart"}],
+                       "mRangedMultiplier": {"mNumber": 0.5, "__type": "NumberCalculationPart"},
+                       "__type": "{e9a3c91d}"}
+
+        assert translate_calculation(calculation) == "(0.01 * max_hp) * (0.5 if ranged > 0 else 1)"
+
+
+    def test_item_values_are_single_numbers(self):
+        # Sheen in 16.23: the item's data values have one mValue, not one per rank.
+        record = {"mDataValues": [{"mName": "SpellbladeCooldown", "mValue": 1.5}],
+                  "mItemCalculations": {"SpellbladeDamage": {"__type": "GameCalculation", "mFormulaParts": [
+                      {"mStat": 2, "mStatFormula": 1, "mCoefficient": 1.0, "__type": "StatByCoefficientCalculationPart"}]}}}
+
+        assert item_values(record).values == {"SpellbladeCooldown": "1.5", "SpellbladeDamage": "base_ad"}
 
 
     def test_elapsed_share_of_a_buff(self):

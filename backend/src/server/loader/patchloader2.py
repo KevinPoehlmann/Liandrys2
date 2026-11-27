@@ -33,13 +33,10 @@ from src.server.models.json_validation import (
 from src.server.models.change import with_hotfix_lines
 from src.server.models.enums import Stat
 from src.server.models.image import Image
-from src.server.models.item import NewItem
 from src.server.models.patch import NewPatch, Patch
 from src.server.models.passive import Passive
 from src.server.models.rule import StatModifier
 from src.server.models.rune import NewRune
-
-
 
 
 patch_logger = logging.getLogger("liandrys.patch")
@@ -60,7 +57,6 @@ async def check_patch_available() -> list[str]:
     if db_patch and db_patch.loaded_total_count == db_patch.total_count:
         patches.remove(db_patch.patch)
     return sorted(patches, key=patch_sort_key)
-
 
 
 # --- Internal functions (to be expanded later) ---
@@ -141,14 +137,6 @@ async def _list_other_data(patch_ver: str, session: SafeSession) -> tuple[list[t
     return item_list, rune_list, summoner_list
 
 
-async def _load_all_items(item_list: list[tuple[str, ItemJson]], session: SafeSession, patch: NewPatch) -> None:
-    tasks = [
-        _load_item(item_id, item_data, session, patch)
-        for item_id, item_data in item_list
-    ]
-    await asyncio.gather(*tasks)
-
-
 async def _load_all_runes(rune_list: list[RuneClass], session: SafeSession, patch: NewPatch) -> None:
     rune_tasks = [
         _load_rune(rune, session, patch)
@@ -156,43 +144,6 @@ async def _load_all_runes(rune_list: list[RuneClass], session: SafeSession, patc
     ]
     rune_tasks.append(_load_rune_stat_shards(patch))
     await asyncio.gather(*rune_tasks)
-
-
-async def _load_item(item_id: str, item_json: ItemJson, session: SafeSession, patch: NewPatch) -> None:
-    if item_id == "1038":
-        debug_logger.debug(f"[ITEM] we are at BF Sword")
-        pass
-    if await db.exists_item_by_item_id(item_id, patch.patch):
-        return
-    
-    item_wiki = await _fetch_wiki_html(_wiki_name("items", item_id, item_json.name), "Item", patch, session)
-    if not item_wiki:
-        if not item_json.maps.get("11", False) or item_id.startswith("15"):
-            patch.item_count -= 1
-        else:
-            patch_logger.error(f"[ITEM] [LOAD] [{item_json.name}] -> maps: {item_json.maps.get('11', 'None')} | item_id: {item_id} -> {item_id.startswith('15')}")
-        return
-    try:
-        item = ws.scrape_item(item_id, item_json, item_wiki, patch.patch)
-        if not item:
-            _save_cached_html("item", item_id, patch, item_wiki)
-            patch_logger.error(f"[ITEM] [LOAD] [{item_json.name}] ❌ Failed to create object")
-            load_logger.error(f"[ITEM] {item_json.name} ❌ Failed to load")
-            return
-
-    except Exception as e:
-        _save_cached_html("item", item_id, patch, item_wiki)
-        patch_logger.exception(f"[ITEM] [LOAD] [{item_json.name}] ❌ Failed to create object: {e}")
-        load_logger.error(f"[ITEM] {item_json.name} ❌ Failed to load")
-        raise
-    try:
-        await _load_image(item_json.image, session, patch)
-    except Exception as e:
-        patch_logger.warning(f"[ITEM] [IMAGE] [{item_json.name}] ❌ Failed loading image: {e}")
-
-    await db.add_item(item)
-    patch.loaded_item_count += 1
-    load_logger.info(f"[ITEM] {item.name} ✔ Loaded successfully")
 
 
 async def _load_rune(rune_class: RuneClass, session: SafeSession, patch: NewPatch) -> None:
@@ -249,7 +200,6 @@ async def _load_rune_stat_shards(patch: NewPatch) -> None:
         await db.add_rune(rune)
         patch.loaded_rune_count += 1
         load_logger.info(f"[RUNE] {rune.name} ✔ Loaded successfully")
-
 
 
 def _wiki_name(type_: str, ddragon_id: str, name: str) -> str:
@@ -334,56 +284,6 @@ async def _load_rune_tree_images(icon_list: list[str], session: SafeSession) -> 
     await asyncio.gather(*tasks)
 
 
-async def _patch_items(changes: dict, new_patch: NewPatch, old_patch: NewPatch, session: SafeSession) -> None:
-    all_items = await db.fetch_items_by_patch(old_patch.patch)
-
-    try:
-        items_data = await session.get_json(URLS.dataLink + new_patch.patch + URLS.itemList)
-        items = ItemsJson(**items_data)
-        new_items = [(item_id, ItemJson(**item_data)) for item_id, item_data in items.data.items() if item_data["name"] in changes.get("new", [])]
-        
-        for new_item_id, new_item_json in new_items:
-            new_patch.item_count += 1
-            try:
-                await _load_item(new_item_id, new_item_json, session, new_patch)
-                changes["new"].remove(new_item_json.name)
-            except Exception as e:
-                patch_logger.error(f"[ITEM] [PATCH] [{new_item_json.name}] ❌ Failed to load new item: {e}")
-                load_logger.error(f"[ITEM] {new_item_json.name} ❌ Failed to load")
-
-        for item_name in changes.get("new", []):
-            patch_logger.error(f"[ITEM] [PATCH] [{item_name}] ❌ Item not found in the new patch data!")
-            load_logger.error(f"[ITEM] {item_name} ❌ Item not found in the new patch data!")
-    except Exception as e:
-        patch_logger.exception(f"[ITEM] [PATCH] ❌ Failed to patch NEW items: {e}")
-        load_logger.error(f"[ITEM] ❌ Failed to patch NEW items: {e}")
-
-    for item in all_items:
-        if item.name in changes.get("deleted", []):
-            new_patch.item_count -= 1
-            load_logger.info(f"[ITEM] {item.name} ✔ Deleted successfully")
-            continue 
-        item.patch = new_patch.patch
-        if item.name in changes.get("changed", {}):
-            new_patch.changed_item_count += 1
-            diff = changes["changed"][item.name]
-            try:
-                await _add_changes_item(item, diff)
-                load_logger.info(f"[ITEM] {item.name} ✔ Patched successfully")
-            except Exception as e:
-                patch_logger.exception(f"[ITEM] [PATCH] [{item.name}] ❌ Failed to apply changes: {e}")
-                load_logger.error(f"[ITEM] {item.name} ❌ Failed to patch")
-
-        await db.add_item(item)
-        new_patch.loaded_item_count += 1
-
-
-async def _add_changes_item(item: NewItem, diff: list) -> None:
-    item.changes.extend(diff)
-    item.validated = False
-
-
-
 async def _patch_runes(changes: dict, new_patch: NewPatch, old_patch: NewPatch, session: SafeSession) -> None:
     all_runes = await db.fetch_runes_by_patch(old_patch.patch)
 
@@ -436,15 +336,14 @@ def _find_rune(rune_name: str, runes_data: dict) -> RuneClass | None:
     return None
 
 
-
 async def _add_changes_rune(rune: NewRune, diff: list) -> None:
     rune.changes.extend(diff)
     rune.validated = False
 
 
 async def hotfix_others(notes: dict, patch: NewPatch, hotfixed_at: datetime) -> None:
-    """Items and runes named in a hotfix get its lines and lose their validation, in place."""
-    types = {"items": (db.fetch_items_by_patch, db.update_item), "runes": (db.fetch_runes_by_patch, db.update_rune)}
+    """Runes named in a hotfix get its lines and lose their validation, in place."""
+    types = {"runes": (db.fetch_runes_by_patch, db.update_rune)}
     for type_, (fetch, update) in types.items():
         type_notes = notes.get(type_, {})
         for status in ("new", "deleted"):
@@ -477,14 +376,12 @@ async def _clean_up(patch: NewPatch) -> None:
                 patch_logger.info(f"[PATCH] [CLEANUP] [{patch.patch}] - {key}: {count} document(s) removed")
 
 
-
 def _reload_info_loader() -> None:
     """Reloads the info_loader module to refresh URLs and paths."""
     global URLS, PATHS
     info = info_loader()
     URLS = info.urls
     PATHS = info.paths
-
 
 
 def _cache_filename(type_: str, name: str, patch: NewPatch) -> Path:
@@ -510,7 +407,6 @@ def _delete_cached_html(type_: str, name: str, patch: NewPatch) -> None:
     if path.exists():
         patch.cached_documents -= 1
         path.unlink()
-
 
 
 def load_local_html(name: str) -> str:

@@ -11,14 +11,6 @@ from src.server.loader.webscraper2 import (
     _scrape_passive_description,
     _scrape_ability,            
     _scrape_ability_stats,      
-    scrape_item,                
-    _scrape_item_class,         
-    _scrape_item_elements,      
-    _scrape_item_stats,         
-    _scrape_item_stat_block,    
-    _scrape_item_active,        
-    _scrape_item_passives,      
-    _scrape_item_element_text,  
     scrape_rune,                
     _scrape_rune_passive,       
     _scrape_rune_summoner_stats,
@@ -30,8 +22,6 @@ from src.server.models.item import NewItem
 from src.server.models.rune import NewRune
 from src.server.models.json_validation import PassiveJson, Image, SpellJson, ChampionJson, StatsJson, ItemJson, GoldJson, RuneJson
 from src.server.models.passive import ChampionPassive, Passive
-
-
 
 
 def test_scrape_champion_malzahar(load_html):
@@ -198,7 +188,6 @@ def test_scrape_ability_malzahar(load_soup):
     assert "cooldown" not in ability.raw_stats
 
 
-
 def test_scrape_ability_stats_void(load_soup):
     soup = load_soup("malzahar")
     block = soup.find("div", class_="skill skill_w")
@@ -207,189 +196,6 @@ def test_scrape_ability_stats_void(load_soup):
     assert all(key in stat_dict for key in expected_keys)
     assert stat_dict["cost"] == "40.0 + (rank - 1) * 5.0"
     assert stat_dict["cast time"] == "none"
-
-
-def test_scrape_item_titanic(load_html):
-    item_json = ItemJson(
-        name="Titanic Hydra",
-        description="Titanic Hydra description",
-        colloq="Titanic Hydra colloq",
-        plaintext="Titanic Hydra",
-        from_=["Ravenous Hydra"],
-        into=[],
-        image=Image(
-            full="Titanic_Hydra.png",
-            sprite="item0.png",
-            group="item",
-            x=0,
-            y=0,
-            w=48,
-            h=48
-        ),
-        gold=GoldJson(
-            base=0,
-            purchasable=True,
-            total=3000,
-            sell=2100
-        ),
-        tags=["Hydra"],
-        maps={
-            "11.1": True,
-            "11.2": True,
-            "11.3": False,
-        },
-        stats={
-            "HP": 600,
-            "AD": 40,
-        }
-    )
-    titanic_html = load_html("titanic_hydra")
-    item = scrape_item("5421", item_json, titanic_html, patch="15.7.1")
-    assert isinstance(item, NewItem)
-    assert item.name == "Titanic Hydra"
-    assert item.class_ == ItemClass.LEGENDARY
-    assert isinstance(item.active, ItemActive)
-    assert item.active.name == "Titanic Crescent"
-    assert item.passives[0].name == "Cleave"
-    assert item.stats[Stat.HP] == 600
-
-
-def test_scrape_item_pickaxe(load_html):
-    item_json = ItemJson(
-        name="Pickaxe",
-        description="Titanic Hydra description",
-        colloq="Titanic Hydra colloq",
-        plaintext="Titanic Hydra",
-        from_=["Ravenous Hydra"],
-        into=[],
-        image=Image(
-            full="Titanic_Hydra.png",
-            sprite="item0.png",
-            group="item",
-            x=0,
-            y=0,
-            w=48,
-            h=48
-        ),
-        gold=GoldJson(
-            base=0,
-            purchasable=True,
-            total=3000,
-            sell=2100
-        ),
-        tags=["Hydra"],
-        maps={
-            "11.1": True,
-            "11.2": True,
-            "11.3": False,
-        },
-        stats={
-            "HP": 600,
-            "AD": 40,
-        }
-    )
-    titanic_html = load_html("pickaxe")
-    item = scrape_item("5421", item_json, titanic_html, patch="15.7.1")
-    assert isinstance(item, NewItem)
-    assert item.name == "Pickaxe"
-    assert item.class_ == ItemClass.BASIC
-    assert item.stats[Stat.AD] == 25
-
-
-def test_scrape_item_cosmic_drive(load_html):
-    item_json = ItemJson(
-        name="Cosmic Drive",
-        description="Titanic Hydra description",
-        colloq="Titanic Hydra colloq",
-        plaintext="Titanic Hydra",
-        from_=["Ravenous Hydra"],
-        into=[],
-        image=Image(
-            full="Titanic_Hydra.png",
-            sprite="item0.png",
-            group="item",
-            x=0,
-            y=0,
-            w=48,
-            h=48
-        ),
-        gold=GoldJson(
-            base=0,
-            purchasable=True,
-            total=3000,
-            sell=2100
-        ),
-        tags=["Hydra"],
-        maps={
-            "11.1": True,
-            "11.2": True,
-            "11.3": False,
-        },
-        stats={
-            "HP": 600,
-            "AD": 40,
-        }
-    )
-    titanic_html = load_html("cosmic_drive")
-    item = scrape_item("5421", item_json, titanic_html, patch="15.7.1")
-    assert isinstance(item, NewItem)
-    assert item.name == "Cosmic Drive"
-    assert item.class_ == ItemClass.LEGENDARY
-    assert item.stats[Stat.AP] == 70
-    assert item.stats[Stat.ABILITY_HASTE] == 25
-
-
-def test_scrape_item_class_titanic(load_soup):
-    soup = load_soup("titanic_hydra")  # loads from html/titanic_hydra.html
-    item_class = _scrape_item_class(soup)
-    assert item_class == ItemClass.LEGENDARY
-
-
-def test_scrape_item_elements_titanic(load_soup):
-    soup = load_soup("titanic_hydra")
-    elements = _scrape_item_elements(soup)
-    assert "Stats" in elements
-    assert "Recipe" in elements
-    assert "Active" in elements
-    assert "Passive" in elements
-    assert "Limitations" in elements
-
-
-def test_scrape_item_stats_titanic(load_soup):
-    soup = load_soup("titanic_hydra")
-    elements = _scrape_item_elements(soup)
-    stats, masterwork_stats = _scrape_item_stats(elements["Stats"])
-    assert stats[Stat.HP] == 600
-    assert stats[Stat.AD] == 40
-    assert masterwork_stats[Stat.HP] == 785
-    assert masterwork_stats[Stat.AD] == 54.29
-
-
-def test_scrape_item_active_titanic(load_soup):
-    soup = load_soup("titanic_hydra")
-    elements = _scrape_item_elements(soup)
-    active = _scrape_item_active(elements["Active"])
-    assert active.name == "Titanic Crescent"
-    assert active.unique == True
-    assert active.description.startswith("Your next basic attack")  # or similar
-
-
-def test_scrape_item_passive_titanic(load_soup):
-    soup = load_soup("titanic_hydra")
-    elements = _scrape_item_elements(soup)
-    passives = _scrape_item_passives(elements["Passive"])
-    assert len(passives) == 1
-    assert passives[0].name == "Cleave"
-    assert passives[0].unique == True
-    assert passives[0].description.startswith("Basic attacks")  # or similar
-
-
-def test_scrape_item_element_text_titanic(load_soup):
-    soup = load_soup("titanic_hydra")
-    elements = _scrape_item_elements(soup)
-    limitations = _scrape_item_element_text(elements["Limitations"])
-    assert limitations == "Limited to 1 Hydra item."
-
 
 
 def test_scrape_rune_comet(load_html):

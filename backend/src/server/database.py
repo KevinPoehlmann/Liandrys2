@@ -11,7 +11,7 @@ from pymongo.results import UpdateResult
 
 from src.server.models.patch import NewPatch, Patch
 from src.server.models.champion import NewChampion, Champion, RawChampion, ShortChampion
-from src.server.models.item import NewItem, Item, ShortItem
+from src.server.models.item import NewItem, Item, RawItem, ShortItem
 from src.server.models.rune import NewRune, Rune, ShortRune
 from src.server.models.summonerspell import NewSummonerspell, RawSummonerspell, Summonerspell, ShortSummonerspell
 from src.server.models.enums import Map
@@ -50,6 +50,7 @@ async def setup_indexes() -> None:
     await _unique_index(summonerspell_collection, ["key", "patch"], "summonerspell_index")
     await _unique_index(raw_champion_collection, ["champion_id", "patch"], "raw_champion_index")
     await _unique_index(raw_summonerspell_collection, ["key", "patch"], "raw_summonerspell_index")
+    await _unique_index(raw_item_collection, ["item_id", "patch"], "raw_item_index")
 
 
 async def _unique_index(collection: AgnosticCollection, fields: list[str], name: str) -> None:
@@ -75,6 +76,7 @@ rune_collection: AgnosticCollection = database.runes
 summonerspell_collection: AgnosticCollection = database.summonerspells
 raw_champion_collection: AgnosticCollection = database.raw_champions
 raw_summonerspell_collection: AgnosticCollection = database.raw_summonerspells
+raw_item_collection: AgnosticCollection = database.raw_items
 
 
 
@@ -251,6 +253,16 @@ async def update_champion(champion: Champion) -> UpdateResult:
 
 
 #--------Item-----------------------------
+
+
+async def upsert_raw_item(raw: RawItem) -> None:
+    key = {"item_id": raw.item_id, "patch": raw.patch}
+    await raw_item_collection.replace_one(key, raw.dict(), upsert=True)
+
+
+async def fetch_raw_item(item_id: str, patch: str) -> RawItem | None:
+    document = await raw_item_collection.find_one({"item_id": item_id, "patch": patch})
+    return RawItem.parse_obj(document) if document else None
 
 
 async def add_item(item: NewItem) -> str:

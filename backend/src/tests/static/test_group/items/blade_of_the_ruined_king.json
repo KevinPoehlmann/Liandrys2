@@ -1,8 +1,8 @@
 {
   "item_id": "3153",
-  "name": "Blade of the Ruined King",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "name": "Blade of The Ruined King",
+  "patch": "16.23.1",
+  "hotfix": null,
   "gold": 3200,
   "into": [],
   "from_": [
@@ -17,13 +17,15 @@
     "attackspeed": 0.25,
     "life steal percent": 0.1
   },
-  "masterwork": {},
+  "masterwork": {
+    "ad": 14,
+    "attackspeed": 0.16
+  },
   "active": null,
   "passives": [
     {
       "name": "Mist's Edge",
       "description": "",
-      "unique": true,
       "rules": [
         {
           "trigger": "on_hit",
@@ -35,13 +37,14 @@
               "type_": "Damage",
               "props": {
                 "target": "target",
-                "amount": "(0.06 if ranged else 0.09) * target_current_hp",
+                "amount": "(RangedValue if ranged else MeleeValue) * target_current_hp",
                 "dmg_type": [
                   "Proc damage",
                   "On-hit damage"
                 ],
                 "dmg_sub_type": "Physical",
-                "vamp": 0.0
+                "vamp": 0.0,
+                "can_crit": false
               }
             }
           ],
@@ -49,21 +52,25 @@
           "speed": "0",
           "acceleration": "0",
           "max_speed": "0",
-          "cooldown": "0"
+          "cooldown": "0",
+          "cast_cooldown": null,
+          "for_each": null
         }
       ],
       "stats": [],
       "buffs": [],
       "inputs": [],
       "assumptions": [],
+      "values": {},
+      "tooltip": "",
       "raw_stats": {},
       "changes": [],
-      "validated": true
+      "validated": true,
+      "unique": true
     },
     {
       "name": "Clawing Shadows",
       "description": "",
-      "unique": true,
       "rules": [
         {
           "trigger": "on_hit",
@@ -97,14 +104,16 @@
           "speed": "0",
           "acceleration": "0",
           "max_speed": "0",
-          "cooldown": "0"
+          "cooldown": "0",
+          "cast_cooldown": null,
+          "for_each": null
         }
       ],
       "stats": [],
       "buffs": [
         {
           "name": "clawing_shadows",
-          "duration": "6",
+          "duration": "AttackCounterDuration",
           "max_stacks": 3,
           "refresh": true,
           "interval": "0",
@@ -113,6 +122,9 @@
           "windup_cancel": [],
           "slowed_while": [],
           "tags": [],
+          "blocks": [],
+          "replaces": {},
+          "range_type": null,
           "stats": [],
           "rules": [
             {
@@ -134,7 +146,7 @@
                     "target": "bearer",
                     "status": "Slow",
                     "duration": "1",
-                    "strength": "0.3"
+                    "strength": "-MoveSpeedMod"
                   }
                 },
                 {
@@ -158,13 +170,15 @@
               "speed": "0",
               "acceleration": "0",
               "max_speed": "0",
-              "cooldown": "0"
+              "cooldown": "0",
+              "cast_cooldown": null,
+              "for_each": null
             }
           ]
         },
         {
           "name": "clawing_shadows_cooldown",
-          "duration": "15",
+          "duration": "Cooldown",
           "max_stacks": 1,
           "refresh": true,
           "interval": "0",
@@ -173,34 +187,58 @@
           "windup_cancel": [],
           "slowed_while": [],
           "tags": [],
+          "blocks": [],
+          "replaces": {},
+          "range_type": null,
           "stats": [],
           "rules": []
         }
       ],
       "inputs": [],
       "assumptions": [],
+      "values": {},
+      "tooltip": "",
       "raw_stats": {},
       "changes": [],
-      "validated": true
+      "validated": true,
+      "unique": true
     }
   ],
-  "limitations": "Limited to 1 Blade of the Ruined King.",
+  "limitations": "",
   "requirements": "",
   "maps": [
     "SR",
-    "HA",
-    "NB",
-    "Brawl"
+    "HA"
   ],
+  "values": {
+    "MoveSpeedMod": "-0.3",
+    "MoveSpeedDuration": "1",
+    "Cooldown": "15",
+    "RangedValue": "0.06",
+    "MeleeValue": "0.09",
+    "MonsterDamageCap": "100",
+    "AttackCounterDuration": "6",
+    "RangedMoveSpeedMod": "-0.15",
+    "ChampRange": "h_06387172 if ranged > 0 else h_792cf56b",
+    "SiphonDamage": "by_level(40, 40, 40, 40, 40, 40, 40, 40, 40, 47, 54, 61, 68, 75, 82, 89, 96, 103, 110, 117)",
+    "MeleeItemCalcValue": "MeleeValue",
+    "RangedItemCalcValue": "RangedValue",
+    "h_792cf56b": "1",
+    "h_06387172": "2",
+    "h_c0b34d7a": "MoveSpeedMod",
+    "h_fe7dca43": "RangedMoveSpeedMod",
+    "MeleeItemCalcValueB": "MoveSpeedMod * -1",
+    "RangedItemCalcValueB": "RangedMoveSpeedMod * -1",
+    "h_d96e60e3": "MeleeValue",
+    "h_42565e68": "RangedValue",
+    "h_79b6144b": "h_42565e68 if ranged > 0 else h_d96e60e3",
+    "h_405deeb1": "target_current_hp * h_79b6144b"
+  },
+  "tooltip": "<section></section><section><attention>%i:scaleAD% @FlatPhysicalDamageMod@</attention> Attack Damage<br><attention>%i:scaleAS% @PercentAttackSpeedMod*100@%</attention> Attack Speed<br><attention>%i:scaleLS% @PercentLifeStealMod*100@%</attention> Life Steal</section><section><passive>Mist's Edge</passive><br>Attacks deal <physicalDamage>{{ Item_Melee_Ranged_Split_Dynamic }}</physicalDamage> of enemy's current Health as <physicalDamage>bonus physical damage</physicalDamage> {{ Item_Keyword_OnHit }}.<br><br><passive>Clawing Shadows</passive> {{Item_Cooldown}}<br>Attacking a champion 3 times <status>Slows</status> them by @MoveSpeedMod*-100@% for @MoveSpeedDuration@ second.</section><section></section><section><flavorText></flavorText></section>",
   "changes": [],
   "image": {
     "full": "3153.png",
-    "group": "item",
-    "sprite": "item0.png",
-    "x": 0,
-    "y": 0,
-    "h": 48,
-    "w": 48
+    "group": "item"
   },
   "_id": "685961e07de6da37b9ad9300"
 }

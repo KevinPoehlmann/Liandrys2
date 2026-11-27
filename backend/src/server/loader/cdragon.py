@@ -74,6 +74,9 @@ SPELL_FIELDS = {"cooldownTime": (("Cooldown", "cooldownTime"), 1), "mana": (("ma
 AMMO_FIELDS = {"ammoRechargeTime": (("mAmmoRechargeTime",), 1), "maxAmmo": (("mMaxAmmo",), 1)}
 
 
+RANGED_CALCULATION = "{e9a3c91d}"  # a GameCalculation with mRangedMultiplier, only in items
+
+
 class UnsupportedCalculation(Exception):
     pass
 
@@ -95,15 +98,34 @@ def spell_values(spell: dict, max_rank: int) -> SpellValues:
     if max(_spell_field(spell, ("mMaxAmmo",)) or [0]) >= 2 and not spell.get("mAmmoCountHiddenInUI"):
         for name, (sources, first_rank) in AMMO_FIELDS.items():
             _add(result, name, lambda: _rank_value(_spell_field(spell, sources), max_rank, first_rank))
-    calculations = spell.get("mSpellCalculations") or {}
+    effect_amounts = [amount.get("value") for amount in spell.get("mEffectAmount") or []]
+    riot_names = [value.get("name", "") for value in spell.get("DataValues") or []]
+    _add_calculations(result, spell.get("mSpellCalculations") or {}, riot_names, effect_amounts, max_rank)
+    return result
+
+
+def item_values(record: dict) -> SpellValues:
+    """An item's values: data values are single numbers, and its calculations are the spells' (Gunblade's
+    ActiveDamage). The item's active and passives share them."""
+    result = SpellValues()
+    data_values = record.get("mDataValues") or []
+    for data_value in data_values:
+        _add(result, data_value.get("mName", ""), lambda: format_number(data_value.get("mValue", 0)))
+    effect_amounts = [[amount] for amount in record.get("mEffectAmount") or []]
+    riot_names = [value.get("mName", "") for value in data_values]
+    _add_calculations(result, record.get("mItemCalculations") or {}, riot_names, effect_amounts, 0)
+    return result
+
+
+def _add_calculations(result: SpellValues, calculations: dict, riot_names: list[str],
+                      effect_amounts: list[list[float] | None], max_rank: int) -> None:
     for index in sorted(_effect_indices(calculations)):
-        _add(result, _effect_name(index), lambda: _rank_value(_effect_amount(spell, index), max_rank))
-    data_values = DataValues(dict(result.values), [value.get("name", "") for value in spell.get("DataValues") or []])
+        _add(result, _effect_name(index), lambda: _rank_value(_effect_amount(effect_amounts, index), max_rank))
+    data_values = DataValues(dict(result.values), riot_names)
     for name, calculation in calculations.items():
         _add(result, name, lambda: translate_calculation(data_values.resolve(calculation)))
         if readable := value_name(name):
             result.calculations[readable] = calculation
-    return result
 
 
 def _spell_field(spell: dict, sources: tuple[str, ...]) -> list[float]:
@@ -130,9 +152,8 @@ def _effect_name(index: int) -> str:
     return f"Effect{index}Amount"
 
 
-def _effect_amount(spell: dict, index: int) -> list[float]:
-    amounts = spell.get("mEffectAmount") or []
-    if not 1 <= index <= len(amounts) or not (values := amounts[index - 1].get("value")):
+def _effect_amount(amounts: list[list[float] | None], index: int) -> list[float]:
+    if not 1 <= index <= len(amounts) or not (values := amounts[index - 1]):
         raise UnsupportedCalculation(f"refers to the missing effect amount {index}")
     return values
 
@@ -264,6 +285,10 @@ def translate_calculation(calculation: dict) -> str:
             formula = _name(calculation["mModifiedGameCalculation"])
         case "GameCalculationConditional":
             formula = _conditional(calculation)
+        case calculation_type if calculation_type == RANGED_CALCULATION:
+            # Its name doesn't hash from any guess; its fields tell what it does (Titanic Hydra: 1 %, ranged 0.5 %).
+            ranged = _part(calculation["mRangedMultiplier"])
+            formula = f"{_factor(_sum(calculation.get('mFormulaParts', [])))} * ({ranged} if ranged > 0 else 1)"
         case other:
             raise UnsupportedCalculation(f"calculation type {other}")
     if "mMultiplier" in calculation:
@@ -272,15 +297,21 @@ def translate_calculation(calculation: dict) -> str:
 
 
 def _conditional(calculation: dict) -> str:
-    # The caster's buff picks the calculation (Jax W while empowered); without a default the other side is 0.
+    # The caster's buff or range type picks the calculation (Jax W while empowered, Runaan's for ranged);
+    # without a default the other side is 0.
     if unknown := [name for name in calculation if name.startswith("{")]:
         raise UnsupportedCalculation(f"conditional calculation with unknown field {unknown[0]}")
     requirement = calculation.get("mConditionalCalculationRequirements", {})
-    if requirement.get("__type") != "HasBuffCastRequirement":
-        raise UnsupportedCalculation(f"condition {requirement.get('__type')}")
+    match requirement.get("__type"):
+        case "HasBuffCastRequirement":
+            condition = _buff_stacks(requirement)
+        case "IsRangedCastRequirement":
+            condition = "ranged"
+        case other:
+            raise UnsupportedCalculation(f"condition {other}")
     comparison = "== 0" if requirement.get("mInvertResult") else "> 0"
     default = calculation.get("mDefaultGameCalculation")
-    return (f"{_name(calculation['mConditionalGameCalculation'])} if {_buff_stacks(requirement)} {comparison} "
+    return (f"{_name(calculation['mConditionalGameCalculation'])} if {condition} {comparison} "
             f"else {_name(default) if default else '0'}")
 
 

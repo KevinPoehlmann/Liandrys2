@@ -26,12 +26,11 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 
 ## Phase 3: Loader with little manual work per patch
 
-The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells ✅, (4) items incl. actives, (5) runes. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
+The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells ✅, (4) items incl. actives ✅, (5) runes. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
 
 **Then, one type at a time, each complete like the champions (first load from CDragon/wiki, patching, hotfixes, real run on the throwaway DB):**
-- [ ] (4) Items incl. actives
 - [ ] (5) Runes
-- [ ] Remove the old loader (`patchloader2.py`, `webscraper2.py` and their tests) once all four types run through `patchloader.py` (summoner spells are already gone from them)
+- [ ] Remove the old loader (`patchloader2.py`, `webscraper2.py` and their tests) once all four types run through `patchloader.py` (summoner spells and items are already gone from them)
 
 **Later in this phase:**
 - [ ] Named values per ability with stable names (`BaseDamage`, `ADRatio`, …) for the other three types; the rule editor (Phase 4) offers them for selection
@@ -40,6 +39,8 @@ The loader only collects data (numbers, named values, texts, cast times) and bui
 - [ ] Error handling refactor: dead `urllib` excepts, `_retry` swallowing non-HTTP errors, `gather` without `return_exceptions` (orphaned tasks), blocking `requests.get` inside `async` functions, `image` unbound in `_load_rune`
 - [ ] The patchloader tests write into the real `src/logs` (e.g. `liandrys_all.log`); mock the loggers like `tests/test_errors.py` does
 - [ ] Re-download the 12 zero-byte images
+- [ ] Image hashes: Cloudflare serves the same CDragon PNG sometimes as the original, sometimes re-optimized (Sheen 16.21: 6656 vs. 4587 bytes, same ETag), so one image can get two hashed files. Harmless duplicates; hashing the decoded pixels (Pillow) would fix it
+- [ ] Items: `ByItemEpicnessCountCalculationPart` ("per legendary item") stays reported. In 16.23 only the old mythic passives' leftovers use it (Goredrinker, Galeforce, …; also Guinsoo's, Evenshroud, Radiant Virtue), none in a live tooltip; translate it once a tooltip uses it again
 - [ ] Left from Phase 2 for the scraper rework, because only the scraper uses them: the pseudo stats in `Stat` (`target's armor`, `units`, `Charge`, …), `DamageType` `Default`/`Non-Damaging`/`See Notes`/`Spell damage`, the `ERROR` members and the `from_str` alias maps
 - [ ] PBE preview (V1, after the base loader): CDragon mirrors the PBE (`pbe/`, e.g. 16.24 while 26.23 is live) in the same format, about two weeks ahead. Load it as a provisional next patch, clearly marked, replaced on release. PBE values still change, and some never ship
 - [ ] Dash and leap travel times (Nidalee's Pounce lands at the cast today), e.g. from CommunityDragon's spell data or other sources

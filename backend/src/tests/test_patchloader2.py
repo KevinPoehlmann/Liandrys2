@@ -14,9 +14,7 @@ from src.server.loader.patchloader2 import (
     _get_newer_patches,
     wiki_hotfix_dates,
     hotfix_others,
-    _load_all_items,
     _load_all_runes,
-    _load_item,
     _load_rune,
     _load_rune_stat_shards,
     _fetch_wiki_html,
@@ -24,8 +22,6 @@ from src.server.loader.patchloader2 import (
     _load_image,
     _load_image_rune,
     _load_rune_tree_images,
-    _patch_items,
-    _add_changes_item,
     _patch_runes,
     _find_rune,
     _add_changes_rune,
@@ -37,12 +33,10 @@ from src.server.models.change import patch_note
 from src.server.models.champion import NewChampion
 from src.server.models.enums import RangeType, Stat
 from src.server.models.image import Image
-from src.server.models.item import NewItem
 from src.server.models.json_validation import PathJson
 from src.server.models.passive import Passive, ChampionPassive
 from src.server.models.patch import NewPatch, Patch
 from src.server.models.rune import NewRune
-
 
 
 def test_fetch_riot_patch_list_valid(mocker):
@@ -131,23 +125,6 @@ async def test_check_patch_available_resumes_an_unfinished_patch(mocker, loaded_
 
 
 @pytest.mark.asyncio
-async def test_load_all_items_calls_each(mocker, loaded_patch):
-    # Given
-    item_list = [("1001", "ItemA"), ("1002", "ItemB")]
-    mock_session = AsyncMock()
-
-    # Mock _load_item
-    mocked_load_item = mocker.patch("src.server.loader.patchloader2._load_item", new=AsyncMock())
-
-    # When
-    await _load_all_items(item_list, mock_session, loaded_patch)
-
-    # Then
-    assert mocked_load_item.call_count == len(item_list)
-    mocked_load_item.assert_any_call("1001", "ItemA", mock_session, loaded_patch)
-    mocked_load_item.assert_any_call("1002", "ItemB", mock_session, loaded_patch)
-
-
 @pytest.mark.asyncio
 async def test_load_all_runes_calls_each(mocker, loaded_patch):
     rune_list = ["Conqueror", "Electrocute"]
@@ -165,41 +142,6 @@ async def test_load_all_runes_calls_each(mocker, loaded_patch):
 
 
 @pytest.mark.asyncio
-async def test_load_item_success(mocker, loaded_patch):
-    item_id = "3031"
-    item_json = mocker.Mock()
-    item_json.name = "Infinity Edge"
-    item_json.image = mocker.Mock(full="infinity_edge.png")
-
-    item_obj = mocker.Mock()
-    item_obj.name = "Infinity Edge"
-
-    item_masterwork_obj = mocker.Mock()
-    item_masterwork_obj.name = "Infinity Edge"
-
-    session = AsyncMock()
-
-    mocker.patch("src.server.loader.patchloader2.db.exists_item_by_item_id", return_value=False)
-
-    # Mock wiki fetch
-    mocker.patch("src.server.loader.patchloader2._fetch_wiki_html", return_value="<html>infinity</html>")
-
-    # Mock item logic
-    ws_create_item = mocker.patch(
-        "src.server.loader.patchloader2.ws.scrape_item",
-        side_effect=[item_obj, item_masterwork_obj]
-    )
-
-    # Mock image + DB
-    mocker.patch("src.server.loader.patchloader2._load_image", new=AsyncMock())
-    mock_add = mocker.patch("src.server.loader.patchloader2.db.add_item", new=AsyncMock())
-
-    await _load_item(item_id, item_json, session, loaded_patch)
-    assert ws_create_item.called
-
-    assert mock_add.call_count == 1
-
-
 @pytest.mark.asyncio
 async def test_load_rune_success(mocker, loaded_patch):
     rune = mocker.Mock()
@@ -266,7 +208,6 @@ async def test_fetch_wiki_html_raises_loaderror_on_http_error(mocker, loaded_pat
     assert exc.value.type == "Item"
 
 
-
 @pytest.mark.asyncio
 async def test_load_image_downloads_file(mocker):
     image = mocker.Mock()
@@ -304,7 +245,6 @@ async def test_load_image_downloads_file(mocker):
     mocked_write.assert_called_once_with(b"fake_image_data")
 
 
-
 @pytest.mark.asyncio
 async def test_load_image_rune(mocker):
     icon = "perksStylesPrecision.png"
@@ -335,107 +275,7 @@ async def test_load_image_rune(mocker):
     session.get_bytes.assert_called_once()
 
 
-
-
-
 @pytest.mark.asyncio
-async def test_patch_items(mocker):
-    patch_obj = NewPatch(patch="15.8.1")
-    session = AsyncMock()
-
-    # Existing item in DB
-    existing_item = NewItem(
-        item_id="3071",
-        name="Black Cleaver",
-        patch="15.8.0",
-        gold=3000,
-        into=[],
-        from_=[],
-        stats={},
-        masterwork={},
-        validated=True,
-        image=Image(
-            full="Black Cleaver.png",
-            group="items"
-        ),
-        active=None,
-        passives=[],
-        limitations="",
-        requirements="",
-        maps=[],
-        changes=[]
-    )
-    mocker.patch("src.server.loader.patchloader2.db.fetch_items_by_patch", return_value=[existing_item])
-    mock_add_item = mocker.patch("src.server.loader.patchloader2.db.add_item")
-    mock_load_item = mocker.patch("src.server.loader.patchloader2._load_item")
-
-    # Riot API item structure
-    riot_item_data = {
-        "type": "Item",
-        "version": "15.8.1",
-        "basic": {},
-        "data": {
-            "3071": {
-                "name": "Black Cleaver",
-                "description": "",
-                "colloq": "",
-                "plaintext": "",
-                "gold": {
-                    "base": 500,
-                    "purchasable": True,
-                    "total": 3000,
-                    "sell": 2100
-                },
-                "from": [],
-                "into": [],
-                "image": Image(
-                    full="Black Cleaver.png",
-                    group="items"
-                ),
-                "maps": {"11": True},
-                "tags": [],
-                "stats": {}
-            },
-            "7000": {
-                "name": "Mythic Cleaver",
-                "description": "",
-                "colloq": "",
-                "plaintext": "",
-                "gold": {
-                    "base": 500,
-                    "purchasable": True,
-                    "total": 3000,
-                    "sell": 2100
-                },
-                "from": [],
-                "into": [],
-                "image": Image(
-                    full="Black Cleaver.png",
-                    group="items"
-                ),
-                "maps": {"11": True},
-                "tags": [],
-                "stats": {}
-            }
-        },
-        "groups": [],
-        "tree": []
-    }
-    session.get_json.return_value = riot_item_data
-
-    changes = {
-        "new": ["Mythic Cleaver"],
-        "changed": {"Black Cleaver": [patch_note("Cooldown reduced")]},
-        "deleted": []
-    }
-
-    await _patch_items(changes, patch_obj, patch_obj, session)
-
-    mock_load_item.assert_called_once()
-    mock_add_item.assert_called()
-
-
-
 @pytest.mark.asyncio
 async def test_patch_runes(mocker):
     patch_obj = NewPatch(patch="15.8.1")
@@ -519,7 +359,6 @@ def test_find_rune_not_found():
     assert result is None
 
 
-
 @pytest.mark.asyncio
 async def test_load_rune_stat_shards_as_stat_modifiers(mocker, loaded_patch):
     mocker.patch("src.server.loader.patchloader2.db.exists_rune_by_name", new=AsyncMock(return_value=False))
@@ -535,24 +374,23 @@ async def test_load_rune_stat_shards_as_stat_modifiers(mocker, loaded_patch):
 
 
 @pytest.mark.asyncio
-async def test_hotfix_others_changes_the_named_objects_in_place(mocker, loaded_patch):
-    sheen = SimpleNamespace(name="Sheen", changes=[patch_note("Cost reduced")], validated=True)
-    thornmail = SimpleNamespace(name="Thornmail", changes=[], validated=True)
-    conqueror = SimpleNamespace(name="Conqueror", changes=[], validated=True)
-    for type_, documents in (("items", [sheen, thornmail]), ("runes", [conqueror])):
-        mocker.patch(f"src.server.loader.patchloader2.db.fetch_{type_}_by_patch", new=AsyncMock(return_value=documents))
-    update_item = mocker.patch("src.server.loader.patchloader2.db.update_item", new=AsyncMock())
-    mocker.patch("src.server.loader.patchloader2.db.update_rune", new=AsyncMock())
-    notes = {"items": {"changed": {"Sheen": [patch_note("Cost reduced"), patch_note("Damage increased")]}},
-             "runes": {"changed": {"Conqueror": [patch_note("Healing reduced")]}}}
+async def test_hotfix_others_changes_the_named_runes_in_place(mocker, loaded_patch):
+    conqueror = SimpleNamespace(name="Conqueror", changes=[patch_note("Healing reduced")], validated=True)
+    electrocute = SimpleNamespace(name="Electrocute", changes=[], validated=True)
+    aery = SimpleNamespace(name="Summon Aery", changes=[], validated=True)
+    mocker.patch("src.server.loader.patchloader2.db.fetch_runes_by_patch",
+                 new=AsyncMock(return_value=[conqueror, electrocute, aery]))
+    update_rune = mocker.patch("src.server.loader.patchloader2.db.update_rune", new=AsyncMock())
+    notes = {"runes": {"changed": {"Conqueror": [patch_note("Healing reduced"), patch_note("Duration increased")],
+                                   "Electrocute": [patch_note("Damage reduced")]}}}
 
     hotfixed_at = datetime(2026, 11, 22, 18, 0)
     await hotfix_others(notes, loaded_patch, hotfixed_at)
 
-    assert [(change.text, change.hotfix) for change in sheen.changes] == [("Cost reduced", None),
-                                                                          ("Damage increased", hotfixed_at)]
-    assert not sheen.validated and not conqueror.validated
-    assert thornmail.validated
-    update_item.assert_called_once_with(sheen)
-    # Sheen already changed in this patch, Conqueror is new to the count.
-    assert (loaded_patch.changed_item_count, loaded_patch.changed_rune_count) == (0, 1)
+    assert [(change.text, change.hotfix) for change in conqueror.changes] == [("Healing reduced", None),
+                                                                              ("Duration increased", hotfixed_at)]
+    assert not conqueror.validated and not electrocute.validated
+    assert aery.validated
+    assert update_rune.call_count == 2
+    # Conqueror already changed in this patch, Electrocute is new to the count.
+    assert loaded_patch.changed_rune_count == 1

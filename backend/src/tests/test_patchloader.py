@@ -278,7 +278,7 @@ class TestLoadFreshDatabase():
     @pytest.fixture
     def old_loader(self, monkeypatch) -> Mock:
         spells = [SimpleNamespace(id_="SummonerFlash", modes=["CLASSIC"]), SimpleNamespace(id_="SummonerMana", modes=["ARAM"])]
-        mock = Mock(_list_other_data=AsyncMock(return_value=([("1001", None)], [], spells)), _load_all_items=AsyncMock(),
+        mock = Mock(_list_other_data=AsyncMock(return_value=([("1001", None), ("322065", None)], [], spells)),
                     _load_all_runes=AsyncMock())
         monkeypatch.setattr(loader, "old", mock)
         return mock
@@ -289,6 +289,9 @@ class TestLoadFreshDatabase():
         monkeypatch.setattr(loader, "fetch_champion_list", AsyncMock(return_value=[veigar_entry()]))
         monkeypatch.setattr(loader, "load_all_champions", AsyncMock(side_effect=self._count_one))
         monkeypatch.setattr(loader, "load_all_summonerspells", AsyncMock())
+        monkeypatch.setattr(loader, "load_all_items", AsyncMock())
+        monkeypatch.setattr(loader, "item_sources", AsyncMock(return_value=Mock(item_data={
+            "1001": {"modes": {"classic sr 5v5": True}}, "322065": {"modes": {"swiftplay": True}}})))
         monkeypatch.setattr(loader, "name_dictionaries", AsyncMock(
             return_value={"champions": NameDictionary(), "summonerspells": NameDictionary()}))
 
@@ -304,15 +307,15 @@ class TestLoadFreshDatabase():
 
         patch = database.upsert_patch.call_args.args[0]
         assert patch.patch == "16.23.1"
-        # Only Summoner's Rift spells count: Clarity (ARAM) is left out.
+        # Only Summoner's Rift spells and items count: Clarity (ARAM) and Swiftplay's copy are left out.
         assert (patch.champion_count, patch.item_count, patch.summonerspell_count, patch.total_count) == (1, 1, 1, 3)
         assert patch.loaded_total_count == 1
-        old_loader._load_all_items.assert_called_once()
+        loader.load_all_items.assert_called_once()
 
 
     @pytest.mark.asyncio
     async def test_a_failing_type_still_stores_the_patch(self, database, old_loader, champions, loggers):
-        old_loader._load_all_items.side_effect = RuntimeError("wiki down")
+        old_loader._load_all_runes.side_effect = RuntimeError("wiki down")
 
         await loader.load_fresh_database(["16.23.1"])
 

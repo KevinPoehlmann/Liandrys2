@@ -277,6 +277,8 @@ class Character():
         containers = [(self.passive, ActionType.PASSIVE)] + self.equipment_passives
         containers += [(ability, slot) for slot, (ability, _) in self.ability_dict.items()]
         values: dict[ActionType, dict[str, str]] = defaultdict(dict)
+        for slot, item in self.item_slots.items():  # an item's active and passives share its values
+            values[slot] |= item.values
         for container, slot in containers:
             values[slot] |= container.values
         return dict(values)

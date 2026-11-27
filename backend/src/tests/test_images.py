@@ -6,9 +6,14 @@ import pytest
 
 import src.server.loader.images as images
 from src.server.loader.champion_builder import build_champion
+from src.server.loader.item_builder import build_item
 from src.server.loader.patchexceptions import LoadError
 from src.server.models.champion import RawChampion
 from src.server.models.json_validation import ChampionJson
+from src.server.models.patch import NewPatch
+from src.tests.test_item_builder import GUNBLADE
+from src.tests.test_item_builder import entry as item_entry
+from src.tests.test_item_builder import raw as item_raw
 
 
 CDRAGON = Path(__file__).parent / "static" / "cdragon"
@@ -128,3 +133,51 @@ class TestLoadChampionImages():
         failures = await images.load_champion_images(FakeSession({"": b"icon"}), champion, raw, "16.23")
 
         assert failures == ["q: no icon in the spell data"]
+
+
+class TestLoadItemImage():
+
+    @pytest.mark.asyncio
+    async def test_the_icon_comes_from_cdragon(self):
+        item = build_item(item_raw(GUNBLADE), item_entry(GUNBLADE))
+        session = FakeSession({"": b"icon"})
+
+        failures = await images.load_item_image(session, item, item_raw(GUNBLADE), "16.23")
+
+        assert failures == []
+        assert item.image.full.startswith("3146_hextechgunblade.") and item.image.group == "item"
+        assert session.urls == ["https://raw.communitydragon.org/16.23/game/assets/items/icons2d/3146_hextechgunblade.png"]
+
+
+    @pytest.mark.asyncio
+    async def test_a_missing_image_keeps_data_dragons(self):
+        item = build_item(item_raw(GUNBLADE), item_entry(GUNBLADE))
+
+        failures = await images.load_item_image(FakeSession({}), item, item_raw(GUNBLADE), "16.23")
+
+        assert item.image.full == "3146.png"
+        assert failures[0].startswith("404 Image not found")
+
+
+class TestMasterworkBorder():
+
+    @pytest.mark.asyncio
+    async def test_ornns_overlay_is_stored_on_the_patch(self):
+        patch = NewPatch(patch="16.23.1")
+        session = FakeSession({"bordertreatmentornn": b"frame"})
+
+        failures = await images.load_masterwork_border(session, patch, fixture("items.bin.json"), "16.23")
+
+        assert failures == []
+        assert patch.masterwork_border.full.startswith("bordertreatmentornn.") and patch.masterwork_border.group == "item"
+        assert session.urls == ["https://raw.communitydragon.org/16.23/game/assets/items/itemmodifiers/bordertreatmentornn.png"]
+
+
+    @pytest.mark.asyncio
+    async def test_a_missing_modifier_is_reported(self):
+        patch = NewPatch(patch="16.23.1")
+
+        failures = await images.load_masterwork_border(FakeSession({}), patch, {}, "16.23")
+
+        assert patch.masterwork_border is None
+        assert failures == ["no overlay in Items/ItemModifiers/OrnnItemsModifier"]

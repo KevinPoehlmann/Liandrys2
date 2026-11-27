@@ -9,10 +9,13 @@ from src.server.loader.helper import SafeSession
 from src.server.loader.patchexceptions import LoadError
 from src.server.models.champion import NewChampion, RawChampion
 from src.server.models.image import Image
+from src.server.models.item import NewItem, RawItem
+from src.server.models.patch import NewPatch
 from src.server.models.summonerspell import NewSummonerspell, RawSummonerspell
 
 
 IMAGE_DIR = Path("src/images")
+ORNN_MODIFIER = "Items/ItemModifiers/OrnnItemsModifier"
 
 
 def asset_url(version: str, asset: str) -> str:
@@ -75,6 +78,36 @@ async def load_summonerspell_image(session: SafeSession, summonerspell: NewSummo
     url = summoner_icon_url(version, asset)
     try:
         summonerspell.image = await store_image(session, url, "spell", _asset_name(asset))
+    except LoadError as e:
+        return [f"{e.code} {e.reason} — {e.url}"]
+    except RuntimeError as e:  # SafeSession's retries are used up
+        return [f"{e} — {url}"]
+    return []
+
+
+async def load_item_image(session: SafeSession, item: NewItem, raw: RawItem, version: str) -> list[str]:
+    """Like load_summonerspell_image: the failure, if any; then the item keeps Data Dragon's image."""
+    asset = raw.cdragon.get("mItemDataClient", {}).get("inventoryIcon", "")
+    if not asset:
+        return ["no icon in the item data"]
+    url = asset_url(version, asset)
+    try:
+        item.image = await store_image(session, url, "item", _asset_name(asset))
+    except LoadError as e:
+        return [f"{e.code} {e.reason} — {e.url}"]
+    except RuntimeError as e:  # SafeSession's retries are used up
+        return [f"{e} — {url}"]
+    return []
+
+
+async def load_masterwork_border(session: SafeSession, patch: NewPatch, items_bin: dict, version: str) -> list[str]:
+    """Ornn's upgrade only changes an item's numbers and its frame, an overlay with a transparent middle."""
+    asset = items_bin.get(ORNN_MODIFIER, {}).get("inventoryIconToOverlay", "")
+    if not asset:
+        return [f"no overlay in {ORNN_MODIFIER}"]
+    url = asset_url(version, asset)
+    try:
+        patch.masterwork_border = await store_image(session, url, "item", _asset_name(asset))
     except LoadError as e:
         return [f"{e.code} {e.reason} — {e.url}"]
     except RuntimeError as e:  # SafeSession's retries are used up

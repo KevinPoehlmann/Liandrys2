@@ -1,8 +1,8 @@
 {
   "item_id": "6676",
   "name": "The Collector",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "gold": 3000,
   "into": [],
   "from_": [
@@ -14,27 +14,17 @@
   "validated": true,
   "stats": {
     "ad": 50.0,
-    "lethality": 10.0,
-    "critical strike chance percent": 0.25
+    "critical strike chance percent": 0.25,
+    "lethality": 10.0
   },
   "masterwork": {
-    "ad": 78.57,
-    "lethality": 10.0,
-    "critical strike chance percent": 0.25
+    "ad": 28
   },
   "active": null,
   "passives": [
     {
       "name": "Death",
       "description": "If you deal post-mitigation damage that would leave a champion below 5% of their maximum health,  execute them.",
-      "raw_stats": {},
-      "changes": [],
-      "validated": true,
-      "unique": true,
-      "inputs": [],
-      "stats": [],
-      "buffs": [],
-      "assumptions": [],
       "rules": [
         {
           "trigger": "on_damage_dealt",
@@ -63,7 +53,7 @@
               "actor": "target",
               "key": "current_hp",
               "comparison": "Less than",
-              "value": "0.05 * target_max_hp"
+              "value": "ExecuteThreshold * target_max_hp"
             }
           ],
           "actions": [
@@ -78,41 +68,54 @@
           "speed": "0",
           "acceleration": "0",
           "max_speed": "0",
-          "cooldown": "0"
+          "cooldown": "0",
+          "cast_cooldown": null,
+          "for_each": null
         }
-      ]
+      ],
+      "stats": [],
+      "buffs": [],
+      "inputs": [],
+      "assumptions": [],
+      "values": {},
+      "tooltip": "",
+      "raw_stats": {},
+      "changes": [],
+      "validated": true,
+      "unique": true
     },
     {
       "name": "Taxes",
       "description": "Killing a champion grants you an additional  25.",
+      "rules": [],
+      "stats": [],
+      "buffs": [],
+      "inputs": [],
+      "assumptions": [],
+      "values": {},
+      "tooltip": "",
       "raw_stats": {},
       "changes": [],
       "validated": true,
-      "unique": true,
-      "inputs": [],
-      "stats": [],
-      "buffs": [],
-      "rules": [],
-      "assumptions": []
+      "unique": true
     }
   ],
-  "limitations": "Limited to 1 The Collector.",
+  "limitations": "",
   "requirements": "",
   "maps": [
     "SR",
-    "HA",
-    "NB",
-    "Brawl"
+    "HA"
   ],
+  "values": {
+    "LethalityAmount": "10",
+    "ExecuteThreshold": "0.05",
+    "GoldAmount": "25"
+  },
+  "tooltip": "<section></section><section><attention>%i:scaleAD% @FlatPhysicalDamageMod@</attention> Attack Damage<br><attention>%i:scaleAPen% @PhysicalLethality@</attention> Lethality<br><attention>%i:scaleCrit% @FlatCritChanceMod*100@%</attention> Critical Strike Chance</section><section><passive>Death</passive><br>Your damage executes champions that are below @ExecuteThreshold*100@% Health.<br><br><passive>Taxes</passive><br>Champion kills grant <gold>@GoldAmount@ bonus gold</gold>.</section><section></section><section><flavorText></flavorText></section>",
   "changes": [],
   "image": {
     "full": "6676.png",
-    "group": "item",
-    "sprite": "item5.png",
-    "x": 48,
-    "y": 192,
-    "h": 48,
-    "w": 48
+    "group": "item"
   },
   "_id": "685962037de6da37b9ad9369"
 }

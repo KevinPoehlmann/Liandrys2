@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field, root_validator
 
 from src.server.models.change import Change
@@ -28,6 +30,8 @@ class NewItem(BaseModel):
     limitations: str = ""
     requirements: str = ""
     maps: list[Map] = []
+    values: dict[str, str] = {}  # loader-owned named values, shared by the active and the passives (SpellbladeDamage)
+    tooltip: str = ""  # loader-owned, Riot's text with @Name@ placeholders for the values
 
     changes: list[Change] = []
 
@@ -58,3 +62,15 @@ class ShortItem(BaseModel):
     def convert_active_to_bool(cls, values):
         values["active"] = bool(values.get("active"))
         return values
+
+
+class RawItem(BaseModel):
+    """Everything the loader downloaded for one item and patch, unchanged. Never read by the user API."""
+    item_id: str
+    patch: str
+    build: str
+    fetched_at: datetime
+    cdragon: dict  # the item's record in items.cdtb.bin.json; untyped on purpose like RawChampion.cdragon
+    active: dict | None = None  # the record of the spell it names (spellName), often a dummy; cast time and range
+    strings: dict[str, str] = {}  # its entries from lol.stringtable.json (name, tooltips)
+    item_data: dict = {}  # its entry in the wiki's Module:ItemData/data, references resolved (class, effects)

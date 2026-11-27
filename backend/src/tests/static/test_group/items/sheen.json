@@ -1,12 +1,14 @@
 {
   "item_id": "3057",
   "name": "Sheen",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "gold": 900,
   "into": [
     "3078",
     "3100",
+    "2510",
+    "3508",
     "6632",
     "6662"
   ],
@@ -24,13 +26,6 @@
     {
       "name": "Spellblade",
       "description": "After using an ability, your next basic attack within 10 seconds deals 100% base AD bonus physical damage on-hit (1.5 second cooldown, starts after using the empowered attack).",
-      "raw_stats": {},
-      "changes": [],
-      "validated": true,
-      "unique": true,
-      "inputs": [],
-      "stats": [],
-      "assumptions": [],
       "rules": [
         {
           "trigger": "on_cast",
@@ -65,9 +60,12 @@
           "speed": "0",
           "acceleration": "0",
           "max_speed": "0",
-          "cooldown": "0"
+          "cooldown": "0",
+          "cast_cooldown": null,
+          "for_each": null
         }
       ],
+      "stats": [],
       "buffs": [
         {
           "name": "spellblade",
@@ -80,6 +78,9 @@
           "windup_cancel": [],
           "slowed_while": [],
           "tags": [],
+          "blocks": [],
+          "replaces": {},
+          "range_type": null,
           "stats": [],
           "rules": [
             {
@@ -92,13 +93,14 @@
                   "type_": "Damage",
                   "props": {
                     "target": "target",
-                    "amount": "base_ad",
+                    "amount": "SpellbladeDamage",
                     "dmg_type": [
                       "Proc damage",
                       "On-hit damage"
                     ],
                     "dmg_sub_type": "Physical",
-                    "vamp": 0.0
+                    "vamp": 0.0,
+                    "can_crit": false
                   }
                 },
                 {
@@ -122,13 +124,15 @@
               "speed": "0",
               "acceleration": "0",
               "max_speed": "0",
-              "cooldown": "0"
+              "cooldown": "0",
+              "cast_cooldown": null,
+              "for_each": null
             }
           ]
         },
         {
           "name": "spellblade_cooldown",
-          "duration": "1.5",
+          "duration": "SpellbladeCooldown",
           "max_stacks": 1,
           "refresh": true,
           "interval": "0",
@@ -137,29 +141,39 @@
           "windup_cancel": [],
           "slowed_while": [],
           "tags": [],
+          "blocks": [],
+          "replaces": {},
+          "range_type": null,
           "stats": [],
           "rules": []
         }
-      ]
+      ],
+      "inputs": [],
+      "assumptions": [],
+      "values": {},
+      "tooltip": "",
+      "raw_stats": {},
+      "changes": [],
+      "validated": true,
+      "unique": true
     }
   ],
   "limitations": "Limited to 1 Spellblade item.",
   "requirements": "",
   "maps": [
     "SR",
-    "HA",
-    "NB",
-    "Brawl"
+    "HA"
   ],
+  "values": {
+    "SpellbladeCooldown": "1.5",
+    "Cooldown": "1.5",
+    "SpellbladeDamage": "base_ad"
+  },
+  "tooltip": "<section></section><section><attention>%i:scaleCooldown% @AbilityHasteMod@</attention> Ability Haste</section><section><passive>Spellblade</passive> {{ Item_Cooldown }}<br>After using an Ability, your next Attack deals <physicalDamage>@SpellbladeDamage@ bonus physical damage</physicalDamage> {{ Item_Keyword_OnHit }}.<br></section><section></section><section><flavorText></flavorText></section>",
   "changes": [],
   "image": {
     "full": "3057.png",
-    "group": "item",
-    "sprite": "item2.png",
-    "x": 336,
-    "y": 384,
-    "h": 48,
-    "w": 48
+    "group": "item"
   },
   "_id": "685961df7de6da37b9ad927c"
 }

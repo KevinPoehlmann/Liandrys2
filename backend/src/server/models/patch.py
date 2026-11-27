@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
+from src.server.models.image import Image
 from src.server.models.pydanticid import PydanticObjectId
 
 
@@ -9,6 +10,7 @@ class NewPatch(BaseModel):
     build: str | None = None  # CommunityDragon's content build; a new build within the patch is a hotfix
     updated_at: datetime | None = None  # the last hotfix run
     validated: bool = False
+    masterwork_border: Image | None = None  # Ornn's frame, drawn over a legendary item's icon when upgraded
 
     cached_documents: int = 0
 

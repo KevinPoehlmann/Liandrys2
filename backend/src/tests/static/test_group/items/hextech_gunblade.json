@@ -1,8 +1,8 @@
 {
   "item_id": "3146",
   "name": "Hextech Gunblade",
-  "patch": "15.12.1",
-  "hotfix": "2025-06-12T00:00:00",
+  "patch": "16.23.1",
+  "hotfix": null,
   "gold": 3000,
   "into": [],
   "from_": [
@@ -17,20 +17,23 @@
     "ap": 80.0,
     "omnivamp percent": 0.1
   },
-  "masterwork": {},
+  "masterwork": {
+    "ap": 25,
+    "ad": 14
+  },
   "active": {
     "name": "Lightning Bolt",
     "description": "",
-    "type_": "Active",
-    "unique": true,
     "cost": "0",
     "cost_resource": "none",
-    "cooldown": "60",
+    "cooldown": "Cooldown",
     "cast_time": "0",
     "recharge": "0",
+    "charges": "0",
     "cooldown_starts_after": null,
     "cooldown_starts_on_cast": false,
     "usable_during_cc": false,
+    "counts_as_cast": true,
     "stages": [
       {
         "recast_window": "0",
@@ -47,12 +50,13 @@
                 "type_": "Damage",
                 "props": {
                   "target": "target",
-                  "amount": "175 + 78 * (min(level, 18) - 1) / 17 + 0.3 * ap",
+                  "amount": "ActiveDamage",
                   "dmg_type": [
                     "Ability damage"
                   ],
                   "dmg_sub_type": "Magic",
-                  "vamp": 0.0
+                  "vamp": 0.0,
+                  "can_crit": false
                 }
               },
               {
@@ -60,8 +64,8 @@
                 "props": {
                   "target": "target",
                   "status": "Slow",
-                  "duration": "1.5",
-                  "strength": "0.25"
+                  "duration": "SlowDuration",
+                  "strength": "SlowAmount"
                 }
               }
             ],
@@ -69,7 +73,9 @@
             "speed": "0",
             "acceleration": "0",
             "max_speed": "0",
-            "cooldown": "0"
+            "cooldown": "0",
+            "cast_cooldown": null,
+            "for_each": null
           }
         ]
       }
@@ -79,33 +85,35 @@
     "buffs": [],
     "inputs": [],
     "pets": [],
-    "assumptions": [
-      "The wiki gives only 175 - 253 (based on level); assumed to grow linearly from level 1 to 18."
-    ],
+    "assumptions": [],
+    "values": {},
+    "tooltip": "",
     "raw_stats": {
       "target range": "700"
     },
     "changes": [],
-    "validated": true
+    "validated": true,
+    "type_": "Active",
+    "unique": true
   },
   "passives": [],
-  "limitations": "Limited to 1 Hextech Gunblade.",
+  "limitations": "",
   "requirements": "",
   "maps": [
     "SR",
-    "HA",
-    "NB",
-    "Brawl"
+    "HA"
   ],
+  "values": {
+    "SlowAmount": "0.25",
+    "SlowDuration": "1.5",
+    "Cooldown": "60",
+    "ActiveDamage": "by_level(175, 179.588235294, 184.176470588, 188.764705882, 193.352941176, 197.941176471, 202.529411765, 207.117647059, 211.705882353, 216.294117647, 220.882352941, 225.470588235, 230.058823529, 234.647058824, 239.235294118, 243.823529412, 248.411764706, 253, 257.588235294, 262.176470588) + 0.3 * ap"
+  },
+  "tooltip": "<section></section><section><attention>%i:scaleAP% @FlatMagicDamageMod@</attention> Ability Power<br><attention>%i:scaleAD% @FlatPhysicalDamageMod@</attention> Attack Damage<br><attention>%i:scaleSV% @PercentOmnivampMod*100@%</attention> Omnivamp</section><section></section><section>{{ Item_OnActivation }} {{ Item_Cooldown }}<br><active>Lightning Bolt</active><br>Shocks the target enemy champion, dealing @ActiveDamage@ magic damage and slowing them by @SlowAmount*100@% for @SlowDuration@ seconds.</section><section><flavorText></flavorText></section>",
   "changes": [],
   "image": {
     "full": "3146.png",
-    "group": "item",
-    "sprite": "item0.png",
-    "x": 0,
-    "y": 0,
-    "h": 48,
-    "w": 48
+    "group": "item"
   },
   "_id": "685961e07de6da37b9ad9301"
 }

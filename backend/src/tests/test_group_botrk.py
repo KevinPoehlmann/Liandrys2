@@ -22,7 +22,7 @@ THORNMAIL_ARMOR, THORNMAIL_HP = 75, 150
 LIFE_STEAL = 0.1
 GRIEVOUS_WOUNDS = 0.4
 
-MISTS_EDGE = Origin(kind=OriginKind.ITEM, name="Blade of the Ruined King")
+MISTS_EDGE = Origin(kind=OriginKind.ITEM, name="Blade of The Ruined King")  # Data Dragon's name
 LIFE_STEAL_HEAL = Origin(kind=OriginKind.VAMP, name="life steal")
 
 

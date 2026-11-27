@@ -1,6 +1,5 @@
 import locale
 import logging
-import re
 import unicodedata
 
 from bs4 import BeautifulSoup, Tag
@@ -12,27 +11,17 @@ from src.server.loader.helper import (
     parse_formula_from_string,
 )
 from src.server.loader.patchexceptions import ScrapeError
-from src.server.models.ability import ChampionAbility, ItemActive, Ability
+from src.server.models.ability import ChampionAbility, Ability
 from src.server.models.champion import NewChampion
-from src.server.models.enums import (
-    ActiveType,
-    ResourceType,
-    RangeType,
-    ItemClass,
-    Map,
-    Stat
-)
+from src.server.models.enums import ResourceType, RangeType
 from src.server.models.image import Image
-from src.server.models.item import NewItem
-from src.server.models.json_validation import ChampionJson, SpellJson, PassiveJson, ItemJson
-from src.server.models.passive import ChampionPassive, ItemPassive, Passive
+from src.server.models.json_validation import ChampionJson, SpellJson, PassiveJson
+from src.server.models.passive import ChampionPassive, Passive
 from src.server.models.rune import NewRune
-
 
 
 patch_logger = logging.getLogger("liandrys.patch")
 debug_logger = logging.getLogger("liandrys.debug")
-
 
 
 @dataclass
@@ -41,7 +30,6 @@ class AttackspeedStats():
     attack_windup: float = 0.0
     windup_modifier: float = 1.0
     missile_speed: int = 0
-
 
 
 def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str) -> NewChampion | None:
@@ -114,8 +102,6 @@ def scrape_champion(champion_json: ChampionJson, wiki_html: str, patch: str) -> 
     return champ
 
 
-
-
 def _scrape_attackspeed_stats(soup: BeautifulSoup, base_as: float, name: str) -> AttackspeedStats:
     stats = AttackspeedStats(
         attackspeed_ratio=base_as,
@@ -182,7 +168,6 @@ def _scrape_side_box_stats(soup: BeautifulSoup, name: str) -> tuple[str, RangeTy
                 raise ScrapeError(f"Unknown range type value: '{range_text}'", type="Champion", name=name)
 
     return last_changed, range_type
-
 
 
 def _scrape_passive(soup: BeautifulSoup, passive_json: PassiveJson, champion_name: str) -> ChampionPassive:
@@ -287,188 +272,6 @@ def _scrape_ability_stats(block: Tag) -> dict[str, str]:
     return stats
 
 
-def scrape_item(item_id: str, item_json: ItemJson, wiki_html: str, patch: str) -> NewItem:   
-    item = NewItem(
-        item_id=item_id,
-        name=item_json.name,
-        patch=patch,
-        gold=item_json.gold.total,
-        into=item_json.into,
-        from_=item_json.from_,
-        image=item_json.image
-    )
-
-    try:
-        maps = [Map.from_str(m) for m, v in item_json.maps.items() if v == True]
-        if len(item_id) == 6 and item_id.startswith("32"):
-            maps.remove(Map.SR) if Map.SR in maps else None
-            maps.append(Map.SP)
-        item.maps = maps
-    except ValueError as e:
-        patch_logger.warning(f"[ITEM] [SCRAPE] [{item.name}] Could not find Map: {e}")
-
-    if item_id.startswith("15"):
-        item.class_ = ItemClass.TOWER_MINION
-        return item
-    
-    soup = BeautifulSoup(wiki_html, "lxml")
-    item_class = _scrape_item_class(soup)
-    if not item_class or item_class == ItemClass.OUTDATED:
-        patch_logger.warning(f"[ITEM] [SCRAPE] [{item.name}] Could not find ItemClass, setting to ERROR")
-        return item
-    item.class_ = item_class
-
-    elements = _scrape_item_elements(soup)
-    for title, content in elements.items():
-        match title:
-            case "Stats":
-                stats, masterwork_stats = _scrape_item_stats(content)
-                item.stats = stats
-                if masterwork_stats:
-                    item.masterwork = masterwork_stats
-            case "Active":
-                item.active = _scrape_item_active(content)
-                item.validated = False
-            case "Passive":
-                item.passives = _scrape_item_passives(content)
-                item.validated = False
-            case "Limitations":
-                item.limitations = _scrape_item_element_text(content)
-                item.validated = False
-            case "Consume":
-                item.active = _create_consume_active(item.name, content)
-                item.validated = False
-            case "Requirements":
-                item.requirements = _scrape_item_element_text(content)
-                item.validated = False
-
-    return item
-
-def _scrape_item_class(soup: BeautifulSoup) -> ItemClass | None:
-    wiki_item = soup.find("div", class_="mw-parser-output")
-    if not wiki_item:
-        return None
-    wiki_class = wiki_item.find("a", attrs={"title": re.compile("Category")}) # type: ignore[arg-type]
-    if not wiki_class:
-        return None
-    try:
-        item_class = ItemClass.from_str((_get_clean_text(wiki_class)))
-    except ValueError as e:
-        patch_logger.warning(f"[ITEM] [SCRAPE] [?] Could not find ItemClass: {e}")
-        item_class = ItemClass.ERROR
-    return item_class
-    
-
-def _scrape_item_elements(soup: BeautifulSoup) -> dict[str, Tag]:
-    item_content = soup.find("div", class_="mw-parser-output")
-    item_info = item_content.find("div", class_="infobox") # type: ignore[arg-type]
-    if not item_info:
-        return {}
-    headers = item_info.find_all("div", class_="infobox-header")
-    info_dict = {header.text: header.next_sibling for header in headers}
-    return info_dict
-
-
-def _scrape_item_stats(content: Tag) -> tuple[dict[Stat, float], dict[Stat, float]]:
-
-    all_stats = content.find_all("div", class_="infobox-section-stacked")
-    if not all_stats:
-        item_stats = _scrape_item_stat_block(content)
-        if not item_stats:
-            return {}, {}
-        return item_stats, {}
-    item_stats = _scrape_item_stat_block(all_stats[0])
-
-    masterwork_stats = {}
-    if len(all_stats) == 3:
-        masterwork_stats = _scrape_item_stat_block(all_stats[2])
-
-    return item_stats, masterwork_stats
-
-
-def _scrape_item_stat_block(block: Tag) -> dict[Stat, float]:
-    parsed_stats = {}
-    for stat in block.find_all("div", class_="infobox-data-value"):
-        value = stat.text
-        pair = value.split(maxsplit=1)
-        if len(pair) < 2:
-            patch_logger.warning(f"[ITEM] [SCRAPE] [?] Could not parse Item stat: {value}")
-            continue
-        if "%" in pair[0]:
-            pair[0] = pair[0].strip(" %+")
-            pair[1] += " percent"
-        if pair[0] == "+":
-            parsed_stats[Stat.GOLD_P_10] = int(pair[1].split()[0])
-            continue
-        try:
-            if pair[1].endswith(" percent"):
-                parsed_stats[Stat.from_str(pair[1])] = float(pair[0])/100
-            else:
-                parsed_stats[Stat.from_str(pair[1])] = float(pair[0])
-        except ValueError as e:
-            patch_logger.warning(f"[ITEM] [SCRAPE] [?] Could not parse Item stat: {pair[1]} with value {pair[0]}")
-            parsed_stats[Stat.ERROR] = float(pair[0])
-    return parsed_stats
-    
-
-
-def _scrape_item_active(content: Tag) -> ItemActive:
-    active = ItemActive(
-        name="Replace",
-        type_=ActiveType.ACTIVE
-    )
-    title = content.find("b")
-    if not title:
-        return active
-    title = title.text
-    active.description = _get_clean_text(content, remove=title)
-    if "Unique" in title:
-        active.unique = True
-        title = title.replace("Unique – ", "")
-    active.name = title.strip(":")
-    return active
-
-
-def _scrape_item_passives(content: Tag) -> list[ItemPassive]:
-    passives = []
-    passives_wiki = content.find_all("div", class_="infobox-data-value")
-    for passive_wiki in passives_wiki:
-        passive = ItemPassive(
-            name="Replace",
-        )
-        title = passive_wiki.find("b")
-        if not title:
-            passives.append(passive)
-            continue
-        title = title.text
-        passive.description = _get_clean_text(passive_wiki, remove=title)
-        if "Unique" in title:
-            passive.unique = True
-            title = title.replace("Unique – ", "")
-        passive.name = title.strip(":")
-        passives.append(passive)
-    return passives
-
-
-def _create_consume_active(name: str, content: Tag) -> ItemActive:
-    active = ItemActive(
-        name=name,
-        type_=ActiveType.CONSUME
-    )
-    description = _scrape_item_element_text(content)
-    active.description = description
-    return active
-
-
-def _scrape_item_element_text(content: Tag) -> str:
-    element = content.find("div", class_="infobox-data-value")
-    if element:
-        return _get_clean_text(element)
-    return ""
-
-
-
-
 def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str) -> NewRune:
     soup = BeautifulSoup(wiki_html, "lxml")
     try:
@@ -491,7 +294,6 @@ def scrape_rune(rune_class: RuneClass, wiki_html: str, image: Image, patch: str)
         image=image
     )
     return rune
-
 
 
 def _scrape_rune_passive(soup: BeautifulSoup) -> Passive:
@@ -522,7 +324,6 @@ def _scrape_rune_summoner_stats(rune_content: Tag) -> dict[str, str]:
         value_text = value.text
         stats[label_text] = value_text
     return stats
-
 
 
 def _get_clean_text(tag: Tag, strip: str = "", remove: str = "") -> str:
