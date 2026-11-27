@@ -1,8 +1,13 @@
+import aiohttp
+import asyncio
 import pytest
 
 from datetime import datetime
+from unittest.mock import Mock
 
+from src.server.loader import helper
 from src.server.loader.helper import (
+    SafeSession,
     info_loader,
     patch_sort_key,
     riot_to_wiki_patch,
@@ -103,3 +108,75 @@ def test_wiki_to_datetime_invalid(invalid_date):
     with pytest.raises(ScrapeError):
         wiki_to_datetime(invalid_date, datetime(2025, 3, 19))
 
+
+
+class FailingSession:
+    def __init__(self, *errors):
+        self.errors = list(errors)
+        self.calls = 0
+
+    def get(self, url, timeout=None):
+        self.calls += 1
+        error = self.errors.pop(0) if self.errors else None
+        return FakeResponse(error)
+
+
+class FakeResponse:
+    def __init__(self, error):
+        self.error = error
+
+    async def __aenter__(self):
+        if self.error:
+            raise self.error
+        return self
+
+    async def __aexit__(self, *_):
+        return False
+
+    def raise_for_status(self):
+        pass
+
+    async def json(self):
+        return {"ok": True}
+
+
+def http_error(status: int) -> aiohttp.ClientResponseError:
+    return aiohttp.ClientResponseError(request_info=None, history=(), status=status)
+
+
+@pytest.fixture
+def no_sleep(monkeypatch):
+    async def sleep(_):
+        pass
+    monkeypatch.setattr(asyncio, "sleep", sleep)
+    monkeypatch.setattr(helper, "patch_logger", Mock())
+    monkeypatch.setattr(helper, "load_logger", Mock())
+
+
+@pytest.mark.parametrize("error", [aiohttp.ServerDisconnectedError(), asyncio.TimeoutError(), http_error(503)])
+async def test_retry_repeats_network_errors(no_sleep, error):
+    session = FailingSession(error)
+
+    assert await SafeSession(session).get_json("url") == {"ok": True}
+    assert session.calls == 2
+
+
+async def test_retry_gives_up_after_max_retries(no_sleep):
+    session = FailingSession(*[asyncio.TimeoutError()] * 3)
+
+    with pytest.raises(RuntimeError, match="Max retry"):
+        await SafeSession(session).get_json("url")
+    assert session.calls == 3
+
+
+@pytest.mark.parametrize("error", [KeyError("bug"), http_error(400)])
+async def test_retry_lets_other_errors_through(no_sleep, error):
+    session = FailingSession(error)
+
+    with pytest.raises(type(error)):
+        await SafeSession(session).get_json("url")
+    assert session.calls == 1
+
+
+async def test_retry_returns_empty_on_404(no_sleep):
+    assert await SafeSession(FailingSession(http_error(404))).get_json("url") == ""

@@ -1,7 +1,9 @@
 from datetime import datetime
+from unittest.mock import Mock
 
 import pytest
 
+from src.server.loader import patch_notes
 from src.server.loader.patch_notes import (fetch_hotfix_dates, hotfix_dates, hotfix_notes, notes_with_hotfixes, page_text,
                                            parse_patch_notes, wikitext_to_text)
 from src.server.loader.patchexceptions import LoadError
@@ -153,10 +155,14 @@ def test_a_hotfix_sorts_its_entries_by_template_and_skips_mode_changes(load_wiki
     assert notes["champions"]["changed"] == {}  # Swiftplay's champion changes are mode changes
 
 
-def test_a_missing_hotfix_gives_no_notes(load_wikitext):
+def test_a_missing_hotfix_gives_no_notes_and_is_logged(load_wikitext, monkeypatch):
+    logger = Mock()
+    monkeypatch.setattr(patch_notes, "patch_logger", logger)
+
     notes = parse_patch_notes(load_wikitext("V26.21"), datetime(2026, 10, 30))
 
     assert all(not type_notes["changed"] for type_notes in notes.values())
+    logger.error.assert_called_once()
 
 
 def test_several_hotfixes_keep_the_lines_of_each():

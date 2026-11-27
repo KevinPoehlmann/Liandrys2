@@ -78,6 +78,7 @@ STAT_VARIABLES: dict[str, Callable[[StatSource], float]] = {
     "attackspeed": _total(Stat.ATTACKSPEED_P), "bonus_attackspeed": _total(Stat.BONUS_ATTACKSPEED_P),
     "lethality": _total(Stat.LETHALITY),
     "life_steal": _total(Stat.LIFE_STEAL_P),
+    "heal_shield_power": _total(Stat.HEAL_N_SHIELD_P),
     "armor_pen_percent": _total(Stat.ARMOR_PEN_P),
     "magic_pen": _total(Stat.MAGIC_PEN),
     "magic_pen_percent": _total(Stat.MAGIC_PEN_P),

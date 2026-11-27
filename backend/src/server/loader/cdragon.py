@@ -31,6 +31,7 @@ STAT_VARIABLES = {
     (18, 0): "life_steal",  # Ambessa R: heal 15–20 % (+ 50 % life steal)
     (29, 0): "lethality",  # Pyke R: 1.5 lethality
     (31, 2): "bonus_attack_range",  # Urgot W: "autonomous attack range scales with bonus attack range"
+    (34, 0): "heal_shield_power",  # Glacial Augment: SlowZoneSlowHealShieldRatio, +9 % slow per 10 % heal and shield power
 }
 # Set on a stat part that reads the target's stat (Zed P, Aurora P: % of the target's max HP). Name still unknown.
 TARGET_STAT_FLAG = "{a8cb9c14}"

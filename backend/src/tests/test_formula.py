@@ -96,12 +96,13 @@ class TestVariables():
         assert evaluate_formula("bonus_movespeed", FormulaContext(source=slowed)) == 0
 
 
-    def test_life_steal_and_bonus_attack_range(self):
-        source = FakeSource(stats={Stat.LIFE_STEAL_P: 0.1, Stat.ATTACK_RANGE: 650},
+    def test_life_steal_heal_shield_power_and_bonus_attack_range(self):
+        source = FakeSource(stats={Stat.LIFE_STEAL_P: 0.1, Stat.HEAL_N_SHIELD_P: 0.08, Stat.ATTACK_RANGE: 650},
                             base_stats={Stat.ATTACK_RANGE: 350})
         context = FormulaContext(source=source)
 
         assert evaluate_formula("life_steal", context) == 0.1
+        assert evaluate_formula("heal_shield_power", context) == 0.08
         assert evaluate_formula("bonus_attack_range", context) == 300
 
 

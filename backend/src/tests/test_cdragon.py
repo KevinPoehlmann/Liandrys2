@@ -255,6 +255,14 @@ class TestCalculations():
             "LifeStealScaling * life_steal + 0.3 * bonus_movespeed + bonus_attack_range"
 
 
+    def test_heal_and_shield_power(self):
+        # Glacial Augment's SlowZoneCalc in 16.21.
+        calculation = {"__type": "GameCalculation", "mFormulaParts": [
+            {"__type": "StatByNamedDataValueCalculationPart", "mStat": 34, "mDataValue": "SlowZoneSlowHealShieldRatio"}]}
+
+        assert translate_calculation(calculation) == "SlowZoneSlowHealShieldRatio * heal_shield_power"
+
+
     def test_target_stats(self):
         # Kindred W (target's current HP), Ekko W (target's missing HP) and Zed P (target's max HP) in 16.21.
         calculation = {"__type": "GameCalculation", "mFormulaParts": [

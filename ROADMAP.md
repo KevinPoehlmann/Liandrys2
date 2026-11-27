@@ -29,9 +29,6 @@ Done, see [docs/decisions.md](docs/decisions.md#phase-2-ability-system-data-mode
 The loader only collects data (numbers, named values, texts, cast times) and builds no structure. Decisions, sources, the validation table for automatic patching and what is built: [docs/decisions.md](docs/decisions.md#phase-3-loader-with-little-manual-work-per-patch). Build order: (1) champions first load ✅, (2) champions patching ✅, (3) summoner spells ✅, (4) items incl. actives ✅, (5) runes ✅. Throwaway DB for real runs: `liandrys-patchtest`, port 27018, kept for further runs and Phase 4.
 
 **Later in this phase:**
-- [ ] `_retry` (`loader/helper.py`) swallows non-HTTP errors; let them through (the rest of the old error handling list went with the old loader)
-- [ ] A test still writes into the real `src/logs/liandrys_all.log` through the unmocked `patch_logger` of `loader/patch_notes.py` ("Hotfix … not found on the patch page"); mock it like `tests/test_patchloader.py` does
-- [ ] Runes: Glacial Augment's `SlowZoneCalc` uses stat 34 (heal and shield power), not in `STAT_VARIABLES` yet; check the id and its variable before translating it
 - [ ] Items: `ByItemEpicnessCountCalculationPart` ("per legendary item") stays reported. In 16.23 only the old mythic passives' leftovers use it (Goredrinker, Galeforce, …; also Guinsoo's, Evenshroud, Radiant Virtue), none in a live tooltip; translate it once a tooltip uses it again
 - [ ] PBE preview (V1, after the base loader): CDragon mirrors the PBE (`pbe/`, e.g. 16.24 while 26.23 is live) in the same format, about two weeks ahead. Load it as a provisional next patch, clearly marked, replaced on release. PBE values still change, and some never ship
 - [ ] Dash and leap travel times (Nidalee's Pounce lands at the cast today), e.g. from CommunityDragon's spell data or other sources
