@@ -619,9 +619,6 @@ class Character():
     def get_stat(self, stat: Stat) -> float:
         if stat == Stat.BONUS_ATTACKSPEED_P:
             return self._get_bonus_attackspeed()
-        if stat.value.startswith("bonus "):
-            return self._get_bonus_stat(Stat.from_str(stat.value.removeprefix("bonus ")))
-        
         if stat == Stat.ATTACKSPEED_P:
             return self._get_attackspeed()
         if stat == Stat.MOVESPEED:

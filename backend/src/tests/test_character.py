@@ -38,7 +38,6 @@ class TestCharacter():
     @pytest.mark.parametrize("stat, output", [
         (Stat.AD, 120.45),
         (Stat.ABILITY_HASTE, 40),
-        (Stat.SECONDS, 0)
     ])
     def test_get_stat(self, aatrox_with_items, stat, output):
         result = aatrox_with_items.get_stat(stat)

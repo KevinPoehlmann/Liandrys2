@@ -20,7 +20,7 @@ class NewItem(BaseModel):
     gold: int
     into: list[str]
     from_: list[str]
-    class_: ItemClass = ItemClass.ERROR
+    class_: ItemClass = ItemClass.NONE
     validated: bool = True
     stats: dict[Stat, float] = {}
     masterwork: dict[Stat, float] = {}

@@ -46,7 +46,7 @@ QueueEntry = RuleEvent | BuffEnd | BuffTick | PetAttackDue | PetExpire
 # Close enough for any melee attack; projectiles still need travel time (Vladimir's E lands after a Hemoplague cast at its release).
 DEFAULT_DISTANCE = 100
 # Statuses that are crowd control; Grievous Wounds and untargetability aren't.
-CROWD_CONTROL = set(StatusType) - {StatusType.GRIEVOUS_WOUNDS, StatusType.UNTARGETABLE, StatusType.REPLACE, StatusType.ERROR}
+CROWD_CONTROL = set(StatusType) - {StatusType.GRIEVOUS_WOUNDS, StatusType.UNTARGETABLE, StatusType.REPLACE}
 
 
 def travel_time(distance: float, speed: float, acceleration: float = 0, max_speed: float = 0) -> float:
@@ -393,8 +393,8 @@ class Simulation():
                                                         props=ApplyBuffProps(buff=props.buff, target=props.target)), event, tick)
             case ExecuteAction(props=props):
                 target = self._resolve_target(props.target, event)
-                execute = ProcessedDamageProperties(value=0, flat_pen=0, percent_pen=0, dmg_type=DamageType.DEFAULT,
-                                                    dmg_sub_type=DamageSubType.TRUE, execute=True, tags=[DamageType.DEFAULT])
+                execute = ProcessedDamageProperties(value=0, flat_pen=0, percent_pen=0, dmg_sub_type=DamageSubType.TRUE,
+                                                    execute=True)
                 return [QueueComponent(source=event.slot, actor=event.owner, target=target, type_=EffectType.DAMAGE,
                                        props=execute, origin=self._origin(event), cast=event.cast)]
             case LockAction(props=props):
@@ -522,7 +522,6 @@ class Simulation():
             value=value,
             flat_pen=flat_pen,
             percent_pen=percent_pen,
-            dmg_type=props.dmg_type[0] if props.dmg_type else DamageType.DEFAULT,
             dmg_sub_type=props.dmg_sub_type,
             vamp=props.vamp,
             life_steal=self._life_steal(props, self.actors[event.owner]),

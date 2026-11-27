@@ -30,7 +30,7 @@ def build_champion(raw: RawChampion, entry: ChampionJson) -> NewChampion:
     champion = NewChampion(
         key=entry.key, name=entry.name, champion_id=raw.champion_id, patch=raw.patch,
         last_changed=last_changed_patch(raw.champion_data),
-        resource_type=ResourceType.from_str(entry.partype), image=entry.image,
+        resource_type=ResourceType(entry.partype or ResourceType.NONE), image=entry.image,
         passive=ChampionPassive(name=spells["passive"].name or entry.passive.name, image=entry.passive.image),
         **abilities, **champion_stats(raw.cdragon),
     )

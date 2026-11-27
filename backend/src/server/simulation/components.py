@@ -15,7 +15,6 @@ class ProcessedDamageProperties(EffectProperties):
     value: float
     flat_pen: float
     percent_pen: float
-    dmg_type: DamageType
     dmg_sub_type: DamageSubType = cast(DamageSubType, DamageSubType.PHYSIC)
     vamp: float = 0
     life_steal: float = 0

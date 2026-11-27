@@ -225,6 +225,12 @@ The loader only collects data (numbers, named values, texts, cast times) and bui
   - ✅ Decided: no tree icon download any more. The five icons are committed under their old names (`images/rune/7201_Precision.png`, …) and `RUNE_TREES` points to them statically; hashed tree icons belong to the Images point in the roadmap
   - ✅ Decided: `info.json` and `InfoJson` only keep `wikiNames`; `paths`, `urls`, `itemStatDict`, `maps` and `abilityStats` were only read by the old loader
 
+- [x] **Enum cleanup** (the old scraper's leftovers). The patchtest DB (all four types, 16.20 + 16.21) held none of the removed values, so no migration; an old DB with them fails validation until the fresh load
+  - `Stat` keeps only real, additive stats. The pseudo stats (`target's armor`, `units`, `seconds`, `Charge`, `Flat`, the `maximum`/`missing` health and mana variants) and the `bonus …` members are formula variables now (`bonus_ad`, `target_max_hp`, `missing_hp`); a `StatModifier` with `bonus ad` read as if there were two kinds of AD. Only `BONUS_ATTACKSPEED_P` stays, since bonus attack speed includes the growth per level, so `Character.get_stat` no longer resolves `bonus <stat>`
+  - `DamageType` lost `Default`, `Non-Damaging`, `See Notes` and `Spell damage`. The single `dmg_type` of `ProcessedDamageProperties` was never read (everything uses `tags`), so it went too, and an execute has no tags
+  - The `ERROR` members (`Stat`, `StatusType`, `ItemClass`) were the old scraper's fallback for unknown text; `Item.class_` defaults to `ItemClass.NONE` like the loader's fallback
+  - The `from_str` alias maps are gone. The two still needed are loader knowledge and live there: `summonerspell_builder.GAME_MAPS` (Data Dragon's map ids and game modes) and an empty `partype` as `ResourceType.NONE` in `champion_builder`; an unknown resource still fails the load
+
 ### Cast times and animations
 
   - Cast times are not reliable in CDragon: three fields (`spellCastTime`, often a default 0.25 and once -2.0; `mCastTime`; `castFrame`, a frame of the animation at 30 fps) that disagree with each other and with the wiki (Darius Q 0.75 in the wiki, 0.25 in `spellCastTime`). Decided: `cast_time` stays hand-owned, the editor suggests the wiki template's `cast time` and shows the three CDragon fields. Phase 4: a few practice tool checks or the CommunityDragon Discord could tell what each field means

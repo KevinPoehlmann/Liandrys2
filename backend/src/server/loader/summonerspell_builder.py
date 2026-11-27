@@ -16,6 +16,11 @@ from src.server.models.summonerspell import NewSummonerspell, RawSummonerspell
 
 SLOT = "spell"  # bare names in a summoner spell's formulas belong to its one spell
 RIFT_MODE = "CLASSIC"
+# Data Dragon names maps by id (items) and by game mode (summoner spells).
+GAME_MAPS = {
+    "11": Map.SR, "CLASSIC": Map.SR, "12": Map.HA, "ARAM": Map.HA, "21": Map.NB, "22": Map.TFT,
+    "30": Map.AR, "CHERRY": Map.AR, "33": Map.SW, "35": Map.BR, "BRAWL": Map.BR, "SWIFTPLAY": Map.SP,
+}
 # Module:SpellData's fields and the value they should match.
 WIKI_FIELDS = {"cooldown": "cooldownTime", "charges": "maxAmmo", "recharge": "ammoRechargeTime"}
 
@@ -48,13 +53,8 @@ def summoner_spell(raw: RawSummonerspell) -> LoadedSpell:
 
 
 def maps(modes: list[str]) -> list[Map]:
-    found = []
-    for mode in modes:
-        try:
-            found.append(Map.from_str(mode))
-        except ValueError:  # most modes are events we don't model (URF, ULTBOOK, ...)
-            continue
-    return list(dict.fromkeys(found))
+    # Most modes are events we don't model (URF, ULTBOOK, ...).
+    return list(dict.fromkeys(GAME_MAPS[mode.upper()] for mode in modes if mode.upper() in GAME_MAPS))
 
 
 def apply_loader_part(summonerspell: NewSummonerspell, spell: LoadedSpell) -> None:

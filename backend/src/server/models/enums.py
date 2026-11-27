@@ -58,96 +58,7 @@ class Stat(str, Enum):
     E_COOLDOWN_REDUCTION = "e cooldown reduction"
     R_COOLDOWN_REDUCTION = "r cooldown reduction"
     DAMAGE_TAKEN_P = "damage taken percent"
-    ARMOR_TARGET = "target's armor"
-    BONUS_AD = "bonus ad"
-    BONUS_AP = "bonus ap"
-    BONUS_ARMOR = "bonus armor"
-    BONUS_ATTACKSPEED_P = "bonus attackspeed"
-    BONUS_HP = "bonus health"
-    BONUS_HP_P = "bonus health percent"
-    BONUS_MANA = "bonus mana"
-    BONUS_MOVESPEED = "bonus movement speed"
-    BONUS_MR = "bonus magic resistance"
-    CHARGE = "Charge"
-    CURENT_HP_TARGET = "of target's current health"
-    MAX_HP = "maximum health"
-    MAX_HP_TARGET = "target's maximum health"
-    MAX_MANA = "maximum mana"
-    MISSING_HP = "missing health"
-    MISSING_HP_TARGET = "target's missing health"
-    MISSING_MANA = "of missing mana"
-    UNITS = "units"
-    SECONDS = "seconds"
-    FLAT = "Flat"
-    ERROR = "Error"
-
-    @classmethod
-    def from_str(cls, value: str) -> "Stat":
-        alias_map = {
-            # All alias values mapping to enum members
-            "attack damage": cls.AD, "AD": cls.AD, "per 100 AD": cls.AD,
-            "ability power": cls.AP, "AP": cls.AP, "per 100 AP": cls.AP,
-            "total armor": cls.ARMOR,
-            "attack speed percent": cls.ATTACKSPEED_P,
-            "critical strike chance": cls.CRIT_P,
-            "Energy": cls.ENERGY,
-            "base health regeneration percent": cls.HP_REG_P,
-            "Lethality": cls.LETHALITY,
-            "Mana": cls.MANA, " Mana": cls.MANA, " mana": cls.MANA,
-            "base mana regeneration percent": cls.MANA_REG_P,
-            "move speed": cls.MOVESPEED, "movement speed": cls.MOVESPEED,
-            "movement speed percent": cls.MOVESPEED_P, "bonus movement speed percent": cls.MOVESPEED_P,
-            "magic resist": cls.MR, "magic resistance": cls.MR, "total magic resistance": cls.MR,
-            "bonus AD": cls.BONUS_AD, "bonus attack damage": cls.BONUS_AD, "per 100 bonus AD": cls.BONUS_AD,
-            "bonus AP": cls.BONUS_AP,
-            "bonus attack speed percent": cls.BONUS_ATTACKSPEED_P, "bonus attack speed": cls.BONUS_ATTACKSPEED_P,
-            "of his bonus health": cls.BONUS_HP,
-            "per 100 bonus magic resistance": cls.BONUS_MR,
-            "of target's current health": cls.CURENT_HP_TARGET, "of the target's current health": cls.CURENT_HP_TARGET,
-            "of her maximum health": cls.MAX_HP, "of maximum health": cls.MAX_HP, "of his maximum health": cls.MAX_HP,
-            "of target's maximum health": cls.MAX_HP_TARGET, "of the target's maximum health": cls.MAX_HP_TARGET,
-            "of missing health": cls.MISSING_HP, "his missing health": cls.MISSING_HP, "of his missing health": cls.MISSING_HP,
-            "of target's missing health": cls.MISSING_HP_TARGET, "of the target's missing health": cls.MISSING_HP_TARGET,
-            "health": cls.HP,
-            "base health regen percent": cls.HP_REG_P,
-            "gold per 10": cls.GOLD_P_10,  # if used that way
-            "bonus attack speed": cls.BONUS_ATTACKSPEED_P,
-            "bonus movement speed": cls.BONUS_MOVESPEED,
-            "bonus armor": cls.BONUS_ARMOR,
-            "bonus mana": cls.BONUS_MANA,
-            "bonus health percent": cls.BONUS_HP_P,
-            "bonus health": cls.BONUS_HP,
-            "omnivamp percent": cls.OMNIVAMP_P,
-            "slow resist percent": cls.SLOW_RESIST_P,
-            "summoner spell haste": cls.SUMMONER_HASTE,
-            "tenacity percent": cls.TENACITY_P,
-            "units": cls.UNITS,
-            "seconds": cls.SECONDS,
-            "flat": cls.FLAT,
-        }
-        try:
-            return cls(value)
-        except ValueError:
-            lowered = value.strip().lower()
-            for alias, member in alias_map.items():
-                if lowered == alias.lower():
-                    return member
-            raise ValueError(f"{value!r} is not a valid alias for {cls.__name__}")
-
-"""     CHANNEL_TIME="channel time"
-    CHARGE_TIME="CHARGE TIME", 'seconds charged', 'charge time'
-    CHIMES="number of Chimes"
-    CONST="Constant"
-    DISTANCE="distance traveled"
-    DURATION="duration"
-    FURY="Fury"
-    LEVEL="level", "Ornn's level"
-    MARKS="marks"
-    RANK="Rank",
-    SECONDS="seconds"
-    STACKS="Stacks", "stacks" """
-
-
+    BONUS_ATTACKSPEED_P = "bonus attackspeed"  # includes the attack speed growth per level
 
 
 class ActionType(str, Enum):
@@ -197,27 +108,6 @@ class Map(str, Enum):
     SW="Swarm"
     SP="Swiftplay"
 
-    @classmethod
-    def from_str(cls, value: str) -> "Map":
-        alias_map = {
-            # All alias values mapping to enum members
-            "11": cls.SR, "CLASSIC": cls.SR,
-            "12": cls.HA, "ARAM": cls.HA,
-            "21": cls.NB,
-            "22": cls.TFT,
-            "30": cls.AR, "CHERRY": cls.AR,
-            "33": cls.SW,
-            "35": cls.BR, "BRAWL": cls.BR,
-            "SWIFTPLAY": cls.SP,
-        }
-        try:
-            return cls(value)
-        except ValueError:
-            lowered = value.strip().lower()
-            for alias, member in alias_map.items():
-                if lowered == alias.lower():
-                    return member
-            raise ValueError(f"{value!r} is not a valid alias for {cls.__name__}")
 
 
 class Actor(str):
@@ -278,22 +168,6 @@ class ResourceType(str, Enum):
     SHIELD="Shield"
     NONE="None"
 
-    @classmethod
-    def from_str(cls, value: str) -> "ResourceType":
-        alias_map = {
-            # All alias values mapping to enum members
-            "": cls.NONE
-        }
-        try:
-            return cls(value)
-        except ValueError:
-            lowered = value.strip().lower()
-            for alias, member in alias_map.items():
-                if lowered == alias.lower():
-                    return member
-            raise ValueError(f"{value!r} is not a valid alias for {cls.__name__}")
-
-
 
 #Items
 
@@ -311,23 +185,6 @@ class ItemClass(str, Enum):
     STARTER="starter item"
     TRINKET="trinket item"
     TOWER_MINION="tower and minion item"
-    ERROR="Error"
-
-    @classmethod
-    def from_str(cls, value: str) -> "ItemClass":
-        alias_map = {
-            # All alias values mapping to enum members
-            "": cls.NONE,
-            "basic item": cls.BASIC,
-        }
-        try:
-            return cls(value)
-        except ValueError:
-            lowered = value.strip().lower()
-            for alias, member in alias_map.items():
-                if lowered == alias.lower():
-                    return member
-            raise ValueError(f"{value!r} is not a valid alias for {cls.__name__}")
 
 
 #Ability details
@@ -337,42 +194,17 @@ class DamageType(str, Enum):
     AOE="Area damage"
     AOE_DOT="AOE DOT damage"
     BASIC="Basic damage"
-    DEFAULT="Default damage"
     DOT="DOT damage"
-    NON="Non-Damaging"
-    NOTES="See Notes"
     PET="Pet damage"
     PROC="Proc damage"
     REACTIVE="Reactive damage"  # Thornmail: reacts to being hit
     ON_HIT="On-hit damage"  # applies life steal like basic damage (Mist's Edge, Spellblade)
-    SPELL="Spell damage"
 
 class DamageSubType(str, Enum):
     PHYSIC = "Physical"
     MAGIC = "Magic"
     TRUE = "True"
     ADAPTIVE = "Adaptive"
-
-    @classmethod
-    def from_str(cls, value: str) -> "DamageSubType":
-        alias_map = {
-            "Physical damage": cls.PHYSIC,
-            " Physical damage": cls.PHYSIC,
-            " Physical": cls.PHYSIC,
-            "Magic damage": cls.MAGIC,
-            " Magic": cls.MAGIC,
-            " Magic damage": cls.MAGIC,
-            "True damage": cls.TRUE,
-            " True": cls.TRUE,
-            " True damage": cls.TRUE,
-        }
-        try:
-            return cls(value)
-        except ValueError:
-            lowered = value.strip()
-            if lowered in alias_map:
-                return alias_map[lowered]
-            raise ValueError(f"{value!r} is not a valid alias for {cls.__name__}")
 
 
 #Abilities
@@ -433,28 +265,7 @@ class StatusType(str, Enum):
     GRIEVOUS_WOUNDS = "Grievous Wounds"  # strength = healing reduction, the strongest counts
     SUSPENSION = "Suspension"
     TAUNT = "Taunt"
-    ERROR = "Error"
 
-    @classmethod
-    def from_str(cls, value: str) -> "StatusType":
-        alias_map = {
-            "Root": cls.GROUND,
-            "Charm": cls.STUN,
-            "Flee": cls.STUN,
-            "Polymorph": cls.STUN,
-        }
-        try:
-            return cls(value)
-        except ValueError:
-            lowered = value.strip().lower()
-            for alias, member in alias_map.items():
-                if lowered == alias.lower():
-                    return member
-            raise ValueError(f"{value!r} is not a valid alias for {cls.__name__}")
-    """ CHARM="Charm"
-    FLEE="Flee"
-    POLYMOROPH="Polymorph"
-    ROOT="Root" """
 
 
 
