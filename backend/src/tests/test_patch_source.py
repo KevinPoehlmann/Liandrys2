@@ -74,7 +74,7 @@ class TestPreviewIsCurrent():
 
     @pytest.fixture
     def live(self) -> NewPatch:
-        return NewPatch(patch="16.23.1")
+        return NewPatch(patch="16.23.1", timestamp=datetime(2026, 11, 20, 9, 0))
 
 
     @pytest.fixture
@@ -99,6 +99,13 @@ class TestPreviewIsCurrent():
     def test_a_live_hotfix_after_the_preview_reloads_it(self, preview, live):
         # The preview copies the live patch's hand-made part and compares with its numbers.
         live.updated_at = datetime(2026, 11, 26, 12, 0)
+
+        assert not preview_is_current(preview, "16.24.1", PBE_BUILD, live)
+
+
+    def test_a_live_patch_loaded_after_the_preview_reloads_it(self, preview, live):
+        # A database catching up several patches: the preview was built from an older live patch.
+        live.timestamp = datetime(2026, 11, 26, 12, 0)
 
         assert not preview_is_current(preview, "16.24.1", PBE_BUILD, live)
 

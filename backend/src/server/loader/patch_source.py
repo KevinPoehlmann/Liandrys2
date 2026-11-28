@@ -50,11 +50,11 @@ def is_newer(patch: str, than: str) -> bool:
 
 
 def preview_is_current(preview: NewPatch | None, name: str, build: str, live: NewPatch) -> bool:
-    """The stored preview shows this PBE build and the live patch it was built from. Its build is only stored once the
-    load has run, so an interrupted load is never current."""
+    """The stored preview shows this PBE build and the live patch it was built from (that patch's load or last hotfix
+    came before it). Its build is only stored once the load has run, so an interrupted load is never current."""
     if preview is None or preview.patch != name or preview.build != build:
         return False
-    return live.updated_at is None or live.updated_at < preview.timestamp
+    return (live.updated_at or live.timestamp) < preview.timestamp
 
 
 def new_on_pbe(summary: list[dict], champions: list[ChampionJson]) -> list[str]:
